@@ -61,6 +61,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -89,6 +90,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -183,7 +185,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // ActivityResult
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), result -> {
-
+                    getActivityResultCallback(result);
                 });
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
@@ -276,6 +278,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         binding.tvPostTitle.setText(postTitle);
         binding.tvUsername.setText(userName);
+        assert getArguments() != null;
         binding.tvPostingDate.setText(getArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
@@ -314,8 +317,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
             if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
-                long cntComment = snapshot.getLong("cnt_comment");
-                long cntCompathy = snapshot.getLong("cnt_compathy");
+                BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
+                //long cntComment = snapshot.getLong("cnt_comment");
+                //long cntCompathy = snapshot.getLong("cnt_compathy");
+                long cntComment = Objects.requireNonNull(board).getCommentCount();
+                long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
                 binding.tvCntComment.setText(String.valueOf(cntComment));
                 binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
             }
@@ -531,7 +537,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
      */
-    private void activityResultCallback(ActivityResult result) {
+    private void getActivityResultCallback(ActivityResult result) {
 
     }
 
@@ -884,4 +890,48 @@ public class BoardReadDlgFragment extends DialogFragment implements
     }
 
      */
+    static class BoardGeneralObject {
+        @PropertyName("post_title")
+        private String postTitle;
+        @PropertyName("post_content")
+        private String postContent;
+        @PropertyName("post_general")
+        private boolean isGeneralPost;
+        @PropertyName("timestamp")
+        private long timestamp;
+        @PropertyName("user_id")
+        private String userId;
+        @PropertyName("user_name")
+        private String userName;
+        @PropertyName("cnt_view")
+        private long cntView;
+        @PropertyName("cnt_comment")
+        private long cntComment;
+        @PropertyName("cnt_ccompathy")
+        private long cntCompathy;
+
+        public BoardGeneralObject() {
+            // Must have a public no-argument constructor
+        }
+        /*
+        public BoardGeneralObject(long view, long comment, long compathy) {
+            this.cntView = view;
+            this.cntComment = comment;
+            this.cntCompathy = compathy;
+        }
+        */
+        @PropertyName("cnt_view")
+        public long getViewCount() {
+            return cntView;
+        }
+        @PropertyName("cnt_comment")
+        public long getCommentCount() {
+            return cntComment;
+        }
+        @PropertyName("cnt_ccompathy")
+        public long getCompathyCount() {
+            return cntCompathy;
+        }
+
+    }
 }

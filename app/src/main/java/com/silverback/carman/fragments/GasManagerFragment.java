@@ -8,9 +8,11 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman.BaseActivity;
+import com.silverback.carman.MainActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -82,7 +85,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     private SimpleDateFormat sdf;
     private DecimalFormat df;
     private Calendar calendar;
-    private ProgressBarDialogFragment pbFragment;
 
     // Fields
     private Location mPrevLocation;
@@ -102,7 +104,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         // Required empty public constructor
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,20 +118,20 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         // The parent activity gets started by tabbing the Geofence notification w/ the pendingintent
         // that contains the station id, name, geofencing time, and category. The data will fill out
         // the gas or service form acoording to the transferred category.
-        String action = getActivity().getIntent().getAction();
+        String action = requireActivity().getIntent().getAction();
         if(action != null && action.equals(Constants.NOTI_GEOFENCE)) {
             isGeofenceIntent = true;
-            geoStnName = getActivity().getIntent().getStringExtra(Constants.GEO_NAME);
-            geoStnId = getActivity().getIntent().getStringExtra(Constants.GEO_ID);
-            geoTime = getActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
-            category = getActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+            geoStnName = requireActivity().getIntent().getStringExtra(Constants.GEO_NAME);
+            geoStnId = requireActivity().getIntent().getStringExtra(Constants.GEO_ID);
+            geoTime = requireActivity().getIntent().getLongExtra(Constants.GEO_TIME, -1);
+            category = requireActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
 
         // Instantiate the objects
         firestore = FirebaseFirestore.getInstance();
-        mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings = ((BaseActivity)getActivity()).getSharedPreferernces();
-        geofenceHelper = new FavoriteGeofenceHelper(getContext());
+        mDB = CarmanDatabase.getDatabaseInstance(requireContext());
+        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        geofenceHelper = new FavoriteGeofenceHelper(requireContext());
         calendar = Calendar.getInstance(Locale.getDefault());
         df = ((BaseActivity)requireActivity()).getDecimalFormat();
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
@@ -390,18 +392,12 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
     }
 
-    // Not only save the form data in the Room local db, but also upload the data to Firestore
-    // in terms of the gas station rating and any comment. The local db and Firestore should be
-    // refactored to sync as long as the user gets logged in.
+    // Not only save the form data in the Room, but also upload the station rating and comment data
+    // to Firestor. The local db and Firestore should be refactored to sync as long as the user gets
+    // logged in.
     public void saveGasData(String userId) {
         if(!doEmptyCheck()) return;
-        // Show the progress bar while saving the data in the Room and uploading the rating data to
-        // Firestore.
-        /*
-        pbFragment = new ProgressBarDialogFragment();
-        pbFragment.setProgressMsg("로컬에 저장중임");
-        pbFragment.show(getChildFragmentManager(), "progressbar");
-        */
+
         // CreateEntity instances both of which are correlated with ForeignKe
         ExpenseBaseEntity baseEntity = new ExpenseBaseEntity();
         GasManagerEntity gasEntity = new GasManagerEntity();
@@ -440,7 +436,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
     // Batch to upload the data of rating and comment to Firestore.
     public void uploadGasDataToFirestore(String userId, int gasTotal) {
-        //pbFragment.setProgressMsg("Uploading.....");
         WriteBatch gasBatch = firestore.batch();
         if(binding.rbGasStation.getRating() > 0) {
             Map<String, Object> ratingData = new HashMap<>();
@@ -465,11 +460,15 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         gasBatch.commit().addOnCompleteListener(task -> {
-            //pbFragment.dismiss();
+            /*
             Intent resultIntent = new Intent();
             resultIntent.putExtra("totalsum", gasTotal);
             Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
             Objects.requireNonNull(requireActivity()).finish();
+             */
+            if(task.isSuccessful()) {
+
+            }
         });
     }
 

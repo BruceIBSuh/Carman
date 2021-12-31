@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -36,6 +37,7 @@ import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.adapters.BoardPostingAdapter;
 import com.silverback.carman.databinding.FragmentBoardPagerBinding;
+import com.silverback.carman.databinding.ViewAutomakerEmblemBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -297,10 +299,10 @@ public class BoardPagerFragment extends Fragment implements
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
             isViewOrder = !isViewOrder;
-            // Set the spannable string indicating what's the basis of sorting. The reason why the
-            // span is set.
-            String sortLabel = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
-            //binding..setText(sortLabel);
+            String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
+            TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
+            tvSorting.setText(sorting);
+            //emblemBinding.tvSortingOrder.setText(sorting);
 
             // Initialize fields when clicking the menu for switching timestamp and cnt_view
             //isLastPage = false;

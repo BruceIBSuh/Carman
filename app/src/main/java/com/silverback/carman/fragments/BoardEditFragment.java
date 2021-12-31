@@ -34,7 +34,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.j2objc.annotations.Property;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
@@ -52,6 +54,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -255,7 +258,6 @@ public class BoardEditFragment extends Fragment implements
         menu.getItem(0).setVisible(false);
         menu.getItem(1).setVisible(true);
     }
-
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         /*
@@ -268,24 +270,19 @@ public class BoardEditFragment extends Fragment implements
         return false;
     }
 
-
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    public void onActivityCreated(Bundle bundle) {
-        super.onActivityCreated(bundle);
-
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
         // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(requireActivity(), chooser -> {
             log.i("FragmentViwModel: %s", chooser);
-            ((BoardActivity)getActivity()).getImageFromChooser(chooser);
+            ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
         });
-
 
         // On completing to apply Glide with an image selected from the chooser, set it to the span.
         imgModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
-            ImageSpan imgSpan = new ImageSpan(getContext(), bitmap);
+            ImageSpan imgSpan = new ImageSpan(view.getContext(), bitmap);
             spanHandler.setImageSpan(imgSpan);
         });
 
@@ -314,10 +311,7 @@ public class BoardEditFragment extends Fragment implements
     public void removeImage(int position) {
         log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
-
-
         // Store the postion to remove
-
         /*
         uriEditImageList.remove(position);
         // notifyItemRemoved(), weirdly does not work here.
@@ -333,7 +327,6 @@ public class BoardEditFragment extends Fragment implements
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
         if(imgUri != null) uriEditImageList.add(position, imgUri);
         imgAdapter.notifyDataSetChanged();
-
         for(Uri uri : uriEditImageList) {
             log.i("uriEditImageList: %s", uri);
         }
@@ -346,11 +339,9 @@ public class BoardEditFragment extends Fragment implements
         log.i("Removed Span: %s", position);
         uriEditImageList.remove(position);
         imgAdapter.notifyDataSetChanged();
-
         for(Uri uri : uriEditImageList) {
             log.i("uriEditImageList: %s", uri);
         }
-
         for(String url : strImgUrlList) {
             log.i("http url: %s", url);
         }
@@ -378,17 +369,18 @@ public class BoardEditFragment extends Fragment implements
 
 
     // If any images is removed, delete them from Firebase Storage.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     public void prepareUpdate() {
         // Hide the soft input if it is visible.
-        ((InputMethodManager)getActivity().getSystemService(INPUT_METHOD_SERVICE))
+        ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(localView.getWindowToken(), 0);
 
         if(!doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
         pbFragment = new ProgressBarDialogFragment();
-        getActivity().getSupportFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction().add(android.R.id.content, pbFragment).commit();
 
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
@@ -421,7 +413,7 @@ public class BoardEditFragment extends Fragment implements
             // url.
             cntUploadImage = 0;
             for(int i = 0; i < uriEditImageList.size(); i++) {
-                if(uriEditImageList.get(i).getScheme().equals("content")) {
+                if(Objects.equals(uriEditImageList.get(i).getScheme(), "content")) {
                     cntUploadImage++;
                     bitmapTask = ThreadManager.startBitmapUploadTask(getContext(), uriEditImageList.get(i), i, imgModel);
                 }
@@ -433,11 +425,11 @@ public class BoardEditFragment extends Fragment implements
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void updatePost(){
         pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
-
         String docId = bundle.getString("documentId");
+
         final DocumentReference docref = firestore.collection("board_general").document(docId);
         docref.update("post_images", FieldValue.delete());
 
@@ -485,5 +477,7 @@ public class BoardEditFragment extends Fragment implements
         } else return true;
 
     }
+
+
 }
 

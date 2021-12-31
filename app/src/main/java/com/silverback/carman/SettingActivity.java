@@ -164,6 +164,7 @@ public class SettingActivity extends BaseActivity implements
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
         addPreferenceFragment(settingFragment, getSupportFragmentManager());
+
         /*
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
@@ -553,7 +554,10 @@ public class SettingActivity extends BaseActivity implements
                     @Nullable Bundle savedInstanceState) {
                 super.onFragmentViewCreated(fm, fragment, v, savedInstanceState);
                 log.i("onViewCreated");
-                markupPreference((PreferenceFragmentCompat)fragment, requestCode);
+                // To prevent SettingAutoFragment from invoking the method, which leads to cause
+                // NullPointerException due to no autoRef reference.
+                if(fragment instanceof SettingPreferenceFragment)
+                    markupPreference((PreferenceFragmentCompat)fragment, requestCode);
             }}, false);
     }
 
@@ -570,7 +574,6 @@ public class SettingActivity extends BaseActivity implements
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                 Preference autoPref = fragment.findPreference(Constants.AUTO_DATA);
-
                 log.i("auto pref: %s", autoPref);
                 Objects.requireNonNull(autoPref).setIcon(R.drawable.setting_arrow_indicator);
                 break;

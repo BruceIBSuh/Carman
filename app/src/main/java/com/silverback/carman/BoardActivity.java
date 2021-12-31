@@ -53,6 +53,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
@@ -101,7 +102,7 @@ public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
         //ViewPager.OnPageChangeListener,
-        //AppBarLayout.OnOffsetChangedListener,
+        AppBarLayout.OnOffsetChangedListener,
         BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
@@ -155,8 +156,6 @@ public class BoardActivity extends BaseActivity implements
         setSupportActionBar(binding.boardToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        //tabPage = Constants.BOARD_RECENT;
-        //category = getIntent().getIntExtra("category", 0);
         category = Constants.BOARD_RECENT;
 
         // The chkboxList is created by whether the autodata is set and the cbAutoFilter is created
@@ -168,9 +167,8 @@ public class BoardActivity extends BaseActivity implements
         // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
         log.i("jsonAutoFilter: %s", jsonAutoFilter);
-        try { createAutoCheckBox(this, jsonAutoFilter, binding.autofilter);}
-        catch(NullPointerException e) {
-            setNoAutoFilterText();}
+        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
+        catch(NullPointerException e) {setNoAutoFilterText();}
         catch(JSONException e) {e.printStackTrace();}
 
         // ViewPager2
@@ -178,20 +176,13 @@ public class BoardActivity extends BaseActivity implements
         pagerAdapter.setAutoFilterValues(cbAutoFilter);
         binding.boardPager.setVisibility(View.GONE); //show progressbar unitl the query completes.
         binding.boardPager.setAdapter(pagerAdapter);
-        binding.boardPager.registerOnPageChangeCallback(pagerCallback);
+        //binding.boardPager.registerOnPageChangeCallback(pagerCallback);
 
         // TabLayoutMediator which interconnects TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
         new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
             tab.setText(titles.get(position));
         }).attach();
-
-        //addTabIconAndTitle(this, boardTabLayout);
-        //frameLayout.addView(boardPager); // already defined in XML file.
-
-        // Add the listeners to the viewpager and AppbarLayout
-        binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
-        animTabLayout();
 
         // FAB tapping creates BoardWriteFragment in the framelayout
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
@@ -204,12 +195,19 @@ public class BoardActivity extends BaseActivity implements
             }
         });
 
+        // Add the listeners to the viewpager and AppbarLayout
+        //binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
+        animTabLayout();
+
 
     }
 
+    // Should be defined for the autofilter to property work as long as the activity is resumed
+    // by onActivityResult callback.
     @Override
     public void onResume() {
         super.onResume();
+        binding.boardPager.registerOnPageChangeCallback(pagerCallback);
     }
 
     @Override
@@ -217,7 +215,6 @@ public class BoardActivity extends BaseActivity implements
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onStop();
     }
-
 
     /* replace this with getSupportFragentManager().addFragmentOnAttachListener()
     @Override
@@ -229,22 +226,24 @@ public class BoardActivity extends BaseActivity implements
     }
      */
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        this.menu = menu;
-        getMenuInflater().inflate(R.menu.menu_options_board, menu);
-
-        // What's difference b/w return true and super.onCreateOptionsMenu(menu) is, if true, no
-        // menu are able to be set in the child and, if false, menu are able to be set.
-        //return true;
-        return super.onCreateOptionsMenu(menu);
-    }
-
     /*
      * On Android 3.0 and higher, the options menu is considered to always be open when menu items
      * are presented in the app bar. When an event occurs and you want to make a menu update,
      * you must call invalidateOptionsMenu() to request that the system call onPrepareOptionsMenu().
+     *
+     * What's difference b/w return true and super.onCreateOptionsMenu(menu) is, if true, no menu
+     * items are able to be set in the child.
      */
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        this.menu = menu;
+
+        menu.getItem(0).setVisible(false);
+        menu.getItem(1).setVisible(false);
+        return super.onCreateOptionsMenu(menu);
+    }
+
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         return super.onPrepareOptionsMenu(menu);
@@ -252,80 +251,62 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case android.R.id.home:
-                // Check which child view the framelayout contains; if it holds the viewpager, just
-                // finish the activity and otherwise, add the viewpager to the framelayout.
-                if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
-                    binding.frameContents.removeView(binding.boardPager);
-                    finish();
+        log.i("framelayout child: %s", binding.frameContents.getChildAt(0));
+        if(item.getItemId() == android.R.id.home) {
+            // Check which child view the framelayout contains; if it holds the viewpager, just
+            // finish the activity and otherwise, add the viewpager to the framelayout.
+            if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
+                binding.frameContents.removeView(binding.boardPager);
+                finish();
 
-                // Fragment container may hold either BoardWriteFragment or BoardEditFragment. When
-                // pressing the up button, either of the fragments is removed from the container and
-                // it shoud be null for garbage collection.
-                } else {
-                    boolean isWriteMode = (writePostFragment != null) &&
-                            binding.frameContents.getChildAt(0) == writePostFragment.getView();
-                    String msg = (isWriteMode)?
-                            getString(R.string.board_msg_cancel_write) :
-                            getString(R.string.board_msg_cancel_edit);
-
-                    Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
-                    Snackbar snackBar = Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG);
-                    snackBar.setAction("OK", view -> {
-                        // Remove BoardWriteFragment when the up button presses.
-                        getSupportFragmentManager().beginTransaction().remove(target).commit();
-                        // Hide the soft input when BoardWriteFragment disappears
-                        InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
-                        imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-                        // As BoardPagerFragment comes in, the tabLayout animates to display and the
-                        // menu for uploading is made invisible.
-                        animTabHeight(true);
-                        //menu.getItem(1).setVisible(false);
-                        addViewPager();
-
-                    }).show();
-                }
-
-                return true;
-
-            case R.id.action_upload_post:
-                //return false;
-
-                // Network check. If no network exists, no matter what is wifi or mobile data,
-                // show the error message and nothing is done.
-                // Refactor: WorkManager should be applied to upload a post as any network is
-                // re-established.
-                /*
-                if(!isNetworkConnected) {
-                    String errNoNetwork = getString(R.string.error_no_network_upload_fail);
-                    Snackbar.make(coordinatorLayout, errNoNetwork, Snackbar.LENGTH_SHORT).show();
-                    return false;
-                }
-                */
-
-                // Make it differencitated that what the current page contains b/w BoardWriteFragment
-                // and BoardEditFragment.
+            } else {
+                // FrameLayout may contain either BoardWriteFragment or BoardEditFragment. On pressing
+                // the up button, either of the fragments is removed from the container and it should be
+                // null for garbage collection.
                 boolean isWriteMode = (writePostFragment != null) &&
                         binding.frameContents.getChildAt(0) == writePostFragment.getView();
-                if(isWriteMode) writePostFragment.prepareAttachedImages();
-                else editPostFragment.prepareUpdate();
-                return true;
+                String msg = (isWriteMode)?
+                        getString(R.string.board_msg_cancel_write) :
+                        getString(R.string.board_msg_cancel_edit);
 
-            default: return super.onOptionsItemSelected(item);
-        }
+                Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
+                Snackbar snackBar = Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG);
+                snackBar.setAction("OK", view -> {
+                    getSupportFragmentManager().beginTransaction().remove(target).commit();
+                    // Hide the soft input when BoardWriteFragment disappears
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+                    // As BoardPagerFragment comes in, the tabLayout animates to display and the
+                    // menu for uploading is made invisible.
+                    animTabHeight(true);
+                    //menu.getItem(1).setVisible(false);
+                    addViewPager();
 
+                }).show();
+            }
+
+            return true;
+
+        } else if(item.getItemId() == R.id.action_upload_post) {
+            // Make it differencitated that what the current page contains b/w BoardWriteFragment
+            // and BoardEditFragment.
+            boolean isWriteMode = (writePostFragment != null) &&
+                    binding.frameContents.getChildAt(0) == writePostFragment.getView();
+            if(isWriteMode) writePostFragment.prepareAttachedImages();
+            else editPostFragment.prepareUpdate();
+            return true;
+
+        } else return super.onOptionsItemSelected(item);
     }
 
-    // Implement the abstract class of ViewPager2.OnPageChangeCallback, which replaced the interface
-    // type
+    // Implement the abstract class of ViewPager2.OnPageChangeCallback, which has replaced the previous
+    // interface type.
     private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
-            log.i("ViewPager2 PageChangeCallback:%s", position);
             super.onPageSelected(position);
             //tabPage = position;
-            //menu.getItem(0).setVisible(false);
+            menu.getItem(0).setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
             animAutoFilter(false);
 
@@ -335,12 +316,11 @@ public class BoardActivity extends BaseActivity implements
                             .setTitle(getString(R.string.board_general_title));
                     break;
                 case Constants.BOARD_AUTOCLUB:
-                    log.i("autoclub board:%s", cbAutoFilter.size());
-                    isAutoFilter = true;
+                    //isAutoFilter = true;
                     if(cbAutoFilter.size() > 0) {
                         clubTitle = createAutoClubTitle();
                         Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
-                        //menu.getItem(0).setVisible(true);
+                        menu.getItem(0).setVisible(true);
                     } else {
                         final String autoclub = getString(R.string.board_tab_title_autoclub);
                         Objects.requireNonNull(getSupportActionBar()).setTitle(autoclub);
@@ -359,8 +339,8 @@ public class BoardActivity extends BaseActivity implements
     };
 
     // Implement AppBarLayout.OnOffsetChangedListener
-//    @Override
-//    public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
+    @Override
+    public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
 
 
     // Floating Action Button click event handler
@@ -369,12 +349,11 @@ public class BoardActivity extends BaseActivity implements
     // the user to move SettingPreferenceActivity to create it.
     // The tab layout should be animated to decrease its height to 0 for purpose of adjusing the post
     // content area to the base line.
-    //@SuppressWarnings("ConstantConditions")
+    // This event handler applies only to the floating action button.
     @Override
     public void onClick(View view) {
-        // Only apply to the floating action button
         if(view.getId() != R.id.fab_board_write) return;
-        if(editPostFragment != null) editPostFragment = null;
+
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
@@ -389,10 +368,12 @@ public class BoardActivity extends BaseActivity implements
         }
         // TabHeight must be measured here b/c it will be increased to the full size or decreased
         // down to 0 each time the button clicks.
-        tabHeight = binding.tabBoard.getMeasuredHeight();
+
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
+        tabHeight = binding.tabBoard.getMeasuredHeight();
         if(binding.frameContents.getChildCount() > 0) binding.frameContents.removeView(binding.boardPager);
+        if(editPostFragment != null) editPostFragment = null;
 
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
@@ -400,7 +381,7 @@ public class BoardActivity extends BaseActivity implements
         args.putInt("tabPage", category);
 
         // Handle the toolbar menu as the write board comes in.
-        if(tabPage != Constants.BOARD_AUTOCLUB) {
+        if(category != Constants.BOARD_AUTOCLUB) {
             Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_write));
             animTabHeight(false); // false: tab height = 0;
 
@@ -409,12 +390,18 @@ public class BoardActivity extends BaseActivity implements
         // other pages, animation is made to slide up not only the tablayout but also tne
         // nestedscrollview
         } else {
-            // Vistion control as BoardWriteFragment comes in and the general chkbox should be shown.
+            //if(TextUtils.isEmpty(tvAutoFilterLabel.getText())) {
+            if(tvAutoFilterLabel == null) {
+                Snackbar.make(binding.getRoot(),
+                        getString(R.string.board_autoclub_set), Snackbar.LENGTH_LONG).show();
+                return;
+            }
+
             tvAutoFilterLabel.setVisibility(View.GONE);
             cbGeneral.setVisibility(View.VISIBLE);
 
             //if(!isAutoFilter) animAutoFilter(isAutoFilter);
-            animAutoFilter(false);
+            animAutoFilter(true);
             menu.getItem(0).setVisible(false);
         }
 
@@ -434,13 +421,13 @@ public class BoardActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public void onEditClicked(Bundle bundle) {
+        log.i("onEditModeClicked");
         if(writePostFragment != null) writePostFragment = null;
-        if(binding.frameContents.getChildAt(0) instanceof ViewPager)
+        if(binding.frameContents.getChildAt(0) instanceof ViewPager2)
             binding.frameContents.removeView(binding.boardPager);
 
         editPostFragment = new BoardEditFragment();
         editPostFragment.setArguments(bundle);
-
         getSupportFragmentManager().beginTransaction().addToBackStack(null)
                 .replace(binding.frameContents.getId(), editPostFragment)
                 .commit();
@@ -483,9 +470,8 @@ public class BoardActivity extends BaseActivity implements
                 jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
                 log.i("json auto result: %s", jsonAutoFilter);
                 // Create the autofilter checkboxes and set inital values to the checkboxes
-                try { createAutoCheckBox(this, jsonAutoFilter, binding.autofilter);}
-                catch(NullPointerException e) {
-                    setNoAutoFilterText();}
+                try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
+                catch(NullPointerException e) { setNoAutoFilterText();}
                 catch(JSONException e) {e.printStackTrace();}
 
                 // Update the pagerAdapter
@@ -587,13 +573,11 @@ public class BoardActivity extends BaseActivity implements
     // the viewpager has the auto club page.
     public SpannableStringBuilder createAutoClubTitle() {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
-
         if(chkboxList.get(1).isChecked()) {
             ssb.append(chkboxList.get(1).getText()).append(" ").append(chkboxList.get(0).getText());
             for(int i = 2; i < chkboxList.size(); i++) {
                 if (chkboxList.get(i).isChecked()) ssb.append(" ").append(chkboxList.get(i).getText());
             }
-
             int start = cbAutoFilter.get(1).length() + 1;
             int end = ssb.length();
             ssb.setSpan(new RelativeSizeSpan(0.5f), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -648,7 +632,7 @@ public class BoardActivity extends BaseActivity implements
      * @param v parent container
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
-    private void createAutoCheckBox(Context context, String json, ViewGroup v) throws JSONException {
+    private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
         if(v.getChildCount() > 0) v.removeAllViews();
 
@@ -659,35 +643,7 @@ public class BoardActivity extends BaseActivity implements
         // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
         // It is appropriate that JSONArray.isNull(int) be applied.
         JSONArray jsonAuto = new JSONArray(json);
-        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0))
-            throw new NullPointerException("no auto data");
-        // If no autodata is initially given, show the spanned message to initiate startActivityForResult()
-        // to let the user set the auto data in SettingPreferenceActivity.
-        /*
-        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) {
-            TextView tvMessage = new TextView(context);
-            String msg = getString(R.string.board_filter_join);
-            SpannableString ss = new SpannableString(msg);
-            ClickableSpan clickableSpan = new ClickableSpan(){
-                @Override
-                public void onClick(@NonNull View textView) {
-                    int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
-                    Intent intent = new Intent(BoardActivity.this, SettingPrefActivity.class);
-                    intent.putExtra("requestCode", requestCode);
-                    startActivityForResult(intent, requestCode);
-                }
-            };
-
-            ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            tvMessage.setText(ss);
-            // Required to make ClickableSpan workable.
-            tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
-            v.addView(tvMessage, params);
-
-            return;
-        }
-
-         */
+        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) throw new NullPointerException("no auto data");
 
         // Create the header and the general checkbox controlled by setting visibility which depends
         // on which fragment the frame contains; header turns visible in BoardPagerFragment and the
@@ -709,7 +665,6 @@ public class BoardActivity extends BaseActivity implements
         cbGeneral.setTextColor(Color.WHITE);
         v.addView(cbGeneral, params);
         cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneral = isChecked);
-
 
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.

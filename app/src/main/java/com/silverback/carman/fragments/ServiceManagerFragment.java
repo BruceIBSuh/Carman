@@ -469,11 +469,12 @@ public class ServiceManagerFragment extends Fragment implements
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
             // Send the activity result to the caller activity(MainActivity)
+            /*
             Intent resultIntent = new Intent();
             resultIntent.putExtra("totalsum", totalExpense);
             Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
             Objects.requireNonNull(requireActivity()).finish();
-
+            */
             /*
             MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
             totalExpenseLive.setValue(totalExpense);
