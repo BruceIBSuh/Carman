@@ -19,16 +19,16 @@ import java.lang.ref.WeakReference;
 // Adapter for ViewPager2 placed below the top frame, which displays GasManagerFragment,
 // ServiceManagerFragment, and StatGraphFragment in order.
 
-public class ExpContentPagerAdapter extends FragmentStateAdapter {
-    //private static final LoggingHelper log = LoggingHelperFactory.create(ExpContentPagerAdapter.class);
+public class ExpensePagerAdapter extends FragmentStateAdapter {
+    //private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
 
-    public ExpContentPagerAdapter(FragmentActivity fa) {
+    public ExpensePagerAdapter(FragmentActivity fa) {
         super(fa);
     }
-    public ExpContentPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
+    public ExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
-    private WeakReference<Fragment> weakFragmentReference;
+    //private WeakReference<Fragment> weakFragmentReference;
 
     private final Fragment[] fragments = new Fragment[]{
             new GasManagerFragment(),

@@ -29,8 +29,8 @@ public class ExpensePagerFragment extends Fragment {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerFragment.class);
-    private final static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
 
+    private final static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
     // Objects
     private FragmentPagerExpenseBinding binding;
     private CarmanDatabase mDB;
@@ -38,19 +38,10 @@ public class ExpensePagerFragment extends Fragment {
     private Fragment currentFragment;
     private List<GasManagerDao.RecentGasData> gasDataList;
     private List<ServiceManagerDao.RecentServiceData> serviceList;
-    // UIs
-    //private TextView tvLastInfo, tvPage;
 
     // Fields
     private int numPage;
     private String lastInfo;
-
-    // Define Interface to pass over the current mileage to GasManagerActivity
-    /*
-    public interface OnLastMileageInfoFragmentListener {
-        void getLastMileageInfo(int arg);
-    }
-    */
 
     private ExpensePagerFragment(){
         // Default Constructor. Leave this empty!
@@ -58,7 +49,6 @@ public class ExpensePagerFragment extends Fragment {
 
     // Instantiate Singleton of ExpensePagerFragment
     public static ExpensePagerFragment create(int pageNumber) {
-        //Instantiate SharedPreferences for getting tableName set as default
         ExpensePagerFragment fragment = new ExpensePagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", pageNumber);
@@ -69,22 +59,20 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getActivity() == null) return;
         if(getArguments() != null) numPage = getArguments().getInt("page");
-
         // Instantiate CarmanDatabase as a type of singleton instance
-        mDB = CarmanDatabase.getDatabaseInstance(getActivity().getApplicationContext());
+        mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         binding = FragmentPagerExpenseBinding.inflate(inflater);
         return binding.getRoot();
     }
 
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // Observe whether the current fragment changes via ViewModel and find what is the current
@@ -93,7 +81,6 @@ public class ExpensePagerFragment extends Fragment {
             currentFragment = fragment;
             // Query the recent data as the type of LiveData using Room(query on worker thread)
             if(currentFragment instanceof GasManagerFragment) {
-                log.i("current fragment invoked");
                 mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                     gasDataList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
@@ -101,7 +88,6 @@ public class ExpensePagerFragment extends Fragment {
                 });
 
             } else if(currentFragment instanceof ServiceManagerFragment) {
-                log.i("current fragment invoked");
                 mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
                     serviceList = data;
                     lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
@@ -110,15 +96,14 @@ public class ExpensePagerFragment extends Fragment {
 
             }
         });
-
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private String displayLastInfo(int pos) {
         // The latest mileage should be retrieved from SharedPreferernces. Otherwise, the last mileage
         // be retrieved from DB because the mileage value column in GasManagerTable and
-        String format = getContext().getResources().getString(R.string.date_format_1);
+        String format = requireContext().getResources().getString(R.string.date_format_1);
         String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 

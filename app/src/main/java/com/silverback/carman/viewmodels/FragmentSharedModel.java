@@ -41,12 +41,14 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
+    private MutableLiveData<Fragment> currentFragment;
     private MutableLiveData<String> favoriteStnId;
     private MutableLiveData<Integer> imageItemSelected;
     private MutableLiveData<Integer> imageChooser;
     private MutableLiveData<String> strData;
     private MutableLiveData<String> firstPlaceholderId;
     private MutableLiveData<Integer> totalExpense;
+
 
     // DatePicker, TimePickerFragment
     private MutableLiveData<Calendar> customDateAndTime;
@@ -65,11 +67,10 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> engineType;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
-    public void setCurrentFragment(Fragment fm) { fragment.setValue(fm); }
-    public LiveData<Fragment> getCurrentFragment() {
-        return fragment;
+    public MutableLiveData<Fragment> getCurrentFragment() {
+        if(currentFragment == null) currentFragment = new MutableLiveData<>();
+        return currentFragment;
     }
-
     // Share GasManagerFragment and ServiceManagerFragment with NumPadFragment
     public void setNumPadValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.

@@ -167,10 +167,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 } else {
                     log.i("new data come in");
                     expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
-                    //expensePagerAdapter.notifyDataSetChanged();
+                    expensePagerAdapter.notifyDataSetChanged();
                 }
-                //
-
             }
         }
     }

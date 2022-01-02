@@ -175,10 +175,8 @@ public class MainActivity extends BaseActivity implements
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
         });
 
-        // Return the viewpagers to the initial page.
+        // Return the fuel price pager to the first page.
         binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-        mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, 0);
-
 
     }
 
@@ -288,8 +286,7 @@ public class MainActivity extends BaseActivity implements
 
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void callActivityResult(ActivityResult result) {
-        // In case the station reyelcerview is in the visible state, it should be gone to the initlal
-        // state.
+        // If the station reyelcerview is in the visible state, it should be gone
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             binding.stationRecyclerView.setVisibility(View.GONE);
@@ -299,16 +296,16 @@ public class MainActivity extends BaseActivity implements
         }
 
         switch(result.getResultCode()) {
-            case Activity.RESULT_OK: // SettingPrefActivity result
+            case Activity.RESULT_OK: // SettingActivity result
                 updateSettingResult(result);
                 break;
 
             case Activity.RESULT_CANCELED: // ExpenseActivity result
                 Intent resultIntent = result.getData();
                 if(resultIntent != null) {
-                    int totalSum = resultIntent.getIntExtra("totalsum", 0);
-                    log.i("total sum: %s", totalSum);
-                    mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, totalSum);
+                    int expense = resultIntent.getIntExtra("expense", 0);
+                    log.i("total sum: %s", expense);
+                    mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, expense);
                 }
                 break;
         }

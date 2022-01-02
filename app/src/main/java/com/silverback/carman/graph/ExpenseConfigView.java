@@ -29,8 +29,6 @@ public class ExpenseConfigView extends View {
     private final int[] arrArcColor = new int[numSector];
     private final int[] arrIndexBg = new int[numSector];
 
-
-
     private int gasExp, svcExp, washExp, miscExp;
     private int mViewWidth;
     private int mViewHeight;
@@ -42,8 +40,6 @@ public class ExpenseConfigView extends View {
         @Override
         public void run() {
             boolean needNewFrame = false;
-
-
             if(needNewFrame) postDelayed(this, 3);
             invalidate();
         }

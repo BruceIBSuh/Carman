@@ -1,24 +1,19 @@
 package com.silverback.carman.fragments;
 
 
-import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -29,7 +24,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.MainActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.ExpenseBaseEntity;
@@ -127,7 +121,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
             category = requireActivity().getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
 
-        // Instantiate the objects
+        // Instantiate objects
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(requireContext());
         mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
@@ -136,8 +130,8 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         df = ((BaseActivity)requireActivity()).getDecimalFormat();
         sdf = new SimpleDateFormat(getString(R.string.date_format_1), Locale.getDefault());
 
-        // ViewModels: reconsider why the models references the ones defined in the parent activity;
-        // it would rather  be better to redefine them here.
+        // ViewModels: reconsider why  models shouldn't reference the ones defined in the parent
+        // activity. it would rather  be better to redefine.
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         stnListModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
         opinetViewModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
@@ -156,7 +150,8 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
             // Count the number of the favorite provider to handle the number becomes one or zero.
             @Override
             public void notifyAddGeofenceCompleted(int placeholder) {
-                Snackbar.make(getView(), R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(),
+                        R.string.gas_snackbar_favorite_added, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = true;
             }
 
@@ -177,17 +172,18 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                     //mDB.favoriteModel().updatePlaceHolder(favList);
                 }
                 */
-                Snackbar.make(binding.getRoot(), R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(),
+                        R.string.gas_snackbar_favorite_removed, Snackbar.LENGTH_SHORT).show();
                 isFavoriteGas = false;
-
             }
 
             @Override
             public void notifyAddGeofenceFailed() {
-                log.i("Failed to add the gas station to Geofence");
+                log.e("Failed to add the gas station to Geofence:");
             }
         });
 
+        // Initialize fields
         userName = mSettings.getString(Constants.USER_NAME, null);
     }
 
@@ -240,7 +236,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setCurrentStation();
-        fragmentModel.setCurrentFragment(this);
+        fragmentModel.getCurrentFragment().setValue(this);
 
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             if(isGeofenceIntent) return;
@@ -296,7 +292,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     @Override
     public void onResume() {
         super.onResume();
-        fragmentModel.setCurrentFragment(this);
+        fragmentModel.getCurrentFragment().setValue(this);
         binding.tvGasDatetime.setText(sdf.format(System.currentTimeMillis()));
     }
 
@@ -312,6 +308,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     public void onDestroy() {
         super.onDestroy();
     }
+
 
     private void setCurrentStation() {
         if(isGeofenceIntent) return;
@@ -397,7 +394,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     // logged in.
     public void saveGasData(String userId) {
         if(!doEmptyCheck()) return;
-
         // CreateEntity instances both of which are correlated with ForeignKe
         ExpenseBaseEntity baseEntity = new ExpenseBaseEntity();
         GasManagerEntity gasEntity = new GasManagerEntity();
@@ -422,14 +418,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
             uploadGasDataToFirestore(userId, baseEntity.totalExpense);
-            /*
-            MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
-            totalExpenseLive.setValue(baseEntity.totalExpense);
-            totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
-
-            });
-
-             */
         }
 
     }
@@ -460,15 +448,9 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         }
 
         gasBatch.commit().addOnCompleteListener(task -> {
-            /*
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("totalsum", gasTotal);
-            Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
-            Objects.requireNonNull(requireActivity()).finish();
-             */
             if(task.isSuccessful()) {
-
-            }
+                fragmentModel.getTotalExpenseByCategory().setValue(gasTotal);
+            } else log.e("Failed to save the form data");
         });
     }
 
@@ -503,7 +485,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
     // Calculate an gas amount loaded with a given payment and unit price.  Unless a unit price is
     // given, toast a message to ask for inputting the price.
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void calculateGasAmount() {
         if(TextUtils.isEmpty(binding.etGasUnitPrice.getText())) {
             Toast.makeText(getActivity(), R.string.toast_unit_price, Toast.LENGTH_SHORT).show();
@@ -511,8 +493,10 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                 !TextUtils.isEmpty(binding.tvGasPayment.getText())) {
             try {
                 // Convert Number to the primitive int type.
-                int price = df.parse(binding.etGasUnitPrice.getText().toString()).intValue();
-                int paid = df.parse(binding.tvGasPayment.getText().toString()).intValue();
+                final String unitPrice = binding.etGasUnitPrice.getText().toString();
+                final String payment = binding.tvGasPayment.getText().toString();
+                int price = Objects.requireNonNull(df.parse(unitPrice)).intValue();
+                int paid = Objects.requireNonNull(df.parse(payment)).intValue();
                 String gasAmount = String.valueOf(paid/price);
                 binding.tvGasAmount.setText(gasAmount);
             } catch(ParseException | NullPointerException e) {
@@ -534,12 +518,14 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
                 //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
-                favPriceTask = ThreadManager.startFavoritePriceTask(getActivity(), opinetViewModel, stnId, false);
+                favPriceTask = ThreadManager.startFavoritePriceTask(
+                        requireActivity(), opinetViewModel, stnId, false);
                 break;
             case Constants.SVC:
                 binding.pbSearchStation.setVisibility(View.GONE);
                 binding.imgbtnGasSearch.setVisibility(View.VISIBLE);
                 break;
+
             default: break;
         }
     }

@@ -52,8 +52,6 @@ public class StatGraphView extends View {
     private int WIDEN_FIRST_INTERVAL; //add more space to the first interval of the graph
     private int TEXT_TOP_MARGIN;
 
-    private int graphAxisColor, graphLabelColor;
-
     private final Runnable animator = new Runnable() {
         @Override
         public void run() {
@@ -101,8 +99,8 @@ public class StatGraphView extends View {
         TypedArray typedArray =
                 context.getTheme().obtainStyledAttributes(attrs, R.styleable.StatGraphView, 0, 0);
         try {
-            graphAxisColor = typedArray.getColor(R.styleable.StatGraphView_graphAxisColor, 0);
-            graphLabelColor = typedArray.getColor(R.styleable.StatGraphView_graphLabelColor, 0);
+            int graphAxisColor = typedArray.getColor(R.styleable.StatGraphView_graphAxisColor, 0);
+            int graphLabelColor = typedArray.getColor(R.styleable.StatGraphView_graphLabelColor, 0);
             log.i("typedarray: %s", graphAxisColor);
         } finally {
             // init() cannot get started until the color attrs are obtained.
@@ -265,7 +263,7 @@ public class StatGraphView extends View {
                 // Draw the number of monthly total expense on the top of the graph bar.
                 if(monthlyExpense[index] > 0) {
                     canvas.drawText(df.format(monthlyExpense[index] / 1000),
-                            GRAPH_SIDE_MARGIN + (interval * index) + interval / 2,
+                            GRAPH_SIDE_MARGIN + (interval * index) + (float)(interval / 2),
                             topMargin + (int)((getHeight() - topMargin - bottomTextHeight - TEXT_TOP_MARGIN) * percentList.get(index)) - 5,
                             expenseNumPaint);
                 }
@@ -277,7 +275,7 @@ public class StatGraphView extends View {
         // Draw the label text rigth under the x-axis
         index = 0;
         for(String s : monthLabel) {
-            canvas.drawText(s, GRAPH_SIDE_MARGIN + (interval * index) + interval / 2,
+            canvas.drawText(s, GRAPH_SIDE_MARGIN + (interval * index) + (float)(interval / 2),
                     getHeight() - bottomTextDescent,
                     textPaint);
             index++;
@@ -299,9 +297,9 @@ public class StatGraphView extends View {
 
 
     private int measureWidth(int measureSpec) {
-        int preferred = 0;
+        //int preferred;
         //if(monthLabel != null) {
-            preferred = monthLabel.length * interval + GRAPH_SIDE_MARGIN * 2;
+            int preferred = monthLabel.length * interval + GRAPH_SIDE_MARGIN * 2;
             //Log.d(TAG, "Preferred Value: " + preferred);
         //}
 

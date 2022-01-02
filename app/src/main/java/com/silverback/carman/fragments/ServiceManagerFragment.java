@@ -9,6 +9,7 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -76,8 +77,6 @@ public class ServiceManagerFragment extends Fragment implements
     //private StationListViewModel stationModel;
     //private ServiceCenterTask serviceCenterTask;
     //private Location location;
-
-
     private FavoriteGeofenceHelper geofenceHelper;
     private FavoriteGeofenceHelper.OnGeofenceListener geofenceListener;
     private ExpServiceItemAdapter mAdapter;
@@ -189,6 +188,7 @@ public class ServiceManagerFragment extends Fragment implements
         catch (JSONException e) { e.printStackTrace(); }
     }
 
+
     // Implement ExpServiceItemAdapter.OnParentFragmentListener to pop up NumberPadFragmnet and
     // intput the amount of expense in each service item.
     // setItemPosition():
@@ -260,7 +260,7 @@ public class ServiceManagerFragment extends Fragment implements
     private void addViewModelObserver(ViewModel model) {
         if(model instanceof FragmentSharedModel) {
             // To notify ExpensePagerFragment of the current fragment to show its recent expenses
-            fragmentModel.setCurrentFragment(this);
+            fragmentModel.getCurrentFragment().setValue(this);
 
             // Share a value b/w fragments  w/ DatePickerDialogFragment
             fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
@@ -468,23 +468,7 @@ public class ServiceManagerFragment extends Fragment implements
         int rowId = mDB.serviceManagerModel().insertAll(baseEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
-            // Send the activity result to the caller activity(MainActivity)
-            /*
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("totalsum", totalExpense);
-            Objects.requireNonNull(requireActivity()).setResult(Activity.RESULT_CANCELED, resultIntent);
-            Objects.requireNonNull(requireActivity()).finish();
-            */
-            /*
-            MutableLiveData<Integer> totalExpenseLive = new MutableLiveData<>();
-            totalExpenseLive.setValue(totalExpense);
-            totalExpenseLive.observe(getViewLifecycleOwner(), total -> {
-                log.i("Save the service data in the room: %s", total);
-                //uploadSvcDataToFirestore(userId, total);
-            });
-
-             */
-
+            fragmentModel.getTotalExpenseByCategory().setValue(totalExpense);
         } //else totalExpenseLive.setValue(0);
     }
 
