@@ -72,7 +72,7 @@ public class MainExpPagerFragment extends Fragment {
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
 
-        monthlyExpense = new RecentMonthlyExpense();
+
     }
 
 
@@ -96,6 +96,8 @@ public class MainExpPagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        // Must instantiate the object here to have getViewLifecycleOwner();
+        monthlyExpense = new RecentMonthlyExpense();
         switch(position) {
             case 0:
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
@@ -199,7 +201,8 @@ public class MainExpPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(
+                        getViewLifecycleOwner(), data -> calcPrevExpense(index, data));
             }
         }
 

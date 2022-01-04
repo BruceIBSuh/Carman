@@ -237,7 +237,8 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         super.onViewCreated(view, savedInstanceState);
         setCurrentStation();
 
-        fragmentModel.getCurrentFragment().setValue(this);
+        //fragmentModel.getCurrentFragment().setValue(this);
+
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             if(isGeofenceIntent) return;
             if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {

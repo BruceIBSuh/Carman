@@ -260,7 +260,7 @@ public class ServiceManagerFragment extends Fragment implements
     private void addViewModelObserver(ViewModel model) {
         if(model instanceof FragmentSharedModel) {
             // To notify ExpensePagerFragment of the current fragment to show its recent expenses
-            fragmentModel.getCurrentFragment().setValue(this);
+            //fragmentModel.getCurrentFragment().setValue(this);
 
             // Share a value b/w fragments  w/ DatePickerDialogFragment
             fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {

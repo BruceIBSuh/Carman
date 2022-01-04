@@ -110,6 +110,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private int prevHeight;
     private int totalExpense;
 
+    private ViewPager2 gasExpense, svcExpense;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -130,13 +132,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Create initial layouts of the appbar, tablayout, and viewpager on the top.
         createAppbarLayout();
         createTabLayout();
+        createExpenseViewPager();
 
-        // Add the viewpager in the framelayout.
-        pagerRecentExp = new ViewPager2(this);
-        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        pagerRecentExp.setAdapter(recentAdapter);
-        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
-                (tab, pos) -> {}).attach();
+//        pagerRecentExp = new ViewPager2(this);
+//        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+//        pagerRecentExp.setAdapter(recentAdapter);
+//        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
+//                (tab, pos) -> {}).attach();
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -252,28 +254,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 log.i("page selected: %s, %s", position, state);
-                //if(state > 0 && position != STAT) return;
-                //if(binding.topframeViewpager.getChildCount() > 0)
-                binding.topframeViewpager.removeAllViews();
-
+                if(state > 0 && position != STAT) return;
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 //if(state > 0) return;
-                //if(state == 0 && position == Constants.SVC) return;
                 currentPage = position;
                 if(binding.topframeViewpager.getChildCount() > 0){
                     binding.topframeViewpager.removeAllViews();
                 }
-
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframeTabIndicator.setVisibility(View.VISIBLE);
+
 
                 switch (position) {
                     case GAS:
                         log.i("GAS");
                         pageTitle = getString(R.string.exp_title_gas);
-                        recentAdapter.notifyItemChanged(0, GAS);
                         pagerRecentExp.setCurrentItem(0);
                         binding.topframeViewpager.addView(pagerRecentExp);
                         animSlideTopFrame(prevHeight, 120);
@@ -283,7 +280,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     case SVC:
                         log.i("SERVICE");
                         pageTitle = getString(R.string.exp_title_service);
-                        recentAdapter.notifyItemChanged(0, SVC);
                         pagerRecentExp.setCurrentItem(0);
                         binding.topframeViewpager.addView(pagerRecentExp);
                         animSlideTopFrame(prevHeight, 100);
@@ -330,12 +326,24 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
         // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
+            log.i("expense tab: %s, %s", tab, pos);
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
         }).attach();
 
         animSlideTabLayout();
     }
+
+    private void createExpenseViewPager() {
+        // Add the viewpager in the framelayout.
+        pagerRecentExp = new ViewPager2(this);
+        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        pagerRecentExp.setAdapter(recentAdapter);
+        pagerRecentExp.setCurrentItem(0);
+        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
+                (tab, pos) -> {}).attach();
+    }
+
 
     // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
