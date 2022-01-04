@@ -19,8 +19,8 @@ public class ExpRecentAdapter extends FragmentStateAdapter {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpRecentAdapter.class);
 
-    // Constants
-    //private static final int NUM_PAGES = 5;
+    private ExpensePagerFragment pagerFragment;
+
     public ExpRecentAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
@@ -28,19 +28,23 @@ public class ExpRecentAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        log.i("adapter position:%s", position);
-        return ExpensePagerFragment.create(position);
+        return pagerFragment = ExpensePagerFragment.getInstance(position);
     }
+
 
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
-        log.i("bindviewholder");
+        log.i("onBindViewHolder:%s, %s", position, payloads);
+        if(payloads.size() == 0) super.onBindViewHolder(holder, position, payloads);
+        else pagerFragment.setFragmentIndex((int)payloads.get(0));
+
     }
+
 
     @Override
     public int getItemCount() {
         return Constants.NUM_RECENT_PAGES;
     }
+
 }

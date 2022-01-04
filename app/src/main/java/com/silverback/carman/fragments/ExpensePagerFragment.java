@@ -17,6 +17,7 @@ import com.silverback.carman.database.ServiceManagerDao;
 import com.silverback.carman.databinding.FragmentPagerExpenseBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.text.DecimalFormat;
@@ -40,15 +41,40 @@ public class ExpensePagerFragment extends Fragment {
     private List<ServiceManagerDao.RecentServiceData> serviceList;
 
     // Fields
-    private int numPage;
+    private int page;
     private String lastInfo;
+    private int index;
 
+    /*
+    private ExpensePagerFragment pagerFragment;
+    public ExpensePagerFragment(int index, int page) {
+        this.index = index;
+        this.page = page;
+        this.lastInfo = "";
+    }
+
+     */
     private ExpensePagerFragment(){
         // Default Constructor. Leave this empty!
     }
 
+    private static class FragmentHolder {
+        private static final ExpensePagerFragment INSTANCE = new ExpensePagerFragment();
+    }
+
+    public static ExpensePagerFragment getInstance(int page) {
+        log.i("static init");
+        Bundle args = new Bundle();
+        args.putInt("page", page);
+        FragmentHolder.INSTANCE.setArguments(args);
+        return FragmentHolder.INSTANCE;
+    }
+
+
+    /*
     // Instantiate Singleton of ExpensePagerFragment
-    public static ExpensePagerFragment create(int pageNumber) {
+    public static ExpensePagerFragment getInstance(int pageNumber) {
+        log.i("Fragment created");
         ExpensePagerFragment fragment = new ExpensePagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", pageNumber);
@@ -56,10 +82,12 @@ public class ExpensePagerFragment extends Fragment {
         return fragment;
     }
 
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(getArguments() != null) numPage = getArguments().getInt("page");
+        log.i("onCreate");
+        if(getArguments() != null) page = getArguments().getInt("page");
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -75,27 +103,51 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
         fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
+            log.i("current fragment:%s, %s",  fragment, index);
             currentFragment = fragment;
+
             // Query the recent data as the type of LiveData using Room(query on worker thread)
-            if(currentFragment instanceof GasManagerFragment) {
+            if(currentFragment instanceof GasManagerFragment || index == 0) {
                 mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                     gasDataList = data;
-                    lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
                     binding.tvLastInfo.setText(lastInfo);
                 });
-
-            } else if(currentFragment instanceof ServiceManagerFragment) {
+            } else if(currentFragment instanceof ServiceManagerFragment || index == 1) {
                 mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
                     serviceList = data;
-                    lastInfo = (data.size() > numPage) ? displayLastInfo(numPage) : getString(R.string.toast_expense_no_data);
+                    lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
                     binding.tvLastInfo.setText(lastInfo);
                 });
 
             }
+
         });
+    }
+
+    public void setFragmentIndex(int index) {
+        this.index = index;
+        log.i("fragment index: %s", index);
+        /*
+        if(index == Constants.GAS) {
+            mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
+                gasDataList = data;
+                lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
+                binding.tvLastInfo.setText(lastInfo);
+            });
+        } else if(index == Constants.SVC) {
+            mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
+                serviceList = data;
+                lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
+                binding.tvLastInfo.setText(lastInfo);
+            });
+        }
+
+         */
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
@@ -107,7 +159,7 @@ public class ExpensePagerFragment extends Fragment {
         String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 
-        if(currentFragment instanceof GasManagerFragment) {
+        if(currentFragment instanceof GasManagerFragment || index == 0) {
             String date = BaseActivity.formatMilliseconds(format, gasDataList.get(pos).dateTime);
             String a = String.format("%-10s%s%s", getString(R.string.gas_label_date), date, "\n");
             String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasDataList.get(pos).mileage), "km", "\n");
@@ -116,7 +168,7 @@ public class ExpensePagerFragment extends Fragment {
             String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasDataList.get(pos).gasAmount), liter);
             return a + b + c + d + e;
 
-        } else if(currentFragment instanceof ServiceManagerFragment) {
+        } else if(currentFragment instanceof ServiceManagerFragment || index == 1) {
             String date = BaseActivity.formatMilliseconds(format, serviceList.get(pos).dateTime);
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
             String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(pos).mileage), "km", "\n");

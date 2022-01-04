@@ -199,7 +199,7 @@ public class MainExpPagerFragment extends Fragment {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
-                queryMonthlyExpense(start, end).observe(getViewLifecycleOwner(), data -> calcPrevExpense(index, data));
+                queryMonthlyExpense(start, end).observe(requireActivity(), data -> calcPrevExpense(index, data));
             }
         }
 

@@ -141,19 +141,17 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
+
         // Upon saving and uploading the expense data, back to MainActivity w/ the activity result
         fragmentModel.getTotalExpenseByCategory().observe(this, totalExpense -> {
-            log.i("observe saving:%s", totalExpense);
             if(totalExpense > 0) {
                 this.totalExpense = totalExpense;
                 //recentAdapter.notifyItemChanged(0);
-
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("expense", totalExpense);
                 setResult(RESULT_CANCELED, resultIntent);
                 finish();
             }
-
         });
 
         // Init the task to get the current location.
@@ -170,7 +168,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     @Override
     public void onResume() {
         super.onResume();
-
     }
 
     @Override
@@ -207,13 +204,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         if(item.getItemId() == android.R.id.home) {
             // DEBUG & REFACTOR REQURIED
             if(isGeofencing) {
-                /*
                 Intent mainIntent = new Intent(this, MainActivity.class);
                 mainIntent.putExtra("isGeofencing", true);
                 startActivity(mainIntent);
-                */
-            }
-            finish();
+            } else finish();
+
             return true;
         } else if(item.getItemId() == R.id.save_expense) {
             saveExpenseData();
@@ -245,12 +240,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // and onPageScrolled.
     private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
         return  new ViewPager2.OnPageChangeCallback() {
-
-            int state = 0; // 0 -> idle, 1 -> dragging 2 -> settling
+            int state;// 0 -> idle, 1 -> dragging 2 -> settling
             @Override
             public void onPageScrollStateChanged(int state) {
                 super.onPageScrollStateChanged(state);
-                log.i("onPageScrollStateChanged: %s", state);
                 this.state = state;
             }
 
@@ -258,14 +251,20 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-                //if(state == 2) return;
-                log.i("page selected: %s", position);
+                log.i("page selected: %s, %s", position, state);
+                //if(state > 0 && position != STAT) return;
+                //if(binding.topframeViewpager.getChildCount() > 0)
+                binding.topframeViewpager.removeAllViews();
+
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
+                //if(state > 0) return;
                 //if(state == 0 && position == Constants.SVC) return;
                 currentPage = position;
-                if(binding.topframeViewpager.getChildCount() > 0)
+                if(binding.topframeViewpager.getChildCount() > 0){
                     binding.topframeViewpager.removeAllViews();
+                }
+
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframeTabIndicator.setVisibility(View.VISIBLE);
@@ -274,18 +273,20 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                     case GAS:
                         log.i("GAS");
                         pageTitle = getString(R.string.exp_title_gas);
+                        recentAdapter.notifyItemChanged(0, GAS);
                         pagerRecentExp.setCurrentItem(0);
-                        animSlideTopFrame(prevHeight, 120);
                         binding.topframeViewpager.addView(pagerRecentExp);
+                        animSlideTopFrame(prevHeight, 120);
                         prevHeight = 120;
                         break;
 
                     case SVC:
                         log.i("SERVICE");
                         pageTitle = getString(R.string.exp_title_service);
+                        recentAdapter.notifyItemChanged(0, SVC);
                         pagerRecentExp.setCurrentItem(0);
-                        animSlideTopFrame(prevHeight, 100);
                         binding.topframeViewpager.addView(pagerRecentExp);
+                        animSlideTopFrame(prevHeight, 100);
                         prevHeight = 100;
                         break;
 
