@@ -99,7 +99,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private StationListTask stationListTask;
     private Location mPrevLocation;
 
-    private ViewPager2 pagerRecentExp;
+    private ViewPager2 recentExpensePager;
     private MenuItem menuSave;
 
     // Fields
@@ -132,13 +132,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Create initial layouts of the appbar, tablayout, and viewpager on the top.
         createAppbarLayout();
         createTabLayout();
-        createExpenseViewPager();
+        //createExpenseViewPager();
+        recentExpensePager = new ViewPager2(this);
+        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        recentExpensePager.setAdapter(recentAdapter);
+        new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,
+                (tab, pos) -> {}).attach();
 
-//        pagerRecentExp = new ViewPager2(this);
-//        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-//        pagerRecentExp.setAdapter(recentAdapter);
-//        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
-//                (tab, pos) -> {}).attach();
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -161,7 +161,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
-
         // Initialize field values
         prevHeight = 0;
 
@@ -241,7 +240,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // ViewPager was interface which is required to implement onPageSelected, onPageScrollStateChanged,
     // and onPageScrolled.
     private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
+
         return  new ViewPager2.OnPageChangeCallback() {
+
             int state;// 0 -> idle, 1 -> dragging 2 -> settling
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -249,51 +250,53 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 this.state = state;
             }
 
+
             // onPageSelected should be invoked when the state is idle or setting.
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
-                log.i("page selected: %s, %s", position, state);
-                if(state > 0 && position != STAT) return;
+                //if(state > 0 && position != STAT) return;
                 // To prevent the ServiceManagerFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 //if(state > 0) return;
                 currentPage = position;
-                if(binding.topframeViewpager.getChildCount() > 0){
-                    binding.topframeViewpager.removeAllViews();
+                if(binding.topframeExpense.getChildCount() > 0){
+                    binding.topframeExpense.removeAllViews();
                 }
+
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
-                binding.topframeTabIndicator.setVisibility(View.VISIBLE);
+                binding.topframePage.setVisibility(View.VISIBLE);
 
-
+                log.i("page selected: %s", position);
                 switch (position) {
                     case GAS:
-                        log.i("GAS");
                         pageTitle = getString(R.string.exp_title_gas);
-                        pagerRecentExp.setCurrentItem(0);
-                        binding.topframeViewpager.addView(pagerRecentExp);
+                        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+                        recentExpensePager.setAdapter(recentAdapter);
+                        //recentExpensePager.setCurrentItem(0);
+                        binding.topframeExpense.addView(recentExpensePager);
                         animSlideTopFrame(prevHeight, 120);
                         prevHeight = 120;
                         break;
 
                     case SVC:
-                        log.i("SERVICE");
                         pageTitle = getString(R.string.exp_title_service);
-                        pagerRecentExp.setCurrentItem(0);
-                        binding.topframeViewpager.addView(pagerRecentExp);
+                        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+                        recentExpensePager.setAdapter(recentAdapter);
+                        //recentExpensePager.setCurrentItem(0);
+                        binding.topframeExpense.addView(recentExpensePager);
                         animSlideTopFrame(prevHeight, 100);
                         prevHeight = 100;
                         break;
 
                     case STAT:
-                        log.i("STATS");
                         pageTitle = getString(R.string.exp_title_stat);
                         menuSave.setVisible(false);
-                        binding.topframeTabIndicator.setVisibility(View.GONE);
+                        binding.topframePage.setVisibility(View.GONE);
                         statGraphFragment = new StatGraphFragment();
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.topframe_viewpager, statGraphFragment)
+                                .replace(R.id.topframe_expense, statGraphFragment)
                                 .commit();
 
                         animSlideTopFrame(prevHeight, 200);
@@ -326,7 +329,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // A mediator to link TabLayout w/ ViewPager2. TabLayoutMediator listens to ViewPager2
         // OnPageChangeCallback, TabLayout OnTabSelectedListener and RecyclerView AdapterDataObserver.
         new TabLayoutMediator(binding.tabExpense, binding.pagerTabFragment, true, true, (tab, pos) -> {
-            log.i("expense tab: %s, %s", tab, pos);
             tab.setText(titles[pos]);
             tab.setIcon(icons[pos]);
         }).attach();
@@ -336,11 +338,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     private void createExpenseViewPager() {
         // Add the viewpager in the framelayout.
-        pagerRecentExp = new ViewPager2(this);
+        recentExpensePager = new ViewPager2(this);
         recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        pagerRecentExp.setAdapter(recentAdapter);
-        pagerRecentExp.setCurrentItem(0);
-        new TabLayoutMediator(binding.topframeTabIndicator, pagerRecentExp, true, true,
+        recentExpensePager.setAdapter(recentAdapter);
+        recentExpensePager.setCurrentItem(0);
+        new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,
                 (tab, pos) -> {}).attach();
     }
 
@@ -384,13 +386,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
-        ViewGroup.LayoutParams params = binding.topframeViewpager.getLayoutParams();
+        ViewGroup.LayoutParams params = binding.topframeExpense.getLayoutParams();
         anim.setDuration(1000);
         anim.start();
 
         anim.addUpdateListener(valueAnimator -> {
             params.height = (int)valueAnimator.getAnimatedValue();
-            binding.topframeViewpager.setLayoutParams(params);
+            binding.topframeExpense.setLayoutParams(params);
         });
     }
 

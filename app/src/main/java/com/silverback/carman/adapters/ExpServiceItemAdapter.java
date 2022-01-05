@@ -300,7 +300,7 @@ public class ExpServiceItemAdapter extends RecyclerView.Adapter<ExpServiceItemAd
     }
 
     private synchronized void setServiceProgressBar(ServiceItemViewHolder holder, int lapse, int maxValue) {
-        log.i("progressbar anim: %s, %s", holder.binding.tvItemName.getText(), lapse);
+        //log.i("progressbar anim: %s, %s", holder.binding.tvItemName.getText(), lapse);
         int progressColor = (lapse >= (maxValue * 0.8))? warningColor : safeColor;
         final ProgressBar pb = holder.binding.progbarServicePeriod;
 

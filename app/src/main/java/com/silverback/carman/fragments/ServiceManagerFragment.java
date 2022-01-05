@@ -175,12 +175,15 @@ public class ServiceManagerFragment extends Fragment implements
         super.onResume();
         // Update the time to the current time.
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
+        fragmentModel.getCurrentFragment().setValue(this);
 
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+
         addViewModelObserver(fragmentModel);
 
         // Show the service data and animate the progressbar to indicate when to check an item.
@@ -260,7 +263,7 @@ public class ServiceManagerFragment extends Fragment implements
     private void addViewModelObserver(ViewModel model) {
         if(model instanceof FragmentSharedModel) {
             // To notify ExpensePagerFragment of the current fragment to show its recent expenses
-            //fragmentModel.getCurrentFragment().setValue(this);
+            fragmentModel.getCurrentFragment().setValue(this);
 
             // Share a value b/w fragments  w/ DatePickerDialogFragment
             fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {

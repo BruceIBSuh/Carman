@@ -14,6 +14,7 @@ import androidx.lifecycle.LifecycleOwner;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;

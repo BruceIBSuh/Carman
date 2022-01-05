@@ -43,23 +43,22 @@ public class ExpensePagerFragment extends Fragment {
     // Fields
     private int page;
     private String lastInfo;
-    /*
-    private ExpensePagerFragment pagerFragment;
-    public ExpensePagerFragment(int index, int page) {
-        this.index = index;
+
+    public ExpensePagerFragment(int page) {
         this.page = page;
-        this.lastInfo = "";
     }
 
-     */
+    /*
     private ExpensePagerFragment(){
         // Default Constructor. Leave this empty!
     }
+
+    /*
     private static class FragmentHolder {
         private static final ExpensePagerFragment INSTANCE = new ExpensePagerFragment();
     }
     public static ExpensePagerFragment getInstance(int page) {
-        log.i("static init");
+        log.i("static init:%s", page);
         Bundle args = new Bundle();
         args.putInt("page", page);
         FragmentHolder.INSTANCE.setArguments(args);
@@ -67,18 +66,16 @@ public class ExpensePagerFragment extends Fragment {
     }
 
 
-    /*
     // Instantiate Singleton of ExpensePagerFragment
     public static ExpensePagerFragment getInstance(int pageNumber) {
-        log.i("Fragment created");
+        log.i("expensepager constructor");
         ExpensePagerFragment fragment = new ExpensePagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", pageNumber);
         fragment.setArguments(args);
         return fragment;
     }
-
-     */
+    */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,10 +96,9 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        log.i("onViewCreated");
         // Observe whether the current fragment changes via ViewModel and find what is the current
         // fragment attached in order to separately do actions according to the fragment.
-        /*
         fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
             log.i("current fragment:%s",  fragment);
             currentFragment = fragment;
@@ -123,7 +119,10 @@ public class ExpensePagerFragment extends Fragment {
             }
         });
 
-         */
+    }
+
+    public void setCurrentFragmentIndex(int index) {
+        log.i("Hello Index");
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
@@ -156,6 +155,10 @@ public class ExpensePagerFragment extends Fragment {
         }
 
         return null;
+    }
+
+    public void dispViewPager() {
+        log.i("hello world");
     }
 
 }

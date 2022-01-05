@@ -41,12 +41,13 @@
                 android:layout_marginBottom="?attr/actionBarSize"
                 app:layout_collapseMode="parallax" >
                 <FrameLayout
-                    android:id="@+id/topframe_viewpager"
+                    android:id="@+id/topframe_expense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:animateLayoutChanges="true"
                     android:background="@android:color/white" />
                 <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/topframe_tab_indicator"
+                    android:id="@+id/topframe_page"
                     android:layout_width="match_parent"
                     android:layout_height="25dp"
                     app:tabBackground="@drawable/dot_indicator_selector"
