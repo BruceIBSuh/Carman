@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+The RecyclerView in the last position, which shows service items, would be cut off when
+ConstraintLayout is used as the root layout.
+-->
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -12,11 +16,11 @@
         android:id="@+id/view_boxing"
         android:layout_width="match_parent"
         android:layout_height="150dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_service_boxing"
         android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
         android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true" />
+        android:layout_marginTop="0dp"
+        android:background="@drawable/bg_service_boxing" />
 
     <TextView
         android:id="@+id/tv_label_date"
@@ -27,6 +31,7 @@
         android:minWidth="80dp"
         android:text="@string/svc_label_date"
         android:textSize="@dimen/label"
+        android:textStyle="bold"
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         tools:ignore="RelativeOverlap"/>
@@ -65,7 +70,8 @@
         android:layout_marginTop="16dp"
         android:labelFor="@id/et_service_provider"
         android:text="@string/svc_label_provider"
-        android:textSize="@dimen/label" />
+        android:textSize="@dimen/label"
+        android:textStyle="bold" />
 
     <ImageButton
         android:id="@+id/btn_svc_favorite"
@@ -117,7 +123,8 @@
         android:labelFor="@id/tv_svc_mileage"
         android:minWidth="80dp"
         android:text="@string/svc_label_mileage"
-        android:textSize="@dimen/label" />
+        android:textSize="@dimen/label"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tv_svc_mileage"
@@ -153,7 +160,8 @@
         android:labelFor="@id/tv_svc_payment"
         android:minWidth="80dp"
         android:text="@string/svc_label_payment"
-        android:textSize="@dimen/label" />
+        android:textSize="@dimen/label"
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tv_svc_payment"
@@ -262,6 +270,7 @@
 
 <!--
 The last item of RecyclerView will be cut off when ConstraintLayout is used as the root layout.
+
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"

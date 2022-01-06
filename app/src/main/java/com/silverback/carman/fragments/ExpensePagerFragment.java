@@ -44,15 +44,9 @@ public class ExpensePagerFragment extends Fragment {
     private int page;
     private String lastInfo;
 
-    public ExpensePagerFragment(int page) {
-        this.page = page;
-    }
-
-    /*
     private ExpensePagerFragment(){
         // Default Constructor. Leave this empty!
     }
-
     /*
     private static class FragmentHolder {
         private static final ExpensePagerFragment INSTANCE = new ExpensePagerFragment();
@@ -64,18 +58,18 @@ public class ExpensePagerFragment extends Fragment {
         FragmentHolder.INSTANCE.setArguments(args);
         return FragmentHolder.INSTANCE;
     }
+    */
 
-
-    // Instantiate Singleton of ExpensePagerFragment
+    // Instantiate Singleton of ExpensePagerFragment using Eager Initialization. Other type of
+    // initialization should cause an error.
     public static ExpensePagerFragment getInstance(int pageNumber) {
-        log.i("expensepager constructor");
-        ExpensePagerFragment fragment = new ExpensePagerFragment();
+        ExpensePagerFragment instance = new ExpensePagerFragment();
         Bundle args = new Bundle();
         args.putInt("page", pageNumber);
-        fragment.setArguments(args);
-        return fragment;
+        instance.setArguments(args);
+        return instance;
     }
-    */
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -97,8 +91,9 @@ public class ExpensePagerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         log.i("onViewCreated");
-        // Observe whether the current fragment changes via ViewModel and find what is the current
-        // fragment attached in order to separately do actions according to the fragment.
+
+        // FragmentSharedModel observes if the fragment in the bottom viewpager changes b/w
+        // GasManagerFragment and ServiceManagerFragment.
         fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
             log.i("current fragment:%s",  fragment);
             currentFragment = fragment;
@@ -146,8 +141,8 @@ public class ExpensePagerFragment extends Fragment {
         } else if(currentFragment instanceof ServiceManagerFragment) {
             String date = BaseActivity.formatMilliseconds(format, serviceList.get(pos).dateTime);
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
-            String b = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(pos).mileage), "km", "\n");
-            String c = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(pos).svcName, "\n");
+            String b = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(pos).svcName, "\n");
+            String c = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(pos).mileage), "km", "\n");
             String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_payment), df.format(serviceList.get(pos).totalExpense), won, "\n");
 
             return a + b + c + d;

@@ -12,17 +12,18 @@
         android:visibility="gone"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:layout_marginEnd="16dp"
+
         android:indeterminate="true"
         android:indeterminateTintMode="src_atop"
         android:indeterminateTint="@color/secondaryColor"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tv_sorting_order"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
     <ImageView
         android:id="@+id/img_action_emblem"
-        android:layout_width="50dp"
+        android:layout_width="35dp"
         android:layout_height="wrap_content"
         android:contentDescription="@null"
         android:scaleType="centerInside"

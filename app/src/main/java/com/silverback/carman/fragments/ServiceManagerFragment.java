@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -145,6 +146,7 @@ public class ServiceManagerFragment extends Fragment implements
 
     }
 
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -154,7 +156,7 @@ public class ServiceManagerFragment extends Fragment implements
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvServiceDate.setText(sdf.format(visitTime));
         binding.tvSvcPayment.setText("0");
-        binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "n/a"));
+        binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
         createRecyclerServiceItemView();
 
@@ -175,6 +177,8 @@ public class ServiceManagerFragment extends Fragment implements
         super.onResume();
         // Update the time to the current time.
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
+        // To sync the fragment w/ the viewpager in the top frame. MUST be declared here, not in
+        // onViewCreated.
         fragmentModel.getCurrentFragment().setValue(this);
 
     }
@@ -182,10 +186,7 @@ public class ServiceManagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-
         addViewModelObserver(fragmentModel);
-
         // Show the service data and animate the progressbar to indicate when to check an item.
         try { createServiceProgressBar();}
         catch (JSONException e) { e.printStackTrace(); }

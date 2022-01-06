@@ -101,7 +101,6 @@ import java.util.Objects;
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
-        //ViewPager.OnPageChangeListener,
         AppBarLayout.OnOffsetChangedListener,
         BoardReadDlgFragment.OnEditModeListener {
 
@@ -180,9 +179,9 @@ public class BoardActivity extends BaseActivity implements
 
         // TabLayoutMediator which interconnects TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
-        new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) -> {
-            tab.setText(titles.get(position));
-        }).attach();
+        new TabLayoutMediator(binding.tabBoard, binding.boardPager, (tab, position) ->
+            tab.setText(titles.get(position))
+        ).attach();
 
         // FAB tapping creates BoardWriteFragment in the framelayout
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
@@ -238,7 +237,6 @@ public class BoardActivity extends BaseActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_options_board, menu);
         this.menu = menu;
-
         menu.getItem(0).setVisible(false);
         menu.getItem(1).setVisible(false);
         return super.onCreateOptionsMenu(menu);
@@ -251,7 +249,6 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        log.i("framelayout child: %s", binding.frameContents.getChildAt(0));
         if(item.getItemId() == android.R.id.home) {
             // Check which child view the framelayout contains; if it holds the viewpager, just
             // finish the activity and otherwise, add the viewpager to the framelayout.
@@ -296,7 +293,7 @@ public class BoardActivity extends BaseActivity implements
             else editPostFragment.prepareUpdate();
             return true;
 
-        } else return super.onOptionsItemSelected(item);
+        } else return super.onOptionsItemSelected(item); // means false
     }
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback, which has replaced the previous

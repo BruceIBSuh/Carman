@@ -8,9 +8,15 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/bg_service_boxing.xml" value="0.33" />
+        <entry key="app/src/main/res/drawable/dot_indicator_default.xml" value="0.3509259259259259" />
+        <entry key="app/src/main/res/drawable/dot_indicator_selected.xml" value="0.3509259259259259" />
+        <entry key="app/src/main/res/drawable/dot_indicator_selector.xml" value="0.3509259259259259" />
+        <entry key="app/src/main/res/drawable/state_view_focus.xml" value="0.3509259259259259" />
         <entry key="app/src/main/res/layout/activity_board.xml" value="0.33" />
         <entry key="app/src/main/res/layout/activity_expense.xml" value="0.2625" />
         <entry key="app/src/main/res/layout/activity_settings.xml" value="0.10572916666666667" />
+        <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
         <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.33" />
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
@@ -28,6 +34,7 @@
         <entry key="app/src/main/res/layout/spinner_district_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/spinner_district_entry.xml" value="0.2989583333333333" />
         <entry key="app/src/main/res/layout/spinner_main_dropdown.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/view_action_emblem.xml" value="0.5" />
         <entry key="app/src/main/res/layout/view_automaker_emblem.xml" value="0.5" />
         <entry key="app/src/main/res/menu/menu_board_read.xml" value="0.2625" />
         <entry key="app/src/main/res/menu/menu_options_board.xml" value="0.25885416666666666" />
