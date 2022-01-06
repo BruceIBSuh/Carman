@@ -43,7 +43,7 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
         <!--app:behavior_overlapTop="100dp"-->
-
+    <!--
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_navi"
         android:layout_width="wrap_content"
@@ -53,5 +53,5 @@
         android:contentDescription="@null"
         app:layout_anchor="@+id/recycler_comments"
         app:layout_anchorGravity="end|top"/>
-
+    -->
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

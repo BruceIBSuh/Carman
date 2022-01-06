@@ -37,7 +37,6 @@ import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.adapters.BoardPostingAdapter;
 import com.silverback.carman.databinding.FragmentBoardPagerBinding;
-import com.silverback.carman.databinding.ViewAutomakerEmblemBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -281,7 +280,6 @@ public class BoardPagerFragment extends Fragment implements
             ImageView imgEmblem = actionView.findViewById(R.id.img_action_emblem);
             ProgressBar pbEmblem = actionView.findViewById(R.id.pb_emblem);
             //tvSorting = rootView.findViewById(R.id.tv_sorting_order);
-            log.i("automaker in menu:%s", automaker);
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
                 actionView.setVisibility(View.INVISIBLE);
@@ -298,10 +296,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
-            isViewOrder = !isViewOrder;
-            String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
-            TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
-            tvSorting.setText(sorting);
             //emblemBinding.tvSortingOrder.setText(sorting);
 
             // Initialize fields when clicking the menu for switching timestamp and cnt_view
@@ -324,6 +318,10 @@ public class BoardPagerFragment extends Fragment implements
                 @Override
                 public void onAnimationEnd(Animator animation, boolean isReverse) {
                     rotation.cancel();
+                    String sorting = (!isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
+                    TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
+                    tvSorting.setText(sorting);
+                    isViewOrder = !isViewOrder;
                 }
             });
 
@@ -786,8 +784,8 @@ public class BoardPagerFragment extends Fragment implements
     private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
         // Make the progressbar visible until getting the emblem from Firetore
         pb.setVisibility(View.VISIBLE);
+        log.i("automaker emblem: %s", automaker);
         firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
-            log.i("automaker emblem: %s", doc.get("reg_maker"));
             String emblem = doc.getString("auto_emblem");
             if(TextUtils.isEmpty(emblem)) return;
             else {

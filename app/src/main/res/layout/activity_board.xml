@@ -106,7 +106,7 @@
         android:contentDescription="@null"
         app:alpha="0.3"
         app:borderWidth="0dp"
-        app:backgroundTint="@android:color/holo_red_light"
+        app:backgroundTint="@android:color/holo_green_dark"
         app:rippleColor="@color/colorPrimary"
         app:layout_anchor="@id/nestedScrollView"
         app:layout_anchorGravity="end|bottom"/>

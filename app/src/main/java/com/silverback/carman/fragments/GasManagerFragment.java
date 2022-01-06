@@ -239,8 +239,6 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
         super.onViewCreated(view, savedInstanceState);
         setCurrentStation();
 
-        fragmentModel.getCurrentFragment().setValue(this);
-
         locationModel.getLocation().observe(getViewLifecycleOwner(), location -> {
             if(isGeofenceIntent) return;
             if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
@@ -295,6 +293,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     @Override
     public void onResume() {
         super.onResume();
+        // To sync the fragment w/ the viewpager in the top frame.
         fragmentModel.getCurrentFragment().setValue(this);
         binding.tvGasDatetime.setText(sdf.format(System.currentTimeMillis()));
     }
