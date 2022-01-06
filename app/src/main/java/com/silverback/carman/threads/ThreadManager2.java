@@ -72,7 +72,6 @@ public class ThreadManager2 {
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
     private StationListTask stnListTask;
-    private ExpenseTabPagerTask expenseTask;
 
     // Constructor private
     private ThreadManager2() {
@@ -264,23 +263,6 @@ public class ThreadManager2 {
         InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
         return stnListTask;
     }
-
-
-    public ExpenseTabPagerTask startExpenseTabPagerTask(PagerAdapterViewModel model, String svcItems){
-        //Context context, FragmentManager fm, PagerAdapterViewModel model,
-        //String[] defaults, String jsonDistrict, String jsonSvcItem){
-
-        //ExpenseTabPagerTask expenseTask = (ExpenseTabPagerTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        if(expenseTask == null) expenseTask = new ExpenseTabPagerTask();
-        //expenseTask.initPagerTask(fm, model, defaults, jsonDistrict, jsonSvcItem);
-        expenseTask.initTask(model, svcItems);
-
-        //InnerClazz.sInstance.threadPoolExecutor.execute(expenseTask.getTabPagerRunnable());
-        InnerClazz.sInstance.threadPoolExecutor.execute(expenseTask.getServiceItemsRunnable());
-
-        return expenseTask;
-    }
-
 
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
