@@ -296,8 +296,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
-            isViewOrder = !isViewOrder;
-
             //emblemBinding.tvSortingOrder.setText(sorting);
 
             // Initialize fields when clicking the menu for switching timestamp and cnt_view
@@ -320,9 +318,10 @@ public class BoardPagerFragment extends Fragment implements
                 @Override
                 public void onAnimationEnd(Animator animation, boolean isReverse) {
                     rotation.cancel();
-                    String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
+                    String sorting = (!isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
                     TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
                     tvSorting.setText(sorting);
+                    isViewOrder = !isViewOrder;
                 }
             });
 
