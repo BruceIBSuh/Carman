@@ -20,12 +20,14 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LifecycleOwner;
@@ -274,6 +276,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // and onPageScrolled.
     private ViewPager2.OnPageChangeCallback addPageChangeCallback() {
         return  new ViewPager2.OnPageChangeCallback() {
+            /*
             int state;// 0 -> idle, 1 -> dragging 2 -> settling
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -281,8 +284,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 this.state = state;
             }
 
+             */
 
-            // onPageSelected should be invoked when the state is idle or setting.
             @Override
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
@@ -297,6 +300,24 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframePage.setVisibility(View.VISIBLE);
+                if(isCollapsed) binding.appBar.setExpanded(true, true);
+
+                /*
+                CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams)binding.appBar.getLayoutParams();
+                final AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
+                if (behavior != null) {
+                    ValueAnimator valueAnimator = ValueAnimator.ofInt();
+                    valueAnimator.setInterpolator(new DecelerateInterpolator());
+                    valueAnimator.addUpdateListener(animation -> {
+                        behavior.setTopAndBottomOffset((Integer) animation.getAnimatedValue());
+                        binding.appBar.requestLayout();
+                    });
+                    valueAnimator.setIntValues(0, -(int)getActionbarHeight());
+                    valueAnimator.setDuration(5000);
+                    valueAnimator.start();
+                }
+                */
+
 
                 switch (position) {
                     case GAS:
@@ -323,12 +344,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         getSupportFragmentManager().beginTransaction()
                                 .replace(R.id.topframe_expense, statGraphFragment)
                                 .commit();
-
-                        //if(!isCollapsed) {
-                            animSlideTopFrame(prevHeight, 200);
-                            prevHeight = 200;
-                        //} else prevHeight = 0;
-
+                        animSlideTopFrame(prevHeight, 190);
+                        prevHeight = 190;
                         break;
                 }
             }
@@ -379,8 +396,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.
     private void animSlideTabLayout() {
-        log.i("animSlideTabLayout");
-        final float tbHeight = getActionbarHeight();
+        float tbHeight = getActionbarHeight();
         AnimatorSet animSet = new AnimatorSet();
         ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.tabExpense, "translationY", tbHeight);
         ObjectAnimator animFrame = ObjectAnimator.ofFloat(binding.topFrame, "translationY", tbHeight);
@@ -392,6 +408,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         // In case the app gets inititated by Geofence notification, ServiceFragent must be set to
         // the current page only after the topframe viewpager has added. Otherwise, an error occurs
         // for the reason of no child view in the viewpager.
+        /*
         animSet.addListener(new AnimatorListenerAdapter(){
             public void onAnimationEnd(Animator animator) {
                 super.onAnimationEnd(animator);
@@ -403,18 +420,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 fetchCurrentStation(ExpenseActivity.this);
             }
         });
+
+         */
     }
 
+    // Scale down or up the height of the viewpager container based on the content length in the
+    // viewpager
     private void animSlideTopFrame(int oldY, int newY) {
         // Convert the dp unit to pixels
+        ViewGroup.LayoutParams params = binding.topframeExpense.getLayoutParams();
         int prevHeight = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 oldY, getResources().getDisplayMetrics());
         int newHeight = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 newY, getResources().getDisplayMetrics());
 
+
         // Animate to slide the top frame down to the measured height.
         ValueAnimator anim = ValueAnimator.ofInt(prevHeight, newHeight);
-        ViewGroup.LayoutParams params = binding.topframeExpense.getLayoutParams();
         anim.setDuration(1000);
         anim.start();
 
