@@ -45,11 +45,12 @@
                     android:id="@+id/topframe_expense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:animateLayoutChanges="true"
                     android:background="@android:color/white" />
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/topframe_page"
                     android:layout_width="match_parent"
-                    android:layout_height="25dp"
+                    android:layout_height="15dp"
                     android:background="@android:color/white"
                     app:tabBackground="@drawable/dot_indicator_selector"
                     app:tabGravity="center"
@@ -86,6 +87,7 @@
         android:id="@+id/pager_tab_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
