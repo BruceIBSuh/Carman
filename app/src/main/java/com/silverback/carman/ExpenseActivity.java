@@ -300,7 +300,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframePage.setVisibility(View.VISIBLE);
-                if(isCollapsed) binding.appBar.setExpanded(true, true);
+
 
                 /*
                 CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams)binding.appBar.getLayoutParams();
@@ -348,6 +348,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         prevHeight = 190;
                         break;
                 }
+
+                if(isCollapsed) binding.appBar.setExpanded(true, true);
             }
         };
     }
