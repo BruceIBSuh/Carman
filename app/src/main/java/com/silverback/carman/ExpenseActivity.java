@@ -96,7 +96,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private ActivityExpenseBinding binding;
     private LocationViewModel locationModel;
     private ExpensePagerAdapter pagerAdapter;
-    private ExpRecentAdapter recentAdapter;
     private StatGraphFragment statGraphFragment;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
@@ -139,15 +138,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         createAppbarLayout();
         createTabLayout();
         createExpenseViewPager();
-
-        binding.appBar.addOnOffsetChangedListener(this);
-        /*
-        recentExpensePager = new ViewPager2(this);
-        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
-        recentExpensePager.setAdapter(recentAdapter);
-        new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,
-                (tab, pos) -> {}).attach();
-        */
+        binding.appbar.addOnOffsetChangedListener(this);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -157,8 +148,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         fragmentModel.getTotalExpenseByCategory().observe(this, totalExpense -> {
             if(totalExpense > 0) {
                 binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
-                //this.totalExpense = totalExpense;
-                //recentAdapter.notifyItemChanged(0);
+                // Back to MainActivity w/ results
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("expense", totalExpense);
                 setResult(RESULT_CANCELED, resultIntent);
@@ -192,7 +182,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         super.onStop();
         binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
         if(locationTask != null) locationTask = null;
-        //if(tabPagerTask != null) tabPagerTask = null;
         if(stationListTask != null) stationListTask = null;
 
     }
@@ -213,7 +202,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 }
             }
         }
-
         return super.dispatchTouchEvent(event);
     }
 
@@ -253,11 +241,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     // Implement AppBarLayout.OnOffsetChangeListener
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int scroll) {
-        binding.appBar.post(() -> {
+        binding.appbar.post(() -> {
             if(Math.abs(scroll) == 0) {
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.exp_toolbar_title));
                 isCollapsed = false;
-            } else if(Math.abs(scroll) == binding.appBar.getTotalScrollRange()) {
+            } else if(Math.abs(scroll) == binding.appbar.getTotalScrollRange()) {
                 Objects.requireNonNull(getSupportActionBar()).setTitle(pageTitle);
                 isCollapsed = true;
             }
@@ -265,8 +253,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Fade the topFrame accroding to the scrolling of the AppBarLayout
         //setBackgroundOpacity(appBar.getTotalScrollRange(), scroll); //fade the app
-        if(binding.appBar.getTotalScrollRange() != 0) {
-            float bgAlpha = (float)((100 + (scroll * 100 / binding.appBar.getTotalScrollRange())) * 0.01);
+        if(binding.appbar.getTotalScrollRange() != 0) {
+            float bgAlpha = (float)((100 + (scroll * 100 / binding.appbar.getTotalScrollRange())) * 0.01);
             binding.topFrame.setAlpha(bgAlpha);
         }
     }
@@ -283,7 +271,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 super.onPageScrollStateChanged(state);
                 this.state = state;
             }
-
              */
 
             @Override
@@ -301,22 +288,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 invalidateOptionsMenu();
                 binding.topframePage.setVisibility(View.VISIBLE);
 
-
-                /*
-                CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams)binding.appBar.getLayoutParams();
-                final AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
-                if (behavior != null) {
-                    ValueAnimator valueAnimator = ValueAnimator.ofInt();
-                    valueAnimator.setInterpolator(new DecelerateInterpolator());
-                    valueAnimator.addUpdateListener(animation -> {
-                        behavior.setTopAndBottomOffset((Integer) animation.getAnimatedValue());
-                        binding.appBar.requestLayout();
-                    });
-                    valueAnimator.setIntValues(0, -(int)getActionbarHeight());
-                    valueAnimator.setDuration(5000);
-                    valueAnimator.start();
-                }
-                */
 
 
                 switch (position) {
@@ -348,8 +319,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         prevHeight = 190;
                         break;
                 }
-
-                if(isCollapsed) binding.appBar.setExpanded(true, true);
+                //if(isCollapsed) animExpandTabLayout();
+                if(isCollapsed) binding.appbar.setExpanded(true);
             }
         };
     }
@@ -386,14 +357,28 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private void createExpenseViewPager() {
         // Add the viewpager in the framelayout.
         recentExpensePager = new ViewPager2(this);
-        recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
         recentExpensePager.setAdapter(recentAdapter);
         recentExpensePager.setCurrentItem(0);
         new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,
                 (tab, pos) -> {}).attach();
     }
 
-
+    private void animExpandTabLayout() {
+        CoordinatorLayout.LayoutParams params = (CoordinatorLayout.LayoutParams)binding.appbar.getLayoutParams();
+        final AppBarLayout.Behavior behavior = (AppBarLayout.Behavior) params.getBehavior();
+        if (behavior != null) {
+            ValueAnimator valueAnimator = ValueAnimator.ofInt();
+            valueAnimator.setInterpolator(new DecelerateInterpolator());
+            valueAnimator.addUpdateListener(animation -> {
+                behavior.setTopAndBottomOffset((int)animation.getAnimatedValue());
+                binding.appbar.requestLayout();
+            });
+            valueAnimator.setIntValues(0, 0);
+            valueAnimator.setDuration(5000);
+            valueAnimator.start();
+        }
+    }
     // Animate TabLayout and the tap-syned viewpager sequentially. As the animation completes,
     // the top viewpager is set up with ExpRecntPagerAdapter and add the viewpager to the frame and
     // start LocationTask.

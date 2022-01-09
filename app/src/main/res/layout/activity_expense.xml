@@ -8,16 +8,14 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:context="com.silverback.carman.ExpenseActivity">
-
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBar"
+        android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
         <com.google.android.material.appbar.CollapsingToolbarLayout
-            android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             app:toolbarId="@id/toolbar_expense"
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|snap|exitUntilCollapsed"
@@ -36,7 +34,7 @@
             <LinearLayout
                 android:id="@+id/topFrame"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:layout_marginTop="?attr/actionBarSize"
                 android:layout_marginBottom="?attr/actionBarSize"
@@ -45,13 +43,12 @@
                     android:id="@+id/topframe_expense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:animateLayoutChanges="true"
-                    android:background="@android:color/white" />
+                    android:gravity="center_vertical"
+                    android:background="@android:color/white"/>
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/topframe_page"
                     android:layout_width="match_parent"
-                    android:layout_height="15dp"
-                    android:background="@android:color/white"
+                    android:layout_height="20dp"
                     app:tabBackground="@drawable/dot_indicator_selector"
                     app:tabGravity="center"
                     app:tabIndicatorHeight="0dp" />
@@ -80,14 +77,12 @@
                 app:layout_collapseMode="pin"
                 app:titleTextColor="#FFFFFF" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
-
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager_tab_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="8dp"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 

@@ -196,6 +196,7 @@ public class MainExpPagerFragment extends Fragment {
         }
 
         // Query the expense data of previous months except the current one.
+        // BUGS AROUND HERE WHEN GETTING RESULT FROM saveExpense()!!!
         void queryPrevMonthExpense() {
             for(int i = 1; i < NumOfPrevMonths; i++) {
                 final int index = i;

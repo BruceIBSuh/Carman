@@ -16,7 +16,6 @@
         android:id="@+id/fragment_gas"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="0dp"
         tools:context="com.silverback.carman.fragments.GasManagerFragment">
 
         <androidx.constraintlayout.widget.Guideline
