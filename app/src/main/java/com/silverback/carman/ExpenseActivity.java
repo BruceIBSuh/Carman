@@ -152,6 +152,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("expense", totalExpense);
                 setResult(RESULT_CANCELED, resultIntent);
+                log.i("expense result back to MainActivity");
                 finish();
             }
         });
@@ -211,7 +212,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         getMenuInflater().inflate(R.menu.options_expense, menu);
         menuSave = menu.findItem(R.menu.options_expense);
         return true;
-        //return super.onCreateOptionsMenu(menu);
+        //return super.onCreateOptionsMenu(menu); // default: false
     }
     // Modify the options menu based on events that occur during the activity lifecycle.
     @Override
@@ -228,7 +229,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 Intent mainIntent = new Intent(this, MainActivity.class);
                 mainIntent.putExtra("isGeofencing", true);
                 startActivity(mainIntent);
-            } else finish();
+            } else {
+                finish();
+            }
             return true;
 
         } else if(item.getItemId() == R.id.save_expense) {
@@ -287,8 +290,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // Invoke onPrepareOptionsMenu(Menu)
                 invalidateOptionsMenu();
                 binding.topframePage.setVisibility(View.VISIBLE);
-
-
 
                 switch (position) {
                     case GAS:

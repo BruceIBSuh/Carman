@@ -71,8 +71,6 @@ public class MainExpPagerFragment extends Fragment {
         //SimpleDateFormat sdf2 = new SimpleDateFormat(getString(R.string.date_format_6), Locale.getDefault());
         df = (DecimalFormat)NumberFormat.getInstance();
         df.applyPattern("#,###");
-
-
     }
 
 
@@ -97,6 +95,7 @@ public class MainExpPagerFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // Must instantiate the object here to have getViewLifecycleOwner();
+        log.i("update recent expense:");
         monthlyExpense = new RecentMonthlyExpense();
         switch(position) {
             case 0:
@@ -107,9 +106,7 @@ public class MainExpPagerFragment extends Fragment {
             case 1:
                 monthlyExpense.setMonthlyExpenseConfig();
                 break;
-
         }
-
     }
 
 

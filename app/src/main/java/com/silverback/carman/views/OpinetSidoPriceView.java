@@ -60,7 +60,7 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
     }
 
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
         File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
         Uri uriSido = Uri.fromFile(sidoFile);

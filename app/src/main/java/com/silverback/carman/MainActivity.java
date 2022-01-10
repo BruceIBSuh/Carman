@@ -61,6 +61,8 @@ import java.io.ObjectOutputStream;
 import java.util.List;
 import java.util.Objects;
 
+
+
 public class MainActivity extends BaseActivity implements
         StationListAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
@@ -71,9 +73,11 @@ public class MainActivity extends BaseActivity implements
 
     // Objects
     private ActivityMainBinding binding;
+
     private LocationViewModel locationModel;
     private StationListViewModel stnModel;
     private ImageViewModel imgModel;
+    private OpinetViewModel opinetModel;
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
@@ -90,7 +94,7 @@ public class MainActivity extends BaseActivity implements
     private ActivityResultLauncher<Intent> activityResultLauncher;
 
     // Fields
-    private String[] arrGasCode, arrGasName;
+    private String[] arrGasCode;
     private String[] defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
@@ -109,7 +113,7 @@ public class MainActivity extends BaseActivity implements
         // Set initial values
         defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
-        arrGasName = getResources().getStringArray(R.array.spinner_fuel_name);
+        //arrGasName = getResources().getStringArray(R.array.spinner_fuel_name);
         mPrevLocation = null;
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
@@ -146,6 +150,7 @@ public class MainActivity extends BaseActivity implements
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
 
         // Event Handlers
@@ -166,7 +171,6 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        // Set the ion in the toolbar
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
 
@@ -238,7 +242,8 @@ public class MainActivity extends BaseActivity implements
         gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
         // Reset the price info in the viewpager.
         mainPricePagerAdapter.setFuelCode(gasCode);
-        mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
+        //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
+        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
 
 
         // Show the average price and create the price bar as hidden.
@@ -284,32 +289,6 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
-    private void callActivityResult(ActivityResult result) {
-        // If the station reyelcerview is in the visible state, it should be gone
-        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        if(isStnViewOn) {
-            binding.stationRecyclerView.setVisibility(View.GONE);
-            binding.fab.setVisibility(View.GONE);
-            binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.progbtnGas.setProgressColor(isStnViewOn);
-        }
-
-        switch(result.getResultCode()) {
-            case Activity.RESULT_OK: // SettingActivity result
-                updateSettingResult(result);
-                break;
-
-            case Activity.RESULT_CANCELED: // ExpenseActivity result
-                Intent resultIntent = result.getData();
-                if(resultIntent != null) {
-                    int expense = resultIntent.getIntExtra("expense", 0);
-                    log.i("total sum: %s", expense);
-                    mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, expense);
-                }
-                break;
-        }
-    }
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback to listen to the viewpager
     // changing a page.
@@ -320,43 +299,6 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    // Get the price info saved in the cache and show them in the price bar.
-    private void setCollapsedPriceBar() {
-        final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
-        String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
-
-        // Set the sido and sigun price which is stored in the cache at an interval.
-        for(String fName : arrFile) {
-            File file = new File(getCacheDir(), fName);
-            Uri uri = Uri.fromFile(file);
-            try(InputStream is = getContentResolver().openInputStream(uri);
-                ObjectInputStream ois = new ObjectInputStream(is)) {
-                Object obj = ois.readObject();
-                Iterable<?> itr = (Iterable<?>)obj;
-                for(Object x : itr) {
-                    switch(fName) {
-                        case Constants.FILE_CACHED_SIDO_PRICE:
-                            Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
-                            if(sido.getProductCd().matches(gasCode)) {
-                                binding.pricebar.tvCollapsedSido.setText(sido.getSidoName());
-                                binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
-                            }
-                            break;
-
-                        case Constants.FILE_CACHED_SIGUN_PRICE:
-                            Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
-                            if(sigun.getProductCd().matches(gasCode)) {
-                                binding.pricebar.tvCollapsedSigun.setText(sigun.getSigunName());
-                                binding.pricebar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
-                            }
-                            break;
-                    }
-                }
-
-            } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
-        }
-    }
 
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
@@ -578,6 +520,78 @@ public class MainActivity extends BaseActivity implements
         return spannableString;
     }
 
+    // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
+    private void callActivityResult(ActivityResult result) {
+        // If the station reyelcerview is in the visible state, it should be gone
+        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(isStnViewOn) {
+            binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.fab.setVisibility(View.GONE);
+            binding.recyclerContents.setVisibility(View.VISIBLE);
+            binding.progbtnGas.setProgressColor(isStnViewOn);
+        }
+
+        Intent resultIntent = result.getData();
+        if(resultIntent == null) return;
+
+        switch(result.getResultCode()) {
+            case Activity.RESULT_OK: // SettingActivity result
+                log.i("activity result ok?");
+                updateSettingResult(result);
+                break;
+
+            case Activity.RESULT_CANCELED: // ExpenseActivity result
+                int expense = resultIntent.getIntExtra("expense", 0);
+                log.i("total sum: %s", expense);
+                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, expense);
+                break;
+
+            case Constants.REQUEST_MAIN_SETTING_GENERAL:
+                log.i("general setting result:%s", result.getData());
+                updateSettingResult(result);
+                break;
+        }
+    }
+
+    // Get the price info saved in the cache and show them in the price bar.
+    private void setCollapsedPriceBar() {
+        final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
+        String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
+        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
+        // Set the sido and sigun price which is stored in the cache at an interval.
+        for(String fName : arrFile) {
+            File file = new File(getCacheDir(), fName);
+            Uri uri = Uri.fromFile(file);
+            try(InputStream is = getContentResolver().openInputStream(uri);
+                ObjectInputStream ois = new ObjectInputStream(is)) {
+                Object obj = ois.readObject();
+                Iterable<?> itr = (Iterable<?>)obj;
+                for(Object x : itr) {
+                    switch(fName) {
+                        case Constants.FILE_CACHED_SIDO_PRICE:
+                            Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
+                            if(sido.getProductCd().matches(gasCode)) {
+                                binding.pricebar.tvCollapsedSido.setText(sido.getSidoName());
+                                binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                            }
+                            break;
+
+                        case Constants.FILE_CACHED_SIGUN_PRICE:
+                            Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
+                            if(sigun.getProductCd().matches(gasCode)) {
+                                binding.pricebar.tvCollapsedSigun.setText(sigun.getSigunName());
+                                binding.pricebar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                            }
+                            break;
+                    }
+                }
+
+            } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
+        }
+    }
+
+
+
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
     private void updateSettingResult(ActivityResult result) {
         Intent resultIntent = result.getData();
@@ -587,34 +601,33 @@ public class MainActivity extends BaseActivity implements
         String district = resultIntent.getStringExtra("distCode");
         String gasType = resultIntent.getStringExtra("gasCode");
         String searchRadius = resultIntent.getStringExtra("searchRadius");
-        log.i("searchRadius: %s", searchRadius);
+
 
         if(!TextUtils.isEmpty(userName)) Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
+
         if(!TextUtils.isEmpty(district) && !TextUtils.isEmpty(gasType)) {
             log.i("both changed");
-            OpinetViewModel opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
             gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasType);
-
             opinetModel.distPriceComplete().observe(this, isDone -> {
-                mainPricePagerAdapter.notifyDataSetChanged();
+                mainPricePagerAdapter.notifyItemChanged(0, gasType);
                 setGasSpinnerSelection(gasType);
-                //setCollapsedPriceBar();
+                setCollapsedPriceBar();
             });
 
         } else if(!TextUtils.isEmpty(district) && TextUtils.isEmpty(gasType)) {
-            log.i("district changed");
-            OpinetViewModel opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+            log.i("district changed:%s", district);
             gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasCode);
-
             opinetModel.distPriceComplete().observe(this, isDone -> {
-                mainPricePagerAdapter.notifyDataSetChanged();
+                mainPricePagerAdapter.notifyItemChanged(0, gasType);
                 setCollapsedPriceBar();
             });
 
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
+            log.i("gas type changed:");
             isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
             defaultParams[0] = gasType;
+            mainPricePagerAdapter.notifyItemChanged(0, gasType);
 
         } else if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;

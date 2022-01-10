@@ -162,6 +162,7 @@ public class IntroActivity extends BaseActivity  {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
+            log.i("initial dist code: %s", distCode);
             mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
                 gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the

@@ -59,10 +59,12 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
-
-        super.onBindViewHolder(holder, position, payloads);
-        if(position == 0) distFragment.reload(0, fuelCode);
-        else if(position == 1) stnFragment.reload(1, fuelCode);
+        log.i("MainPricePagerAdapter: %s, %s", position, payloads.size());
+        if(payloads.size() == 0) super.onBindViewHolder(holder, position, payloads);
+        else {
+            if(position == 0) distFragment.reload(0, (String)payloads.get(0));
+            else if(position == 1) stnFragment.reload(1, (String)payloads.get(0));
+        }
     }
 
     @Override

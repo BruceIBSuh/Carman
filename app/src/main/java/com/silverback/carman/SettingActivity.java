@@ -1,6 +1,7 @@
 package com.silverback.carman;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -101,6 +102,7 @@ public class SettingActivity extends BaseActivity implements
     private ActivitySettingsBinding binding;
     public Toolbar settingToolbar;
     private FrameLayout frameLayout;
+    private Fragment fragment;
 
     // Fields
     private String userId, distCode, userName, gasCode, radius, userImage, jsonAutoData, permCamera;
@@ -129,6 +131,7 @@ public class SettingActivity extends BaseActivity implements
         setSupportActionBar(binding.settingToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
+        fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
 
         // get Intent data, if any.
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
@@ -237,7 +240,6 @@ public class SettingActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {}
-
     /*
      * The return value should benefit when there are multiple fragments and they overrides the
      * OnOptionsItemSelected.
@@ -253,6 +255,15 @@ public class SettingActivity extends BaseActivity implements
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
+        if (item.getItemId() == android.R.id.home) {
+            log.i("setting update");
+            if(resultIntent != null) setResult(Constants.REQUEST_MAIN_SETTING_GENERAL, resultIntent);
+            finish();
+
+        } else return super.onOptionsItemSelected(item);
+
+        return true;
+    }
         /*
         if(item.getItemId() == android.R.id.home) {
             uploadUserDataToFirebase(uploadData);
@@ -262,16 +273,20 @@ public class SettingActivity extends BaseActivity implements
             resultIntent.putExtra("fuelCode", gasCode);
             resultIntent.putExtra("radius", radius);
             resultIntent.putExtra("userImage", userImage);
-
+            log.i("resut data: %s, %s, %s, %s, %s", distCode, userName, gasCode, radius, userImage);
             setResult(RESULT_OK, resultIntent);
             finish();
             return true;
-        } else return false;
-        */
-        Fragment fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+
+        } else super.onOptionsItemSelected(item);
+
+        // Use FragmentManager.findFragmentByTag as far as a fragment is dynamically added.
+                Fragment fragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
+        log.i("Fragment in the framelayout: %s", fragment);
+
         if(item.getItemId() == android.R.id.home) {
             // The activity contains SettingPrefFragment
-            if (fragment instanceof SettingPreferenceFragment) {
+            if(fragment instanceof SettingPreferenceFragment) {
                 // Upload user data to Firebase
                 uploadUserDataToFirebase(uploadData);
                 // Create Intent back to MainActivity which contains extras to notify the activity of
@@ -279,20 +294,23 @@ public class SettingActivity extends BaseActivity implements
                 switch (requestCode) {
                     case Constants.REQUEST_MAIN_SETTING_GENERAL:
                         log.i("Back to MainActivity: %s", distCode);
+
                         Intent resultIntent = new Intent();
                         resultIntent.putExtra("district", distCode);
                         resultIntent.putExtra("userName", userName);
                         resultIntent.putExtra("fuelCode", gasCode);
                         resultIntent.putExtra("radius", radius);
                         resultIntent.putExtra("userImage", userImage);
+
                         setResult(RESULT_OK, resultIntent);
                         break;
 
                     case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+
                         Intent autoIntent = new Intent();
                         autoIntent.putExtra("jsonAutoData", jsonAutoData);
                         log.i("JSON Auto Data in Setting: %s", jsonAutoData);
-                        setResult(requestCode, autoIntent);
+                        setResult(requestCode, resultIntent);
                         break;
 
                     case Constants.REQUEST_BOARD_SETTING_USERNAME:
@@ -314,14 +332,13 @@ public class SettingActivity extends BaseActivity implements
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
             }
-
         // The return value should be false when it comes to the menu that adds a new service item,
         // which means this method will be handled in the SettingSvcItemFragment.
         } else return item.getItemId() != R.id.menu_add_service_item;
 
-
-
     }
+
+         */
 
     /*
      * Invoked when a preference which has an associated custom (dialog)fragment is tapped. If you do not
@@ -390,7 +407,6 @@ public class SettingActivity extends BaseActivity implements
                     // send the result bact to BoardActivity for startActivityForResult()
                     log.i("JSON AutoData: %s", jsonAutoData);
                     this.jsonAutoData = jsonAutoData;
-
                 }
 
                 break;
@@ -536,10 +552,9 @@ public class SettingActivity extends BaseActivity implements
     }
 
     private void addPreferenceFragment(PreferenceFragmentCompat fragment, FragmentManager fm) {
-        fm.beginTransaction().replace(R.id.frame_setting, fragment, "preference")
+        fm.beginTransaction().replace(R.id.frame_setting, fragment, "settingGeneral")
                 .addToBackStack(null)
                 .commit();
-
         fm.registerFragmentLifecycleCallbacks(new FragmentManager.FragmentLifecycleCallbacks() {
             @Override
             public void onFragmentAttached(
@@ -556,15 +571,16 @@ public class SettingActivity extends BaseActivity implements
                 log.i("onViewCreated");
                 // To prevent SettingAutoFragment from invoking the method, which leads to cause
                 // NullPointerException due to no autoRef reference.
-                if(fragment instanceof SettingPreferenceFragment)
-                    markupPreference((PreferenceFragmentCompat)fragment, requestCode);
+                if(fragment instanceof SettingPreferenceFragment){
+                    if(requestCode != -1) markupPreference((PreferenceFragmentCompat)fragment, requestCode);
+                }
+
             }}, false);
     }
 
     // Display the indicator for which preferrence should be set as long as the activity is invoked
     // by ActivityResultLauncher.
     private void markupPreference(PreferenceFragmentCompat fragment, int code) {
-        log.i("request code : %s", code);
         switch(code) {
             case Constants.REQUEST_BOARD_SETTING_USERNAME:
                 Preference namePref = fragment.findPreference(Constants.USER_NAME);
