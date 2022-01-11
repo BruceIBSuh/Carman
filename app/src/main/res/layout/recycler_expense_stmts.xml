@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="3dp" >
+
+    <TextView
+        android:id="@+id/tv_stmts_date"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/tv_stmts_mileage"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_stmts_mileage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_stmts_date"
+        app:layout_constraintEnd_toStartOf="@+id/tv_stmts_expense"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/tv_stmts_date"
+        app:layout_constraintTop_toTopOf="@+id/tv_stmts_date"
+
+        />
+
+    <TextView
+        android:id="@+id/tv_stmts_expense"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_stmts_mileage"
+        app:layout_constraintEnd_toStartOf="@+id/tv_stmts_provider"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/tv_stmts_mileage"
+        app:layout_constraintTop_toTopOf="@+id/tv_stmts_mileage" />
+
+    <TextView
+        android:id="@+id/tv_stmts_provider"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center|start"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_stmts_expense"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_weight="3"
+        app:layout_constraintStart_toEndOf="@+id/tv_stmts_expense"
+        app:layout_constraintTop_toTopOf="@+id/tv_stmts_expense" />
+</androidx.constraintlayout.widget.ConstraintLayout>

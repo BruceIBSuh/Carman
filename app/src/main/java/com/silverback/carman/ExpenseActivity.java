@@ -145,10 +145,25 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
         // Upon saving and uploading the expense data, back to MainActivity w/ the activity result
         fragmentModel.getTotalExpenseByCategory().observe(this, sparseExpense -> {
+
+            final int key = sparseExpense.keyAt(0);
+            final int total = sparseExpense.get(key);
+            log.i("sparseArray: %s, %s", key, total);
+            recentAdapter.setCurrentFragment(key);
+            recentAdapter.notifyItemChanged(0, total);
+
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("category", key);
+            resultIntent.putExtra("expense", total);
+            setResult(Constants.REQUEST_MAIN_EXPENSE_TOTAL, resultIntent);
+            finish();
+            /*
             int totalExpense = 0;
             switch(sparseExpense.keyAt(0)) {
                 case Constants.GAS:
                     log.i("Gas Expense: %s", sparseExpense.get(0));
+                    resultIntent.putExtra("expense", sparseExpense.get(0));
+                    resultIntent.putExtra("category")
                     totalExpense = sparseExpense.get(0);
                     recentAdapter.setCurrentFragment(Constants.GAS);
                     recentAdapter.notifyItemChanged(0, sparseExpense.get(Constants.GAS));
@@ -166,10 +181,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 // Back to MainActivity w/ results
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("expense", totalExpense);
+                resultIntent.putExtra("category", )
                 setResult(RESULT_CANCELED, resultIntent);
                 log.i("expense result back to MainActivity");
                 finish();
             }
+
+             */
         });
 
         // Init the task to get the current location.

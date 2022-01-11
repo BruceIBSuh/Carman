@@ -58,6 +58,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -538,10 +539,13 @@ public class MainActivity extends BaseActivity implements
                 updateSettingResult(result);
                 break;
 
-            case Activity.RESULT_CANCELED: // ExpenseActivity result
-                int expense = resultIntent.getIntExtra("expense", 0);
-                log.i("total sum: %s", expense);
-                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, expense);
+            case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
+                log.i("result back:%s, %s", resultIntent.getIntExtra("expense", 0), resultIntent.getIntExtra("category", 0));
+                //int[] arr = resultIntent.getIntArrayExtra("expense");
+                List<Integer> list = new ArrayList<>();
+                list.add(resultIntent.getIntExtra("category", 0));
+                list.add(resultIntent.getIntExtra("expense", 0));
+                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, list);
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:

@@ -21,6 +21,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -154,34 +155,15 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-
-        /*
-        switch(position){
-            case Constants.NOTIFICATION:
-                break;
-            case Constants.VIEWPAGER_EXPENSE:
-                log.i("new data come in:%s", payloads);
-                //expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
-                //expensePagerAdapter.notifyDataSetChanged();
-                expensePagerAdapter.notifyItemChanged(0, payloads);
-                break;
-            default: super.onBindViewHolder(holder, position, payloads);
-        }
-
-         */
-
-
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
             log.i("payloads:%s", payloads.get(0));
             if(position == Constants.VIEWPAGER_EXPENSE) {
-                if(payloads.get(0).equals(0)) {
-                    log.i("return to the default");
-                    //expBinding.mainPagerExpense.setCurrentItem(0, true);
+                if(payloads.isEmpty()) {
                     super.onBindViewHolder(holder, position, payloads);
                 } else {
-                    log.i("new data come in:%s, %s", expensePagerAdapter.getItemCount(), payloads);
+                    // Big Bug: MUST NOT invoke Gas and SVC at the same time.
                     expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
                     //expensePagerAdapter.notifyDataSetChanged();
                     //expensePagerAdapter.notifyItemRangeChanged(0, expensePagerAdapter.getItemCount(), payloads);

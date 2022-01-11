@@ -6,6 +6,7 @@ public class Constants {
     public static final int REQUEST_MAIN_SETTING_GENERAL = 1000;
     public static final int REQUEST_BOARD_SETTING_AUTOCLUB = 2000;
     public static final int REQUEST_BOARD_SETTING_USERNAME = 2001;
+    public static final int REQUEST_MAIN_EXPENSE_TOTAL = 3001;
     public static final int REQUEST_BOARD_CAMERA = 2002;
     public static final int REQUEST_BOARD_GALLERY = 2003;
     public static final int REQUEST_NETWORK_SETTING = 3000;
@@ -22,7 +23,7 @@ public class Constants {
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;
 
-    // MainActivity Content Category
+    // MainActivity Content Feed
     public static final int NOTIFICATION = 0;
     public static final int BANNER_AD_1 = 1;
     public static final int VIEWPAGER_EXPENSE = 2;
