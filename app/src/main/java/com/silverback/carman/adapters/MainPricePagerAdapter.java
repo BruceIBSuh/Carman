@@ -3,8 +3,6 @@ package com.silverback.carman.adapters;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
-import androidx.fragment.app.FragmentManager;
-import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.adapter.FragmentViewHolder;
 
@@ -33,8 +31,8 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     private static final int NUM_PAGES = 2;
 
     // Objects
-    private MainPricePagerFragment distFragment;
-    private MainPricePagerFragment stnFragment;
+    private MainPricePagerFragment districtFragment;
+    private MainPricePagerFragment favStationFragment;
     private String fuelCode;
 
     public MainPricePagerAdapter(FragmentActivity fa) {
@@ -47,10 +45,10 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
         switch(position) {
             case 0:
                 log.i("first district fragment:%s", getItemId(position));
-                return distFragment = MainPricePagerFragment.getInstance(fuelCode, 0);
+                return districtFragment = MainPricePagerFragment.getInstance(fuelCode, 0);
             case 1:
                 log.i("second station fragment:%s", getItemId(position));
-                return stnFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
+                return favStationFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
             default:
                 return MainPricePagerFragment.getInstance(fuelCode, position);
         }
@@ -59,11 +57,12 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
-        log.i("MainPricePagerAdapter: %s, %s", position, payloads.size());
-        if(payloads.size() == 0) super.onBindViewHolder(holder, position, payloads);
-        else {
-            if(position == 0) distFragment.reload(0, (String)payloads.get(0));
-            else if(position == 1) stnFragment.reload(1, (String)payloads.get(0));
+        log.i("payloads: %s", payloads.size());
+        if(payloads.size() == 0) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else {
+            if(position == 0) districtFragment.reload(0, (String)payloads.get(0));
+            else if(position == 1) favStationFragment.reload(1, (String)payloads.get(0));
         }
     }
 

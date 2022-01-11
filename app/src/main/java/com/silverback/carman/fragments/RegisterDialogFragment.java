@@ -279,10 +279,10 @@ public class RegisterDialogFragment extends DialogFragment implements
             geocoderTask = ThreadManager2.getInstance().startGeocoderTask(getContext(), locationModel, mAddress);
 
             // Fetch the Location based on a given address name by using Geocoder, then pass the value
-            // to ServiceManagerFragment and close the dialog.
+            // to ExpenseServiceFragment and close the dialog.
             locationModel.getGeocoderLocation().observe(this, location -> {
                 mLocation = location;
-                // Pass the location and address of an service provider to ServiceManagerFragment
+                // Pass the location and address of an service provider to ExpenseServiceFragment
                 // using FragmentSharedModel which enables Fragments to communicate each other.
                 log.i("Geocoder Location: %s, %s", mLocation, mAddress);
                 registerService();

@@ -6,6 +6,7 @@ import android.util.SparseLongArray;
 
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -26,7 +27,7 @@ public class FragmentSharedModel extends ViewModel {
     private final MutableLiveData<Boolean> alertGasResult = new MutableLiveData<>();
     private final MutableLiveData<Boolean> alertSvcResult = new MutableLiveData<>();
 
-    // ServiceManagerFragment and RegisterDialogFragment
+    // ExpenseServiceFragment and RegisterDialogFragment
     private MutableLiveData<SparseArray<Object>> serviceLocation;
     private MutableLiveData<String> registeredServiceId;
 
@@ -41,13 +42,16 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
-    private MutableLiveData<Fragment> currentFragment;
+    private MutableLiveData<Integer> fragmentIndex;
     private MutableLiveData<String> favoriteStnId;
     private MutableLiveData<Integer> imageItemSelected;
     private MutableLiveData<Integer> imageChooser;
     private MutableLiveData<String> strData;
     private MutableLiveData<String> firstPlaceholderId;
-    private MutableLiveData<Integer> totalExpense;
+
+    //private MutableLiveData<Integer> totalGasExpense, totalSvcExpense;
+    private MutableLiveData<SparseIntArray> totalExpense;
+    private MutableLiveData<Integer> expenseCategory;
 
 
     // DatePicker, TimePickerFragment
@@ -67,11 +71,11 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> engineType;
 
     // Communicate b/w ExpensePagerFragment and a fragment contained in the tab viewpager
-    public MutableLiveData<Fragment> getCurrentFragment() {
-        if(currentFragment == null) currentFragment = new MutableLiveData<>();
-        return currentFragment;
+    public MutableLiveData<Integer> getCurrentFragment() {
+        if(fragmentIndex == null) fragmentIndex = new MutableLiveData<>();
+        return fragmentIndex;
     }
-    // Share GasManagerFragment and ServiceManagerFragment with NumPadFragment
+    // Share ExpenseGasFragment and ExpenseServiceFragment with NumPadFragment
     public void setNumPadValue(int key, int value) {
         SparseIntArray sparsesArray = new SparseIntArray(1); //param: initial capacity.
         sparsesArray.put(key, value);
@@ -89,7 +93,7 @@ public class FragmentSharedModel extends ViewModel {
     
 
 
-    // Pass a String value in MemoPadFragment to ServiceManagerFragment
+    // Pass a String value in MemoPadFragment to ExpenseServiceFragment
     public void setMemoPadValue(int key, String value) {
         SparseArray<String> sparseArray = new SparseArray<>(1);
         sparseArray.put(key, value);
@@ -114,7 +118,7 @@ public class FragmentSharedModel extends ViewModel {
 
 
 
-    // Commmunicate b/w RegisterDialogFragment and ServiceManagerFragment
+    // Commmunicate b/w RegisterDialogFragment and ExpenseServiceFragment
     public void setServiceLocation(SparseArray<Object> sparseArray) {
         svcLocation.setValue(sparseArray);
     }
@@ -143,7 +147,7 @@ public class FragmentSharedModel extends ViewModel {
         return favoriteStnId;
     }
 
-    // Communicate GasManagerFragment or ServiceManagerFragment w/ AlertDidalogFragment when
+    // Communicate ExpenseGasFragment or ExpenseServiceFragment w/ AlertDidalogFragment when
     // the favorite button clicks to remove a provider out of the favorite list.
     public void setAlertGasResult(boolean b) {
         alertGasResult.setValue(b);
@@ -211,12 +215,18 @@ public class FragmentSharedModel extends ViewModel {
     }
 
 
-    // Shared the selected spinner item position in StatStmtsFragment with StatGraphFragment to set
+    // Shared the selected spinner item position in ExpenseStmtsFragment with ExpenseGraphFragment to set
     // data queried by category.
-    public MutableLiveData<Integer> getTotalExpenseByCategory() {
+    public MutableLiveData<SparseIntArray> getTotalExpenseByCategory() {
         if(totalExpense == null)  totalExpense = new MutableLiveData<>();
         return totalExpense;
     }
+
+    public MutableLiveData<Integer> getExpenseCategory() {
+        if(expenseCategory == null) expenseCategory = new MutableLiveData<>();
+        return expenseCategory;
+    }
+
 
     public MutableLiveData<Boolean> getJsonAutoData() {
         if(jsonAutoData == null) jsonAutoData = new MutableLiveData<>();
@@ -233,7 +243,7 @@ public class FragmentSharedModel extends ViewModel {
         return permission;
     }
 
-    // Communicate b/w GasManagerFragment/ServiceManagerFragment and
+    // Communicate b/w ExpenseGasFragment/ExpenseServiceFragment and
     // DatePickerFragment/TimePickerFragment
     public MutableLiveData<Calendar> getCustomDateAndTime() {
         if(customDateAndTime == null) customDateAndTime = new MutableLiveData<>();

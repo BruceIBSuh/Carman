@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -56,10 +57,10 @@ import java.util.Objects;
 /**
  * This fragment provides the form to fill in the gas expense.
  */
-public class GasManagerFragment extends Fragment {//implements View.OnClickListener {
+public class ExpenseGasFragment extends Fragment {//implements View.OnClickListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GasManagerFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseGasFragment.class);
 
     private static final int REQUEST_PERM_BACKGROUND_LOCATION = 1000;
     private FragmentGasManagerBinding binding;
@@ -94,7 +95,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     private int category;
 
     // Constructor
-    public GasManagerFragment() {
+    public ExpenseGasFragment() {
         // Required empty public constructor
     }
 
@@ -294,7 +295,7 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
     public void onResume() {
         super.onResume();
         // To sync the fragment w/ the viewpager in the top frame.
-        fragmentModel.getCurrentFragment().setValue(this);
+        fragmentModel.getCurrentFragment().setValue(Constants.GAS);
         binding.tvGasDatetime.setText(sdf.format(System.currentTimeMillis()));
     }
 
@@ -451,7 +452,10 @@ public class GasManagerFragment extends Fragment {//implements View.OnClickListe
 
         gasBatch.commit().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                fragmentModel.getTotalExpenseByCategory().setValue(gasTotal);
+                log.i("Total GasExpense: %s", gasTotal);
+                SparseIntArray sparseArray = new SparseIntArray();
+                sparseArray.put(Constants.GAS, gasTotal);
+                fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
             } else log.e("Failed to save the form data");
         });
     }

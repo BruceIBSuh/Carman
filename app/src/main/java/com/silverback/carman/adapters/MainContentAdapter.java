@@ -1,7 +1,6 @@
 package com.silverback.carman.adapters;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,7 +11,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
-import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainContentAdsBinding;
 import com.silverback.carman.databinding.MainContentCarlifeBinding;
@@ -36,7 +34,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentExpenseBinding expBinding;
     private MainContentAdsBinding adsBinding;
     private MainContentCarlifeBinding carlifeBinding;
-    private final MainExpPagerAdapter expensePagerAdapter;
+    private final MainExpensePagerAdapter expensePagerAdapter;
 
     //private final FragmentSharedModel fragmentModel;
 
@@ -50,7 +48,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         super();
         this.mListener = listener;
         firestore= FirebaseFirestore.getInstance();
-        expensePagerAdapter = new MainExpPagerAdapter((FragmentActivity)context);
+        expensePagerAdapter = new MainExpensePagerAdapter((FragmentActivity)context);
         //fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 

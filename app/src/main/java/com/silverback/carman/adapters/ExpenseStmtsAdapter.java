@@ -16,38 +16,40 @@ import com.silverback.carman.utils.Constants;
 
 import java.util.List;
 
-public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapter.ExpenseStatHolder> {
+public class ExpenseStmtsAdapter extends RecyclerView.Adapter<ExpenseStmtsAdapter.ExpenseStmtsHolder> {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpStatStmtsAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseStmtsAdapter.class);
 
     // Objects
     private List<ExpenseBaseDao.ExpenseStatements> expList;
 
     // Constructor
-    public ExpStatStmtsAdapter(List<ExpenseBaseDao.ExpenseStatements> expList){
+    public ExpenseStmtsAdapter(List<ExpenseBaseDao.ExpenseStatements> expList){
         super();
         this.expList = expList;
     }
 
     @NonNull
     @Override
-    public ExpenseStatHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ExpenseStmtsHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardviewExpenseStmtsBinding binding = CardviewExpenseStmtsBinding.inflate(
                 LayoutInflater.from(parent.getContext()), parent, false);
 
-        return new ExpenseStatHolder(binding);
+        return new ExpenseStmtsHolder(binding);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ExpenseStatHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ExpenseStmtsHolder holder, int position) {
         holder.bindToExpenseStat(expList.get(position));
     }
 
     @Override
     public void onBindViewHolder(
-            @NonNull ExpenseStatHolder holder, int pos, @NonNull List<Object> payloads) {
+            @NonNull ExpenseStmtsHolder holder, int pos, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
-        else log.i("payloads: %s", payloads.size());
+        else {
+            log.i("payloads: %s", payloads.size());
+        }
     }
 
     @Override
@@ -59,13 +61,13 @@ public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapte
         this.expList = expList;
     }
 
-    static class ExpenseStatHolder extends RecyclerView.ViewHolder {
+    static class ExpenseStmtsHolder extends RecyclerView.ViewHolder {
         // Objects
         private final CardviewExpenseStmtsBinding binding;
         private final String dateFormat;
 
         // Constructor
-        ExpenseStatHolder(CardviewExpenseStmtsBinding binding) {
+        ExpenseStmtsHolder(CardviewExpenseStmtsBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
 
@@ -78,7 +80,7 @@ public class ExpStatStmtsAdapter extends RecyclerView.Adapter<ExpStatStmtsAdapte
 
         }
 
-        // Bind the queried data to the viewholder in BindViewHolder of ExpStatStmtsAdapter
+        // Bind the queried data to the viewholder in BindViewHolder of ExpenseStmtsAdapter
         void bindToExpenseStat(ExpenseBaseDao.ExpenseStatements entity) {
             binding.tvStatDate.setText(BaseActivity.formatMilliseconds(dateFormat, entity.dateTime));
             binding.tvStatMileage.setText(BaseActivity.getDecimalFormatInstance().format(entity.mileage));

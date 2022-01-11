@@ -53,14 +53,14 @@ public class ExpenseTabPagerRunnable implements Runnable {
             // Create the adapter
             //ExpTabPagerAdapter pagerAdapter = new ExpTabPagerAdapter(task.getFragmentManager(), context.get);
 
-            // Set args to GasManagerFragment
+            // Set args to ExpenseGasFragment
             task.getDefaults()[1] = Constants.MIN_RADIUS;
             Bundle gasArgs = new Bundle();
             gasArgs.putStringArray("defaultParams", task.getDefaults());
             gasArgs.putString("userId", userId);
             //pagerAdapter.getItem(0).setArguments(gasArgs);
 
-            // Set args to ServiceManagerFragment
+            // Set args to ExpenseServiceFragment
             JSONArray jsonArray = new JSONArray(task.getJsonDistrict());
             String distCode = (String)jsonArray.get(2);
             Bundle svcArgs = new Bundle();

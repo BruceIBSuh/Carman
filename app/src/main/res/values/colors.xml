@@ -35,7 +35,7 @@
 
     <color name="mainThemeColor">#1EA4FF</color>
 
-    <!-- MainExpPagerFragment.ExpenseConfigView -->
+    <!-- MainExpensePagerFragment.ExpenseConfigView -->
     <color name="expconfig_gas">@android:color/holo_green_light</color>
     <color name="expconfig_svc">@android:color/holo_blue_bright</color>
     <color name="expconfig_wash">@android:color/holo_orange_light</color>
@@ -57,7 +57,7 @@
     <!-- MemoPadDialog -->
     <color name="bgMemoPadTitle">#778899</color>
 
-    <!-- StatStmtsFragment$StatGraphView -->
+    <!-- ExpenseStmtsFragment$StatGraphView -->
     <!--StatActivity$BarGraphView-->
     <color name="graphBarColor">@color/statThemeColor</color>
     <color name="graphLabelColor">#202020</color>

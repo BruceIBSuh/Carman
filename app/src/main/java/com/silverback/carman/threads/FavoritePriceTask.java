@@ -45,7 +45,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     }
 
     // OpinetViewModel LiveData having price data of a favroite gas station in the favorite list
-    // which pops up by clicking the fav button in GasManagerFragment
+    // which pops up by clicking the fav button in ExpenseGasFragment
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
         viewModel.getFavoritePriceData().postValue(data);

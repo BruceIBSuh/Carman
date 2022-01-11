@@ -24,10 +24,10 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-public class StatGraphFragment extends Fragment implements View.OnClickListener {
+public class ExpenseGraphFragment extends Fragment implements View.OnClickListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StatGraphFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseGraphFragment.class);
 
     // Object References
     private FragmentStatGraphBinding binding;
@@ -50,7 +50,7 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     private int gasCategory, svcCategory;
 
     // Constructor
-    public StatGraphFragment() {
+    public ExpenseGraphFragment() {
         // Required empty public constructor
     }
 
@@ -100,19 +100,20 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstancestate) {
         super.onViewCreated(view, savedInstancestate);
-        // Get the selected item position of the spinner defined in StatStmtsFragment for querying
+
+        // Get the selected item position of the spinner defined in ExpenseStmtsFragment for querying
         // the expense by category
-        fragmentSharedModel.getTotalExpenseByCategory().observe(getViewLifecycleOwner(), pos -> {
-            switch(pos) {
-                case 0:
+        fragmentSharedModel.getExpenseCategory().observe(getViewLifecycleOwner(), category -> {
+            switch(category) {
+                case 0: // all
                     gasCategory = Constants.GAS;
                     svcCategory = Constants.SVC;
                     break;
-                case 1:
+                case 1: // gas
                     gasCategory = Constants.GAS;
                     svcCategory = -1;
                     break;
-                case 2:
+                case 2: // service
                     gasCategory = -1;
                     svcCategory = Constants.SVC;
                     break;
@@ -120,7 +121,6 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
 
             loadTotalExpense(targetYear, gasCategory, svcCategory);
         });
-
     }
 
 
@@ -174,7 +174,6 @@ public class StatGraphFragment extends Fragment implements View.OnClickListener 
                 default: break;
             }
         }
-
         return monthlyTotal;
     }
 }

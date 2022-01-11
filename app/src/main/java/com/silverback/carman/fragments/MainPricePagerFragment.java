@@ -44,10 +44,10 @@ public class MainPricePagerFragment extends Fragment {
         // Default private construcotr leaving empty.
     }
 
-    public static MainPricePagerFragment getInstance(String fuelCode, int position) {
+    public static MainPricePagerFragment getInstance(String fuelCode, int page) {
         MainPricePagerFragment pagerFragment = new MainPricePagerFragment();
         Bundle args = new Bundle();
-        args.putInt("page", position);
+        args.putInt("page", page);
         args.putString("fuelCode", fuelCode);
         pagerFragment.setArguments(args);
 
@@ -66,7 +66,6 @@ public class MainPricePagerFragment extends Fragment {
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedStateInstance) {
-
         log.i("onCreateView of MainPricePagerFragment");
         if(getArguments() != null) {
             page = getArguments().getInt("page");

@@ -27,9 +27,6 @@ import java.util.List;
 import java.util.Locale;
 
 
-/**
- * This RecyclerView.Adapter is to display posting items of
- */
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // Logging

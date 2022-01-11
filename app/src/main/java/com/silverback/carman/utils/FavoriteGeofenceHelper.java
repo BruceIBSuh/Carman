@@ -71,7 +71,7 @@ public class FavoriteGeofenceHelper {
 
     }
 
-    // Attach the listener to GasManagerFragment and ServiceManagerFragment for notifying them
+    // Attach the listener to ExpenseGasFragment and ExpenseServiceFragment for notifying them
     // of whether to add the provider to Geofence and the DB successfully or not.
     public void setGeofenceListener(OnGeofenceListener listener) {
         mListener = listener;
@@ -202,7 +202,7 @@ public class FavoriteGeofenceHelper {
                             }
                         });
 
-                        // Notify GasManagerFragment or ServiceManagerFragment of the completion of
+                        // Notify ExpenseGasFragment or ExpenseServiceFragment of the completion of
                         // geofencing.
                         mListener.notifyAddGeofenceCompleted(placeHolder);
 

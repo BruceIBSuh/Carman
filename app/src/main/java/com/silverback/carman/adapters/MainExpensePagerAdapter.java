@@ -8,23 +8,23 @@ import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.adapter.FragmentViewHolder;
 
-import com.silverback.carman.fragments.MainExpPagerFragment;
+import com.silverback.carman.fragments.MainExpensePagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
 import java.util.List;
 
-public class MainExpPagerAdapter extends FragmentStateAdapter {
-    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerAdapter.class);
+public class MainExpensePagerAdapter extends FragmentStateAdapter {
+    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpensePagerAdapter.class);
     private static final int NUM_PAGES = 2;
 
-    private MainExpPagerFragment targetFragment;
+    private MainExpensePagerFragment targetFragment;
 
-    public MainExpPagerAdapter(FragmentActivity fa) {
+    public MainExpensePagerAdapter(FragmentActivity fa) {
         super(fa);
     }
 
-    public MainExpPagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
+    public MainExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
 
@@ -36,7 +36,7 @@ public class MainExpPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return targetFragment = MainExpPagerFragment.newInstance(position);
+        return targetFragment = MainExpensePagerFragment.newInstance(position);
     }
 
 

@@ -1,8 +1,6 @@
 package com.silverback.carman;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -37,13 +35,13 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.silverback.carman.adapters.ExpensePagerAdapter;
-import com.silverback.carman.adapters.ExpRecentAdapter;
+import com.silverback.carman.adapters.ExpenseRecentAdapter;
 import com.silverback.carman.databinding.ActivityExpenseBinding;
-import com.silverback.carman.fragments.GasManagerFragment;
+import com.silverback.carman.fragments.ExpenseGasFragment;
+import com.silverback.carman.fragments.ExpenseServiceFragment;
 import com.silverback.carman.fragments.MemoPadFragment;
 import com.silverback.carman.fragments.NumberPadFragment;
-import com.silverback.carman.fragments.ServiceManagerFragment;
-import com.silverback.carman.fragments.StatGraphFragment;
+import com.silverback.carman.fragments.ExpenseGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
@@ -59,10 +57,10 @@ import java.util.Objects;
 
 /*
  * This activity is largely compolsed of two viewpagers. One viewpager which is synced w/ the tab
- * is at the bottom for holding such fragments as GasManagerFragment, ServiceManagerFragment, and
- * StatStmtsFragment. The other is at the top to hold MainPricePagerFragment w/ MainPricePagerAdapter
+ * is at the bottom for holding such fragments as ExpenseGasFragment, ExpenseServiceFragment, and
+ * ExpenseStmtsFragment. The other is at the top to hold MainPricePagerFragment w/ MainPricePagerAdapter
  * which, as a single fragment with multiple pages, shows the recent 5 expense statements of the first
- * 2 tab-synced fragments and a single page of StatGraphFragment of the last tab-synced one, which
+ * 2 tab-synced fragments and a single page of ExpenseGraphFragment of the last tab-synced one, which
  * may extend to multi pages at a later time.
  *
  * Considerable components and resources to load at the same time may cause the top viewpager animation
@@ -77,8 +75,8 @@ import java.util.Objects;
  *
  * On the other hand, separate process should be made if the activity gets started by tabbing the
  * geofence notification. In particular, be careful of the notification that contains the intent of
- * calling ServiceManagerFragment. Must add tabPager.setCurrentItem() when and only when the expense
- * viewpager is prepared. Otherwise, it makes an error b/c the expense view in ServiceManagerFragment
+ * calling ExpenseServiceFragment. Must add tabPager.setCurrentItem() when and only when the expense
+ * viewpager is prepared. Otherwise, it makes an error b/c the expense view in ExpenseServiceFragment
  * may be null.
  */
 
@@ -96,9 +94,10 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private ActivityExpenseBinding binding;
     private LocationViewModel locationModel;
     private ExpensePagerAdapter pagerAdapter;
-    private StatGraphFragment statGraphFragment;
+    private ExpenseGraphFragment expenseGraphFragment;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
+    private ExpenseRecentAdapter recentAdapter;
 
     //private ThreadTask tabPagerTask;
     private LocationTask locationTask;
@@ -130,7 +129,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             category = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
 
-        statGraphFragment = new StatGraphFragment();
+        expenseGraphFragment = new ExpenseGraphFragment();
         numPad = new NumberPadFragment();
         memoPad = new MemoPadFragment();
 
@@ -145,7 +144,23 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
 
         // Upon saving and uploading the expense data, back to MainActivity w/ the activity result
-        fragmentModel.getTotalExpenseByCategory().observe(this, totalExpense -> {
+        fragmentModel.getTotalExpenseByCategory().observe(this, sparseExpense -> {
+            int totalExpense = 0;
+            switch(sparseExpense.keyAt(0)) {
+                case Constants.GAS:
+                    log.i("Gas Expense: %s", sparseExpense.get(0));
+                    totalExpense = sparseExpense.get(0);
+                    recentAdapter.setCurrentFragment(Constants.GAS);
+                    recentAdapter.notifyItemChanged(0, sparseExpense.get(Constants.GAS));
+                    break;
+                case Constants.SVC:
+                    log.i("Svc Expense: %s", sparseExpense.get(1));
+                    totalExpense = sparseExpense.get(1);
+                    recentAdapter.setCurrentFragment(Constants.SVC);
+                    recentAdapter.notifyItemChanged(0, sparseExpense.get(Constants.SVC));
+                    break;
+            }
+
             if(totalExpense > 0) {
                 binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
                 // Back to MainActivity w/ results
@@ -226,6 +241,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         if(item.getItemId() == android.R.id.home) {
             // DEBUG & REFACTOR REQURIED
             if(isGeofencing) {
+                log.i("isGeofencing");
                 Intent mainIntent = new Intent(this, MainActivity.class);
                 mainIntent.putExtra("isGeofencing", true);
                 startActivity(mainIntent);
@@ -280,7 +296,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 //if(state > 0 && position != STAT) return;
-                // To prevent the ServiceManagerFragment from being called twice. Not sure why it
+                // To prevent the ExpenseServiceFragment from being called twice. Not sure why it
                 // is called twice. Seems a bug in ViewPager2.
                 //if(state > 0) return;
                 currentPage = position;
@@ -312,9 +328,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                         pageTitle = getString(R.string.exp_title_stat);
                         menuSave.setVisible(false);
                         binding.topframePage.setVisibility(View.GONE);
-                        statGraphFragment = new StatGraphFragment();
+                        expenseGraphFragment = new ExpenseGraphFragment();
                         getSupportFragmentManager().beginTransaction()
-                                .replace(R.id.topframe_expense, statGraphFragment)
+                                .replace(R.id.topframe_expense, expenseGraphFragment)
                                 .commit();
                         animSlideTopFrame(prevHeight, 190);
                         prevHeight = 190;
@@ -358,7 +374,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private void createExpenseViewPager() {
         // Add the viewpager in the framelayout.
         recentExpensePager = new ViewPager2(this);
-        ExpRecentAdapter recentAdapter = new ExpRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        recentAdapter = new ExpenseRecentAdapter(getSupportFragmentManager(), getLifecycle());
         recentExpensePager.setAdapter(recentAdapter);
         recentExpensePager.setCurrentItem(0);
         new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,
@@ -435,7 +451,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     // Once a current location is fetched, get the current gas station based on it. This method
-    // will be referenced in ServiceManagerFragment in the ViewCreate lifecycle.
+    // will be referenced in ExpenseServiceFragment in the ViewCreate lifecycle.
     private void fetchCurrentStation(LifecycleOwner lifeCycleOwner) {
         locationModel.getLocation().observe(lifeCycleOwner, location -> {
             if(location == null) return;
@@ -455,7 +471,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         datePickerFragment.show(getSupportFragmentManager(), "datePicker");
     }
 
-    // Pop up the number pad which is invoked in GasManagerFragment and ServiceManagerFragment
+    // Pop up the number pad which is invoked in ExpenseGasFragment and ExpenseServiceFragment
     // in common and defined in each xml layou files as onClick.
     public void showNumPad(View view) {
         // return true if the fragment is currently added to its activity, preventing the click event
@@ -480,17 +496,17 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         memoPad.show(getSupportFragmentManager(), "memoPad");
     }
 
-    // Save the form data in the Room based on which framgnet the activity contains. The data should
-    // be uploaded to Firestore at the same time only if the user is logged in. The method to save
-    // data is defined in each fragment.
+    // Save the expense data in the Room based on which framgnet the activity contains. The data
+    // should be uploaded to Firestore at the same time only if the user is logged in. The method
+    // to save data is defined in each fragment.
     private void saveExpenseData() {
         //WeakReference<Fragment> weakFragment = pagerAdapter.weakFragmentReference(currentPage);
         Fragment fragment = pagerAdapter.getCurrentFragment(currentPage);
         String userId = getUserIdFromStorage(this);
-        if(fragment instanceof GasManagerFragment) {
-            ((GasManagerFragment)fragment).saveGasData(userId);
-        } else if(fragment instanceof ServiceManagerFragment) {
-            ((ServiceManagerFragment)fragment).saveServiceData(userId);
+        if(fragment instanceof ExpenseGasFragment) {
+            ((ExpenseGasFragment)fragment).saveGasData(userId);
+        } else if(fragment instanceof ExpenseServiceFragment) {
+            ((ExpenseServiceFragment)fragment).saveServiceData(userId);
         }
     }
 
@@ -500,17 +516,17 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             String permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
             checkRuntimePermission(binding.getRoot(), permission, () -> {
-                if(weakFragment.get() instanceof GasManagerFragment) {
-                    ((GasManagerFragment)weakFragment.get()).addGasFavorite();
-                } else if(weakFragment.get() instanceof ServiceManagerFragment) {
-                    ((ServiceManagerFragment)weakFragment.get()).addServiceFavorite();
+                if(weakFragment.get() instanceof ExpenseGasFragment) {
+                    ((ExpenseGasFragment)weakFragment.get()).addGasFavorite();
+                } else if(weakFragment.get() instanceof ExpenseServiceFragment) {
+                    ((ExpenseServiceFragment)weakFragment.get()).addServiceFavorite();
                 }
             });
         } else {
-            if(weakFragment.get() instanceof GasManagerFragment) {
-                ((GasManagerFragment)weakFragment.get()).addGasFavorite();
-            } else if(weakFragment.get() instanceof ServiceManagerFragment) {
-                ((ServiceManagerFragment)weakFragment.get()).addServiceFavorite();
+            if(weakFragment.get() instanceof ExpenseGasFragment) {
+                ((ExpenseGasFragment)weakFragment.get()).addGasFavorite();
+            } else if(weakFragment.get() instanceof ExpenseServiceFragment) {
+                ((ExpenseServiceFragment)weakFragment.get()).addServiceFavorite();
             }
         }
     }

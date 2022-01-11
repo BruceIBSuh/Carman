@@ -15,8 +15,6 @@ import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.GasManagerDao;
 import com.silverback.carman.database.ServiceManagerDao;
 import com.silverback.carman.databinding.FragmentPagerExpenseBinding;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
@@ -29,19 +27,18 @@ import java.util.List;
 public class ExpensePagerFragment extends Fragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerFragment.class);
 
     private final static DecimalFormat df = BaseActivity.getDecimalFormatInstance();
     // Objects
     private FragmentPagerExpenseBinding binding;
     private CarmanDatabase mDB;
     private FragmentSharedModel fragmentModel;
-    private Fragment currentFragment;
     private List<GasManagerDao.RecentGasData> gasDataList;
     private List<ServiceManagerDao.RecentServiceData> serviceList;
 
     // Fields
-    private int page;
+    private int page, category;
     private String lastInfo;
 
     private ExpensePagerFragment(){
@@ -73,7 +70,6 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        log.i("onCreate");
         if(getArguments() != null) page = getArguments().getInt("page");
         // Instantiate CarmanDatabase as a type of singleton instance
         mDB = CarmanDatabase.getDatabaseInstance(requireActivity().getApplicationContext());
@@ -90,70 +86,62 @@ public class ExpensePagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        log.i("onViewCreated");
-
         // FragmentSharedModel observes if the fragment in the bottom viewpager changes b/w
-        // GasManagerFragment and ServiceManagerFragment.
-        fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), fragment -> {
-            log.i("current fragment:%s",  fragment);
-            currentFragment = fragment;
-
-            // Query the recent data as the type of LiveData using Room(query on worker thread)
-            if(currentFragment instanceof GasManagerFragment) {
-                mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
-                    gasDataList = data;
-                    lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
-                    binding.tvLastInfo.setText(lastInfo);
-                });
-            } else if(currentFragment instanceof ServiceManagerFragment) {
-                mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
-                    serviceList = data;
-                    lastInfo = (data.size() > page) ? displayLastInfo(page) : getString(R.string.toast_expense_no_data);
-                    binding.tvLastInfo.setText(lastInfo);
-                });
-            }
+        // ExpenseGasFragment and ExpenseServiceFragment.
+        fragmentModel.getCurrentFragment().observe(getViewLifecycleOwner(), category -> {
+            this.category = category;
+            dispRecentExpensePager(category, page);
         });
 
     }
 
-    public void setCurrentFragmentIndex(int index) {
-        log.i("Hello Index");
+    public void dispRecentExpensePager(int category, int page) {
+        // Query the recent data as the type of LiveData using Room(query on worker thread)
+        this.category = category;
+
+        if(category == Constants.GAS) {
+            mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
+                gasDataList = data;
+                lastInfo = (data.size() > page)?displayLastInfo(page):getString(R.string.toast_expense_no_data);
+                binding.tvLastInfo.setText(lastInfo);
+            });
+        } else if(category == Constants.SVC) {
+            mDB.serviceManagerModel().loadRecentServiceData().observe(getViewLifecycleOwner(), data -> {
+                serviceList = data;
+                lastInfo = (data.size() > page)?displayLastInfo(page):getString(R.string.toast_expense_no_data);
+                binding.tvLastInfo.setText(lastInfo);
+            });
+        }
     }
 
     //Display the last 5 info retrieved from SQLite DB in the ViewPager with 5 fragments
     //@SuppressWarnings("ConstantConditions")
-    private String displayLastInfo(int pos) {
+    private String displayLastInfo(int page) {
         // The latest mileage should be retrieved from SharedPreferernces. Otherwise, the last mileage
         // be retrieved from DB because the mileage value column in GasManagerTable and
         String format = requireContext().getResources().getString(R.string.date_format_1);
         String won = getString(R.string.unit_won);
         String liter = getString(R.string.unit_liter);
 
-        if(currentFragment instanceof GasManagerFragment) {
-            String date = BaseActivity.formatMilliseconds(format, gasDataList.get(pos).dateTime);
+        if(category == Constants.GAS) {
+            String date = BaseActivity.formatMilliseconds(format, gasDataList.get(page).dateTime);
             String a = String.format("%-10s%s%s", getString(R.string.gas_label_date), date, "\n");
-            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasDataList.get(pos).mileage), "km", "\n");
-            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), gasDataList.get(pos).stnName, "\n");
-            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(gasDataList.get(pos).gasPayment), won, "\n");
-            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasDataList.get(pos).gasAmount), liter);
+            String b = String.format("%-10s%s%s%s", getString(R.string.exp_label_odometer), df.format(gasDataList.get(page).mileage), "km", "\n");
+            String c = String.format("%-12s%s%s", getString(R.string.gas_label_station), gasDataList.get(page).stnName, "\n");
+            String d = String.format("%-12s%s%s%s", getString(R.string.gas_label_expense), df.format(gasDataList.get(page).gasPayment), won, "\n");
+            String e = String.format("%-12s%s%s", getString(R.string.gas_label_amount),df.format(gasDataList.get(page).gasAmount), liter);
             return a + b + c + d + e;
 
-        } else if(currentFragment instanceof ServiceManagerFragment) {
-            String date = BaseActivity.formatMilliseconds(format, serviceList.get(pos).dateTime);
+        } else if(category == Constants.SVC) {
+            String date = BaseActivity.formatMilliseconds(format, serviceList.get(page).dateTime);
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
-            String b = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(pos).svcName, "\n");
-            String c = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(pos).mileage), "km", "\n");
-            String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_payment), df.format(serviceList.get(pos).totalExpense), won, "\n");
+            String b = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(page).svcName, "\n");
+            String c = String.format("%-8s%s%1s%s", getString(R.string.exp_label_odometer), df.format(serviceList.get(page).mileage), "km", "\n");
+            String d = String.format("%-8s%s%1s%s", getString(R.string.svc_label_payment), df.format(serviceList.get(page).totalExpense), won, "\n");
 
             return a + b + c + d;
-
         }
 
         return null;
     }
-
-    public void dispViewPager() {
-        log.i("hello world");
-    }
-
 }

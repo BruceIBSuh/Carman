@@ -8,23 +8,18 @@ import android.view.LayoutInflater;
 import android.widget.TextView;
 
 import com.silverback.carman.R;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.Opinet;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.util.List;
 
 public class OpinetSigunPriceView extends OpinetPriceView {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(OpinetSidoPriceView.class);
-
+    //private static final LoggingHelper log = LoggingHelperFactory.create(OpinetSidoPriceView.class);
     // Objects
     private TextView tvSigunName, tvSigunPrice;
 
@@ -54,40 +49,33 @@ public class OpinetSigunPriceView extends OpinetPriceView {
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceUp, 0);
             priceDownColor = typedArray.getColor(R.styleable.OpinetSigunPriceView_sigunPriceDown, 0);
-            //log.i("Color: %d, %d", priceUpColor, priceDownColor);
-
         } finally {
             typedArray.recycle();
         }
 
     }
 
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
         File sigunFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIGUN_PRICE);
         Uri sigunUri = Uri.fromFile(sigunFile);
         try(InputStream is = getContext().getContentResolver().openInputStream(sigunUri);
-            ObjectInputStream ois = new ObjectInputStream(is)){
-            List<Opinet.SigunPrice> sigunPrice = (List<Opinet.SigunPrice>)ois.readObject();
-            log.i("add Sigun Price: %s", sigunPrice.size());
-            for (Opinet.SigunPrice opinet : sigunPrice) {
-                if (opinet.getProductCd().matches(fuelCode)) {
-                    String sigunName = opinet.getSigunName();
-                    float price = opinet.getPrice();
-                    float diff = opinet.getDiff();
-                    log.i("sigun price: %s, %s", sigunName, price);
+            ObjectInputStream ois = new ObjectInputStream(is)) {
+            //List<Opinet.SigunPrice> sigunPrice = (List<Opinet.SigunPrice>)ois.readObject();
+            Object obj = ois.readObject();
+            Iterable<?> itr = (Iterable<?>)obj;
+            for(Object o : itr) {
+                Opinet.SigunPrice sigun = (Opinet.SigunPrice) o;
+                if(sigun.getProductCd().matches(fuelCode)) {
+                    String sigunName = sigun.getSigunName();
+                    float price = sigun.getPrice();
+                    float diff = sigun.getDiff();
                     tvSigunName.setText(sigunName);
                     setColoredTextView(tvSigunPrice, price, diff);
-                    break;
-                } else tvSigunPrice.setText(R.string.main_no_data);
+                }
             }
-
-        } catch(FileNotFoundException e) {
-            log.e("FileNotFoundException: %s", e);
-        } catch(IOException e) {
-            log.e("IOException: %s", e);
-        } catch(ClassNotFoundException e) {
-            log.e("ClassNotFoundException: %s", e);
+        } catch(IOException | ClassNotFoundException e) {
+            e.printStackTrace();
         }
     }
 

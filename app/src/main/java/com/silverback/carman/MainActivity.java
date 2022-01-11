@@ -245,7 +245,6 @@ public class MainActivity extends BaseActivity implements
         //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
         mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
 
-
         // Show the average price and create the price bar as hidden.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
@@ -263,12 +262,14 @@ public class MainActivity extends BaseActivity implements
     public void onNothingSelected(AdapterView<?> adapterView) {}
 
     // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
-    @SuppressWarnings("ResultOfMethodCallIgnored")
+    //@SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
         File cacheDir = getCacheDir();
-        if(cacheDir != null && checkPriceUpdate()) {
-            for(File file : Objects.requireNonNull(cacheDir.listFiles())) file.delete();
+        if(cacheDir.exists() && checkPriceUpdate()) {
+            for(File file : Objects.requireNonNull(cacheDir.listFiles())) {
+                if(file.delete()) log.i("file deleted: %s", file.getPath());
+            }
         }
 
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
@@ -319,7 +320,6 @@ public class MainActivity extends BaseActivity implements
             //if (dy > 0 || dy < 0 && binding.fab.isShown()) binding.fab.hide();
             super.onScrolled(recyclerView, dx, dy);
         }
-
         @Override
         public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
             /*
@@ -385,8 +385,6 @@ public class MainActivity extends BaseActivity implements
 
         return null;
     }
-
-
 
 
     // Method for implementing ViewModel callbacks to fetch a location and station list around
@@ -547,7 +545,7 @@ public class MainActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:
-                log.i("general setting result:%s", result.getData());
+                log.i("ActivityResult from Setting");
                 updateSettingResult(result);
                 break;
         }
@@ -594,7 +592,7 @@ public class MainActivity extends BaseActivity implements
 
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
     private void updateSettingResult(ActivityResult result) {
-        Intent resultIntent = result.getData();
+        final Intent resultIntent = result.getData();
         if(resultIntent == null) return;
 
         String userName = resultIntent.getStringExtra("userName");
@@ -602,11 +600,14 @@ public class MainActivity extends BaseActivity implements
         String gasType = resultIntent.getStringExtra("gasCode");
         String searchRadius = resultIntent.getStringExtra("searchRadius");
 
+        // Update the user name
+        if(!TextUtils.isEmpty(userName)) {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
+        }
 
-        if(!TextUtils.isEmpty(userName)) Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
-
+        // Update the price in the viewpager, which depends upon whether either district or gas type
+        // or both changes.
         if(!TextUtils.isEmpty(district) && !TextUtils.isEmpty(gasType)) {
-            log.i("both changed");
             gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasType);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 mainPricePagerAdapter.notifyItemChanged(0, gasType);
@@ -615,21 +616,22 @@ public class MainActivity extends BaseActivity implements
             });
 
         } else if(!TextUtils.isEmpty(district) && TextUtils.isEmpty(gasType)) {
-            log.i("district changed:%s", district);
             gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasCode);
-            opinetModel.distPriceComplete().observe(this, isDone -> {
-                mainPricePagerAdapter.notifyItemChanged(0, gasType);
+            opinetModel.distPriceComplete().observe(this, isComplete -> {
+                log.i("GasPriceTask successfully done");
+                mainPricePagerAdapter.notifyItemChanged(0, gasCode);
                 setCollapsedPriceBar();
             });
 
         } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
-            log.i("gas type changed:");
             isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
             defaultParams[0] = gasType;
             mainPricePagerAdapter.notifyItemChanged(0, gasType);
+        }
 
-        } else if(!TextUtils.isEmpty(searchRadius)) {
+        // Reset the searching radius for near gas stations.
+        if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;
             defaultParams[1] = searchRadius;
         }

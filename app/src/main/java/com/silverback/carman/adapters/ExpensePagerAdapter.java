@@ -7,17 +7,14 @@ import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 
-import com.google.j2objc.annotations.Weak;
-import com.silverback.carman.fragments.GasManagerFragment;
-import com.silverback.carman.fragments.ServiceManagerFragment;
-import com.silverback.carman.fragments.StatStmtsFragment;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.fragments.ExpenseGasFragment;
+import com.silverback.carman.fragments.ExpenseServiceFragment;
+import com.silverback.carman.fragments.ExpenseStmtsFragment;
 
 import java.lang.ref.WeakReference;
 
-// Adapter for ViewPager2 placed below the top frame, which displays GasManagerFragment,
-// ServiceManagerFragment, and StatGraphFragment in order.
+// Adapter for ViewPager2 placed below the top frame, which displays ExpenseGasFragment,
+// ExpenseServiceFragment, and ExpenseGraphFragment in order.
 
 public class ExpensePagerAdapter extends FragmentStateAdapter {
     //private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
@@ -31,9 +28,9 @@ public class ExpensePagerAdapter extends FragmentStateAdapter {
     //private WeakReference<Fragment> weakFragmentReference;
 
     private final Fragment[] fragments = new Fragment[]{
-            new GasManagerFragment(),
-            new ServiceManagerFragment(),
-            new StatStmtsFragment()
+            new ExpenseGasFragment(),
+            new ExpenseServiceFragment(),
+            new ExpenseStmtsFragment()
     };
 
     @NonNull

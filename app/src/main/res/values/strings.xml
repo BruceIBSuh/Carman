@@ -126,7 +126,7 @@
     <string name="gas_snackbar_favorite_removed">즐겨찾는 주유소에서 제외되었습니다</string>
     <string name="gas_snackbar_action_confirm">확인</string>
 
-    <!--ExpenseActivity$ServiceManagerFragment-->
+    <!--ExpenseActivity$ExpenseServiceFragment-->
     <string name="svc_label_date">정비 일자</string>
     <string name="svc_label_provider">정비 업체</string>
     <string name="svc_label_mileage">운행 거리</string>
@@ -159,7 +159,7 @@
     <string name="dialog_label_company">회사이름</string>
     <string name="dialog_label_phone">연락처</string>
     <string name="dialog_label_evaluation">서비스평가</string>
-    <!--ExpenseActivity$StatStmtsFragment-->
+    <!--ExpenseActivity$ExpenseStmtsFragment-->
     <string name="graph_x_axis_month">월</string>
     <string name="graph_y_axis_unit">천원</string>
     <string name="stat_subtitle">지출 내역</string>

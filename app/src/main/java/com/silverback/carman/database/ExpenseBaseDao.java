@@ -10,13 +10,13 @@ import java.util.List;
 
 @Dao
 public interface ExpenseBaseDao {
-    // Retrieve monthly total expense used in gas and service as well, which is used in StatGraphFragment.
+    // Retrieve monthly total expense used in gas and service as well, which is used in ExpenseGraphFragment.
     @Query("SELECT date_time, total_expense FROM ExpenseBaseEntity " +
             "WHERE (category = :category1 OR category = :category2) " +
             "AND date_time BETWEEN :start AND :end")
     LiveData<List<ExpenseByMonth>> loadMonthlyExpense(int category1, int category2, long start, long end);
 
-    // Retrieve the expense by category, which is used in StatStmtsFragment. To fetch the gas expense,
+    // Retrieve the expense by category, which is used in ExpenseStmtsFragment. To fetch the gas expense,
     // the service category is to be -1 to exclude the service expense. The service expense can be
     // likewise fetched.
     @Query("SELECT date_time, mileage, total_expense, stn_name, service_center FROM ExpenseBaseEntity " +
@@ -32,7 +32,7 @@ public interface ExpenseBaseDao {
     @Query("SELECT category, total_expense FROM ExpenseBaseEntity WHERE date_time BETWEEN :start AND :end ")
     LiveData<List<ExpenseConfig>> queryExpenseConfig(long start, long end);
 
-    // Subset of columns to return from loadMonthlyExpense, which is used in StatGraphFragment.
+    // Subset of columns to return from loadMonthlyExpense, which is used in ExpenseGraphFragment.
     class ExpenseByMonth {
         @ColumnInfo(name = "date_time")
         public long dateTime;
@@ -41,7 +41,7 @@ public interface ExpenseBaseDao {
         public int totalExpense;
     }
 
-    // Subset of columns to return from loaddExpenseByCategory, which is used in StatStmtsFragment
+    // Subset of columns to return from loaddExpenseByCategory, which is used in ExpenseStmtsFragment
     class ExpenseStatements {
         @ColumnInfo(name = "date_time")
         public long dateTime;

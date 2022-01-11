@@ -1,16 +1,13 @@
 package com.silverback.carman.fragments;
 
 
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -20,7 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
@@ -56,11 +52,11 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
-public class ServiceManagerFragment extends Fragment implements
+public class ExpenseServiceFragment extends Fragment implements
         ExpServiceItemAdapter.OnParentFragmentListener {
 
     // Constants
-    private static final LoggingHelper log = LoggingHelperFactory.create(ServiceManagerFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseServiceFragment.class);
     //private static final int SVC_CENTER = 2;
 
     // Objects
@@ -105,7 +101,7 @@ public class ServiceManagerFragment extends Fragment implements
     private int category;
     //private Location mPrevLocation;
 
-    public ServiceManagerFragment() {
+    public ExpenseServiceFragment() {
         // Required empty public constructor
     }
 
@@ -179,7 +175,7 @@ public class ServiceManagerFragment extends Fragment implements
         binding.tvServiceDate.setText(sdf.format(System.currentTimeMillis()));
         // To sync the fragment w/ the viewpager in the top frame. MUST be declared here, not in
         // onViewCreated.
-        fragmentModel.getCurrentFragment().setValue(this);
+        fragmentModel.getCurrentFragment().setValue(Constants.SVC);
 
     }
 
@@ -264,7 +260,7 @@ public class ServiceManagerFragment extends Fragment implements
     private void addViewModelObserver(ViewModel model) {
         if(model instanceof FragmentSharedModel) {
             // To notify ExpensePagerFragment of the current fragment to show its recent expenses
-            fragmentModel.getCurrentFragment().setValue(this);
+            //fragmentModel.getCurrentFragment().setValue(Constants.SVC);
 
             // Share a value b/w fragments  w/ DatePickerDialogFragment
             fragmentModel.getCustomDateAndTime().observe(getViewLifecycleOwner(), calendar -> {
@@ -472,7 +468,10 @@ public class ServiceManagerFragment extends Fragment implements
         int rowId = mDB.serviceManagerModel().insertAll(baseEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
-            fragmentModel.getTotalExpenseByCategory().setValue(totalExpense);
+
+            SparseIntArray sparseArray = new SparseIntArray();
+            sparseArray.put(Constants.SVC, totalExpense);
+            fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
         } //else totalExpenseLive.setValue(0);
     }
 

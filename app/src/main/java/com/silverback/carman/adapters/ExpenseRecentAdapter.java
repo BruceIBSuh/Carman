@@ -14,25 +14,31 @@ import com.silverback.carman.utils.Constants;
 
 import java.util.List;
 
-public class ExpRecentAdapter extends FragmentStateAdapter{
+public class ExpenseRecentAdapter extends FragmentStateAdapter{
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(ExpRecentAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseRecentAdapter.class);
 
-    public ExpRecentAdapter(FragmentManager fm, Lifecycle lifecycle) {
+    private ExpensePagerFragment expensePagerFragment;
+    private int index;
+
+    public ExpenseRecentAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
 
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        return ExpensePagerFragment.getInstance(position);
+        expensePagerFragment = ExpensePagerFragment.getInstance(position);
+        return expensePagerFragment;
     }
 
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
+        if(payloads.size() == 0) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else expensePagerFragment.dispRecentExpensePager(index, position);
     }
 
     @Override
@@ -40,7 +46,8 @@ public class ExpRecentAdapter extends FragmentStateAdapter{
         return Constants.NUM_RECENT_PAGES;
     }
 
-
-
+    public void setCurrentFragment(int index) {
+        this.index = index;
+    }
 
 }

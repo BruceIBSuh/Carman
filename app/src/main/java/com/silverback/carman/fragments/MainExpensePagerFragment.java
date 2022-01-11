@@ -11,7 +11,6 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 
 import com.silverback.carman.database.CarmanDatabase;
@@ -31,11 +30,11 @@ import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link MainExpPagerFragment#newInstance} factory method to
+ * Use the {@link MainExpensePagerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MainExpPagerFragment extends Fragment {
-    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpPagerFragment.class);
+public class MainExpensePagerFragment extends Fragment {
+    private static final LoggingHelper log = LoggingHelperFactory.create(MainExpensePagerFragment.class);
 
     private static final int NumOfPrevMonths = 3;
     private RecentMonthlyExpense monthlyExpense;
@@ -48,12 +47,12 @@ public class MainExpPagerFragment extends Fragment {
     private MainContentPagerConfigBinding expConfigBinding;
     private int position;
 
-    private MainExpPagerFragment() {
+    private MainExpensePagerFragment() {
         // Required empty public constructor
     }
 
-    public static MainExpPagerFragment newInstance(int position) {
-        MainExpPagerFragment fragment = new MainExpPagerFragment();
+    public static MainExpensePagerFragment newInstance(int position) {
+        MainExpensePagerFragment fragment = new MainExpensePagerFragment();
         Bundle args = new Bundle();
         args.putInt("position", position);
         fragment.setArguments(args);
