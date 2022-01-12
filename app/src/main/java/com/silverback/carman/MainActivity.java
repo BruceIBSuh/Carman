@@ -90,9 +90,8 @@ public class MainActivity extends BaseActivity implements
 
     private Location mPrevLocation;
     private List<Opinet.GasStnParcelable> mStationList;
-
     private ApplyImageResourceUtil imgResUtil;
-    private ActivityResultLauncher<Intent> activityResultLauncher;
+
 
     // Fields
     private String[] arrGasCode;
@@ -101,6 +100,12 @@ public class MainActivity extends BaseActivity implements
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
+
+
+    // The manual says that registerForActivityResult() is safe to call before a fragment or activity
+    // is created
+    private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -114,7 +119,6 @@ public class MainActivity extends BaseActivity implements
         // Set initial values
         defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
-        //arrGasName = getResources().getStringArray(R.array.spinner_fuel_name);
         mPrevLocation = null;
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
@@ -126,7 +130,7 @@ public class MainActivity extends BaseActivity implements
         Objects.requireNonNull(getSupportActionBar()).setTitle(title);
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
-        // MainContent RecyclerView to display main contents in the activity
+        // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(
                 Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
@@ -141,7 +145,9 @@ public class MainActivity extends BaseActivity implements
         setGasSpinnerSelection(defaultParams[0]);
 
 
-        // Create MainPricePagerAdapter and set it to the viewpager.
+        // Create MainPricePagerAdapter which displays the graphs for the last 3 month total expense
+        // and the expense configuration of this month. More pages should be added to analyze the
+        // user expense.
         mainPricePagerAdapter = new MainPricePagerAdapter(this);
         mainPricePagerAdapter.setFuelCode(defaultParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
@@ -159,14 +165,11 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
-        // Method for implementing ViewModel callbacks to fetch a location and station list around
-        // the location.
+        // Method for implementing ViewModel callbacks to fetch a location and near station list.
         observeViewModel(locationModel);
         observeViewModel(stnModel);
 
-        // Create ActivityResultLauncher to call SettingActiity and get results
-        activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), this::callActivityResult);
+
     }
 
     @Override
@@ -201,7 +204,8 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        // Turn the near station recyclerview off.
         if(item.getItemId() == R.id.action_garage) {
             activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
         } else if(item.getItemId() == R.id.action_board) {
@@ -212,7 +216,6 @@ public class MainActivity extends BaseActivity implements
             Intent settingIntent = new Intent(this, SettingActivity.class);
             activityResultLauncher.launch(settingIntent);
         }
-
         return true;
     }
 
@@ -241,16 +244,17 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
         gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
-        // Reset the price info in the viewpager.
+        // Update the district gas price with a selected gas type
         mainPricePagerAdapter.setFuelCode(gasCode);
         //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
         mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
 
-        // Show the average price and create the price bar as hidden.
+        // Update the average gas price and the hidden price bar.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
 
-        // In case the new station recyclerview is in the foreground, update the price info with
+
+        // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
@@ -341,6 +345,7 @@ public class MainActivity extends BaseActivity implements
                 binding.progbtnGas.setProgressColor(isStnViewOn);
                 locationTask = sThreadManager.fetchLocationTask(this, locationModel);
             });
+
         } else {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
@@ -520,9 +525,10 @@ public class MainActivity extends BaseActivity implements
     }
 
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
-    private void callActivityResult(ActivityResult result) {
+    private void getActivityResult(ActivityResult result) {
         // If the station reyelcerview is in the visible state, it should be gone
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        log.i("isStnView in callActivityResult:%s",isStnViewOn);
         if(isStnViewOn) {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
@@ -534,11 +540,12 @@ public class MainActivity extends BaseActivity implements
         if(resultIntent == null) return;
 
         switch(result.getResultCode()) {
+            /*
             case Activity.RESULT_OK: // SettingActivity result
                 log.i("activity result ok?");
                 updateSettingResult(result);
                 break;
-
+            */
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 log.i("result back:%s, %s", resultIntent.getIntExtra("expense", 0), resultIntent.getIntExtra("category", 0));
                 //int[] arr = resultIntent.getIntArrayExtra("expense");
@@ -641,7 +648,8 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-
+    // Implement MainContentAdapter.MainContentAdapterListener for the buttons defined in the
+    // notification and the postings feed.
     @Override
     public void onClickBoard(int category) {
         Intent boardIntent = new Intent(this, BoardActivity.class);

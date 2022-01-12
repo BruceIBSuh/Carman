@@ -19,9 +19,6 @@ import java.lang.ref.WeakReference;
 public class ExpensePagerAdapter extends FragmentStateAdapter {
     //private static final LoggingHelper log = LoggingHelperFactory.create(ExpensePagerAdapter.class);
 
-    public ExpensePagerAdapter(FragmentActivity fa) {
-        super(fa);
-    }
     public ExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }

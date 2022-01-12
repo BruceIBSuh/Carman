@@ -50,7 +50,6 @@ public class ProgressButton extends LinearLayout {
         Drawable bgButtonRef;
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
-
         try {
             pbColorRef = a.getColor(R.styleable.ProgressButton_progBgColor, 0);
             bgButtonRef = a.getDrawable(R.styleable.ProgressButton_bgToggle);

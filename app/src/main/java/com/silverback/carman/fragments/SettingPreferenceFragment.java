@@ -184,7 +184,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(Constants.USER_IMAGE);
-        userImagePref.setOnPreferenceClickListener(view -> {
+        Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
             // Carmera permission check.
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -192,14 +192,14 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             }
 
             DialogFragment dialogFragment = new CropImageDialogFragment();
-            dialogFragment.show(getActivity().getSupportFragmentManager(), null);
+            dialogFragment.show(requireActivity().getSupportFragmentManager(), null);
             return true;
         });
 
         // LiveData from ApplyImageREsourceUtil to set a drawable to the icon. The viewmodel is
         // defined in onViewCreated().
         ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-        imgModel.getGlideDrawableTarget().observe(getActivity(), res -> userImagePref.setIcon(res));
+        imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
     }
 
     /*
@@ -215,7 +215,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
-            log.i("new auto data: %s, %s", makerName, modelName);
 
             // The null value that JSONObject returns seems different than that of other regular
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it

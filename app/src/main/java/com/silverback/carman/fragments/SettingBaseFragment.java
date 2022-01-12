@@ -20,6 +20,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     // either in SettingAutoFragment or SettingPreferenceFragment.
     void queryAutoMaker(String automaker) {
         autoRef.document(automaker).get().addOnSuccessListener(snapshot -> {
-            if(snapshot != null && snapshot.exists()) queryAutoMakerSnapshot(snapshot);
+            if(snapshot.exists()) queryAutoMakerSnapshot(snapshot);
         }).addOnFailureListener(e -> log.e("No automaker queried:%s", e.getMessage()));
     }
 
@@ -109,7 +110,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         List<String> autoDataList = new ArrayList<>();
         try {
             JSONArray jsonObject = new JSONArray(jsonString);
-            for(int i = 0; i < jsonObject.length(); i++) autoDataList.add(jsonObject.optString(i));
+            for(int i = 0; i < jsonObject.length(); i++)
+                autoDataList.add(jsonObject.optString(i));
 
             // The null value that JSONObject returns seems different than that of other regular objects.
             // Thus, JSONObject.isNull(int) should be checked, then, if true,  set the null value to it .

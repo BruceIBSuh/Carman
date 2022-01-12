@@ -50,7 +50,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.viewpager.widget.ViewPager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -140,10 +139,10 @@ public class BoardActivity extends BaseActivity implements
         mListener = listener;
     }
 
-    // ActivityResult API(registerForActivityResult(), ActivityResultContract, ActivityResultCallback
-    // replaces startActivityForResult() and OnActivityResult()
+
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+    // Create ActivityResultLauncher to call SettingActiity and get results
 
     //@SuppressWarnings("ConstantConditions")
     @Override
@@ -211,6 +210,7 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public void onStop() {
+        activityResultLauncher.unregister();
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onStop();
     }
@@ -235,7 +235,7 @@ public class BoardActivity extends BaseActivity implements
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_options_board, menu);
+        getMenuInflater().inflate(R.menu.options_board, menu);
         this.menu = menu;
         menu.getItem(0).setVisible(false);
         menu.getItem(1).setVisible(false);

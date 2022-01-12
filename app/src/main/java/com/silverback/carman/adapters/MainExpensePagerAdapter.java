@@ -20,10 +20,6 @@ public class MainExpensePagerAdapter extends FragmentStateAdapter {
 
     private MainExpensePagerFragment targetFragment;
 
-    public MainExpensePagerAdapter(FragmentActivity fa) {
-        super(fa);
-    }
-
     public MainExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
@@ -42,9 +38,10 @@ public class MainExpensePagerAdapter extends FragmentStateAdapter {
 
     @Override
     public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
-        else {
-            log.i("reset adapter");
+        if(payloads.isEmpty()) {
+            super.onBindViewHolder(holder, position, payloads);
+        } else {
+            log.i("payloads exist");
         }
 
     }

@@ -102,7 +102,7 @@ public class SettingActivity extends BaseActivity implements
     private ActivitySettingsBinding binding;
     public Toolbar settingToolbar;
     private FrameLayout frameLayout;
-    private Fragment fragment;
+    private Fragment childFragment;
 
     // Fields
     private String userId, distCode, userName, gasCode, radius, userImage, jsonAutoData, permCamera;
@@ -131,10 +131,12 @@ public class SettingActivity extends BaseActivity implements
         setSupportActionBar(binding.settingToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-        fragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+
 
         // get Intent data, if any.
         if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
+        log.i("request code: %s", requestCode);
 
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
@@ -167,28 +169,6 @@ public class SettingActivity extends BaseActivity implements
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
         addPreferenceFragment(settingFragment, getSupportFragmentManager());
-
-        /*
-        getSupportFragmentManager().beginTransaction()
-                .replace(R.id.frame_setting, settingFragment, "preferenceFragment")
-                .addToBackStack(null)
-                .commit();
-
-        // Callback will be automatically unregistered when this FragmentManager is destroyed.
-        getSupportFragmentManager().registerFragmentLifecycleCallbacks(
-                new FragmentManager.FragmentLifecycleCallbacks() {
-                    @Override
-                    public void onFragmentViewCreated(
-                            @NonNull FragmentManager fm, @NonNull Fragment f, @NonNull View v,
-                            @Nullable Bundle savedInstanceState) {
-                        super.onFragmentViewCreated(fm, f, v, savedInstanceState);
-                        markupRequestedPreference((PreferenceFragmentCompat) f, requestCode);
-                    }
-                }, false);
-
-        */
-
-
 
         // Sync issue may occur.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
@@ -239,7 +219,9 @@ public class SettingActivity extends BaseActivity implements
 
 
     @Override
-    public void onBackPressed() {}
+    public void onBackPressed() {
+        log.i("onBackPressed in the parent activity");
+    }
     /*
      * The return value should benefit when there are multiple fragments and they overrides the
      * OnOptionsItemSelected.
@@ -257,12 +239,19 @@ public class SettingActivity extends BaseActivity implements
         // just pop the fragment off the back stack, which works like the Back command.
         if (item.getItemId() == android.R.id.home) {
             log.i("setting update");
-            if(resultIntent != null) setResult(Constants.REQUEST_MAIN_SETTING_GENERAL, resultIntent);
-            finish();
+            if(childFragment instanceof SettingPreferenceFragment) {
+                setResult(Constants.REQUEST_MAIN_SETTING_GENERAL, resultIntent);
+                finish();
+                return true;
+
+            } else {
+                getSupportFragmentManager().popBackStack();
+                Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
+                return false;
+            }
+
 
         } else return super.onOptionsItemSelected(item);
-
-        return true;
     }
         /*
         if(item.getItemId() == android.R.id.home) {
@@ -332,6 +321,7 @@ public class SettingActivity extends BaseActivity implements
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
             }
+
         // The return value should be false when it comes to the menu that adds a new service item,
         // which means this method will be handled in the SettingSvcItemFragment.
         } else return item.getItemId() != R.id.menu_add_service_item;
@@ -349,12 +339,13 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        log.i("onPreferenceStartFragment");
+        log.i("onPreferenceStartFragment: %s, %s", caller.getId(), pref);
         final Bundle args = pref.getExtras();
-        final Fragment fragment = getSupportFragmentManager().getFragmentFactory()
+        final Fragment fragment = getSupportFragmentManager()
+                .getFragmentFactory()
                 .instantiate(getClassLoader(), pref.getFragment());
-
         fragment.setArguments(args);
+
         getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {
             log.i("FragmentResultListener: %s, %s", requestKey, result);
         });
@@ -580,8 +571,8 @@ public class SettingActivity extends BaseActivity implements
 
     // Display the indicator for which preferrence should be set as long as the activity is invoked
     // by ActivityResultLauncher.
-    private void markupPreference(PreferenceFragmentCompat fragment, int code) {
-        switch(code) {
+    private void markupPreference(PreferenceFragmentCompat fragment, int caller) {
+        switch(caller) {
             case Constants.REQUEST_BOARD_SETTING_USERNAME:
                 Preference namePref = fragment.findPreference(Constants.USER_NAME);
                 log.i("namePref: %s", namePref);

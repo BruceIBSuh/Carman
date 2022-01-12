@@ -7,7 +7,9 @@
     <color name="primaryColor">#778899</color>
     <color name="secondaryColor">#B0C4DE</color>
 
-    <color name="recyclerDivider">#F9F9F9</color>
+    <!-- RecyclerDividerUtil-->
+    <!--<color name="recyclerDivider">#F9F9F9</color>-->
+    <color name="recyclerDivider">#E0E0E0</color>
     <color name="recyclerExpenseDivier">#FF9900</color>
 
     <!-- ExpenseActivity -->

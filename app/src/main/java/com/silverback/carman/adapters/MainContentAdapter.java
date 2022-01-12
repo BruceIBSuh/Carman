@@ -1,6 +1,5 @@
 package com.silverback.carman.adapters;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +20,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 
-import java.lang.reflect.Array;
 import java.util.List;
 
 public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -45,11 +43,12 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     // Constructor
-    public MainContentAdapter(Context context, MainContentAdapterListener listener) {
+    public MainContentAdapter(FragmentActivity fa, MainContentAdapterListener listener) {
         super();
         this.mListener = listener;
         firestore= FirebaseFirestore.getInstance();
-        expensePagerAdapter = new MainExpensePagerAdapter((FragmentActivity)context);
+        expensePagerAdapter = new MainExpensePagerAdapter(fa.getSupportFragmentManager(), fa.getLifecycle());
+        //expensePagerAdapter = new MainExpensePagerAdapter((FragmentActivity)context);
         //fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
     }
 
@@ -165,8 +164,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 } else {
                     // Big Bug: MUST NOT invoke Gas and SVC at the same time.
                     expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
-                    //expensePagerAdapter.notifyDataSetChanged();
-                    //expensePagerAdapter.notifyItemRangeChanged(0, expensePagerAdapter.getItemCount(), payloads);
+                    //expensePagerAdapter.notifyItemRangeChanged(0, expensePagerAdapter.getItemCount());
 
                 }
             }
