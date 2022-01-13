@@ -109,17 +109,19 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     List<String> parseAutoData(String jsonString) {
         List<String> autoDataList = new ArrayList<>();
         try {
-            JSONArray jsonObject = new JSONArray(jsonString);
-            for(int i = 0; i < jsonObject.length(); i++)
-                autoDataList.add(jsonObject.optString(i));
+            JSONArray jsonArray = new JSONArray(jsonString);
+            for(int i = 0; i < jsonArray.length(); i++) autoDataList.add(jsonArray.optString(i));
 
             // The null value that JSONObject returns seems different than that of other regular objects.
             // Thus, JSONObject.isNull(int) should be checked, then, if true,  set the null value to it .
             // This is firmly at bug issue.
-            makerName = (jsonObject.isNull(0))? null : jsonObject.optString(0);
-            modelName = (jsonObject.isNull(1))? null : jsonObject.optString(1);
-            typeName = (jsonObject.isNull(2))? null : jsonObject.optString(2);
-            yearName = (jsonObject.isNull(3))? null : jsonObject.optString(3);
+            makerName = (jsonArray.isNull(0))? null : jsonArray.optString(0);
+            modelName = (jsonArray.isNull(1))? null : jsonArray.optString(1);
+            typeName = (jsonArray.isNull(2))? null : jsonArray.optString(2);
+            engineName = jsonArray.optString(3);
+            yearName = (jsonArray.isNull(4))? null : jsonArray.optString(3);
+            log.i("AutoData parsed: %s, %s, %s, %s, %s", makerName, modelName, typeName, engineName, yearName);
+
         } catch(JSONException e) {e.printStackTrace();}
 
         return autoDataList;

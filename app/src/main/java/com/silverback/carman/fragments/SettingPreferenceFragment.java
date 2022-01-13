@@ -215,7 +215,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
             makerName = parseAutoData(jsonString).get(0);
             modelName = parseAutoData(jsonString).get(1);
-
+            log.i("maker and model: %s, %s", makerName, modelName);
             // The null value that JSONObject returns seems different than that of other regular
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
             // if it is true. This is firmly at bug issue.

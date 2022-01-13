@@ -237,13 +237,10 @@ public class SettingActivity extends BaseActivity implements
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
-
-        //childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
-        childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
-        log.i("Fragment in the framelayout: %s", childFragment);
-
         if (item.getItemId() == android.R.id.home) {
-            log.i("setting update");
+            childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+            //childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
+
             if(childFragment instanceof SettingPreferenceFragment) {
                 switch(requestCode) {
                     case Constants.REQUEST_MAIN_SETTING_GENERAL:
@@ -259,6 +256,7 @@ public class SettingActivity extends BaseActivity implements
                 return true;
 
             } else {
+                log.i("Back to SettingPreference");
                 getSupportFragmentManager().popBackStack();
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
@@ -354,7 +352,6 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
-        log.i("onPreferenceStartFragment: %s, %s", caller.getId(), pref);
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager()
                 .getFragmentFactory()
@@ -566,7 +563,6 @@ public class SettingActivity extends BaseActivity implements
             public void onFragmentAttached(
                     @NonNull FragmentManager fm, @NonNull Fragment f, @NonNull Context context) {
                 super.onFragmentAttached(fm, f, context);
-                log.i("onFragmentAttched");
             }
 
             @Override
@@ -574,11 +570,11 @@ public class SettingActivity extends BaseActivity implements
                     @NonNull FragmentManager fm, @NonNull Fragment fragment, @NonNull View v,
                     @Nullable Bundle savedInstanceState) {
                 super.onFragmentViewCreated(fm, fragment, v, savedInstanceState);
-                log.i("onViewCreated");
                 // To prevent SettingAutoFragment from invoking the method, which leads to cause
                 // NullPointerException due to no autoRef reference.
                 if(fragment instanceof SettingPreferenceFragment){
-                    if(requestCode != -1) markupPreference((PreferenceFragmentCompat)fragment, requestCode);
+                    if(requestCode != -1)
+                        markupPreference((PreferenceFragmentCompat)fragment, requestCode);
                 }
 
             }}, false);

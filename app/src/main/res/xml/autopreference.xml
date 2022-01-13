@@ -9,6 +9,7 @@ either XML or the setSummary method in Java.
         app:key="carman_pref_automaker"
         app:title="@string/pref_auto_maker"
         app:summary="@string/pref_entry_void"
+        app:defaultValue="@string/pref_entry_void"
         app:useSimpleSummaryProvider="false"/>
     <ListPreference
         app:key="carman_pref_autotype"
