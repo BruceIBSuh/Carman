@@ -76,6 +76,10 @@ public class MainExpensePagerFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        // Must instantiate the object here to have getViewLifecycleOwner();
+        log.i("update recent expense:");
+        monthlyExpense = new RecentMonthlyExpense();
+
         switch(position){
             case 0:
                 totalBinding = MainContentPagerTotalBinding.inflate(inflater, container, false);
@@ -93,9 +97,7 @@ public class MainExpensePagerFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Must instantiate the object here to have getViewLifecycleOwner();
-        log.i("update recent expense:");
-        monthlyExpense = new RecentMonthlyExpense();
+
         switch(position) {
             case 0:
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
@@ -125,7 +127,7 @@ public class MainExpensePagerFragment extends Fragment {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                monthlyExpense.queryPrevMonthExpense();
+                monthlyExpense.queryPrevMonthExpense(); // Bug here!!!!
                 //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
             }
         });
@@ -193,6 +195,7 @@ public class MainExpensePagerFragment extends Fragment {
 
         // Query the expense data of previous months except the current one.
         // BUGS AROUND HERE WHEN GETTING RESULT FROM saveExpense()!!!
+        // IllegalStateException: Can't access the Fragment View's LifecycleOwner when getView() is null.
         void queryPrevMonthExpense() {
             for(int i = 1; i < NumOfPrevMonths; i++) {
                 final int index = i;
