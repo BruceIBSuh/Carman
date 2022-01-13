@@ -35,7 +35,7 @@ public class Constants {
     public static final float UPDATE_DISTANCE = 50; //Distance difference to update near stations
 
     // Geofences
-    public static final String MIN_RADIUS = "200"; //Current station locating radius
+    public static final String MIN_RADIUS = "500"; //Current station locating radius
     public static final int MAX_FAVORITE = 10;
     public static final int GEOFENCE_RADIUS = 250; //Geofence zoning radius
     public static final int GEOFENCE_LOITERING_TIME = 1000 * 30; //setLoiteringTime()for GEOFENCE_TRANSITION_DWELL

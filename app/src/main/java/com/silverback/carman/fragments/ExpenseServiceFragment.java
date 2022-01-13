@@ -2,6 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
@@ -471,7 +472,12 @@ public class ExpenseServiceFragment extends Fragment implements
 
             SparseIntArray sparseArray = new SparseIntArray();
             sparseArray.put(Constants.SVC, totalExpense);
-            fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
+            //fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("category", Constants.GAS);
+            resultIntent.putExtra("expense", totalExpense);
+            Objects.requireNonNull(getActivity()).setResult(Constants.REQUEST_MAIN_EXPENSE_TOTAL, resultIntent);
+            Objects.requireNonNull(getActivity()).finish();
         } //else totalExpenseLive.setValue(0);
     }
 

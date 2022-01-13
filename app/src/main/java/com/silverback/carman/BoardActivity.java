@@ -255,7 +255,6 @@ public class BoardActivity extends BaseActivity implements
             if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
                 binding.frameContents.removeView(binding.boardPager);
                 finish();
-
             } else {
                 // FrameLayout may contain either BoardWriteFragment or BoardEditFragment. On pressing
                 // the up button, either of the fragments is removed from the container and it should be
@@ -350,14 +349,13 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onClick(View view) {
         if(view.getId() != R.id.fab_board_write) return;
-
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
                     binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
                 Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
-                intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                intent.putExtra("caller", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 activityResultLauncher.launch(intent);
             }).show();
 
@@ -483,6 +481,9 @@ public class BoardActivity extends BaseActivity implements
                 menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
                 break;
 
+            case Constants.REQUEST_BOARD_SETTING_USERNAME:
+                break;
+
             default: break;
         }
     }
@@ -596,7 +597,7 @@ public class BoardActivity extends BaseActivity implements
             public void onClick(@NonNull View textView) {
                 int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
                 Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
-                intent.putExtra("requestCode", requestCode);
+                intent.putExtra("caller", requestCode);
                 activityResultLauncher.launch(intent);
             }
         };
@@ -769,7 +770,9 @@ public class BoardActivity extends BaseActivity implements
 
         // Animations should differ according to whether the current page is on the auto club.
         if(category == Constants.BOARD_AUTOCLUB) {
-            tvAutoFilterLabel.setVisibility(View.VISIBLE);
+            // BUG: java.lang.NullPointerException: Attempt to invoke virtual method
+            // 'void android.widget.TextView.setVisibility(int)' on a null object reference
+            Objects.requireNonNull(tvAutoFilterLabel).setVisibility(View.VISIBLE);
             cbGeneral.setVisibility(View.GONE);
 
             getSupportActionBar().setTitle(createAutoClubTitle());

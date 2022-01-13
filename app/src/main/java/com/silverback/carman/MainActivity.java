@@ -107,6 +107,7 @@ public class MainActivity extends BaseActivity implements
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
 
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -207,13 +208,16 @@ public class MainActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Turn the near station recyclerview off.
         if(item.getItemId() == R.id.action_garage) {
-            activityResultLauncher.launch(new Intent(this, ExpenseActivity.class));
+            Intent expenseIntent = new Intent(this, ExpenseActivity.class);
+            expenseIntent.putExtra("caller", Constants.REQUEST_MAIN_EXPENSE_TOTAL);
+            activityResultLauncher.launch(expenseIntent);
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
         } else if(item.getItemId() == R.id.action_setting) {
             Intent settingIntent = new Intent(this, SettingActivity.class);
+            settingIntent.putExtra("caller", Constants.REQUEST_MAIN_SETTING_GENERAL);
             activityResultLauncher.launch(settingIntent);
         }
         return true;
@@ -526,6 +530,7 @@ public class MainActivity extends BaseActivity implements
 
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void getActivityResult(ActivityResult result) {
+        log.i("activity result: %s", result);
         // If the station reyelcerview is in the visible state, it should be gone
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         log.i("isStnView in callActivityResult:%s",isStnViewOn);
@@ -540,15 +545,13 @@ public class MainActivity extends BaseActivity implements
         if(resultIntent == null) return;
 
         switch(result.getResultCode()) {
-            /*
             case Activity.RESULT_OK: // SettingActivity result
                 log.i("activity result ok?");
                 updateSettingResult(result);
                 break;
-            */
+
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 log.i("result back:%s, %s", resultIntent.getIntExtra("expense", 0), resultIntent.getIntExtra("category", 0));
-                //int[] arr = resultIntent.getIntArrayExtra("expense");
                 List<Integer> list = new ArrayList<>();
                 list.add(resultIntent.getIntExtra("category", 0));
                 list.add(resultIntent.getIntExtra("expense", 0));

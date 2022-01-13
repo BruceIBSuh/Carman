@@ -144,14 +144,13 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
 
         // Upon saving and uploading the expense data, back to MainActivity w/ the activity result
+        /*
         fragmentModel.getTotalExpenseByCategory().observe(this, sparseExpense -> {
-
             final int key = sparseExpense.keyAt(0);
             final int total = sparseExpense.get(key);
             log.i("sparseArray: %s, %s", key, total);
-            recentAdapter.setCurrentFragment(key);
-            recentAdapter.notifyItemChanged(0, total);
-
+            //recentAdapter.setCurrentFragment(key);
+            //recentAdapter.notifyItemChanged(0, total);
             Intent resultIntent = new Intent();
             resultIntent.putExtra("category", key);
             resultIntent.putExtra("expense", total);
@@ -187,9 +186,9 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 finish();
             }
 
-             */
-        });
 
+        });
+        */
         // Init the task to get the current location.
         locationTask = sThreadManager.fetchLocationTask(this, locationModel);
         // Worker Thread for getting service items and the current gas station.

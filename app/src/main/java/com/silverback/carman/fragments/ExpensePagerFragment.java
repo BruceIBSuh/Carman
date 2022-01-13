@@ -2,6 +2,7 @@ package com.silverback.carman.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -95,10 +96,16 @@ public class ExpensePagerFragment extends Fragment {
 
     }
 
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == R.id.save_expense){
+            return false;
+        } else return super.onOptionsItemSelected(item);
+    }
+
     public void dispRecentExpensePager(int category, int page) {
         // Query the recent data as the type of LiveData using Room(query on worker thread)
         this.category = category;
-
         if(category == Constants.GAS) {
             mDB.gasManagerModel().loadRecentGasData().observe(getViewLifecycleOwner(), data -> {
                 gasDataList = data;

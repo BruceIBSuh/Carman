@@ -119,7 +119,6 @@ public class SettingActivity extends BaseActivity implements
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -131,12 +130,13 @@ public class SettingActivity extends BaseActivity implements
         setSupportActionBar(binding.settingToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-        childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+
 
 
         // get Intent data, if any.
-        if(getIntent() != null) requestCode = getIntent().getIntExtra("requestCode", -1);
+        if(getIntent() != null) requestCode = getIntent().getIntExtra("caller", -1);
         log.i("request code: %s", requestCode);
+
 
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
@@ -237,10 +237,24 @@ public class SettingActivity extends BaseActivity implements
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
+
+        //childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+        childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
+        log.i("Fragment in the framelayout: %s", childFragment);
+
         if (item.getItemId() == android.R.id.home) {
             log.i("setting update");
             if(childFragment instanceof SettingPreferenceFragment) {
-                setResult(Constants.REQUEST_MAIN_SETTING_GENERAL, resultIntent);
+                switch(requestCode) {
+                    case Constants.REQUEST_MAIN_SETTING_GENERAL:
+                        log.i("result back to main");
+                        setResult(requestCode, resultIntent);
+                        break;
+                    case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                        setResult(requestCode, resultIntent);
+                        break;
+                }
+
                 finish();
                 return true;
 
@@ -250,10 +264,11 @@ public class SettingActivity extends BaseActivity implements
                 return false;
             }
 
-
-        } else return super.onOptionsItemSelected(item);
+        // The return value should be false when it comes to the menu that adds a new service item,
+        // which means this method will be handled in the SettingSvcItemFragment.
+        } else return item.getItemId() != R.id.menu_add_service_item;
     }
-        /*
+    /*
         if(item.getItemId() == android.R.id.home) {
             uploadUserDataToFirebase(uploadData);
             Intent resultIntent = new Intent();
@@ -270,7 +285,7 @@ public class SettingActivity extends BaseActivity implements
         } else super.onOptionsItemSelected(item);
 
         // Use FragmentManager.findFragmentByTag as far as a fragment is dynamically added.
-                Fragment fragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
+        Fragment fragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
         log.i("Fragment in the framelayout: %s", fragment);
 
         if(item.getItemId() == android.R.id.home) {
@@ -284,7 +299,7 @@ public class SettingActivity extends BaseActivity implements
                     case Constants.REQUEST_MAIN_SETTING_GENERAL:
                         log.i("Back to MainActivity: %s", distCode);
 
-                        Intent resultIntent = new Intent();
+                        //Intent resultIntent = new Intent();
                         resultIntent.putExtra("district", distCode);
                         resultIntent.putExtra("userName", userName);
                         resultIntent.putExtra("fuelCode", gasCode);
@@ -328,7 +343,7 @@ public class SettingActivity extends BaseActivity implements
 
     }
 
-         */
+     */
 
     /*
      * Invoked when a preference which has an associated custom (dialog)fragment is tapped. If you do not

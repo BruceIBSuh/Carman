@@ -1,12 +1,17 @@
 package com.silverback.carman.fragments;
 
 
+import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -109,6 +114,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
             //defaultParams = getArguments().getStringArray("defaultParams");
             //userId = getArguments().getString("userId");
         }
+
 
         // The parent activity gets started by tabbing the Geofence notification w/ the pendingintent
         // that contains the station id, name, geofencing time, and category. The data will fill out
@@ -312,7 +318,6 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         super.onDestroy();
     }
 
-
     private void setCurrentStation() {
         if(isGeofenceIntent) return;
         stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
@@ -455,7 +460,14 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 log.i("Total GasExpense: %s", gasTotal);
                 SparseIntArray sparseArray = new SparseIntArray();
                 sparseArray.put(Constants.GAS, gasTotal);
-                fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
+                //fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
+
+                Intent resultIntent = new Intent();
+                resultIntent.putExtra("category", Constants.GAS);
+                resultIntent.putExtra("expense", gasTotal);
+                Objects.requireNonNull(getActivity()).setResult(Constants.REQUEST_MAIN_EXPENSE_TOTAL, resultIntent);
+                Objects.requireNonNull(getActivity()).finish();
+
             } else log.e("Failed to save the form data");
         });
     }
