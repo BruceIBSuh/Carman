@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman.database.FavoriteProviderEntity;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Calendar;
@@ -59,7 +60,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
     // SettingAutoFragment
-    private MutableLiveData<String> autoData;
+    private MutableLiveData<JSONArray> jsonAutoDataArray;
     private MutableLiveData<Boolean> jsonAutoData;
 
     // Pass the Sido and Sigun name fetched in SettingSpinnerDlgFragment to SettingPrefernceFragment
@@ -233,9 +234,9 @@ public class FragmentSharedModel extends ViewModel {
         return jsonAutoData;
     }
 
-    public MutableLiveData<String> getAutoData() {
-        if(autoData == null) autoData = new MutableLiveData<>();
-        return autoData;
+    public MutableLiveData<JSONArray> getAutoData() {
+        if(jsonAutoDataArray == null) jsonAutoDataArray = new MutableLiveData<>();
+        return jsonAutoDataArray;
     }
 
     public MutableLiveData<Boolean> getPermission() {

@@ -586,7 +586,7 @@ public class SettingActivity extends BaseActivity implements
         switch(caller) {
             case Constants.REQUEST_BOARD_SETTING_USERNAME:
                 Preference namePref = fragment.findPreference(Constants.USER_NAME);
-                log.i("namePref: %s", namePref);
+                    log.i("namePref: %s", namePref);
                 Objects.requireNonNull(namePref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 

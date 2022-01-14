@@ -9,28 +9,27 @@ either XML or the setSummary method in Java.
         app:key="carman_pref_automaker"
         app:title="@string/pref_auto_maker"
         app:summary="@string/pref_entry_void"
-        app:defaultValue="@string/pref_entry_void"
-        app:useSimpleSummaryProvider="false"/>
+        app:useSimpleSummaryProvider="true"/>
     <ListPreference
         app:key="carman_pref_autotype"
         app:enabled="false"
         app:title="@string/pref_auto_type"
-        app:defaultValue="@string/pref_entry_void" />
+         />
     <ListPreference
         app:key="carman_pref_enginetype"
         app:enabled="false"
         app:title="@string/pref_engine_type"
-        app:defaultValue="@string/pref_entry_void" />
+         />
     <ListPreference
         app:key="carman_pref_automodel"
         app:enabled="false"
         app:title="@string/pref_auto_model"
-        app:defaultValue="@string/pref_entry_void" />
+         />
     <ListPreference
         app:key="carman_pref_autoyear"
         app:enabled="false"
         app:title="@string/pref_auto_year"
-        app:defaultValue="@string/pref_entry_void" />
+         />
 </PreferenceScreen>
 <!--
 Setting a summary with a String formatting marker is no longer supported.

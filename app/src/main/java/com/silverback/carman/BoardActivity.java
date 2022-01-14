@@ -74,19 +74,19 @@ import java.util.List;
 import java.util.Objects;
 
 /*
- * This activity mainly consists of a framelayout that alternatively contains either a viewpager
+ * This activity is mainly composed of a framelayout that alternatively contains either a viewpager
  * or the fragments to edit or write a post
  *
- * The viewpager has fragments statically created by categorized posting board and
- * controlled by BoardPagerAdapter which extends FragmentStateAdapter.
+ * The viewpager has fragments statically created for categorized posting board and controlled by
+ * BoardPagerAdapter which extends FragmentStateAdapter.
  *
  * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab, replacing the
- * viewpager in the activity. The fragment to edit a post(BoardEditFragment) replaces the viewpager
- * in the same way when clicking the edit button.  The edit button turns visible in the toolbar
- * as long as the fragment to read a post(BoardReadDlgFragment) pops up and the post is owned by
- * the user.
+ * viewpager the activity contains. The fragment to edit a post(BoardEditFragment) replaces the
+ * viewpager in the same way when clicking the edit button.  The edit button turns visible in the
+ * toolbar as long as the fragment to read a post(BoardReadDlgFragment) pops up and the post is
+ * owned by the user.
  *
- * Communications b/w the fragments are mostly made with a livedata defined in FramentSharedModel.
+ * Communications b/w the fragments are mostly made with the livedata defined in FramentSharedModel.
  * Some cases use interfaces, though.
  *
  * OnAutoFilterCheckBoxListener passes any change of the checkbox values to BoardPagerFragment for
@@ -139,10 +139,8 @@ public class BoardActivity extends BaseActivity implements
         mListener = listener;
     }
 
-
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
-    // Create ActivityResultLauncher to call SettingActiity and get results
 
     //@SuppressWarnings("ConstantConditions")
     @Override
@@ -209,10 +207,10 @@ public class BoardActivity extends BaseActivity implements
     }
 
     @Override
-    public void onStop() {
+    public void onPause() {
         activityResultLauncher.unregister();
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
-        super.onStop();
+        super.onPause();
     }
 
     /* replace this with getSupportFragentManager().addFragmentOnAttachListener()

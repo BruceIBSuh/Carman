@@ -137,7 +137,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // district name and code is saved as JSONString.
         spinnerPref = findPreference(Constants.DISTRICT);
         if(jsonDistrict != null) {
-            spinnerPref.setSummaryProvider(preference ->
+            Objects.requireNonNull(spinnerPref).setSummaryProvider(preference ->
                     String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
             sigunCode = jsonDistrict.optString(2);
         }
@@ -166,9 +166,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         });
 
         Preference gasStation = findPreference(Constants.FAVORITE_GAS);
-        gasStation.setSummaryProvider(preference -> getString(R.string.pref_summary_gas));
+        Objects.requireNonNull(gasStation).setSummaryProvider(preference -> getString(R.string.pref_summary_gas));
         Preference svcCenter = findPreference(Constants.FAVORITE_SVC);
-        svcCenter.setSummaryProvider(preference -> getString(R.string.pref_summary_svc));
+        Objects.requireNonNull(svcCenter).setSummaryProvider(preference -> getString(R.string.pref_summary_svc));
 
         // Set the standard of period between month and mileage.
         ListPreference svcPeriod = findPreference("pref_service_period");
@@ -211,20 +211,22 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // Observe whether the auto data in SettingAutoFragment has changed.
-        fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonString -> {
-            mSettings.edit().putString(Constants.AUTO_DATA, jsonString).apply();
-            makerName = parseAutoData(jsonString).get(0);
-            modelName = parseAutoData(jsonString).get(1);
+        fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonAutoDataArray -> {
+            mSettings.edit().putString(Constants.AUTO_DATA, jsonAutoDataArray.toString()).apply();
+            //makerName = parseAutoData(jsonString).get(0);
+            //modelName = parseAutoData(jsonString).get(1);
+            makerName = (jsonAutoDataArray.isNull(0))? null : jsonAutoDataArray.optString(0);
+            modelName = (jsonAutoDataArray.isNull(1))? null : jsonAutoDataArray.optString(1);
+
             log.i("maker and model: %s, %s", makerName, modelName);
             // The null value that JSONObject returns seems different than that of other regular
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
             // if it is true. This is firmly at bug issue.
             if(!TextUtils.isEmpty(makerName)) {
-                log.i("view created:%s", makerName);
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
-            }
+            } else autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         });
 
         // Observe whether the district has changed in the custom spinner list view. If any change

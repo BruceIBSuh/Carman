@@ -284,7 +284,10 @@ public class BoardReadDlgFragment extends DialogFragment implements
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
-        showUserAutoClub(binding.tvAutoinfo);
+
+        // UPADTE THE FIRESTORE FIELD NAMES REQUIRED !!
+        //showUserAutoClub(binding.tvAutoinfo);
+
 
         // RecyclerView for showing comments
         binding.recyclerComments.setLayoutManager(new LinearLayoutManager(context));

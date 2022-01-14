@@ -20,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -42,6 +43,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
+import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.views.PostingRecyclerView;
 
@@ -183,20 +185,17 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
-        //View localView = inflater.inflate(R.layout.fragment_board_pager, container, false);
-        //pbPaging = localView.findViewById(R.id.progbar_board_paging);
-        //tvEmptyView = localView.findViewById(R.id.tv_empty_view);
-        //recyclerPostView = localView.findViewById(R.id.recycler_board_postings);
-
         // In case of inserting the banner, the item size will change.
         binding.recyclerBoardPostings.setHasFixedSize(false);
         LinearLayoutManager layout = new LinearLayoutManager(
                 getContext(), LinearLayoutManager.VERTICAL, false);
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerBoardPostings.setLayoutManager(layout);
+        binding.recyclerBoardPostings.addItemDecoration(divider);
         //binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
-
         postList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postList, this);
         binding.recyclerBoardPostings.setAdapter(postingAdapter);

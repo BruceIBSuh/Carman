@@ -143,6 +143,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             // Must have a public no-argument constructor
         }
         // Initialize all fields
+
         //public ObjectAutoData(List<String> autoTypeList, List<String> engineTypeList) {
         public ObjectAutoData(Map<String, Integer> autoTypeMap, Map<String, Integer> engineTypeMap) {
             //this.autoTypeList = autoTypeList;
@@ -150,6 +151,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             this.autoTypeMap = autoTypeMap;
             this.engineTypeMap = engineTypeMap;
         }
+
         @PropertyName("auto_type")
         public Map<String, Integer> getAutoTypeMap() {
             return autoTypeMap;
@@ -158,6 +160,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         public Map<String, Integer> getEngineTypeMap() {
             return engineTypeMap;
         }
+
+        /*
         @PropertyName("auto_type")
         public void setAutoTypeMap(Map<String, Integer> autoTypeMap) {
             this.autoTypeMap = autoTypeMap;
@@ -166,6 +170,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         public void setEngineTypeMap(Map<String, Integer> engineTypeMap) {
             this.engineTypeMap = engineTypeMap;
         }
+         */
     }
 
     static class ArrayAutoData {

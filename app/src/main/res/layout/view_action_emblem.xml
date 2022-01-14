@@ -23,7 +23,7 @@
 
     <ImageView
         android:id="@+id/img_action_emblem"
-        android:layout_width="35dp"
+        android:layout_width="40dp"
         android:layout_height="wrap_content"
         android:contentDescription="@null"
         android:scaleType="centerInside"
@@ -39,6 +39,7 @@
         android:text="@string/board_autoclub_sort_time"
         android:textSize="11sp"
         android:textStyle="bold"
+        android:textColor="#C0C0C0"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

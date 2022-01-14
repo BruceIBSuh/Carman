@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:padding="8dp"
-        android:background="@drawable/bg_board_comment">
+        android:background="#E0E0E0">
 
         <ImageView
             android:id="@+id/img_comment_user"
