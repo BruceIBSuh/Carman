@@ -29,6 +29,7 @@
             android:id="@+id/tv_subtitle_gas"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:gravity="start|center"
             android:padding="0dp"
             android:text="@string/gas_subtitle_expense"
@@ -271,7 +272,7 @@
         <View
             android:id="@+id/view8"
             android:layout_width="wrap_content"
-            android:layout_height="24dp"
+            android:layout_height="16dp"
             android:layout_marginTop="16dp"
             android:background="#F3F3F3"
             app:layout_constraintEnd_toEndOf="parent"
@@ -304,7 +305,7 @@
         <TextView
             android:id="@+id/tv_label_carwash"
             android:layout_width="wrap_content"
-            android:layout_height="21dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:labelFor="@id/tv_carwash"
             android:text="@string/gas_label_expense_wash"
@@ -394,7 +395,7 @@
         <View
             android:id="@+id/view9"
             android:layout_width="wrap_content"
-            android:layout_height="24dp"
+            android:layout_height="16dp"
             android:layout_marginTop="16dp"
             android:background="#F3F3F3"
             app:layout_constraintEnd_toEndOf="parent"

@@ -4,7 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="3dp" >
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
+    android:background="@android:color/white">
 
     <TextView
         android:id="@+id/tv_stmts_date"
@@ -30,9 +32,7 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintStart_toEndOf="@+id/tv_stmts_date"
-        app:layout_constraintTop_toTopOf="@+id/tv_stmts_date"
-
-        />
+        app:layout_constraintTop_toTopOf="@+id/tv_stmts_date" />
 
     <TextView
         android:id="@+id/tv_stmts_expense"
@@ -59,4 +59,5 @@
         app:layout_constraintHorizontal_weight="3"
         app:layout_constraintStart_toEndOf="@+id/tv_stmts_expense"
         app:layout_constraintTop_toTopOf="@+id/tv_stmts_expense" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

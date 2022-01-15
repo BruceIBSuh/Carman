@@ -36,7 +36,7 @@ public class ExpenseRecentAdapter extends FragmentStateAdapter{
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if(payloads.size() == 0) {
+        if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else expensePagerFragment.dispRecentExpensePager(index, position);
     }

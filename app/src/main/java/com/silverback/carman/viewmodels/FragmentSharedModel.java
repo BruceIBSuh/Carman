@@ -51,7 +51,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<String> firstPlaceholderId;
 
     //private MutableLiveData<Integer> totalGasExpense, totalSvcExpense;
-    private MutableLiveData<SparseIntArray> totalExpense;
+    private MutableLiveData<Integer> totalExpense;
     private MutableLiveData<Integer> expenseCategory;
 
 
@@ -218,7 +218,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Shared the selected spinner item position in ExpenseStmtsFragment with ExpenseGraphFragment to set
     // data queried by category.
-    public MutableLiveData<SparseIntArray> getTotalExpenseByCategory() {
+    public MutableLiveData<Integer> getTotalExpenseByCategory() {
         if(totalExpense == null)  totalExpense = new MutableLiveData<>();
         return totalExpense;
     }

@@ -140,7 +140,7 @@ public class BoardActivity extends BaseActivity implements
     }
 
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+            new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
 
     //@SuppressWarnings("ConstantConditions")
     @Override
@@ -208,9 +208,14 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public void onPause() {
-        activityResultLauncher.unregister();
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        //activityResultLauncher.unregister();
+        super.onStop();
     }
 
     /* replace this with getSupportFragentManager().addFragmentOnAttachListener()
@@ -235,8 +240,8 @@ public class BoardActivity extends BaseActivity implements
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_board, menu);
         this.menu = menu;
-        menu.getItem(0).setVisible(false);
-        menu.getItem(1).setVisible(false);
+        this.menu.getItem(0).setVisible(false);
+        this.menu.getItem(1).setVisible(false);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -300,14 +305,13 @@ public class BoardActivity extends BaseActivity implements
         public void onPageSelected(int position) {
             super.onPageSelected(position);
             //tabPage = position;
-            menu.getItem(0).setVisible(false);
+            //menu.getItem(0).setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
             animAutoFilter(false);
 
             switch(position) {
                 case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
-                    Objects.requireNonNull(getSupportActionBar())
-                            .setTitle(getString(R.string.board_general_title));
+                    Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
                     break;
                 case Constants.BOARD_AUTOCLUB:
                     //isAutoFilter = true;
@@ -352,7 +356,7 @@ public class BoardActivity extends BaseActivity implements
             Snackbar snackbar = Snackbar.make(
                     binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
-                Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
+                Intent intent = new Intent(this, SettingActivity.class);
                 intent.putExtra("caller", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 activityResultLauncher.launch(intent);
             }).show();
@@ -447,20 +451,22 @@ public class BoardActivity extends BaseActivity implements
     // showing the image span in the post and adding it to the image list so as to update the recyclerview
     // adapter.
     private void getActivityResultCallback(ActivityResult result) {
+        log.i("activity result:%s", result);
         if(result.getData() == null) return;
         switch(result.getResultCode()) {
             case RESULT_OK:
                 log.i("user name:%s", result.getData().getStringExtra("userName"));
                 break;
             case Constants.REQUEST_BOARD_GALLERY:
-//                Uri uri = result.getData().getStringExtra("image");
-//                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
-//                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
+                /*
+                Uri uri = result.getData().getStringExtra("image");
+                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
+                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
+                 */
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                log.i("Setting AutoClub");
-                jsonAutoFilter = result.getData().getStringExtra("jsonAutoData");
+                jsonAutoFilter = result.getData().getStringExtra("autodata");
                 log.i("json auto result: %s", jsonAutoFilter);
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
@@ -469,13 +475,14 @@ public class BoardActivity extends BaseActivity implements
 
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyDataSetChanged();
+                //pagerAdapter.notifyDataSetChanged();
                 binding.boardPager.setAdapter(pagerAdapter);
                 binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
 
-                log.i("Reset tabLayout and action menu");
+                clubTitle = createAutoClubTitle();
+                if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
                 addTabIconAndTitle(this, binding.tabBoard);
-                menu.getItem(0).setVisible(true);
+                //menu.getItem(0).setVisible(true);
                 menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
                 break;
 
@@ -816,7 +823,7 @@ public class BoardActivity extends BaseActivity implements
 
                 // The result should go to the parent activity
                 //startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
-                activityResultLauncher.launch(galleryIntent);
+                //activityResultLauncher.launch(galleryIntent);
                 break;
 
             case Constants.CAMERA: // Camera
@@ -826,7 +833,7 @@ public class BoardActivity extends BaseActivity implements
                 if(cameraIntent.resolveActivity(getPackageManager()) != null) {
                     //log.i("Camera Intent");
                     //startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
-                    activityResultLauncher.launch(cameraChooser);
+                    //activityResultLauncher.launch(cameraChooser);
                 }
                 break;
 

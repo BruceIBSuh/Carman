@@ -70,6 +70,8 @@ public class ExpenseStmtsFragment extends Fragment implements AdapterView.OnItem
         // Create the recyclerview to show the expense list sorted by category
         binding.recyclerStats.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.recyclerStats.setHasFixedSize(false);
+
+        // RecyclerDividerUtil(float height, float padding, int color)
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_EXPENSE, 0,
                 ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerStats.addItemDecoration(divider);
@@ -80,7 +82,6 @@ public class ExpenseStmtsFragment extends Fragment implements AdapterView.OnItem
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstancestate) {
         super.onViewCreated(view, savedInstancestate);
-        log.i("onViewCreated");
         mDB.expenseBaseModel().loadExpenseByCategory(Constants.GAS, Constants.SVC)
                 .observe(getViewLifecycleOwner(), data -> {
                     mAdapter = new ExpenseStmtsAdapter(data);
@@ -105,7 +106,6 @@ public class ExpenseStmtsFragment extends Fragment implements AdapterView.OnItem
         //fragmentModel.getTotalExpenseByCategory().setValue(position);
         fragmentModel.getExpenseCategory().setValue(position);
     }
-
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
         log.i("spinner nothing selected");

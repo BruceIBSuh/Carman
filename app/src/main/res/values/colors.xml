@@ -9,7 +9,7 @@
 
     <!-- RecyclerDividerUtil-->
     <!--<color name="recyclerDivider">#F9F9F9</color>-->
-    <color name="recyclerDivider">#E0E0E0</color>
+    <color name="recyclerDivider">#F5F5F5</color>
     <color name="recyclerColorDivider">#99CCFF</color>
 
     <!-- ExpenseActivity -->

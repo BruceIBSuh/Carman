@@ -16,11 +16,11 @@ import java.util.List;
 
 public class MainExpensePagerAdapter extends FragmentStateAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(MainExpensePagerAdapter.class);
+
     private static final int NUM_PAGES = 2;
 
     private MainExpensePagerFragment targetFragment;
-
-    public MainExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
+     public MainExpensePagerAdapter(FragmentManager fm, Lifecycle lifecycle) {
         super(fm, lifecycle);
     }
 
@@ -40,9 +40,6 @@ public class MainExpensePagerAdapter extends FragmentStateAdapter {
     public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
-        } else {
-            log.i("payloads exist");
         }
-
     }
 }

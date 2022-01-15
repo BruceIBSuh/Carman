@@ -54,7 +54,6 @@ public class ExpenseStmtsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
         binding.tvStmtsDate.setText(BaseActivity.formatMilliseconds(dateFormat, expList.get(position).dateTime));
         binding.tvStmtsMileage.setText(BaseActivity.getDecimalFormatInstance().format(expList.get(position).mileage));
         binding.tvStmtsExpense.setText(BaseActivity.getDecimalFormatInstance().format(expList.get(position).totalExpense));
@@ -67,7 +66,13 @@ public class ExpenseStmtsAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             @NonNull RecyclerView.ViewHolder holder, int pos, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
         else {
-            log.i("payloads: %s", payloads.size());
+            /*
+            binding.tvStmtsDate.setText(BaseActivity.formatMilliseconds(dateFormat, expList.get(pos).dateTime));
+            binding.tvStmtsMileage.setText(BaseActivity.getDecimalFormatInstance().format(expList.get(pos).mileage));
+            binding.tvStmtsExpense.setText(BaseActivity.getDecimalFormatInstance().format(expList.get(pos).totalExpense));
+            binding.tvStmtsProvider.setText((expList.get(pos).stnName != null)?expList.get(pos).stnName : expList.get(pos).serviceCenter);
+
+             */
         }
     }
 

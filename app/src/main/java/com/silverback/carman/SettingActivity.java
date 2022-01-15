@@ -100,19 +100,13 @@ public class SettingActivity extends BaseActivity implements
 
     // UIs
     private ActivitySettingsBinding binding;
-    public Toolbar settingToolbar;
     private FrameLayout frameLayout;
-    private Fragment childFragment;
 
     // Fields
-    private String userId, distCode, userName, gasCode, radius, userImage, jsonAutoData, permCamera;
-    //private String distCode;
-    //private String userName;
-    //private String gasCode;
-    //private String radius;
-    //private String userImage;
-    //private String jsonAutoData;
-    //private String permCamera;
+    private String userId;
+    private String userImage;
+    private String jsonAutoData;
+    private String permCamera;
     private Uri downloadUserImageUri;
     private int requestCode;
 
@@ -131,12 +125,9 @@ public class SettingActivity extends BaseActivity implements
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
 
-
-
         // get Intent data, if any.
         if(getIntent() != null) requestCode = getIntent().getIntExtra("caller", -1);
         log.i("request code: %s", requestCode);
-
 
         // Permission check for CAMERA to get the user image.
         //checkPermissions(this, Manifest.permission.CAMERA);
@@ -238,9 +229,8 @@ public class SettingActivity extends BaseActivity implements
         // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
         // just pop the fragment off the back stack, which works like the Back command.
         if (item.getItemId() == android.R.id.home) {
-            childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
-            //childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral");
-
+            Fragment childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
+            //childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral"); seems not working
             if(childFragment instanceof SettingPreferenceFragment) {
                 switch(requestCode) {
                     case Constants.REQUEST_MAIN_SETTING_GENERAL:
@@ -248,7 +238,10 @@ public class SettingActivity extends BaseActivity implements
                         setResult(requestCode, resultIntent);
                         break;
                     case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                        setResult(requestCode, resultIntent);
+                        log.i("result back to BoardActivity: %s", jsonAutoData);
+                        Intent autodataIntent = new Intent();
+                        autodataIntent.putExtra("autodata", jsonAutoData);
+                        setResult(requestCode, autodataIntent);
                         break;
                 }
 
@@ -386,7 +379,7 @@ public class SettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case Constants.USER_NAME:
-                userName = mSettings.getString(key, null);
+                String userName = mSettings.getString(key, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
                 //if(userName != null) {
@@ -398,7 +391,7 @@ public class SettingActivity extends BaseActivity implements
                 break;
 
             case Constants.AUTO_DATA:
-                String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
+                jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
@@ -409,14 +402,14 @@ public class SettingActivity extends BaseActivity implements
 
                     // send the result bact to BoardActivity for startActivityForResult()
                     log.i("JSON AutoData: %s", jsonAutoData);
-                    this.jsonAutoData = jsonAutoData;
+                    resultIntent.putExtra("autodata", jsonAutoData);
                 }
 
                 break;
 
             case Constants.FUEL:
                 log.i("gas code changed");
-                gasCode = mSettings.getString(key, null);
+                String gasCode = mSettings.getString(key, null);
                 resultIntent.putExtra("gasCode", gasCode);
                 break;
 
@@ -425,13 +418,13 @@ public class SettingActivity extends BaseActivity implements
                 try {
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
-                    distCode = jsonDistArray.optString(2);
+                    String distCode = jsonDistArray.optString(2);
                     resultIntent.putExtra("distCode", distCode);
                 } catch(JSONException e) {e.printStackTrace();}
                 break;
 
             case Constants.SEARCHING_RADIUS:
-                radius = mSettings.getString(key, null);
+                String radius = mSettings.getString(key, null);
                 log.i("searching radius changed: %s", radius);
                 resultIntent.putExtra("searchRadius", radius);
                 break;

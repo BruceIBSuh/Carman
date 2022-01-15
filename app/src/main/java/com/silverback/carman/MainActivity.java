@@ -551,11 +551,8 @@ public class MainActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
-                log.i("result back:%s, %s", resultIntent.getIntExtra("expense", 0), resultIntent.getIntExtra("category", 0));
-                List<Integer> list = new ArrayList<>();
-                list.add(resultIntent.getIntExtra("category", 0));
-                list.add(resultIntent.getIntExtra("expense", 0));
-                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, list);
+                int total = resultIntent.getIntExtra("expense", 0);
+                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, total);
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:
@@ -654,7 +651,7 @@ public class MainActivity extends BaseActivity implements
     // Implement MainContentAdapter.MainContentAdapterListener for the buttons defined in the
     // notification and the postings feed.
     @Override
-    public void onClickBoard(int category) {
+    public void onClickPostingIcon(int category) {
         Intent boardIntent = new Intent(this, BoardActivity.class);
         boardIntent.putExtra("category", category);
         startActivity(boardIntent);

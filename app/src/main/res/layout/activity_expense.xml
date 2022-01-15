@@ -8,11 +8,13 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
     tools:context="com.silverback.carman.ExpenseActivity">
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -38,13 +40,16 @@
                 android:orientation="vertical"
                 android:layout_marginTop="?attr/actionBarSize"
                 android:layout_marginBottom="?attr/actionBarSize"
+                android:background="@android:color/white"
                 app:layout_collapseMode="parallax" >
+
                 <FrameLayout
                     android:id="@+id/topframe_expense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:background="@android:color/white"/>
+
                 <com.google.android.material.tabs.TabLayout
                     android:id="@+id/topframe_page"
                     android:layout_width="match_parent"
@@ -52,6 +57,7 @@
                     app:tabBackground="@drawable/dot_indicator_selector"
                     app:tabGravity="center"
                     app:tabIndicatorHeight="0dp" />
+
             </LinearLayout>
             <!-- tabMaxWidth="0dp" makes the tab expand to the full width -->
             <com.google.android.material.tabs.TabLayout
@@ -77,12 +83,14 @@
                 app:layout_collapseMode="pin"
                 app:titleTextColor="#FFFFFF" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
+
     </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/pager_tab_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 

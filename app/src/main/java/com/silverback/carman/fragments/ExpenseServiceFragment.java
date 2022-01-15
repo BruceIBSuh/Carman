@@ -2,12 +2,10 @@ package com.silverback.carman.fragments;
 
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -88,7 +86,7 @@ public class ExpenseServiceFragment extends Fragment implements
     // Fields
     //private String distCode;
     private int itemPos;
-    private int totalExpense;
+    private int serviceTotal;
     private boolean isGeofenceIntent; // check if this has been launched by Geofence.
     private boolean isSvcFavorite;
     private String userId;
@@ -181,6 +179,16 @@ public class ExpenseServiceFragment extends Fragment implements
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        log.i("ExpenseServiceFragment in Pause state");
+        // When clicking the save button, prevent the observer from invoking the method, which
+        // occasionally
+        fragmentModel.getCurrentFragment().removeObservers(this);
+    }
+
+
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         addViewModelObserver(fragmentModel);
@@ -210,8 +218,8 @@ public class ExpenseServiceFragment extends Fragment implements
     }
     @Override
     public void subtractCost(int value) {
-        totalExpense -= value;
-        binding.tvSvcPayment.setText(df.format(totalExpense));
+        serviceTotal -= value;
+        binding.tvSvcPayment.setText(df.format(serviceTotal));
     }
 
     // Attach the listener which implements the following callback methods when a location is added
@@ -277,8 +285,8 @@ public class ExpenseServiceFragment extends Fragment implements
                     binding.tvSvcMileage.setText(df.format(value));
                 }else if(viewId == R.id.tv_item_cost) {
                     mAdapter.notifyItemChanged(itemPos, data);
-                    totalExpense += data.valueAt(0);
-                    binding.tvSvcPayment.setText(df.format(totalExpense));
+                    serviceTotal += data.valueAt(0);
+                    binding.tvSvcPayment.setText(df.format(serviceTotal));
                 }
             });
 
@@ -449,7 +457,7 @@ public class ExpenseServiceFragment extends Fragment implements
         baseEntity.dateTime = calendar.getTimeInMillis();
         baseEntity.mileage = mileage;
         baseEntity.category = Constants.SVC;
-        baseEntity.totalExpense = totalExpense;
+        baseEntity.totalExpense = serviceTotal;
 
         serviceEntity.serviceCenter = binding.etServiceProvider.getText().toString();
         serviceEntity.serviceAddrs = "seoul, korea"; //temp coding
@@ -469,15 +477,10 @@ public class ExpenseServiceFragment extends Fragment implements
         int rowId = mDB.serviceManagerModel().insertAll(baseEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
             mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
+            //SparseIntArray sparseArray = new SparseIntArray();
+            //sparseArray.put(Constants.SVC, totalExpense);
+            fragmentModel.getTotalExpenseByCategory().setValue(serviceTotal);
 
-            SparseIntArray sparseArray = new SparseIntArray();
-            sparseArray.put(Constants.SVC, totalExpense);
-            //fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
-            Intent resultIntent = new Intent();
-            resultIntent.putExtra("category", Constants.GAS);
-            resultIntent.putExtra("expense", totalExpense);
-            Objects.requireNonNull(getActivity()).setResult(Constants.REQUEST_MAIN_EXPENSE_TOTAL, resultIntent);
-            Objects.requireNonNull(getActivity()).finish();
         } //else totalExpenseLive.setValue(0);
     }
 

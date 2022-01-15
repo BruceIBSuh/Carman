@@ -38,10 +38,12 @@
                 <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+
         <receiver
             android:name=".backgrounds.GeofenceBroadcastReceiver"
             android:enabled="true"
             android:exported="true" />
+
         <receiver
             android:name=".backgrounds.SnoozeBroadcastReceiver"
             android:enabled="true"
@@ -52,13 +54,15 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <activity android:name=".BaseActivity" />
+
         <activity android:name=".IntroActivity" android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" />
+
+        <activity android:name=".MainActivity" android:exported="false"/>
         <activity
             android:name=".ExpenseActivity"
             android:exported="true"
@@ -79,16 +83,12 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.silverback.carman.MainActivity" />
         </activity>
+
         <activity
             android:name=".SettingActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity">
-            <!-- Parent activity meta-data to support 4.0 and lower -->
-
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.silverback.carman.MainActivity" />
+            android:exported="false" >
         </activity>
+
         <activity
             android:name=".StationMapActivity"
             android:label="@string/map_toolbar_title"
@@ -113,7 +113,6 @@
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
-
         <meta-data
             android:name="com.kakao.sdk.AppKey"
             android:value="@string/kakao_app_key" />

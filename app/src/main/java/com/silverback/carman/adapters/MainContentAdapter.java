@@ -33,23 +33,19 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     private MainContentExpenseBinding expBinding;
     private MainContentAdsBinding adsBinding;
     private MainContentCarlifeBinding carlifeBinding;
-    private final MainExpensePagerAdapter expensePagerAdapter;
-
-    //private final FragmentSharedModel fragmentModel;
+    private final MainExpensePagerAdapter mainExpPagerAdapter;
 
     // Interface to notify the parent activity of any event
     public interface MainContentAdapterListener {
-        void onClickBoard(int category);
+        void onClickPostingIcon(int category);
     }
 
     // Constructor
     public MainContentAdapter(FragmentActivity fa, MainContentAdapterListener listener) {
         super();
         this.mListener = listener;
-        firestore= FirebaseFirestore.getInstance();
-        expensePagerAdapter = new MainExpensePagerAdapter(fa.getSupportFragmentManager(), fa.getLifecycle());
-        //expensePagerAdapter = new MainExpensePagerAdapter((FragmentActivity)context);
-        //fragmentModel = new ViewModelProvider((FragmentActivity)context).get(FragmentSharedModel.class);
+        firestore = FirebaseFirestore.getInstance();
+        mainExpPagerAdapter = new MainExpensePagerAdapter(fa.getSupportFragmentManager(), fa.getLifecycle());
     }
 
     //public MainContentNotificationBinding binding; //DataBiding in JetPack
@@ -69,9 +65,9 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         switch(viewType) {
             case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
-                notiBinding.imgbtnNotification.setOnClickListener(view -> {
-                    mListener.onClickBoard(Constants.BOARD_NOTIFICATION);
-                });
+                notiBinding.imgbtnNotification.setOnClickListener(view ->
+                    mListener.onClickPostingIcon(Constants.BOARD_NOTIFICATION)
+                );
                 return new ContentViewHolder(notiBinding.getRoot());
 
             case Constants.VIEWPAGER_EXPENSE:
@@ -80,9 +76,9 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
-                carlifeBinding.imgbtnCarlife.setOnClickListener(view -> {
-                    mListener.onClickBoard(Constants.BOARD_RECENT);
-                });
+                carlifeBinding.imgbtnCarlife.setOnClickListener(view ->
+                    mListener.onClickPostingIcon(Constants.BOARD_RECENT)
+                );
                 return new ContentViewHolder(carlifeBinding.getRoot());
 
             case Constants.BANNER_AD_1: case Constants.BANNER_AD_2:
@@ -120,7 +116,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 break;
 
             case Constants.VIEWPAGER_EXPENSE:
-                expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
+                expBinding.mainPagerExpense.setAdapter(mainExpPagerAdapter);
                 break;
 
             case Constants.CARLIFE:
@@ -157,15 +153,11 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            log.i("payloads:%s", payloads.get(0));
             if(position == Constants.VIEWPAGER_EXPENSE) {
-                if(payloads.isEmpty()) {
-                    super.onBindViewHolder(holder, position, payloads);
-                } else {
-                    // Big Bug: MUST NOT invoke Gas and SVC at the same time.
-                    expBinding.mainPagerExpense.setAdapter(expensePagerAdapter);
-                    //expensePagerAdapter.notifyItemRangeChanged(0, expensePagerAdapter.getItemCount());
-
+                if((Integer)payloads.get(0) > 0) {
+                    expBinding.mainPagerExpense.setAdapter(mainExpPagerAdapter);
+                    //final int total = (Integer)obj;
+                    //mainExpPagerAdapter.notifyItemRangeChanged(0, mainExpPagerAdapter.getItemCount(), total);
                 }
             }
         }

@@ -11,6 +11,7 @@ import android.view.animation.DecelerateInterpolator;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.LiveData;
 
 import com.silverback.carman.database.CarmanDatabase;
@@ -38,7 +39,6 @@ public class MainExpensePagerFragment extends Fragment {
 
     private static final int NumOfPrevMonths = 3;
     private RecentMonthlyExpense monthlyExpense;
-
 
     private Calendar calendar;
     private DecimalFormat df;
@@ -96,8 +96,7 @@ public class MainExpensePagerFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         // Must instantiate the object here to have getViewLifecycleOwner();
         log.i("update recent expense:");
-        monthlyExpense = new RecentMonthlyExpense();
-
+        monthlyExpense = new RecentMonthlyExpense(getViewLifecycleOwner());
         switch(position) {
             case 0:
                 String month = String.valueOf(calendar.get(Calendar.MONTH) + 1);
@@ -127,7 +126,7 @@ public class MainExpensePagerFragment extends Fragment {
             @Override
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                monthlyExpense.queryPrevMonthExpense(); // Bug here!!!!
+                monthlyExpense.queryPrevMonthExpense();
                 //totalBinding.recentGraphView.setExpenseData(totalExpense, getViewLifecycleOwner());
             }
         });
@@ -135,15 +134,29 @@ public class MainExpensePagerFragment extends Fragment {
         animator.start();
     }
 
+    public void updateExpense(int position) {
+        log.i("update expense:");
+        switch(position) {
+            case 0:
+                monthlyExpense.queryThisMonthExpense();
+                break;
+            case 1:
+                monthlyExpense.setMonthlyExpenseConfig();
+                break;
+        }
+    }
+
 
     // Class for setting a month and query the expenses
     private class RecentMonthlyExpense {
+        LifecycleOwner lifeCycleOwner;
         int[] arrExpense;
         int[] arrConfig;
         int totalExpense, count;
         int gasTotal, svcTotal;
 
-        RecentMonthlyExpense() {
+        RecentMonthlyExpense(LifecycleOwner lifeCyclerOvwner) {
+            this.lifeCycleOwner = lifeCyclerOvwner;
             arrExpense = new int[NumOfPrevMonths];
             arrConfig = new int[4];
             totalExpense = 0;
@@ -184,8 +197,8 @@ public class MainExpensePagerFragment extends Fragment {
             //calendar.set(Calendar.DAY_OF_MONTH, 1);
             long start = setThisMonth();
             long end = System.currentTimeMillis();
-            log.i("getViewLifecycleOwner: %s", getViewLifecycleOwner());
-            queryMonthlyExpense(start, end).observe(getViewLifecycleOwner(), results -> {
+            log.i("getViewLifecycleOwner: %s", this.lifeCycleOwner);
+            queryMonthlyExpense(start, end).observe(this.lifeCycleOwner, results -> {
                 totalExpense = 0;
                 for(ExpenseBaseDao.ExpenseByMonth expense : results) totalExpense += expense.totalExpense;
                 arrExpense[0] = totalExpense;
@@ -198,13 +211,13 @@ public class MainExpensePagerFragment extends Fragment {
         // BUGS AROUND HERE WHEN GETTING RESULT FROM saveExpense()!!!
         // IllegalStateException: Can't access the Fragment View's LifecycleOwner when getView() is null.
         void queryPrevMonthExpense() {
-            log.i("getViewLifecycleOwner: %s", getViewLifecycleOwner());
+            log.i("getViewLifecycleOwner: %s", this.lifeCycleOwner);
             for(int i = 1; i < NumOfPrevMonths; i++) {
                 final int index = i;
                 long start = setPreviousMonth(true);
                 long end = setPreviousMonth(false);
                 queryMonthlyExpense(start, end).observe(
-                        getViewLifecycleOwner(), data -> calcPrevExpense(index, data));
+                        this.lifeCycleOwner, data -> calcPrevExpense(index, data));
             }
         }
 

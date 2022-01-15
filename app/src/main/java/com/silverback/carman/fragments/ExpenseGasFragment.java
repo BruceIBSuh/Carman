@@ -308,6 +308,11 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
     @Override
     public void onPause() {
         super.onPause();
+        log.i("ExpesneGasFragment in Pause state");
+        // When clicking the save button, prevent the observer from invoking the method, which
+        // occasionally
+        fragmentModel.getCurrentFragment().removeObservers(this);
+
         if(locationTask != null) locationTask = null;
         if(favPriceTask != null) favPriceTask = null;
         if(stnListTask != null) stnListTask = null;
@@ -320,7 +325,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
 
     private void setCurrentStation() {
         if(isGeofenceIntent) return;
-        stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
+        stnListModel.getCurrentStation().observe(this, curStn -> {
             log.i("current station");
             if(curStn != null) {
                 stnName = curStn.getStnName();
@@ -458,16 +463,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         gasBatch.commit().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 log.i("Total GasExpense: %s", gasTotal);
-                SparseIntArray sparseArray = new SparseIntArray();
-                sparseArray.put(Constants.GAS, gasTotal);
-                //fragmentModel.getTotalExpenseByCategory().setValue(sparseArray);
-
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra("category", Constants.GAS);
-                resultIntent.putExtra("expense", gasTotal);
-                Objects.requireNonNull(getActivity()).setResult(Constants.REQUEST_MAIN_EXPENSE_TOTAL, resultIntent);
-                Objects.requireNonNull(getActivity()).finish();
-
+                fragmentModel.getTotalExpenseByCategory().setValue(gasTotal);
             } else log.e("Failed to save the form data");
         });
     }

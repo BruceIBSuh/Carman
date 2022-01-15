@@ -36,9 +36,7 @@ public class RecyclerDividerUtil extends RecyclerView.ItemDecoration{
 
     @Override
     public void onDraw(
-            @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-
-    }
+            @NonNull Canvas c, @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {}
 
     @Override
     public void onDrawOver(
@@ -49,7 +47,7 @@ public class RecyclerDividerUtil extends RecyclerView.ItemDecoration{
 
         for(int i = 0; i < parent.getChildCount(); i++) {
             View child = parent.getChildAt(i);
-            RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)child.getLayoutParams();
+            //RecyclerView.LayoutParams params = (RecyclerView.LayoutParams)child.getLayoutParams();
             float top = child.getBottom();// + params.bottomMargin;
             float bottom = top + height;
             c.drawRect(left, top, right, bottom, paint);

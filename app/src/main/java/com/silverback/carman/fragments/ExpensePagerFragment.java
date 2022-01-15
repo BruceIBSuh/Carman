@@ -140,6 +140,8 @@ public class ExpensePagerFragment extends Fragment {
             return a + b + c + d + e;
 
         } else if(category == Constants.SVC) {
+            if(serviceList.size() == 0) return null; // Check it out why this method is invoked!!
+
             String date = BaseActivity.formatMilliseconds(format, serviceList.get(page).dateTime);
             String a = String.format("%-8s%s%s", getString(R.string.svc_label_date), date,"\n");
             String b = String.format("%-8s%s%s", getString(R.string.svc_label_provider), serviceList.get(page).svcName, "\n");
