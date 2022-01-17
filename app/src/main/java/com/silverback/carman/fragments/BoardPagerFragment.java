@@ -4,6 +4,7 @@ package com.silverback.carman.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -32,6 +33,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -45,7 +47,6 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.views.PostingRecyclerView;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -102,7 +103,7 @@ public class BoardPagerFragment extends Fragment implements
     // UIs
     private FragmentBoardPagerBinding binding;
     private ProgressBar progbar;
-    private PostingRecyclerView recyclerPostView;
+    //private PostingRecyclerView recyclerPostView;
     private FloatingActionButton fabWrite;
     //private TextView tvEmptyView;
     //private TextView tvSorting;
@@ -168,6 +169,7 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter = new BoardPostingAdapter(postshotList, this);
         }
          */
+
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
         // show the posting list.
         queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
@@ -185,17 +187,23 @@ public class BoardPagerFragment extends Fragment implements
                              Bundle savedInstanceState) {
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
+
         // In case of inserting the banner, the item size will change.
-        binding.recyclerBoardPostings.setHasFixedSize(false);
+        WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
+        /*
         LinearLayoutManager layout = new LinearLayoutManager(
                 getContext(), LinearLayoutManager.VERTICAL, false);
+        */
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
-        binding.recyclerBoardPostings.setLayoutManager(layout);
+
+        binding.recyclerBoardPostings.setHasFixedSize(false);
+        binding.recyclerBoardPostings.setLayoutManager(layoutManager);
         binding.recyclerBoardPostings.addItemDecoration(divider);
         //binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
+
         postList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postList, this);
         binding.recyclerBoardPostings.setAdapter(postingAdapter);
@@ -264,7 +272,14 @@ public class BoardPagerFragment extends Fragment implements
         );
     }
 
-    // Create the toolbar menu of the auto club page in the fragment, not in the actity,  which
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        log.i("BoardPagerFragment resumed");
+    }
+
+    // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
     // should be customized to have an imageview and textview underneath instead of setting icon
     // by setting actionLayout(app:actionLayout in xml).
     @Override
@@ -336,7 +351,10 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         this.autoFilter = autofilter;
-        pagerAdapter.notifyDataSetChanged();
+        //pagerAdapter.notifyDataSetChanged();
+        pagerAdapter.notifyItemChanged(Constants.BOARD_AUTOCLUB, autofilter);
+
+
         //pageHelper.setPostingQuery(Constants.BOARD_AUTOCLUB, isViewOrder);
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
         // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
@@ -370,12 +388,15 @@ public class BoardPagerFragment extends Fragment implements
             bundle.putString("userPic", snapshot.getString("user_pic"));
         }
 
-
         bundle.putInt("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")).intValue());
         bundle.putInt("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")).intValue());
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putString("timestamp", sdf.format(Objects.requireNonNull(snapshot.getDate("timestamp"))));
-        bundle.putStringArrayList("uriImgList", (ArrayList<String>)snapshot.get("post_images"));
+
+        if(snapshot.get("post_images") != null) {
+            BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
+            bundle.putStringArrayList("uriImgList", Objects.requireNonNull(objImages).getPostImages());
+        }
 
         readPostFragment.setArguments(bundle);
         requireActivity().getSupportFragmentManager().beginTransaction()
@@ -388,7 +409,9 @@ public class BoardPagerFragment extends Fragment implements
         addViewCount(docref, position);
     }
 
-    /**
+
+
+    /*
      * Implement QueryPaginationUtil.OnQueryPaginationCallback overriding the following 4 methods that
      * performs to query posts with orderBy() and limit() conditioned up to the pagination number
      * which is defined in Constants.PAGINATION.
@@ -400,7 +423,8 @@ public class BoardPagerFragment extends Fragment implements
      */
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        postList.clear();
+        //postList.clear();
+        if(postList.size() > 0) postList.clear();
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
         if(querySnapshot == null || querySnapshot.size() == 0) {
@@ -416,6 +440,7 @@ public class BoardPagerFragment extends Fragment implements
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
+
         int pos = 0;
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
@@ -748,7 +773,7 @@ public class BoardPagerFragment extends Fragment implements
             subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
                 // In case the user has not read the post before and adoes not exists in the "viewers"
                 // collection
-                if(snapshot == null || !snapshot.exists()) {
+                if(!snapshot.exists()) {
                   docref.update("cnt_view", FieldValue.increment(1));
                   // Set timestamp and the user ip with the user id used as the document id.
                   Map<String, Object> viewerData = new HashMap<>();
@@ -763,7 +788,7 @@ public class BoardPagerFragment extends Fragment implements
                       // Listener to events for local changes, which is notified with the new data
                       // before the data is sent to the backend.
                       docref.get().addOnSuccessListener(data -> {
-                          if(data != null && data.exists())
+                          if(data.exists())
                               // Partial binding to BoardPostingAdapter to update the view count in
                               // the post document.
                               postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
@@ -823,6 +848,25 @@ public class BoardPagerFragment extends Fragment implements
 
          */
     }
+
+    // Wrapper class to prevent java.lang.IndexOutOfBoundsException: Inconsistency detected.
+    // Invalid view holder adapter.
+    private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
+        // Constructor
+        public WrapContentLinearLayoutManager(Context context) {
+            super(context, LinearLayoutManager.VERTICAL, false);
+        }
+
+        @Override
+        public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+            try {
+                super.onLayoutChildren(recycler, state);
+            } catch(IndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 
 }
 

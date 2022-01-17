@@ -38,6 +38,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
@@ -402,5 +403,6 @@ public class BaseActivity extends AppCompatActivity {
     public SharedPreferences getSharedPreferernces() {
         return mSettings;
     }
+
 
 }

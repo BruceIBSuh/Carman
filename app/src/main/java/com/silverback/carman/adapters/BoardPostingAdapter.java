@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardRecyclerviewPostBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -25,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -99,11 +101,13 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     }
 
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    //@SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+        log.i("BoardPostingAdapter onBindViewHolder: %s", position);
         int viewType = getItemViewType(position);
         int AD_POSITION = 20; // Temp code
+
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
@@ -111,7 +115,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // into account.
                 int offset = (position / AD_POSITION) - 1;
                 //int index = (AD_POSITION > position) ? position + 1 : position - offset;
-                int index = position + 1;
 
                 // Timestamp consists of seconds and nanoseconds. To format it as date, get the
                 // seconds using Timestamp.getSeconds() and apply SimpleDateFormat.format() despite
@@ -121,9 +124,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //long postingTime = timeStamp.getSeconds() * 1000;
                 //log.i("timestamp: %s", postingTime);
                 postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
-                postBinding.tvNumber.setText(String.valueOf(index));
-
-
+                postBinding.tvNumber.setText(String.valueOf(position + 1));
 
                 // Some posts may have weird data type. This condition should be removed once the
                 // board is cleared out.
@@ -146,9 +147,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
                 // invoked and the imageview is made null to prevent images from having wrong positions.
                 if(snapshot.get("post_images") != null) {
-                    List<String> postImages = (List<String>)snapshot.get("post_images");
+                    BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
+                    List<String> postImages = Objects.requireNonNull(objImages).getPostImages();
                     String thumbnail = postImages.get(0);
                     if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
+
                 } else {
                     Glide.with(context).clear(postBinding.imgAttached);
                     postBinding.imgAttached.setImageDrawable(null);
@@ -169,15 +172,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Do a partial binding for updating either the view count or the comment count, which is passed
     // with payloads. No payload performs the full binding.
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        log.i("payloads:%s", payloads.size());
+    public void onBindViewHolder(
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        log.i("BoardPostingAdapter payloads:%s", payloads.size());
+        int pos = holder.getBindingAdapterPosition();
         if(payloads.isEmpty()) {
-            super.onBindViewHolder(holder, position, payloads);
+            super.onBindViewHolder(holder, pos, payloads);
         } else  {
             for(Object payload : payloads) {
                 if(payload instanceof DocumentSnapshot) {
                     log.i("documentsnapshot");
-
                     // The view count is passed as the type of Long.
                 } else if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));

@@ -10,7 +10,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:padding="8dp"
-        android:background="#E0E0E0">
+        android:background="@android:color/white">
 
         <ImageView
             android:id="@+id/img_comment_user"

@@ -56,6 +56,7 @@ import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
@@ -75,7 +76,7 @@ import java.util.Objects;
 
 /*
  * This activity is mainly composed of a framelayout that alternatively contains either a viewpager
- * or the fragments to edit or write a post
+ * or the fragments to edit or write a post.
  *
  * The viewpager has fragments statically created for categorized posting board and controlled by
  * BoardPagerAdapter which extends FragmentStateAdapter.
@@ -97,6 +98,7 @@ import java.util.Objects;
  * each fragment. Thus, the return boolean value in OnOptionsItemSelected() depends on whether the
  * menu proceed(false) or consume(true).
  */
+
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
@@ -129,6 +131,26 @@ public class BoardActivity extends BaseActivity implements
     private boolean isAutoFilter, isTabHeight, isLocked;
     private int category;
 
+    public static class PostImages {
+        @PropertyName("post_images")
+        private ArrayList<String> postImageList;
+        public PostImages() {
+            // Mst have a public no-argument constructor
+        }
+        public PostImages(ArrayList<String> postImageList) {
+            this.postImageList = postImageList;
+        }
+        @PropertyName("post_images")
+        public ArrayList<String> getPostImages() {
+            return postImageList;
+        }
+        @PropertyName("post_images")
+        public void setPostImages(ArrayList<String> postImageList) {
+            this.postImageList = postImageList;
+        }
+
+    }
+
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // queries posts with new conditions to make the recyclerview updated.
     public interface OnAutoFilterCheckBoxListener {
@@ -154,7 +176,7 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         category = Constants.BOARD_RECENT;
 
-        // The chkboxList is created by whether the autodata is set and the cbAutoFilter is created
+        // chkboxList is created by whether the autodata is set. cbAutoFilter is created
         // by wheteher each checkbox item is checked.
         chkboxList = new ArrayList<>();
         cbAutoFilter = new ArrayList<>();
@@ -162,7 +184,6 @@ public class BoardActivity extends BaseActivity implements
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        log.i("jsonAutoFilter: %s", jsonAutoFilter);
         try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
         catch(NullPointerException e) {setNoAutoFilterText();}
         catch(JSONException e) {e.printStackTrace();}
@@ -214,7 +235,7 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public void onStop() {
-        //activityResultLauncher.unregister();
+        activityResultLauncher.unregister();
         super.onStop();
     }
 
@@ -661,7 +682,8 @@ public class BoardActivity extends BaseActivity implements
         tvAutoFilterLabel.setTypeface(tvAutoFilterLabel.getTypeface(), Typeface.BOLD);
         v.addView(tvAutoFilterLabel, params);
 
-        // Create the general checkbox
+        // Create the checkbox that indicates a general post shown not only in the general board
+        // but also in the auto club.
         cbGeneral = new CheckBox(context);
         cbGeneral.setVisibility(View.GONE);
         cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
@@ -677,20 +699,23 @@ public class BoardActivity extends BaseActivity implements
             cb.setTag(i);
             cb.setTextColor(Color.WHITE);
             if(jsonAuto.optString(i).equals("null")) {
+                log.i("autodata item:%s", jsonAuto.optString(i));
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.board_filter_year);break;
                 }
                 cb.setEnabled(false);
+
             } else {
-                // The automaker is a necessary checkbox to be checked as far as jsonAuto has set
-                // any checkbox. Other autofilter values depends on whether it is the locked mode
-                // which retrieves each values from SharedPreferences.
+                // The automaker is required to be checked as far as jsonAuto has been set not to be
+                // null. Other autofilter values depends on whether it is the locked mode
+                // which retrieves its value from SharedPreferences.
                 cb.setText(jsonAuto.optString(i));
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
+
                 } else if(isLocked) {
                     final String key = Constants.AUTOFILTER + i;
                     boolean b = mSettings.getBoolean(key, false);
@@ -753,7 +778,7 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    /**
+    /*
      * Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
      * the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
      * remove the fragment out of the container, then regain the viewpager with the toolbar menu and
@@ -763,8 +788,10 @@ public class BoardActivity extends BaseActivity implements
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
-        if(binding.frameContents.getChildCount() > 0)
-            binding.frameContents.removeView(binding.frameContents.getChildAt(0));
+        if(binding.frameContents.getChildCount() > 0) {
+            //binding.frameContents.removeView(binding.frameContents.getChildAt(0));
+            binding.frameContents.removeAllViews();
+        }
         // If the tabLayout height is 0,  put the height back to the default size.
         //if(!isTabHeight) animTabHeight(true);
         animTabHeight(true);
@@ -785,7 +812,9 @@ public class BoardActivity extends BaseActivity implements
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
-        pagerAdapter.notifyDataSetChanged();
+        //pagerAdapter.notifyDataSetChanged();
+        log.i("board caregerory: %s", category);
+        //pagerAdapter.notifyItemChanged(category);
         addTabIconAndTitle(this, binding.tabBoard);
     }
 
@@ -868,4 +897,8 @@ public class BoardActivity extends BaseActivity implements
     public ProgressBar getLoadingProgressBar() {
         return binding.progbarBoardLoading;
     }
+
+    // Typecast Firestore Array field of post_images to ArrayList to pass it to the bundle argument,
+    // which is used in onPostItemClicked()
+
 }

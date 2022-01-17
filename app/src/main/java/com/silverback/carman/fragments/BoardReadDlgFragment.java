@@ -115,7 +115,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
-    private ActivityResultLauncher<Intent> activityResultLauncher;
     private ListenerRegistration regListener;
     //private QueryCommentPagingUtil queryCommentPagingUtil;
     private QueryPostPaginationUtil queryPaginationUtil;
@@ -136,13 +135,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // UIs
     private FragmentBoardReadBinding binding;
-    //private View localView;
-    //private ConstraintLayout constPostingLayout, constCommentLayout;
-    //private Toolbar toolbar;
-    //private View underline;
-    //private RecyclerView recyclerComment;
-    //private EditText etComment;
-    //private TextView tvCompathyCnt, tvCommentCnt;
+
 
     // Fields
     private SpannableStringBuilder autoTitle;
@@ -172,6 +165,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
+    final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+
     //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -181,12 +177,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
         mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
-
-        // ActivityResult
-        activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(), result -> {
-                    getActivityResultCallback(result);
-                });
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
@@ -243,6 +233,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         binding = FragmentBoardReadBinding.inflate(inflater);
 
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
@@ -278,8 +269,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         binding.tvPostTitle.setText(postTitle);
         binding.tvUsername.setText(userName);
-        assert getArguments() != null;
-        binding.tvPostingDate.setText(getArguments().getString("timestamp"));
+        binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
@@ -295,13 +285,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //setRecyclerViewScrollListener();
         //binding.recyclerComments.addOnScrollListener(pagingUtil);
 
-        // Event handler for clicking buttons
-        //btnDismiss.setOnClickListener(view -> dismiss());
-        // On clicking the comment button, show the comment input form.
+        // Event handler for buttons
         binding.imgbtnComment.setOnClickListener(this);
-        // Button to set compathy which increase the compathy number if the user has never picked it up.
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
-        // Upload the comment to Firestore, which needs to refactor for filtering text.
         binding.imgbtnSendComment.setOnClickListener(this);
 
         // If the user is the owner of a post, display the edit menu in the toolbar.
@@ -309,7 +295,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(userPic))? Constants.imgPath + "ic_user_blank_gray" : userPic;
+        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -318,7 +304,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
         regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            if(e != null) return;
+            if(e != null) {
+                e.printStackTrace();
+                return;
+            }
+
             if(snapshot != null && snapshot.exists()) {
                 BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
                 //long cntComment = snapshot.getLong("cnt_comment");
@@ -339,7 +329,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         //queryCommentPagingUtil.setCommentQuery(postRef);
         isLoading = true;
         queryPaginationUtil.setCommentQuery(postRef);
-
         return binding.getRoot();
     }
 
@@ -438,7 +427,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // to show comments on the post by the pagination.
     @Override
     public void getFirstQueryResult(QuerySnapshot postShots) {
-        commentShotList.clear();
+        if(commentShotList.size() > 0) commentShotList.clear();
         for(DocumentSnapshot comment : postShots) {
             commentShotList.add(comment);
             commentAdapter.notifyDataSetChanged();
@@ -761,7 +750,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
     // documents of which contains user ids
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     private void setCompathyCount() {
         // Prevent repeated connection to Firestore every time when users click the button.
         if(hasCompathy) {
@@ -779,7 +768,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                     hasCompathy = true;
                     //docRef.update("cnt_compathy", FieldValue.increment(-1));
                     //compathyRef.delete();
-                    Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(binding.getRoot(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
 
                 } else {
                     postRef.update("cnt_compathy", FieldValue.increment(1));
@@ -891,9 +880,8 @@ public class BoardReadDlgFragment extends DialogFragment implements
             });
         }
     }
-
      */
-    static class BoardGeneralObject {
+    private static class BoardGeneralObject {
         @PropertyName("post_title")
         private String postTitle;
         @PropertyName("post_content")
@@ -916,13 +904,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
         public BoardGeneralObject() {
             // Must have a public no-argument constructor
         }
-        /*
+
         public BoardGeneralObject(long view, long comment, long compathy) {
             this.cntView = view;
             this.cntComment = comment;
             this.cntCompathy = compathy;
         }
-        */
+
         @PropertyName("cnt_view")
         public long getViewCount() {
             return cntView;

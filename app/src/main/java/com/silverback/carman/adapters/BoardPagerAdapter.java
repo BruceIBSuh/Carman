@@ -37,10 +37,6 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         super(fm, lifecycle);
     }
 
-    public void setAutoFilterValues(ArrayList<String> values) {
-        cbValues = values;
-    }
-
     @NonNull
     @Override
     public Fragment createFragment(int position) {
@@ -53,14 +49,16 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-
+            log.i("update postpager:%s", payloads);
         }
     }
-
 
     @Override
     public int getItemCount() {
         return NUM_PAGES;
     }
 
+    public void setAutoFilterValues(ArrayList<String> values) {
+        cbValues = values;
+    }
 }

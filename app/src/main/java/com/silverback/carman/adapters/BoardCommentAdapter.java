@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 
@@ -24,13 +26,13 @@ import java.util.Locale;
 
 public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    //private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
     // Objects
     private ApplyImageResourceUtil imgUtil;
-    private List<DocumentSnapshot> snapshotList;
-    private FirebaseFirestore firestore;
-    private SimpleDateFormat sdf;
+    private final List<DocumentSnapshot> snapshotList;
+    private final FirebaseFirestore firestore;
+    private final SimpleDateFormat sdf;
 
     // Constructor
     public BoardCommentAdapter(List<DocumentSnapshot> snapshotList) {
@@ -87,7 +89,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super.onBindViewHolder(holder, position, payloads);
         } else {
             DocumentSnapshot snapshot = (DocumentSnapshot)payloads.get(0);
-            //log.i("Partial Binding: %s", snapshot.getString("user"));
+            log.i("Partial Binding: %s", snapshot.getString("user"));
         }
 
     }
