@@ -185,10 +185,13 @@ public class BoardActivity extends BaseActivity implements
 
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
+
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
+        /*
         try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
         catch(NullPointerException e) {setNoAutoFilterText();}
         catch(JSONException e) {e.printStackTrace();}
+         */
 
         // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
@@ -330,8 +333,13 @@ public class BoardActivity extends BaseActivity implements
                 case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
                     Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
                     break;
+
                 case Constants.BOARD_AUTOCLUB:
                     //isAutoFilter = true;
+                    try { createAutoFilterCheckBox(BoardActivity.this, jsonAutoFilter, binding.autofilter);}
+                    catch(NullPointerException e) {setNoAutoFilterText();}
+                    catch(JSONException e) {e.printStackTrace();}
+
                     if(cbAutoFilter.size() > 0) {
                         clubTitle = createAutoClubTitle();
                         Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
@@ -342,6 +350,7 @@ public class BoardActivity extends BaseActivity implements
                     }
                     animAutoFilter(true);
                     break;
+
                 case Constants.BOARD_NOTIFICATION:
                     final String noti = getString(R.string.board_tab_title_notification);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(noti);

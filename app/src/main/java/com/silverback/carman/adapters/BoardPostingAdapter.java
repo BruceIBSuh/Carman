@@ -107,25 +107,25 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         int viewType = getItemViewType(position);
         int AD_POSITION = 20; // Temp code
         log.i("position: %s", position);
-
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final DocumentSnapshot snapshot = snapshotList.get(position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
+
                 int offset = (position / AD_POSITION) - 1;
                 //int index = (AD_POSITION > position) ? position + 1 : position - offset;
+                int index = position + 1;
+
 
                 // Timestamp consists of seconds and nanoseconds. To format it as date, get the
                 // seconds using Timestamp.getSeconds() and apply SimpleDateFormat.format() despite
                 // a loss when it should be muliplied by 1000 for making it milliseconds.
+
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
                 //long postingTime = timeStamp.getSeconds() * 1000;
                 //log.i("timestamp: %s", postingTime);
-
-                int index = position + 1;
-                log.i("posting number: %s", index);
                 postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
                 postBinding.tvNumber.setText(String.valueOf(index));
 
@@ -176,10 +176,10 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // with payloads. No payload performs the full binding.
     @Override
     public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        if(payloads.size() == 0) {
-            super.onBindViewHolder(holder, position, payloads);
-        } else  {
+            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
+
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+        else  {
             log.i("payloads exists");
             for(Object payload : payloads) {
                 if(payload instanceof Long) {
