@@ -74,6 +74,17 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
+    <FrameLayout
+        android:id="@+id/frame_contents"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/board_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+    <!--
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
         android:layout_width="match_parent"
@@ -92,8 +103,8 @@
                 android:layout_height="match_parent" />
         </FrameLayout>
     </androidx.core.widget.NestedScrollView>
-
-    <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
+    -->
+    <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Small"
         android:id="@+id/progbar_board_loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -111,7 +122,7 @@
         app:borderWidth="0dp"
         app:backgroundTint="@android:color/holo_green_dark"
         app:rippleColor="@color/colorPrimary"
-        app:layout_anchor="@id/nestedScrollView"
+        app:layout_anchor="@id/frame_contents"
         app:layout_anchorGravity="end|bottom"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

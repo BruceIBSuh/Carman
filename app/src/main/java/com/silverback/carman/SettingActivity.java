@@ -105,6 +105,7 @@ public class SettingActivity extends BaseActivity implements
     // Fields
     private String userId;
     private String userImage;
+    private String userName;
     private String jsonAutoData;
     private String permCamera;
     private Uri downloadUserImageUri;
@@ -239,10 +240,19 @@ public class SettingActivity extends BaseActivity implements
                         break;
                     case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                         log.i("result back to BoardActivity: %s", jsonAutoData);
-                        Intent autodataIntent = new Intent();
-                        autodataIntent.putExtra("autodata", jsonAutoData);
-                        setResult(requestCode, autodataIntent);
+                        Intent autoIntent = new Intent();
+                        autoIntent.putExtra("autodata", jsonAutoData);
+                        setResult(requestCode, autoIntent);
                         break;
+                    /*
+                    case Constants.REQUEST_BOARD_SETTING_USERNAME:
+                        log.i("result back w/ username to BoardActivity: %s", userName);
+                        Intent userIntent = new Intent();
+                        userIntent.putExtra("username", userName);
+                        setResult(requestCode, userIntent);
+                        break;
+
+                    */
                 }
 
                 finish();
@@ -379,7 +389,7 @@ public class SettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case Constants.USER_NAME:
-                String userName = mSettings.getString(key, null);
+                userName = mSettings.getString(key, null);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
                 //if(userName != null) {

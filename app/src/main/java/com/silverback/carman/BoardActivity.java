@@ -46,6 +46,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -131,6 +132,8 @@ public class BoardActivity extends BaseActivity implements
     private boolean isAutoFilter, isTabHeight, isLocked;
     private int category;
 
+    // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
+    // in both BoardPostingAdapter and BoardPagerFragment.
     public static class PostImages {
         @PropertyName("post_images")
         private ArrayList<String> postImageList;
@@ -162,9 +165,8 @@ public class BoardActivity extends BaseActivity implements
     }
 
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+            new ActivityResultContracts.StartActivityForResult(), this::getSettingResultBack);
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -205,6 +207,8 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
         binding.fabBoardWrite.setOnClickListener(this);
 
+        // onAttachFragment(childFragment) is deprecated in API 28. Instead, use this defined in
+        // JetPack androidx.
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
             if(fragment instanceof BoardReadDlgFragment) {
                 BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
@@ -235,19 +239,11 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public void onStop() {
-        activityResultLauncher.unregister();
+        //activityResultLauncher.unregister();
         super.onStop();
     }
 
-    /* replace this with getSupportFragentManager().addFragmentOnAttachListener()
-    @Override
-    public void onAttachFragment(@NonNull Fragment fragment) {
-        if(fragment instanceof BoardReadDlgFragment) {
-            BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
-            readFragment.setEditModeListener(this);
-        }
-    }
-     */
+
 
     /*
      * On Android 3.0 and higher, the options menu is considered to always be open when menu items
@@ -274,42 +270,42 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == android.R.id.home) {
-            // Check which child view the framelayout contains; if it holds the viewpager, just
-            // finish the activity and otherwise, add the viewpager to the framelayout.
+            // Check which child view the framelayout contains; if it contains the viewpager, just
+            // finish the activity; otherwise, add the viewpager to the framelayout.
             if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
                 binding.frameContents.removeView(binding.boardPager);
                 finish();
+
             } else {
                 // FrameLayout may contain either BoardWriteFragment or BoardEditFragment. On pressing
-                // the up button, either of the fragments is removed from the container and it should be
-                // null for garbage collection.
+                // the up button, either of the fragments is removed from the container and add the
+                // viewpager.
                 boolean isWriteMode = (writePostFragment != null) &&
                         binding.frameContents.getChildAt(0) == writePostFragment.getView();
-                String msg = (isWriteMode)?
-                        getString(R.string.board_msg_cancel_write) :
+                String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
                         getString(R.string.board_msg_cancel_edit);
 
-                Fragment target = (isWriteMode)? writePostFragment : editPostFragment;
+                Fragment target = (isWriteMode) ? writePostFragment : editPostFragment;
                 Snackbar snackBar = Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_LONG);
                 snackBar.setAction("OK", view -> {
                     getSupportFragmentManager().beginTransaction().remove(target).commit();
+
                     // Hide the soft input when BoardWriteFragment disappears
                     InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
                     imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+
                     // As BoardPagerFragment comes in, the tabLayout animates to display and the
                     // menu for uploading is made invisible.
                     animTabHeight(true);
+
                     //menu.getItem(1).setVisible(false);
                     addViewPager();
-
                 }).show();
             }
 
             return true;
 
         } else if(item.getItemId() == R.id.action_upload_post) {
-            // Make it differencitated that what the current page contains b/w BoardWriteFragment
-            // and BoardEditFragment.
             boolean isWriteMode = (writePostFragment != null) &&
                     binding.frameContents.getChildAt(0) == writePostFragment.getView();
             if(isWriteMode) writePostFragment.prepareAttachedImages();
@@ -372,6 +368,7 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onClick(View view) {
         if(view.getId() != R.id.fab_board_write) return;
+
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
@@ -408,10 +405,11 @@ public class BoardActivity extends BaseActivity implements
         // other pages, animation is made to slide up not only the tablayout but also tne
         // nestedscrollview
         } else {
+
             //if(TextUtils.isEmpty(tvAutoFilterLabel.getText())) {
+            // tvAutoFilterLabel should be null before calling createAutoFilterCheckbox().
             if(tvAutoFilterLabel == null) {
-                Snackbar.make(binding.getRoot(),
-                        getString(R.string.board_autoclub_set), Snackbar.LENGTH_LONG).show();
+                Snackbar.make(binding.getRoot(), getString(R.string.board_autoclub_set), Snackbar.LENGTH_LONG).show();
                 return;
             }
 
@@ -466,18 +464,12 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setVisibility(View.GONE);
     }
 
-    // Receive an image uri as a data of startActivityForResult() invoked either in BoardWriteFragment
-    // or BoardEditFragment, which holds an implicit intent to call in the image chooser.  The uri is,
-    // in turn, sent to either of the fragments as an livedata of the imageviewmodel for purposes of
-    // showing the image span in the post and adding it to the image list so as to update the recyclerview
-    // adapter.
-    private void getActivityResultCallback(ActivityResult result) {
+    // ActivityResult callback.
+    private void getSettingResultBack(ActivityResult result) {
         log.i("activity result:%s", result);
         if(result.getData() == null) return;
+
         switch(result.getResultCode()) {
-            case RESULT_OK:
-                log.i("user name:%s", result.getData().getStringExtra("userName"));
-                break;
             case Constants.REQUEST_BOARD_GALLERY:
                 /*
                 Uri uri = result.getData().getStringExtra("image");
@@ -496,8 +488,7 @@ public class BoardActivity extends BaseActivity implements
 
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                //pagerAdapter.notifyDataSetChanged();
-                binding.boardPager.setAdapter(pagerAdapter);
+                pagerAdapter.notifyItemChanged(Constants.BOARD_AUTOCLUB);
                 binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
 
                 clubTitle = createAutoClubTitle();
@@ -505,9 +496,6 @@ public class BoardActivity extends BaseActivity implements
                 addTabIconAndTitle(this, binding.tabBoard);
                 //menu.getItem(0).setVisible(true);
                 menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
-                break;
-
-            case Constants.REQUEST_BOARD_SETTING_USERNAME:
                 break;
 
             default: break;
@@ -621,6 +609,7 @@ public class BoardActivity extends BaseActivity implements
         ClickableSpan clickableSpan = new ClickableSpan(){
             @Override
             public void onClick(@NonNull View textView) {
+                log.i("autodata set clicked");
                 int requestCode = Constants.REQUEST_BOARD_SETTING_AUTOCLUB;
                 Intent intent = new Intent(BoardActivity.this, SettingActivity.class);
                 intent.putExtra("caller", requestCode);
@@ -898,7 +887,5 @@ public class BoardActivity extends BaseActivity implements
         return binding.progbarBoardLoading;
     }
 
-    // Typecast Firestore Array field of post_images to ArrayList to pass it to the bundle argument,
-    // which is used in onPostItemClicked()
 
 }

@@ -60,7 +60,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-/**
+/*
  * The viewpager statically creates this fragment using BoardPagerAdapter, which has the custom
  * recyclerview to show the posting board by category.
  *
@@ -181,22 +181,18 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(
+            @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
-
-        // In case of inserting the banner, the item size will change.
+        // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
         WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
-        /*
-        LinearLayoutManager layout = new LinearLayoutManager(
-                getContext(), LinearLayoutManager.VERTICAL, false);
-        */
+        //LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
-
+        // In case of inserting the banner, the item size will change.
         binding.recyclerBoardPostings.setHasFixedSize(false);
         binding.recyclerBoardPostings.setLayoutManager(layoutManager);
         binding.recyclerBoardPostings.addItemDecoration(divider);
@@ -207,26 +203,12 @@ public class BoardPagerFragment extends Fragment implements
         postList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postList, this);
         binding.recyclerBoardPostings.setAdapter(postingAdapter);
-        binding.recyclerBoardPostings.addOnScrollListener(setRecyclerViewScrollListener());
+        binding.recyclerBoardPostings.addOnScrollListener(scrollListener);
 
         // Show/hide Floating Action Button as the recyclerview scrolls.
         fabWrite = ((BoardActivity)Objects.requireNonNull(requireActivity())).getFAB();
         //setRecyclerViewScrollListener();
 
-        // Based on MVVM
-        /*
-        if(currentPage == Constants.BOARD_AUTOCLUB) {
-            // Initialize the club board if any filter is set.
-            if(!TextUtils.isEmpty(automaker)) {
-                isLastPage = false;
-                //postshotList.clear();
-                clubshotList.clear();
-                clubRepo.setPostingQuery(isViewOrder);
-            }
-
-        } else queryPostSnapshot(currentPage);
-        */
-        log.i("current page: %s", currentPage);
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         progbar.setVisibility(View.VISIBLE);
 
@@ -275,8 +257,6 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-
-        log.i("BoardPagerFragment resumed");
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
@@ -323,7 +303,7 @@ public class BoardPagerFragment extends Fragment implements
             binding.progbarBoardPaging.setVisibility(View.GONE);
             queryPagingUtil.setPostQuery(currentPage, isViewOrder);
 
-            // Rotate the imageview holding emblem
+            // Rotate the automaker emblem
             ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
             rotation.setDuration(500);
             rotation.setInterpolator(new AccelerateDecelerateInterpolator());
@@ -332,7 +312,8 @@ public class BoardPagerFragment extends Fragment implements
                 @Override
                 public void onAnimationEnd(Animator animation, boolean isReverse) {
                     rotation.cancel();
-                    String sorting = (!isViewOrder)? getString(R.string.board_autoclub_sort_view) : getString(R.string.board_autoclub_sort_time);
+                    String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_time) :
+                            getString(R.string.board_autoclub_sort_view);
                     TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
                     tvSorting.setText(sorting);
                     isViewOrder = !isViewOrder;
@@ -425,6 +406,7 @@ public class BoardPagerFragment extends Fragment implements
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         //postList.clear();
         if(postList.size() > 0) postList.clear();
+
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
         if(querySnapshot == null || querySnapshot.size() == 0) {
@@ -432,15 +414,17 @@ public class BoardPagerFragment extends Fragment implements
             return;
         }
 
+
         if(currentPage == Constants.BOARD_AUTOCLUB && TextUtils.isEmpty(automaker)) {
+            log.i("no maker fixed");
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
         }
 
+
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
-
         int pos = 0;
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
@@ -467,8 +451,6 @@ public class BoardPagerFragment extends Fragment implements
         }
 
 
-
-        //postingAdapter.notifyItemRangeChanged(0, querySnapshot.size() - 1, "query result");
     }
 
     // Called by QueryPaginationUtil.setNextQuery()
@@ -478,12 +460,14 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
+                log.i("next position: %s", pos);
                 postList.add(document);
-                postingAdapter.notifyItemChanged(pos);
-                //postingAdapter.notifyDataSetChanged();
+                postingAdapter.notifyItemChanged(pos, document);
                 pos++;
             }
         }
+
+
 
         binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
         isLoading = false;
@@ -684,10 +668,10 @@ public class BoardPagerFragment extends Fragment implements
     // has occurred on that RecyclerView, which has 2 abstract methods of onScrollStateChanged() and
     // onScrolled(); the former is to be invoked when RecyclerView's scroll state changes and the
     // latter invoked when the RecyclerView has been scrolled.
-    private RecyclerView.OnScrollListener setRecyclerViewScrollListener() {
-        // RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
-        return new RecyclerView.OnScrollListener() {
-            //boolean isScrolling;
+    //private RecyclerView.OnScrollListener setRecyclerViewScrollListener() {
+    private final RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+        //return new RecyclerView.OnScrollListener() {
+            boolean isScrolling;
             /*
              * Callback to be invoked when RecyclerView's scroll state changes.
              * @param recyclerView being scrolled.
@@ -699,18 +683,16 @@ public class BoardPagerFragment extends Fragment implements
                 super.onScrollStateChanged(recyclerView, newState);
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
                     log.i("scrolling idle state");
-                    fabWrite.show();
                     fabWrite.setAlpha(0.5f);
+                    fabWrite.show();
                     //isScrolling = false;
                     // Exclude the fab from showing on the notificaiton page.
                     //if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
-                } else if(fabWrite.isShown()) {
-                    fabWrite.hide();
+                } else {
+                    if(fabWrite.isShown()) fabWrite.hide();
                 }
             }
-
-             */
-
+            */
             /*
              * Callback to be invoked when the RecyclerView has been scrolled, which will be called
              * right after the scroll has completed. This callback will also be called if visible
@@ -722,7 +704,6 @@ public class BoardPagerFragment extends Fragment implements
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                log.i("oScrolled: %s, %s", dx, dy);
                 fabWrite.setAlpha(0.5f);
 
                 // FAB visibility control that hides the button while scrolling.
@@ -742,6 +723,7 @@ public class BoardPagerFragment extends Fragment implements
                         // a condition has to be added to prevent setNextQuery().
                         if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
                             binding.progbarBoardPaging.setVisibility(View.VISIBLE);
+                            log.i("next query started");
                             queryPagingUtil.setNextQuery();
                         }
 
@@ -752,7 +734,7 @@ public class BoardPagerFragment extends Fragment implements
             }
 
         };
-    }
+
 
 
     /*
@@ -849,8 +831,8 @@ public class BoardPagerFragment extends Fragment implements
          */
     }
 
-    // Wrapper class to prevent java.lang.IndexOutOfBoundsException: Inconsistency detected.
-    // Invalid view holder adapter.
+    // Wrapper class to throw java.lang.IndexOutOfBoundsException: Inconsistency detected.
+    // Invalid view holder adapter positionPostViewHolder
     private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
         // Constructor
         public WrapContentLinearLayoutManager(Context context) {

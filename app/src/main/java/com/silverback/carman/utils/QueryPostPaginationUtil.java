@@ -74,7 +74,6 @@ public class QueryPostPaginationUtil {
 
         // Listen for realtime updates using onSnapshot(addSnapshotListener)
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
-            log.i("realtime update");
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);

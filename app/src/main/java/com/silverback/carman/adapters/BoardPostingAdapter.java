@@ -104,9 +104,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     //@SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        log.i("BoardPostingAdapter onBindViewHolder: %s", position);
         int viewType = getItemViewType(position);
         int AD_POSITION = 20; // Temp code
+        log.i("position: %s", position);
 
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
@@ -123,8 +123,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
                 //long postingTime = timeStamp.getSeconds() * 1000;
                 //log.i("timestamp: %s", postingTime);
+
+                int index = position + 1;
+                log.i("posting number: %s", index);
                 postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
-                postBinding.tvNumber.setText(String.valueOf(position + 1));
+                postBinding.tvNumber.setText(String.valueOf(index));
 
                 // Some posts may have weird data type. This condition should be removed once the
                 // board is cleared out.
@@ -174,18 +177,13 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        log.i("BoardPostingAdapter payloads:%s", payloads.size());
-        int pos = holder.getBindingAdapterPosition();
-        if(payloads.isEmpty()) {
-            super.onBindViewHolder(holder, pos, payloads);
+        if(payloads.size() == 0) {
+            super.onBindViewHolder(holder, position, payloads);
         } else  {
+            log.i("payloads exists");
             for(Object payload : payloads) {
-                if(payload instanceof DocumentSnapshot) {
-                    log.i("documentsnapshot");
-                    // The view count is passed as the type of Long.
-                } else if(payload instanceof Long) {
+                if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));
-                // The comment count is passed as SparseLongArray.
                 } else if(payload instanceof SparseLongArray) {
                     SparseLongArray sparseArray = (SparseLongArray)payload;
                     postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
