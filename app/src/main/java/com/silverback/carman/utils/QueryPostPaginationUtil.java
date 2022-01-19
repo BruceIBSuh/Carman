@@ -36,6 +36,7 @@ public class QueryPostPaginationUtil {
     public QueryPostPaginationUtil(FirebaseFirestore firestore, OnQueryPaginationCallback callback) {
         this.firestore = firestore;
         mCallback = callback;
+        this.field = null;
     }
 
     // Make an initial query for the posting board by category. Recent and popular board are made of
@@ -43,6 +44,7 @@ public class QueryPostPaginationUtil {
     // keyword in the client side.
     public void setPostQuery(int catetory, boolean isViewOrder) {
         colRef = firestore.collection("board_general");
+        query = null;
         querySnapshot = null;
         switch(catetory){
             case Constants.BOARD_RECENT:
@@ -51,6 +53,7 @@ public class QueryPostPaginationUtil {
                 break;
 
             case Constants.BOARD_POPULAR:
+                log.i("BOARD_POPULAR");
                 this.field = "cnt_view";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
@@ -74,42 +77,35 @@ public class QueryPostPaginationUtil {
 
         // Listen for realtime updates using onSnapshot(addSnapshotListener)
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) return;
+            if(e != null) {
+                log.i("query causes error");
+                return;
+            }
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
 
     }
 
-    // Make an initial query of comments in BoardReadDlgFragment.
-    public void setCommentQuery(DocumentReference docRef){
-        querySnapshot = null;
-        this.field = "timestamp";
-        colRef = docRef.collection("comments");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
-                .get()
-                .addOnSuccessListener(queryCommentShot -> {
-                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
-                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
-                    this.querySnapshot = queryCommentShot;
-                    mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(mCallback::getQueryErrorResult);
-    }
 
     // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
     // to make an next query, which will be repeated until query comes to the last page.
     public void setNextQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        log.i("field in next query: %s", field);
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisible).limit(Constants.PAGINATION)
                 .get()
                 .addOnSuccessListener(nextSnapshot -> {
+                    this.querySnapshot = nextSnapshot;
+                    log.i("snapshot size: %s", nextSnapshot.size());
                     if(nextSnapshot.size() >= Constants.PAGINATION) {
-                        this.querySnapshot = nextSnapshot;
+                        //this.querySnapshot = nextSnapshot;
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
-                        querySnapshot = null;
+                        //querySnapshot = null;
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
+
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
 
         /*
@@ -146,5 +142,20 @@ public class QueryPostPaginationUtil {
                 });
 
          */
+    }
+
+    // Make an initial query of comments in BoardReadDlgFragment.
+    public void setCommentQuery(DocumentReference docRef){
+        querySnapshot = null;
+        this.field = "timestamp";
+        colRef = docRef.collection("comments");
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION)
+                .get()
+                .addOnSuccessListener(queryCommentShot -> {
+                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+                    this.querySnapshot = queryCommentShot;
+                    mCallback.getFirstQueryResult(queryCommentShot);
+                }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 }

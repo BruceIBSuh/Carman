@@ -24,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -189,16 +190,16 @@ public class BoardPagerFragment extends Fragment implements
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
         // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
-        WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
-        //LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        //WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
+        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
 
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         // In case of inserting the banner, the item size will change.
         binding.recyclerBoardPostings.setHasFixedSize(false);
-        binding.recyclerBoardPostings.setLayoutManager(layoutManager);
+        binding.recyclerBoardPostings.setLayoutManager(layout);
         binding.recyclerBoardPostings.addItemDecoration(divider);
-        //binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
+        binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
         //itemAnimator.setSupportsChangeAnimations(false);
         binding.recyclerBoardPostings.setAdapter(postingAdapter);
@@ -220,7 +221,7 @@ public class BoardPagerFragment extends Fragment implements
         */
 
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-        progbar.setVisibility(View.VISIBLE);
+        // progbar.setVisibility(View.VISIBLE);
 
         return binding.getRoot();
     }
@@ -310,7 +311,7 @@ public class BoardPagerFragment extends Fragment implements
             // Requery the autoclub post with the field switched.
             isLoading = true;
             //pbPaging.setVisibility(View.GONE);
-            binding.progbarBoardPaging.setVisibility(View.GONE);
+            //binding.progbarBoardPaging.setVisibility(View.GONE);
             queryPagingUtil.setPostQuery(currentPage, isViewOrder);
 
             // Rotate the automaker emblem
@@ -424,14 +425,12 @@ public class BoardPagerFragment extends Fragment implements
             return;
         }
 
-
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postList.add(document);
-            log.i("document: %s", document.getString("post_title"));
         }
 
         postingAdapter.notifyItemRangeChanged(0, querySnapshot.size());
@@ -453,17 +452,14 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        int start = postList.size();
+        final int start = postList.size();
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postList.add(document);
-            postingAdapter.notifyItemChanged(start);
-            start++;
         }
 
-        //postingAdapter.notifyItemRangeChanged(start, nextShots.size());
+        postingAdapter.notifyItemRangeChanged(start, nextShots.size());
         //binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
-        isLoading = false;
 
         // Keep querying if sorted posts are less than the pagination number. When it reaches the
         // number, update the apdater.
@@ -473,18 +469,20 @@ public class BoardPagerFragment extends Fragment implements
                 queryPagingUtil.setNextQuery();
             }//else postingAdapter.notifyDataSetChanged();
         }
+
+        isLoading = false;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-        int start = postList.size();
+        final int start = postList.size();
+        log.i("last query: %s", lastShots.size());
         for(DocumentSnapshot document : lastShots) {
+            log.i("isGeneral: %s", document.getBoolean("post_general"));
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postList.add(document);
-            postingAdapter.notifyItemChanged(start);
-            start++;
         }
-
+        postingAdapter.notifyItemRangeChanged(start, lastShots.size());
 
         //binding.progbarBoardPaging.setVisibility(View.GONE);
         isLoading = true; // Block the scroll listener from keeping querying.
@@ -517,6 +515,170 @@ public class BoardPagerFragment extends Fragment implements
                     postList.remove(snapshot);
                     break;
                 }
+            }
+        }
+    }
+
+
+    // RecyclerView.OnScrollListener is an abstract class to receive messages when a scrolling event
+    // has occurred on that RecyclerView, which has 2 abstract methods of onScrollStateChanged() and
+    // onScrolled(); the former is to be invoked when RecyclerView's scroll state changes and the
+    // latter invoked when the RecyclerView has been scrolled.
+    //private RecyclerView.OnScrollListener setRecyclerViewScrollListener() {
+    private final RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
+        /*
+         * Callback to be invoked when the RecyclerView has been scrolled, which will be called
+         * right after the scroll has completed. This callback will also be called if visible
+         * item range changes after a layout calculation, in which dx and dy will be 0.
+         * @param recyclerView being scrolled
+         * @param dx The amount of horizontal scroll
+         * @param dy The amount of vertical scroll
+         */
+        @Override
+        public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+            fabWrite.setAlpha(0.5f);
+            // FAB visibility control that hides the button while scrolling.
+            //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
+            //WrapContentLinearLayoutManager layout = (WrapContentLinearLayoutManager)recyclerView.getLayoutManager();
+            LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();
+            if (layout != null) {
+                int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
+                int visiblePostCount = layout.getChildCount();
+                int totalPostCount = layout.getItemCount();
+                log.i("totalPostCount: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
+
+                if (!isLoading && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                    //isScrolling = false;
+                    isLoading = true;
+                    //if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
+                    // If the totalPostCount is less than Constants.Pagination, setNextQuery will
+                    // return null value, which results in an error as in Notification board. Accrodingly,
+                    // a condition has to be added to prevent setNextQuery().
+                    if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
+                        //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
+                        log.i("next query started");
+                        queryPagingUtil.setNextQuery();
+                    }
+
+                    //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
+                    //else if(!isLastPage) clubRepo.setNextQuery();
+                }
+            }
+        }
+
+    };
+
+
+
+    /*
+     * Check if a user is the post's owner or has read the post before in order to increate the view
+     * count. In order to do so, get the user id from the internal storage and from the post as well.
+     * Get the user id and query the "viewers" sub-collection to check if the user id exists in the
+     * documents, which means whether the user has read the post before. If so, do not increase
+     * the view count. Otherwise, add the user id to the "viewers" collection and increase the
+     * view count;
+     */
+    //@SuppressWarnings("ConstantConditions")
+    private void addViewCount(DocumentReference docref, int position) {
+        try(FileInputStream fis = Objects.requireNonNull(requireActivity()).openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+            final String viewerId = br.readLine();
+
+            CollectionReference subCollection = docref.collection("viewers");
+            subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
+                // In case the user has not read the post before and adoes not exists in the "viewers"
+                // collection
+                if(!snapshot.exists()) {
+                  docref.update("cnt_view", FieldValue.increment(1));
+                  // Set timestamp and the user ip with the user id used as the document id.
+                  Map<String, Object> viewerData = new HashMap<>();
+                  /*
+                  Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
+                  Date date = calendar.getTime();
+                   */
+                  viewerData.put("timestamp", FieldValue.serverTimestamp());
+                  viewerData.put("viewer_ip", "");
+
+                  subCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
+                      // Listener to events for local changes, which is notified with the new data
+                      // before the data is sent to the backend.
+                      docref.get().addOnSuccessListener(data -> {
+                          if(data.exists())
+                              // Partial binding to BoardPostingAdapter to update the view count in
+                              // the post document.
+                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
+                      }).addOnFailureListener(Exception::printStackTrace);
+                  });
+                }
+            });
+
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
+    // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
+    // auto data as json type.
+    private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
+        // Make the progressbar visible until getting the emblem from Firetore
+        pb.setVisibility(View.VISIBLE);
+        log.i("automaker emblem: %s", automaker);
+        firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
+            String emblem = doc.getString("auto_emblem");
+            if(TextUtils.isEmpty(emblem)) return;
+            else {
+                Uri uri = Uri.parse(emblem);
+                final int x = imgview.getMeasuredWidth();
+                final int y = imgview.getMeasuredHeight();
+                imgutil.applyGlideToEmblem(uri, x, y, imgview);
+            }
+
+            pb.setVisibility(View.GONE);
+
+        });
+
+        /*
+        //firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
+        firestore.collection("autodata").whereEqualTo(FieldPath.documentId(), automaker).get()
+                .addOnSuccessListener(queires -> {
+                    for(QueryDocumentSnapshot autoshot : queires) {
+                        String emblem = autoshot.getString("auto_emblem");
+                        // Empty Check. Refactor should be taken to show an empty icon, instead.
+                        if(TextUtils.isEmpty(emblem)) return;
+                        else {
+                            Uri uri = Uri.parse(emblem);
+                            final int x = imgview.getMeasuredWidth();
+                            final int y = imgview.getMeasuredHeight();
+                            imgutil.applyGlideToEmblem(uri, x, y, imgview);
+                        }
+
+                        pb.setVisibility(View.GONE);
+                        break;
+                    }
+                }).addOnFailureListener(e -> {
+                    pb.setVisibility(View.GONE);
+                    e.printStackTrace();
+                });
+
+         */
+    }
+
+    // Wrapper class to throw java.lang.IndexOutOfBoundsException: Inconsistency detected.
+    // Invalid view holder adapter positionPostViewHolder
+    private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
+        // Constructor
+        public WrapContentLinearLayoutManager(Context context) {
+            super(context, LinearLayoutManager.VERTICAL, false);
+        }
+
+        @Override
+        public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
+            try {
+                super.onLayoutChildren(recycler, state);
+            } catch(IndexOutOfBoundsException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -656,190 +818,6 @@ public class BoardPagerFragment extends Fragment implements
     }
     */
 
-    // RecyclerView.OnScrollListener is an abstract class to receive messages when a scrolling event
-    // has occurred on that RecyclerView, which has 2 abstract methods of onScrollStateChanged() and
-    // onScrolled(); the former is to be invoked when RecyclerView's scroll state changes and the
-    // latter invoked when the RecyclerView has been scrolled.
-    //private RecyclerView.OnScrollListener setRecyclerViewScrollListener() {
-    private final RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
-        //return new RecyclerView.OnScrollListener() {
-            boolean isScrolling;
-            /*
-             * Callback to be invoked when RecyclerView's scroll state changes.
-             * @param recyclerView being scrolled.
-             * @param newState: SCROLL_STATE_IDLE, SCROLL_STATE_DRAGGING, SCROLL_STATE_SETTLING
-             */
-            /*
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    log.i("scrolling idle state");
-                    fabWrite.setAlpha(0.5f);
-                    fabWrite.show();
-                    //isScrolling = false;
-                    // Exclude the fab from showing on the notificaiton page.
-                    //if(currentPage != Constants.BOARD_NOTIFICATION) fabWrite.show();
-                } else {
-                    if(fabWrite.isShown()) fabWrite.hide();
-                }
-            }
-            */
-            /*
-             * Callback to be invoked when the RecyclerView has been scrolled, which will be called
-             * right after the scroll has completed. This callback will also be called if visible
-             * item range changes after a layout calculation, in which dx and dy will be 0.
-             * @param recyclerView being scrolled
-             * @param dx The amount of horizontal scroll
-             * @param dy The amount of vertical scroll
-             */
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                fabWrite.setAlpha(0.5f);
-
-                // FAB visibility control that hides the button while scrolling.
-                //if(dy != 0 && fabWrite.isShown()) fabWrite.hide();
-                LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();
-                if (layout != null) {
-                    int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
-                    int visiblePostCount = layout.getChildCount();
-                    int totalPostCount = layout.getItemCount();
-
-                    if (!isLoading && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        //isScrolling = false;
-                        isLoading = true;
-                        //if(currentPage != Constants.BOARD_AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
-                        // If the totalPostCount is less than Constants.Pagination, setNextQuery will
-                        // return null value, which results in an error as in Notification board. Accrodingly,
-                        // a condition has to be added to prevent setNextQuery().
-                        if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
-                            //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
-                            log.i("next query started");
-                            queryPagingUtil.setNextQuery();
-                        }
-
-                        //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
-                        //else if(!isLastPage) clubRepo.setNextQuery();
-                    }
-                }
-            }
-
-        };
-
-
-
-    /*
-     * Check if a user is the post's owner or has read the post before in order to increate the view
-     * count. In order to do so, get the user id from the internal storage and from the post as well.
-     * Get the user id and query the "viewers" sub-collection to check if the user id exists in the
-     * documents, which means whether the user has read the post before. If so, do not increase
-     * the view count. Otherwise, add the user id to the "viewers" collection and increase the
-     * view count;
-     */
-    //@SuppressWarnings("ConstantConditions")
-    private void addViewCount(DocumentReference docref, int position) {
-        try(FileInputStream fis = Objects.requireNonNull(requireActivity()).openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-            final String viewerId = br.readLine();
-
-            CollectionReference subCollection = docref.collection("viewers");
-            subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
-                // In case the user has not read the post before and adoes not exists in the "viewers"
-                // collection
-                if(!snapshot.exists()) {
-                  docref.update("cnt_view", FieldValue.increment(1));
-                  // Set timestamp and the user ip with the user id used as the document id.
-                  Map<String, Object> viewerData = new HashMap<>();
-                  /*
-                  Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-                  Date date = calendar.getTime();
-                   */
-                  viewerData.put("timestamp", FieldValue.serverTimestamp());
-                  viewerData.put("viewer_ip", "");
-
-                  subCollection.document(viewerId).set(viewerData).addOnSuccessListener(aVoid -> {
-                      // Listener to events for local changes, which is notified with the new data
-                      // before the data is sent to the backend.
-                      docref.get().addOnSuccessListener(data -> {
-                          if(data.exists())
-                              // Partial binding to BoardPostingAdapter to update the view count in
-                              // the post document.
-                              postingAdapter.notifyItemChanged(position, data.getLong("cnt_view"));
-                      }).addOnFailureListener(Exception::printStackTrace);
-                  });
-                }
-            });
-
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Attemp to retrieve the emblem uri from Firestore only when an auto maker is provided. For this
-    // reason, the method should be placed at the end of createAutoFilterCheckBox() which receives
-    // auto data as json type.
-    private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
-        // Make the progressbar visible until getting the emblem from Firetore
-        pb.setVisibility(View.VISIBLE);
-        log.i("automaker emblem: %s", automaker);
-        firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
-            String emblem = doc.getString("auto_emblem");
-            if(TextUtils.isEmpty(emblem)) return;
-            else {
-                Uri uri = Uri.parse(emblem);
-                final int x = imgview.getMeasuredWidth();
-                final int y = imgview.getMeasuredHeight();
-                imgutil.applyGlideToEmblem(uri, x, y, imgview);
-            }
-
-            pb.setVisibility(View.GONE);
-
-        });
-
-        /*
-        //firestore.collection("autodata").whereEqualTo("auto_maker", automaker).get()
-        firestore.collection("autodata").whereEqualTo(FieldPath.documentId(), automaker).get()
-                .addOnSuccessListener(queires -> {
-                    for(QueryDocumentSnapshot autoshot : queires) {
-                        String emblem = autoshot.getString("auto_emblem");
-                        // Empty Check. Refactor should be taken to show an empty icon, instead.
-                        if(TextUtils.isEmpty(emblem)) return;
-                        else {
-                            Uri uri = Uri.parse(emblem);
-                            final int x = imgview.getMeasuredWidth();
-                            final int y = imgview.getMeasuredHeight();
-                            imgutil.applyGlideToEmblem(uri, x, y, imgview);
-                        }
-
-                        pb.setVisibility(View.GONE);
-                        break;
-                    }
-                }).addOnFailureListener(e -> {
-                    pb.setVisibility(View.GONE);
-                    e.printStackTrace();
-                });
-
-         */
-    }
-
-    // Wrapper class to throw java.lang.IndexOutOfBoundsException: Inconsistency detected.
-    // Invalid view holder adapter positionPostViewHolder
-    private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
-        // Constructor
-        public WrapContentLinearLayoutManager(Context context) {
-            super(context, LinearLayoutManager.VERTICAL, false);
-        }
-
-        @Override
-        public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-            try {
-                super.onLayoutChildren(recycler, state);
-            } catch(IndexOutOfBoundsException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 
 }

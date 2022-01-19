@@ -62,7 +62,6 @@ public class PostingBoardRepository implements
     public PostingBoardLiveData getPostingBoardLiveData() {
         if(isLastPage) return null;
         if(lastVisibleshot != null) query = query.startAfter(lastVisibleshot);
-
         return new PostingBoardLiveData(query, this, this);
     }
 
