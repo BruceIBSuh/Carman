@@ -457,7 +457,7 @@ public class BoardPagerFragment extends Fragment implements
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postList.add(document);
         }
-
+        log.i("next query: %s, %s", start, nextShots.size());
         postingAdapter.notifyItemRangeChanged(start, nextShots.size());
         //binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
 
@@ -475,13 +475,12 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-        final int start = postList.size();
-        log.i("last query: %s", lastShots.size());
+        final int start = postList.size() + 1;
         for(DocumentSnapshot document : lastShots) {
-            log.i("isGeneral: %s", document.getBoolean("post_general"));
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else postList.add(document);
         }
+        log.i("last query: %s, %s", start, lastShots.size());
         postingAdapter.notifyItemRangeChanged(start, lastShots.size());
 
         //binding.progbarBoardPaging.setVisibility(View.GONE);
@@ -557,7 +556,7 @@ public class BoardPagerFragment extends Fragment implements
                     // a condition has to be added to prevent setNextQuery().
                     if(currentPage != Constants.BOARD_AUTOCLUB && totalPostCount >= Constants.PAGINATION) {
                         //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
-                        log.i("next query started");
+                        log.i("next query started:%s, %s", currentPage, isViewOrder);
                         queryPagingUtil.setNextQuery();
                     }
 

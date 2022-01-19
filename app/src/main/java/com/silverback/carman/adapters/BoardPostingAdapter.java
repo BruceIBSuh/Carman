@@ -110,7 +110,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             // Calculate the index number by taking the plugin at the end of the pagination
             // into account.
             int offset = (position / AD_POSITION) - 1;
-            int index = (AD_POSITION > position) ? position + 1 : position - offset;
+            //int index = (AD_POSITION > position) ? position + 1 : position - offset;
+            int index = position + 1;
 
             postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
             postBinding.tvNumber.setText(String.valueOf(index));

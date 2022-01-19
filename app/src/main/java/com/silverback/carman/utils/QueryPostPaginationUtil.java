@@ -21,7 +21,7 @@ public class QueryPostPaginationUtil {
     private QuerySnapshot querySnapshot;
 
     // Fields
-    private boolean isUpdated;
+    private int category;
     private String field;
 
     // Interface
@@ -36,18 +36,17 @@ public class QueryPostPaginationUtil {
     public QueryPostPaginationUtil(FirebaseFirestore firestore, OnQueryPaginationCallback callback) {
         this.firestore = firestore;
         mCallback = callback;
-        this.field = null;
     }
 
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public void setPostQuery(int catetory, boolean isViewOrder) {
+    public void setPostQuery(int category, boolean isViewOrder) {
+        this.category = category;
         colRef = firestore.collection("board_general");
-        query = null;
-        querySnapshot = null;
-        switch(catetory){
+        switch(category){
             case Constants.BOARD_RECENT:
+                log.i("BOARD_RECENT");
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
@@ -59,11 +58,13 @@ public class QueryPostPaginationUtil {
                 break;
 
             case Constants.BOARD_AUTOCLUB:
+                log.i("BOARD_AUTOCLUB");
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_NOTIFICATION:
+                log.i("BOARD_NOTIFICATION");
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
@@ -92,12 +93,35 @@ public class QueryPostPaginationUtil {
     // to make an next query, which will be repeated until query comes to the last page.
     public void setNextQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        log.i("field in next query: %s", field);
+        //if(category == Constants.BOARD_POPULAR) query = colRef.whereEqualTo("post_general", true);
+        switch(category) {
+            case Constants.BOARD_RECENT: case Constants.BOARD_POPULAR:
+                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                break;
+            case Constants.BOARD_AUTOCLUB:
+                query = colRef.orderBy(field, Query.Direction.DESCENDING);
+                break;
+            case Constants.BOARD_NOTIFICATION:
+                query = firestore.collection("admin_post").orderBy(field, Query.Direction.DESCENDING);
+                break;
+        }
+        log.i("field: %s", field);
+        query.startAfter(lastVisible).limit(Constants.PAGINATION)
+                .get()
+                .addOnSuccessListener(nextSnapshot -> {
+                    this.querySnapshot = nextSnapshot;
+                    if(nextSnapshot.size() >= Constants.PAGINATION) {
+                        mCallback.getNextQueryResult(nextSnapshot);
+                    } else {
+
+                        mCallback.getLastQueryResult(nextSnapshot);
+                    }
+                }).addOnFailureListener(mCallback::getQueryErrorResult);
+        /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisible).limit(Constants.PAGINATION)
                 .get()
                 .addOnSuccessListener(nextSnapshot -> {
                     this.querySnapshot = nextSnapshot;
-                    log.i("snapshot size: %s", nextSnapshot.size());
                     if(nextSnapshot.size() >= Constants.PAGINATION) {
                         //this.querySnapshot = nextSnapshot;
                         mCallback.getNextQueryResult(nextSnapshot);
@@ -107,7 +131,7 @@ public class QueryPostPaginationUtil {
                     }
 
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
-
+        */
         /*
         colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)
                 .limit(Constants.PAGINATION)
