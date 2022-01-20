@@ -23,6 +23,7 @@ import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -40,6 +41,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final int AD_POSITION = 20;
 
     // Objects
+    //private final List<CompoundItemList> compoundItemList;
+
     private Context context;
 
     private final OnRecyclerItemClickListener mListener;
@@ -77,6 +80,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         snapshotList = snapshots;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         setHasStableIds(true);
+
     }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
@@ -86,8 +90,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         this.context = viewGroup.getContext();
         imgUtil = new ApplyImageResourceUtil(context);
-        postBinding = BoardRecyclerviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
-
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 postBinding = BoardRecyclerviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
@@ -104,14 +106,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
         if(holder instanceof PostViewHolder) {
             DocumentSnapshot snapshot = snapshotList.get(position);
             // Calculate the index number by taking the plugin at the end of the pagination
             // into account.
-            int offset = (position / AD_POSITION) - 1;
-            //int index = (AD_POSITION > position) ? position + 1 : position - offset;
-            int index = position + 1;
+            log.i("bindviewholder position: %s", holder.getLayoutPosition());
+            int offset = (position % AD_POSITION) - 1;
+            int index = (AD_POSITION > position) ? position + 1 : position - offset;
+
 
             postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
             postBinding.tvNumber.setText(String.valueOf(index));
@@ -122,7 +124,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             //log.i("timestamp: %s", postingTime);
             if(snapshot.getDate("timestamp") != null) {
                 Date date = snapshot.getDate("timestamp");
-                postBinding.tvPostingDate.setText(sdf.format(date));
+                postBinding.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
             }
 
             postBinding.tvPostOwner.setText(snapshot.getString("user_name"));
@@ -187,14 +189,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Guess this will be useful to apply plug-in ads.
     @Override
     public int getItemViewType(int position) {
-        //category = (position > 0 && position % AD_POSITION == 0) ? AD_VIEW_TYPE : CONTENT_VIEW_TYPE;
-        category = CONTENT_VIEW_TYPE;
+        category = (position > 0 && position % AD_POSITION == 0) ? AD_VIEW_TYPE : CONTENT_VIEW_TYPE;
         return position;
     }
 
     @Override
     public int getItemCount() {
-        log.i("data size: %s", snapshotList.size());
         return snapshotList.size();
     }
 
@@ -209,8 +209,26 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
     }
 
+    private class CompoundItemList {
+        DocumentSnapshot snapshot;
+        int viewType;
+        public CompoundItemList(int viewType, DocumentSnapshot snapshot) {
+            this.viewType = viewType;
+            this.snapshot = snapshot;
+        }
 
+        public CompoundItemList(int viewType) {
+            this.viewType = viewType;
+        }
 
+        DocumentSnapshot getDocumentSnapshot() {
+            return snapshot;
+        }
+
+        int getViewType() {
+            return viewType;
+        }
+    }
 
 
 }

@@ -75,8 +75,6 @@ public class QueryPostPaginationUtil {
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
         */
-
-        // Listen for realtime updates using onSnapshot(addSnapshotListener)
         query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) {
                 log.i("query causes error");
@@ -117,55 +115,6 @@ public class QueryPostPaginationUtil {
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
-        /*
-        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisible).limit(Constants.PAGINATION)
-                .get()
-                .addOnSuccessListener(nextSnapshot -> {
-                    this.querySnapshot = nextSnapshot;
-                    if(nextSnapshot.size() >= Constants.PAGINATION) {
-                        //this.querySnapshot = nextSnapshot;
-                        mCallback.getNextQueryResult(nextSnapshot);
-                    } else {
-                        //querySnapshot = null;
-                        mCallback.getLastQueryResult(nextSnapshot);
-                    }
-
-                }).addOnFailureListener(mCallback::getQueryErrorResult);
-        */
-        /*
-        colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastVisibleShot)
-                .limit(Constants.PAGINATION)
-                .addSnapshotListener((nextSnapshot, e) -> {
-                    if(e != null || nextSnapshot == null) return;
-                    log.i("meta data: %s", nextSnapshot.getMetadata().isFromCache());
-                    for(DocumentChange dc : nextSnapshot.getDocumentChanges()) {
-                        switch(dc.getType()){
-                            case ADDED:
-                                log.i("ADDED: %s", dc.getDocument().getString("post_title"));
-                                break;
-
-                            case MODIFIED:
-                                log.i("MODIFIED: %s", dc.getDocument().getString("post_title"));
-                                break;
-
-                            case REMOVED:
-                                log.i("REMOVED: %s", dc.getDocument().getString("post_title"));
-                                break;
-                        }
-                    }
-
-                    if(nextSnapshot.size() >= Constants.PAGINATION) {
-                        log.i("query next: %s", nextSnapshot.size());
-                        this.querySnapshot = nextSnapshot;
-                        mCallback.getNextQueryResult(nextSnapshot);
-                    } else {
-                        log.i("query last: %s", nextSnapshot.size());
-                        querySnapshot = null;
-                        mCallback.getLastQueryResult(nextSnapshot);
-                    }
-                });
-
-         */
     }
 
     // Make an initial query of comments in BoardReadDlgFragment.

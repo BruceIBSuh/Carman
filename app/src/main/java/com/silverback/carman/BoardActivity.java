@@ -187,11 +187,9 @@ public class BoardActivity extends BaseActivity implements
         // exception that calls setNoAutofilterText().
 
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        /*
         try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
         catch(NullPointerException e) {setNoAutoFilterText();}
         catch(JSONException e) {e.printStackTrace();}
-         */
 
         // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle());
@@ -262,6 +260,7 @@ public class BoardActivity extends BaseActivity implements
         this.menu = menu;
         this.menu.getItem(0).setVisible(false);
         this.menu.getItem(1).setVisible(false);
+
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -692,7 +691,7 @@ public class BoardActivity extends BaseActivity implements
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        for(int i = 0; i < jsonAuto.length(); i++) {
+        for(int i = 0; i < jsonAuto.length() - 1; i++) { // Exclude the auto type.
             CheckBox cb = new CheckBox(context);
             cb.setTag(i);
             cb.setTextColor(Color.WHITE);
