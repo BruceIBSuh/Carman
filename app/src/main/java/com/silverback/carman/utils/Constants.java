@@ -67,7 +67,8 @@ public class Constants {
     public static final int DIVIDER_HEIGHT_POSTINGBOARD = 8;
 
     // Board
-    public static final int PAGINATION = 10;
+    public static final int PAGINATION = 20;
+    public static final int AD_POSITION = 5;
     public static final int BOARD_RECENT = 0;
     public static final int BOARD_POPULAR = 1;
     public static final int BOARD_AUTOCLUB = 2;
