@@ -15,6 +15,7 @@
  */
 package com.silverback.carman;
 
+import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
@@ -24,8 +25,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -46,10 +47,10 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
@@ -70,9 +71,13 @@ import com.silverback.carman.utils.Constants;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 /*
@@ -128,8 +133,9 @@ public class BoardActivity extends BaseActivity implements
     private String jsonAutoFilter; //auto data saved in SharedPreferences as JSON String.
     private SpannableStringBuilder clubTitle;
     private int tabHeight;
-    private int tabPage;
-    private boolean isAutoFilter, isTabHeight, isLocked;
+    //private int tabPage;
+    //private boolean isAutoFilter, isTabHeight, isLocked;
+    private boolean isLocked;
     private int category;
 
     // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
@@ -151,9 +157,7 @@ public class BoardActivity extends BaseActivity implements
         public void setPostImages(ArrayList<String> postImageList) {
             this.postImageList = postImageList;
         }
-
     }
-
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // queries posts with new conditions to make the recyclerview updated.
     public interface OnAutoFilterCheckBoxListener {
@@ -163,9 +167,14 @@ public class BoardActivity extends BaseActivity implements
     public void setAutoFilterListener(OnAutoFilterCheckBoxListener listener) {
         mListener = listener;
     }
-
+    // ActivityResult
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), this::getSettingResultBack);
+    private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
+            new ActivityResultContracts.GetContent(), this::getAttachedImageUri);
+    private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(), this::getCameraImage);
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -185,7 +194,6 @@ public class BoardActivity extends BaseActivity implements
 
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
-
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
         try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
         catch(NullPointerException e) {setNoAutoFilterText();}
@@ -220,8 +228,6 @@ public class BoardActivity extends BaseActivity implements
         // Add the listeners to the viewpager and AppbarLayout
         //binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
         animTabLayout();
-
-
     }
 
     // Should be defined for the autofilter to property work as long as the activity is resumed
@@ -231,20 +237,16 @@ public class BoardActivity extends BaseActivity implements
         super.onResume();
         binding.boardPager.registerOnPageChangeCallback(pagerCallback);
     }
-
     @Override
     public void onPause() {
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onPause();
     }
-
     @Override
     public void onStop() {
         //activityResultLauncher.unregister();
         super.onStop();
     }
-
-
 
     /*
      * On Android 3.0 and higher, the options menu is considered to always be open when menu items
@@ -376,7 +378,6 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onClick(View view) {
         if(view.getId() != R.id.fab_board_write) return;
-
         String userName = mSettings.getString(Constants.USER_NAME, null);
         if(TextUtils.isEmpty(userName)) {
             Snackbar snackbar = Snackbar.make(
@@ -400,7 +401,8 @@ public class BoardActivity extends BaseActivity implements
 
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
-        args.putString("userId", userId);
+        args.putString("userId", userId); // userId defined in BaseActivity
+        args.putString("userName", userName);
         args.putInt("tabPage", category);
 
         // Handle the toolbar menu as the write board comes in.
@@ -413,17 +415,14 @@ public class BoardActivity extends BaseActivity implements
         // other pages, animation is made to slide up not only the tablayout but also tne
         // nestedscrollview
         } else {
-
             //if(TextUtils.isEmpty(tvAutoFilterLabel.getText())) {
             // tvAutoFilterLabel should be null before calling createAutoFilterCheckbox().
             if(tvAutoFilterLabel == null) {
                 Snackbar.make(binding.getRoot(), getString(R.string.board_autoclub_set), Snackbar.LENGTH_LONG).show();
                 return;
             }
-
             tvAutoFilterLabel.setVisibility(View.GONE);
             cbGeneral.setVisibility(View.VISIBLE);
-
             //if(!isAutoFilter) animAutoFilter(isAutoFilter);
             animAutoFilter(true);
             menu.getItem(0).setVisible(false);
@@ -472,43 +471,7 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setVisibility(View.GONE);
     }
 
-    // ActivityResult callback.
-    private void getSettingResultBack(ActivityResult result) {
-        log.i("activity result:%s", result);
-        if(result.getData() == null) return;
 
-        switch(result.getResultCode()) {
-            case Constants.REQUEST_BOARD_GALLERY:
-                /*
-                Uri uri = result.getData().getStringExtra("image");
-                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
-                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
-                 */
-                break;
-
-            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                jsonAutoFilter = result.getData().getStringExtra("autodata");
-                log.i("json auto result: %s", jsonAutoFilter);
-                // Create the autofilter checkboxes and set inital values to the checkboxes
-                try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
-                catch(NullPointerException e) { setNoAutoFilterText();}
-                catch(JSONException e) {e.printStackTrace();}
-
-                // Update the pagerAdapter
-                pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyItemChanged(Constants.BOARD_AUTOCLUB);
-                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
-
-                clubTitle = createAutoClubTitle();
-                if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
-                addTabIconAndTitle(this, binding.tabBoard);
-                //menu.getItem(0).setVisible(true);
-                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
-                break;
-
-            default: break;
-        }
-    }
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
     // CheckBox values will be used for conditions for querying posts. At the same time, the automodel
@@ -562,7 +525,7 @@ public class BoardActivity extends BaseActivity implements
     // When calling BoardWriteFragment, the tab layout is gone and the fragment comes in and vice versa.
     // state: true - full height false - 0 height.
     private void animTabHeight(boolean isShown) {
-        isTabHeight = isShown;
+        //isTabHeight = isShown;
         ValueAnimator anim = (isShown) ?
                 ValueAnimator.ofInt(0, tabHeight) : ValueAnimator.ofInt(tabHeight, 0);
         anim.addUpdateListener(valueAnimator -> {
@@ -823,25 +786,29 @@ public class BoardActivity extends BaseActivity implements
         switch(media) {
             case Constants.GALLERY:
                 // MULTI-SELECTION: special handling of Samsung phone.
-                    /*
-                    if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
-                        Intent samsungIntent = new Intent("android.intent.action.MULTIPLE_PICK");
-                        samsungIntent.setType("image/*");
-                        PackageManager manager = getActivity().getApplicationContext().getPackageManager();
-                        List<ResolveInfo> infos = manager.queryIntentActivities(samsungIntent, 0);
-                        if(infos.size() > 0){
-                            //samsungIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                            startActivityForResult(samsungIntent, REQUEST_CODE_SAMSUNG);
-                        }
-                        // General phones other than SAMSUNG
-                    } else {
-                        Intent galleryIntent = new Intent();
-                        galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
-                        galleryIntent.setType("image/*");
-                        //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                        startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                /*
+                if(Build.MANUFACTURER.equalsIgnoreCase("samsung")) {
+                    Intent samsungIntent = new Intent("android.intent.action.MULTIPLE_PICK");
+                    samsungIntent.setType("image/*");
+                    PackageManager manager = getApplicationContext().getPackageManager();
+                    List<ResolveInfo> infos = manager.queryIntentActivities(samsungIntent, 0);
+                    if(infos.size() > 0){
+                        //samsungIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                        //startActivityForResult(samsungIntent, REQUEST_CODE_SAMSUNG);
+                        mGetContent.launch("image/*");
                     }
-                    */
+                    // General phones other than SAMSUNG
+                } else {
+                    //Intent galleryIntent = new Intent();
+                    //galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
+                    //galleryIntent.setType("image/*");
+                    //galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    //startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
+                    mGetContent.launch("image/*");
+
+                }
+                 */
+                /*
                 Intent galleryIntent = new Intent();
                 galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
                 galleryIntent.setType("image/*");
@@ -850,22 +817,76 @@ public class BoardActivity extends BaseActivity implements
                 // The result should go to the parent activity
                 //startActivityForResult(galleryIntent, Constants.REQUEST_BOARD_GALLERY);
                 //activityResultLauncher.launch(galleryIntent);
+                 */
+                mGetContent.launch("image/*");
                 break;
 
             case Constants.CAMERA: // Camera
-                Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                Intent cameraChooser = Intent.createChooser(cameraIntent, "Choose camera");
-
-                if(cameraIntent.resolveActivity(getPackageManager()) != null) {
-                    //log.i("Camera Intent");
-                    //startActivityForResult(cameraChooser, Constants.REQUEST_BOARD_CAMERA);
-                    //activityResultLauncher.launch(cameraChooser);
-                }
+                log.i("Open Camera");
+                checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
+                    File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
+                            "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
+                    Uri photoUri = FileProvider.getUriForFile(this, "com.silverback.carman.provider", tmpFile);
+                    mTakePicture.launch(photoUri);
+                });
                 break;
 
             default: break;
         }
 
+    }
+
+    // ActivityResult callback invoked by activityResultCallback to get the result from SettingActivity
+    // to set the auto club.
+    private void getSettingResultBack(ActivityResult result) {
+        log.i("activity result:%s", result);
+        if(result.getData() == null) return;
+        switch(result.getResultCode()) {
+            case Constants.REQUEST_BOARD_GALLERY:
+                /*
+                Uri uri = result.getData().getStringExtra("image");
+                if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
+                else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
+                 */
+                break;
+
+            case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                jsonAutoFilter = result.getData().getStringExtra("autodata");
+                log.i("json auto result: %s", jsonAutoFilter);
+                // Create the autofilter checkboxes and set inital values to the checkboxes
+                try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
+                catch(NullPointerException e) { setNoAutoFilterText();}
+                catch(JSONException e) {e.printStackTrace();}
+
+                // Update the pagerAdapter
+                pagerAdapter.setAutoFilterValues(cbAutoFilter);
+                pagerAdapter.notifyItemChanged(Constants.BOARD_AUTOCLUB);
+                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+
+                clubTitle = createAutoClubTitle();
+                if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
+                addTabIconAndTitle(this, binding.tabBoard);
+                //menu.getItem(0).setVisible(true);
+                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
+                break;
+
+            default: break;
+        }
+    }
+
+    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri from the
+    // image media.
+    private void getAttachedImageUri(Uri uri) {
+        log.i("ActivityResult from GetContent");
+        if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
+        else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
+    }
+
+    // ActivityResult callback by mTakePicture, which get the boolean value when successfully taking
+    // picture back to the callback, then launch ActivityResultContract.GetContent to get the image
+    // uri. No way to send the uri back directly? custom contract?
+    private void getCameraImage(boolean isTaken) {
+        if(isTaken) mGetContent.launch("image/*");
     }
 
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value

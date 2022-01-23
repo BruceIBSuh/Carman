@@ -135,8 +135,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // UIs
     private FragmentBoardReadBinding binding;
-
-
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
@@ -154,7 +152,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public interface OnEditModeListener {
         void onEditClicked(Bundle bundle);
     }
-
     // Interface for listening to BoardActivity at the lifecycle of onAttachFragment.
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
@@ -168,7 +165,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

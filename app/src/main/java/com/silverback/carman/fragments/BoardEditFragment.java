@@ -1,5 +1,7 @@
 package com.silverback.carman.fragments;
 
+import static android.content.Context.INPUT_METHOD_SERVICE;
+
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -12,12 +14,9 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Button;
-import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -25,7 +24,6 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
@@ -34,12 +32,11 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.j2objc.annotations.Property;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
+import com.silverback.carman.databinding.FragmentBoardEditBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager;
@@ -58,8 +55,6 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static android.content.Context.INPUT_METHOD_SERVICE;
-
 /**
  * This fragment is to edit an existing post if and only if a user is the owner of the post.
  */
@@ -74,7 +69,6 @@ public class BoardEditFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private Bundle bundle;
-    private Matcher m;
     private BoardImageAdapter imgAdapter;
     private BoardImageSpanHandler spanHandler;
     private ApplyImageResourceUtil imgUtil;
@@ -88,16 +82,11 @@ public class BoardEditFragment extends Fragment implements
     private UploadBitmapTask bitmapTask;
 
     // UIs
-    private View localView;
-    private EditText etPostTitle, etPostContent;
-    private ProgressBarDialogFragment pbFragment;
+    private FragmentBoardEditBinding binding;
 
     // Fields
     private String title, content;
     private int cntUploadImage;
-    private List<Integer> imgRemoveList;
-
-
 
     // Default Constructor
     public BoardEditFragment() {
@@ -120,11 +109,11 @@ public class BoardEditFragment extends Fragment implements
         sparseSpanArray = new SparseArray<>();
         sparseImageArray = new SparseArray<>();
         uriEditImageList = new ArrayList<>();
-        imgRemoveList = new ArrayList<>(); // Store image urls to remove in the edit mode.
 
         // If the post contains any image, the http url should be typecast to uri.
-        if(strImgUrlList != null) {
-            for(String uriString : strImgUrlList) uriEditImageList.add(Uri.parse(uriString));
+        if(strImgUrlList != null && strImgUrlList.size() > 0) {
+            for(String uriString : strImgUrlList)
+                uriEditImageList.add(Uri.parse(uriString));
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
@@ -132,27 +121,21 @@ public class BoardEditFragment extends Fragment implements
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
-    @SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
+    //@SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentBoardEditBinding.inflate(inflater);
+        binding.etBoardEditTitle.setText(title);
 
-        localView = inflater.inflate(R.layout.fragment_board_edit, container, false);
-
-        etPostTitle = localView.findViewById(R.id.et_board_write_title);
-        Button btnAttach = localView.findViewById(R.id.btn_attach_image);
-        RecyclerView recyclerView = localView.findViewById(R.id.vg_recycler_images);
-        etPostContent = localView.findViewById(R.id.et_edit_content);
-
-        etPostTitle.setText(title);
+        // Create RecyclerView to display attached images
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
-        recyclerView.setLayoutManager(linearLayout);
-
+        binding.editRecyclerImages.setLayoutManager(linearLayout);
         imgAdapter = new BoardImageAdapter(uriEditImageList, this);
-        recyclerView.setAdapter(imgAdapter);
+        binding.editRecyclerImages.setAdapter(imgAdapter);
 
-        etPostContent.setText(new SpannableStringBuilder(content));
-        spanHandler = new BoardImageSpanHandler(etPostContent, this);
+        binding.etEditContent.setText(new SpannableStringBuilder(content));
+        spanHandler = new BoardImageSpanHandler(binding.etEditContent, this);
 
         // If the post contains any image, find the markup in the content using Matcher.find() and
         // at the same time, images should be downsized by Glide and create imagespans only when it
@@ -162,7 +145,7 @@ public class BoardEditFragment extends Fragment implements
         // Once the sparsearray completes to hold all imagespans, it should be converted to spanList
         // to pass to BoardImageSpanHander.setImageSpanList().
         if(uriEditImageList != null && uriEditImageList.size() > 0) {
-            m = Pattern.compile(REGEX_MARKUP).matcher(content);
+            Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
             List<ImageSpan> spanList = new ArrayList<>();
             final float scale = getResources().getDisplayMetrics().density;
             int size = (int)(Constants.IMAGESPAN_THUMBNAIL_SIZE * scale + 0.5f);
@@ -181,7 +164,7 @@ public class BoardEditFragment extends Fragment implements
                             public void onResourceReady(
                                     @NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
 
-                                ImageSpan imgspan = new ImageSpan(getContext(), res);
+                                ImageSpan imgspan = new ImageSpan(requireContext(), res);
                                 sparseSpanArray.put(pos, imgspan);
                                 // No guarantee to get bitmaps sequentially because Glide handles
                                 // images on an async basis. Thus, SparseArray<ImageSpan> should be
@@ -206,51 +189,52 @@ public class BoardEditFragment extends Fragment implements
         // Scroll the edittext inside (nested)scrollview.
         // warning message is caused by onPermClick not implemented. Unless the method is requried
         // to implement, the warning can be suppressed by "clickableVieweaccessibility".
-        etPostContent.setOnTouchListener((view, event) ->{
-            if(etPostContent.hasFocus()) {
+        /*
+        binding.etEditContent.setOnTouchListener((view, event) ->{
+            if(binding.etEditContent.hasFocus()) {
                 view.getParent().requestDisallowInterceptTouchEvent(true);
                 if((event.getAction() & MotionEvent.ACTION_MASK) == MotionEvent.ACTION_SCROLL) {
                     view.getParent().requestDisallowInterceptTouchEvent(false);
                     return true;
                 }
 
-                /*
+
                 switch(event.getAction() & MotionEvent.ACTION_MASK) {
                     case MotionEvent.ACTION_SCROLL:
                         view.getParent().requestDisallowInterceptTouchEvent(false);
                         return true;
                 }
-                 */
+
             }
 
             return false;
         });
 
+         */
         // Call the gallery or camera to capture images, the URIs of which are sent to an intent
         // of onActivityResult(int, int, Intent)
-        btnAttach.setOnClickListener(btn -> {
-            ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                    .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+        binding.btnAttachImage.setOnClickListener(btn -> {
+            ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                    .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
             // Pop up the dialog as far as the num of attached pics are no more than 6.
             if(uriEditImageList.size() > Constants.MAX_IMAGE_NUMS) {
                 log.i("Image count: %s", uriEditImageList.size());
-                Snackbar.make(localView, getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(binding.getRoot(), getString(R.string.board_msg_image), Snackbar.LENGTH_SHORT).show();
+                return;
 
-            } else {
-                // Pop up the dialog to select which media to use bewteen the camera and gallery, then
-                // create an intent by the selection.
-                DialogFragment dialog = new BoardChooserDlgFragment();
-                dialog.show(getActivity().getSupportFragmentManager(), "chooser");
-
-                // Put the line breaker into the edittext when the image interleaves b/w the lines
-                int start = etPostContent.getSelectionStart();
-                int end = etPostContent.getSelectionEnd();
-                etPostContent.getText().replace(start, end, "\n");
             }
+
+            DialogFragment dialog = new BoardChooserDlgFragment();
+            dialog.show(requireActivity().getSupportFragmentManager(), "chooser");
+
+            // Put the line breaker into the edittext when the image interleaves b/w the lines
+            int start = binding.etEditContent.getSelectionStart();
+            int end = binding.etEditContent.getSelectionEnd();
+            binding.etEditContent.getText().replace(start, end, "\n");
         });
 
-        return localView;
+        return binding.getRoot();
     }
 
     @Override
@@ -373,20 +357,23 @@ public class BoardEditFragment extends Fragment implements
     public void prepareUpdate() {
         // Hide the soft input if it is visible.
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
-                .hideSoftInputFromWindow(localView.getWindowToken(), 0);
+                .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
         if(!doEmptyCheck()) return;
 
         // Instantiate the fragment to display the progressbar.
+        /*
         pbFragment = new ProgressBarDialogFragment();
         requireActivity().getSupportFragmentManager()
                 .beginTransaction().add(android.R.id.content, pbFragment).commit();
+        */
 
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
         if(uriEditImageList.size() == 0) updatePost(); // The post originally contains no images.
         else {
-            pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));
+            //pbFragment.setProgressMsg(getString(R.string.board_msg_downsize_image));
+
             // Coompare the new iamges with the old ones and delete old images from Storage and
             // upload new ones if any change is made. At the same time, the post_images field has to
             // be updated with new uris. It seems not necessary to compare two lists and partial update
@@ -427,15 +414,15 @@ public class BoardEditFragment extends Fragment implements
 
     //@SuppressWarnings("ConstantConditions")
     private void updatePost(){
-        pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
+        //pbFragment.setProgressMsg(getString(R.string.board_msg_uploading));
         String docId = bundle.getString("documentId");
 
         final DocumentReference docref = firestore.collection("board_general").document(docId);
         docref.update("post_images", FieldValue.delete());
 
         Map<String, Object> updatePost = new HashMap<>();
-        updatePost.put("post_title", etPostTitle.getText().toString());
-        updatePost.put("post_content", etPostContent.getText().toString());
+        updatePost.put("post_title", binding.etBoardEditTitle.getText().toString());
+        updatePost.put("post_content", binding.etEditContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
 
         if(uriEditImageList.size() > 0) {
@@ -460,7 +447,7 @@ public class BoardEditFragment extends Fragment implements
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
             // Upon completing upload, notify BaordPagerFragment of the document id to update.
             sharedModel.getEditedPosting().setValue(docId);
-            pbFragment.dismiss();
+            //pbFragment.dismiss();
             ((BoardActivity)getActivity()).addViewPager();
 
         }).addOnFailureListener(Exception::printStackTrace);
@@ -468,11 +455,11 @@ public class BoardEditFragment extends Fragment implements
     }
 
     private boolean doEmptyCheck() {
-        if(TextUtils.isEmpty(etPostContent.getText())) {
-            Snackbar.make(localView, getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
+        if(TextUtils.isEmpty(binding.etBoardEditTitle.getText())) {
+            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
             return false;
-        } else if(TextUtils.isEmpty(etPostContent.getText())){
-            Snackbar.make(localView, getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
+        } else if(TextUtils.isEmpty(binding.etEditContent.getText())){
+            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
             return false;
         } else return true;
 

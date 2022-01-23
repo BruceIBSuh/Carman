@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:layout_marginStart="8dp"
-        android:labelFor="@id/et_board_write_title"
+        android:labelFor="@id/et_board_edit_title"
         android:text="@string/boardwrite_label_title"
         android:textSize="@dimen/mediumText"
         android:textStyle="bold"
@@ -36,6 +36,7 @@
         android:layout_marginStart="16dp"
         android:gravity="center_vertical"
         android:background="@null"
+        android:hint="@null"
         android:ems="10"
         android:inputType="text"
         android:textSize="@dimen/mediumText"
@@ -71,7 +72,6 @@
     the value of Selection.getSelectionStart() to tell where is the imagespan
     -->
 
-
     <EditText
         android:id="@+id/et_board_content"
         android:layout_width="0dp"
@@ -85,20 +85,33 @@
         android:padding="8dp"
         android:scrollbars="vertical"
         android:textSize="@dimen/smallText"
-        app:layout_constraintBottom_toTopOf="@+id/vg_recycler_images"
+        app:layout_constraintBottom_toTopOf="@+id/recycler_images"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_header"
+        app:layout_constraintVertical_bias="0.0"
         tools:ignore="autofill" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/vg_recycler_images"
+        android:id="@+id/recycler_images"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
+
+    <ProgressBar
+        android:id="@+id/progbar_board_write"
+        style="?android:attr/progressBarStyle"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/et_board_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/et_board_content" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

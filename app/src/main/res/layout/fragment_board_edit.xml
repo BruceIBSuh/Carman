@@ -23,13 +23,13 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/boardwrite_label_title"
-        android:labelFor="@id/et_board_write_title"
+        android:labelFor="@id/et_board_edit_title"
         app:layout_constraintBottom_toBottomOf="@+id/view_edit_header"
         app:layout_constraintStart_toStartOf="@+id/view_edit_header"
         app:layout_constraintTop_toTopOf="@+id/view_edit_header" />
 
     <EditText
-        android:id="@+id/et_board_write_title"
+        android:id="@+id/et_board_edit_title"
         android:layout_width="0dp"
         android:layout_height="40dp"
         android:layout_marginStart="16dp"
@@ -52,9 +52,9 @@
         android:background="@drawable/btn_attach_image"
         android:textSize="@dimen/smallText"
         android:textStyle="bold"
-        app:layout_constraintBottom_toBottomOf="@+id/et_board_write_title"
+        app:layout_constraintBottom_toBottomOf="@+id/et_board_edit_title"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/et_board_write_title" />
+        app:layout_constraintTop_toTopOf="@+id/et_board_edit_title" />
 
 
     <EditText
@@ -71,12 +71,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/view_edit_header"
-        app:layout_constraintBottom_toTopOf="@+id/vg_recycler_images"
+        app:layout_constraintBottom_toTopOf="@+id/edit_recycler_images"
         tools:ignore="autofill" />
 
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/vg_recycler_images"
+        android:id="@+id/edit_recycler_images"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"

@@ -88,7 +88,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Objects
     private List<MultiTypeItem> multiTypeItemList;
-    private List<DocumentSnapshot> snapshotList;
+    //private List<DocumentSnapshot> snapshotList;
 
     private FirebaseFirestore firestore;
     //private PostingBoardViewModel postingModel;
@@ -119,6 +119,7 @@ public class BoardPagerFragment extends Fragment implements
     private int currentPage;
     private boolean isViewOrder;
     private boolean isLoading; // to block the RecyclerView from scrolling while loading posts.
+    private int index;
     //private boolean isLastPage;
     //private boolean isViewUpdated;
     //private boolean isScrolling;
@@ -158,7 +159,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // Instantiate objects.
         multiTypeItemList = new ArrayList<>();
-        snapshotList = new ArrayList<>();
+        //snapshotList = new ArrayList<>();
 
 
         firestore = FirebaseFirestore.getInstance();
@@ -228,8 +229,8 @@ public class BoardPagerFragment extends Fragment implements
         } else queryPostSnapshot(currentPage);
         */
         isLoading = true;
-        if(snapshotList.size() == 0) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-
+        //if(snapshotList.size() == 0)
+        queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         // progbar.setVisibility(View.VISIBLE);
 
         return binding.getRoot();
@@ -419,7 +420,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         log.i("firstQurey");
-        snapshotList.clear();
+        //snapshotList.clear();
+        index = 0;
         multiTypeItemList.clear();
 
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
@@ -437,11 +439,10 @@ public class BoardPagerFragment extends Fragment implements
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
-        int index = 0;
         for(DocumentSnapshot document : querySnapshot) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
-                snapshotList.add(document);
+                //snapshotList.add(document);
                 multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
             index ++;
@@ -458,7 +459,8 @@ public class BoardPagerFragment extends Fragment implements
         // If the sorted posts are less than the pagination number, keep querying until it's up to
         // the number. Manually update the adapter each time posts amount to the pagination number.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(snapshotList.size() < Constants.PAGINATION) {
+            if(multiTypeItemList.size() < Constants.PAGINATION) {
+            //if(snapshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextQuery();
             }
@@ -468,11 +470,11 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
         final int start = multiTypeItemList.size();
-        int index = snapshotList.size();
+        //int index = snapshotList.size();
         for(DocumentSnapshot document : nextShots) {
             if (currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
-                snapshotList.add(document);
+                //snapshotList.add(document);
                 multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
             index++;
@@ -488,7 +490,8 @@ public class BoardPagerFragment extends Fragment implements
         // Keep querying if sorted posts are less than the pagination number. When it reaches the
         // number, update the apdater.
         if(currentPage == Constants.BOARD_AUTOCLUB) {
-            if(snapshotList.size() < Constants.PAGINATION) {
+            if(multiTypeItemList.size() < Constants.PAGINATION) {
+            //if(snapshotList.size() < Constants.PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextQuery();
             }//else postingAdapter.notifyDataSetChanged();
@@ -501,11 +504,11 @@ public class BoardPagerFragment extends Fragment implements
     public void getLastQueryResult(QuerySnapshot lastShots) {
         //final int start = postList.size();
         final int start = multiTypeItemList.size();
-        int index = snapshotList.size();
+        //int index = snapshotList.size();
         for(DocumentSnapshot document : lastShots) {
             if(currentPage == Constants.BOARD_AUTOCLUB) sortClubPost(document);
             else {
-                snapshotList.add(document);
+                //snapshotList.add(document);
                 multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
             index++;
@@ -517,7 +520,8 @@ public class BoardPagerFragment extends Fragment implements
 
         // On clicking the filter item on the autoclub page, if nothing has been posted, display
         // the empty view.
-        if(currentPage == Constants.BOARD_AUTOCLUB && snapshotList.size() == 0) {
+        //if(currentPage == Constants.BOARD_AUTOCLUB && snapshotList.size() == 0) {
+        if(currentPage == Constants.BOARD_AUTOCLUB && multiTypeItemList.size() == 0) {
             //recyclerPostView.setEmptyView(binding.tvEmptyView);
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
         }
@@ -537,7 +541,9 @@ public class BoardPagerFragment extends Fragment implements
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
     // notation
     private void sortClubPost(DocumentSnapshot snapshot) {
-        snapshotList.add(snapshot);
+        //snapshotList.add(snapshot);
+        multiTypeItemList.add(new MultiTypeItem(0, index, snapshot));
+        /*
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
             for(String filter : autoFilter) {
@@ -547,6 +553,8 @@ public class BoardPagerFragment extends Fragment implements
                 }
             }
         }
+
+         */
     }
 
 

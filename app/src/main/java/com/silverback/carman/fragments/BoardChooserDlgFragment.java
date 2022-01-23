@@ -3,6 +3,7 @@ package com.silverback.carman.fragments;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
@@ -12,6 +13,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.DialogBoardChooserBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -31,6 +33,7 @@ public class BoardChooserDlgFragment extends DialogFragment {
     private final int GALLERY = 1;
     private final int CAMERA = 2;
 
+    private DialogBoardChooserBinding binding;
     //private OnImageChooserListener mListener;
     private FragmentSharedModel fragmentModel;
 
@@ -47,39 +50,57 @@ public class BoardChooserDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        //View localView = View.inflate(getContext(), R.layout.dialog_board_chooser, null);
+        binding = DialogBoardChooserBinding.inflate(LayoutInflater.from(getContext()));
+        //TextView tvGallery = localView.findViewById(R.id.tv_gallery);
+        //TextView tvCamera = localView.findViewById(R.id.tv_camera);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
-        View localView = View.inflate(getContext(), R.layout.dialog_board_chooser, null);
-        TextView tvGallery = localView.findViewById(R.id.tv_gallery);
-        TextView tvCamera = localView.findViewById(R.id.tv_camera);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Select Image Media")
-                .setView(localView);
-
-        tvGallery.setOnClickListener(view -> {
+                .setView(binding.getRoot());
+        binding.tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);
             fragmentModel.getImageChooser().setValue(Constants.GALLERY);
             dismiss();
         });
-
-        tvCamera.setOnClickListener(view -> {
+        binding.tvCamera.setOnClickListener(view -> {
             log.i("Camera selected");
             //mListener.selectMedia(BoardWritingActivity.CAMERA);
             fragmentModel.getImageChooser().setValue(Constants.CAMERA);
             dismiss();
         });
 
-
-
         return builder.create();
+    }
+
+    // onViewCreated() is never called on a custom DialogFragment unless you've overridden
+    // onCreateView() and provided a non-null view.
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        /*
+        binding.tvGallery.setOnClickListener(v -> {
+            log.i("Gallery selected");
+            //mListener.selectMedia(BoardWritingActivity.GALLERY);
+            fragmentModel.getImageChooser().setValue(GALLERY);
+            dismiss();
+        });
+
+        binding.tvCamera.setOnClickListener(v -> {
+            log.i("Camera selected");
+            //mListener.selectMedia(BoardWritingActivity.CAMERA);
+            fragmentModel.getImageChooser().setValue(CAMERA);
+            dismiss();
+        });
+         */
     }
 
     // Override the Fragment.onAttach() method to instantiate the OnImageChooserListener

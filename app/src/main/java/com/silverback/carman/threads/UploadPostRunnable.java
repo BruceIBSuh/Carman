@@ -33,7 +33,7 @@ public class UploadPostRunnable implements Runnable {
 
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
@@ -41,7 +41,7 @@ public class UploadPostRunnable implements Runnable {
 
         // Query the user data with the retrieved user id.
         Map<String, Object> post = mTask.getFirestorePost();
-        final String userId = (String) post.get("user_id");
+        final String userId = (String)post.get("user_id");
         log.i("User ID: %s", userId);
 
         // Retrieve the user name and pic based on the Id and contain them in the Map
