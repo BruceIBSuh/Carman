@@ -7,6 +7,8 @@ import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -44,7 +46,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Objects
     private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
 
-
     private Context context;
     private final OnRecyclerItemClickListener mListener;
     private final SimpleDateFormat sdf;
@@ -59,13 +60,29 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
     }
 
-    //public MainContentNotificationBinding binding; //DataBiding in JetPack
+    // Multi-type viewholder:PostViewHolder and AdViewHolder
     private static class PostViewHolder extends RecyclerView.ViewHolder {
-        PostViewHolder(View itemView) {
-            super(itemView);
+        final TextView tvTitle;
+        final TextView tvNumber;
+        final TextView tvPostingDate;
+        final TextView tvPostingOwner;
+        final TextView tvCountViews;
+        final TextView tvCountComment;
+        final ImageView imgAttached;
+
+        PostViewHolder(BoardRecyclerviewPostBinding binding) {
+            super(binding.getRoot());
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
             params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_POSTINGBOARD);
-            itemView.setLayoutParams(params);
+            binding.getRoot().setLayoutParams(params);
+
+            tvTitle = binding.tvPostTitle;
+            tvNumber = binding.tvNumber;
+            tvPostingDate = binding.tvPostingDate;
+            tvPostingOwner = binding.tvPostOwner;
+            tvCountViews = binding.tvCountViews;
+            tvCountComment = binding.tvCountComment;
+            imgAttached = binding.imgAttached;
         }
     }
 
@@ -74,6 +91,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             super(view);
         }
     }
+
+
 
     // Constructor
     //public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
@@ -99,7 +118,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 postBinding = BoardRecyclerviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
-                return new PostViewHolder(postBinding.getRoot());
+                return new PostViewHolder(postBinding);
 
             case AD_VIEW_TYPE:
             default:
@@ -112,15 +131,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
         switch(category) {
             case CONTENT_VIEW_TYPE:
+                PostViewHolder postHolder = (PostViewHolder)holder;
                 DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
-
                 int index = multiTypeItemList.get(position).getItemIndex();
-                postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
-                postBinding.tvNumber.setText(String.valueOf(index + 1));
+                postHolder.tvTitle.setText(snapshot.getString("post_title"));
+                postHolder.tvNumber.setText(String.valueOf(index + 1));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
@@ -128,12 +148,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //log.i("timestamp: %s", postingTime);
                 if(snapshot.getDate("timestamp") != null) {
                     Date date = snapshot.getDate("timestamp");
-                    postBinding.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
+                    postHolder.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
                 }
 
-                postBinding.tvPostOwner.setText(snapshot.getString("user_name"));
-                postBinding.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
-                postBinding.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
+                postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
+                postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
+                postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
                 // Set the user image
                 if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
@@ -151,8 +171,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
 
                 } else {
-                    Glide.with(context).clear(postBinding.imgAttached);
-                    postBinding.imgAttached.setImageDrawable(null);
+                    Glide.with(context).clear(postHolder.imgAttached);
+                    postHolder.imgAttached.setImageDrawable(null);
                 }
 
                 // Set the listener for clicking the item with position
@@ -165,61 +185,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case AD_VIEW_TYPE:
                 break;
         }
-        /*
-        if(holder instanceof PostViewHolder) {
-            //DocumentSnapshot snapshot = snapshotList.get(position);
-            DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-            // Calculate the index number by taking the plugin at the end of the pagination
-            // into account.
-
-            int index = multiTypeItemList.get(position).getItemIndex();
-            postBinding.tvPostTitle.setText(snapshot.getString("post_title"));
-            postBinding.tvNumber.setText(String.valueOf(index + 1));
-
-            // Refactor considered: day based format as like today, yesterday format, 2 days ago.
-            //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
-            //long postingTime = timeStamp.getSeconds() * 1000;
-            //log.i("timestamp: %s", postingTime);
-            if(snapshot.getDate("timestamp") != null) {
-                Date date = snapshot.getDate("timestamp");
-                postBinding.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
-            }
-
-            postBinding.tvPostOwner.setText(snapshot.getString("user_name"));
-            postBinding.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
-            postBinding.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
-
-            // Set the user image
-            if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
-                bindUserImage(Uri.parse(snapshot.getString("user_pic")));
-            } else {
-                bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
-            }
-
-            // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
-            // invoked and the imageview is made null to prevent images from having wrong positions.
-            if(snapshot.get("post_images") != null) {
-                BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
-                List<String> postImages = Objects.requireNonNull(objImages).getPostImages();
-                String thumbnail = postImages.get(0);
-                if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
-
-            } else {
-                Glide.with(context).clear(postBinding.imgAttached);
-                postBinding.imgAttached.setImageDrawable(null);
-            }
-
-            // Set the listener for clicking the item with position
-            holder.itemView.setOnClickListener(view -> {
-                if(mListener != null) mListener.onPostItemClicked(snapshot, position);
-            });
-
-        } else if(holder instanceof AdViewHolder) {
-            log.i("AdViewHolder:");
-
-
-        }
-        */
     }
 
     // Do a partial binding for updating either the view count or the comment count, which is passed

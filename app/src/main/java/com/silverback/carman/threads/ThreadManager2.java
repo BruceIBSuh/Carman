@@ -4,17 +4,20 @@ import static com.google.firebase.storage.StorageTaskScheduler.sInstance;
 
 import android.content.Context;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
+import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.PagerAdapterViewModel;
@@ -23,6 +26,9 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -43,6 +49,8 @@ public class ThreadManager2 {
     static final int FIRESTORE_STATION_GET_COMPLETED = 103;
     static final int FIRESTORE_STATION_SET_COMPLETED = 104;
     static final int DISTCODE_COMPLETED = 105;
+    static final int UPLOAD_BITMAP_COMPLETED = 106;
+    static final int UPLOAD_BITMAP_FAILED = -106;
 
     static final int FETCH_LOCATION_FAILED = -100;
     static final int DOWNLOAD_STATION_FAILED = -101;
@@ -61,6 +69,8 @@ public class ThreadManager2 {
     private final BlockingQueue<StationListTask> mStnListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
+    private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
+    private final BlockingQueue<UploadPostTask> mUploadPostTaskQueue;
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
@@ -72,15 +82,19 @@ public class ThreadManager2 {
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
     private StationListTask stnListTask;
+    private UploadBitmapTask uploadBitmapTask;
 
     // Constructor private
     private ThreadManager2() {
-        super();
+        //super();
         mThreadTaskQueue = new LinkedBlockingQueue<>();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
+
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
+        mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
+        mUploadPostTaskQueue = new LinkedBlockingQueue<>();
 
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
@@ -94,7 +108,30 @@ public class ThreadManager2 {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask) msg.obj;
-                if(task != null) recycleTask(task);
+                if(task instanceof UploadBitmapTask) {
+                    log.i("upload compressed bitmap done");
+                    switch(msg.what) {
+                        case TASK_COMPLETE:
+                            log.i("main handler");
+                            recycleTask(task);
+                            break;
+                        case TASK_FAIL:
+                            recycleTask(task);
+                            break;
+                        default:super.handleMessage(msg);
+                    }
+                } else if(task instanceof UploadPostTask) {
+                    switch(msg.what) {
+                        case TASK_COMPLETE:
+                            log.i("post upload done");
+                            recycleTask(task);
+                            break;
+                        case TASK_FAIL:
+                            log.i("post upload failed");
+                            recycleTask(task);
+                            break;
+                    }
+                }
             }
         };
     }
@@ -144,7 +181,12 @@ public class ThreadManager2 {
                 msg.sendToTarget();
                 break;
 
-            //default: msg.sendToTarget();
+            case UPLOAD_BITMAP_COMPLETED:
+                log.i("upload image to Storage done");
+                msg.sendToTarget();
+                break;
+
+            default: msg.sendToTarget();
         }
     }
 
@@ -264,6 +306,30 @@ public class ThreadManager2 {
         return stnListTask;
     }
 
+    public static UploadBitmapTask startBitmapUploadTask(
+            Context context, final Uri uriImage, final int position, ImageViewModel model) {
+
+        UploadBitmapTask uploadBitmapTask = InnerClazz.sInstance.mUploadBitmapTaskQueue.poll();
+        if(uploadBitmapTask == null) uploadBitmapTask = new UploadBitmapTask(context);
+        uploadBitmapTask.initBitmapTask(uriImage, position, model);
+        InnerClazz.sInstance.threadPoolExecutor.execute(uploadBitmapTask.getBitmapResizeRunnable());
+
+        return uploadBitmapTask;
+    }
+
+    public static UploadPostTask uploadPostTask (
+            Context context, Map<String, Object> post, FragmentSharedModel viewModel) {
+
+        UploadPostTask uploadPostTask = InnerClazz.sInstance.mUploadPostTaskQueue.poll();
+        if(uploadPostTask == null) uploadPostTask = new UploadPostTask(context);
+        uploadPostTask.initPostTask(post, viewModel);
+        InnerClazz.sInstance.threadPoolExecutor.execute(uploadPostTask.getUploadPostRunnable());
+
+        return uploadPostTask;
+    }
+
+
+
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
         if(task instanceof GasPriceTask) {
@@ -277,6 +343,13 @@ public class ThreadManager2 {
             //stnListTask.recycle();
             //stnListTask = null;
             //mStnListTaskQueue.offer((StationListTask)task);
+        } else if(task instanceof UploadBitmapTask) {
+            ((UploadBitmapTask)task).recycle();
+            mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
+
+        } else if(task instanceof UploadPostTask) {
+            ((UploadPostTask) task).recycle();
+            mUploadPostTaskQueue.offer((UploadPostTask)task);
         }
 
     }

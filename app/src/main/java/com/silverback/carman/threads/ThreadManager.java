@@ -426,7 +426,7 @@ public class ThreadManager {
         if(uploadBitmapTask == null) uploadBitmapTask = new UploadBitmapTask(context);
         else log.i("recycler task");
 
-        uploadBitmapTask.initBitmapTask(uriImage, position, model);
+        //uploadBitmapTask.initBitmapTask(uriImage, position, model);
         sInstance.mDownloadThreadPool.execute(uploadBitmapTask.getBitmapResizeRunnable());
 
         return uploadBitmapTask;

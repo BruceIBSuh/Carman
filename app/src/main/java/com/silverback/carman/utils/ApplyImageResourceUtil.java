@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.text.style.ImageSpan;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -166,7 +167,7 @@ public class ApplyImageResourceUtil {
      * @param maxSize extent to scale down
      * @return bytearray.
      */
-    public synchronized byte[] compressBitmap(Bitmap bitmap, int maxSize)  {
+    public byte[] compressBitmap(Bitmap bitmap, int maxSize)  {
         int compressDensity = 100;
         int streamLength;
         ByteArrayOutputStream baos;
@@ -255,14 +256,13 @@ public class ApplyImageResourceUtil {
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
-    public void applyGlideToImageSpan(Uri imgUri, int size, ImageViewModel model) {
-
+    public static void applyGlideToImageSpan(Context context, Uri imgUri, BoardImageSpanHandler spanHandler) {
         if(imgUri == null) return;
-        final float scale = mContext.getResources().getDisplayMetrics().density;
+        final int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        final float scale = context.getResources().getDisplayMetrics().density;
         int px = (int)(size * scale + 0.5f);
         //int px_y = (int)(y * scale + 0.5f);
-
-        Glide.with(mContext).asBitmap()
+        Glide.with(context).asBitmap()
                 //.override(px_x, px_y)
                 .override(px)
                 .fitCenter()
@@ -272,7 +272,12 @@ public class ApplyImageResourceUtil {
                     public void onResourceReady(
                             @NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
                         // Resource is sent back to the caller as a viewmodel livedata.
-                        model.getGlideBitmapTarget().setValue(resource);
+                        //model.getGlideBitmapTarget().setValue(resource);
+                        ImageSpan imgSpan = new ImageSpan(context, resource);
+                        // Manage the image spans using BoardImageSpanHandler helper class.
+                        //this.imageSpan = imgSpan;
+                        //spanHandler.setImageSpanToPost(imgSpan);
+                        spanHandler.setImageSpan(imgSpan);
                     }
 
                     @Override

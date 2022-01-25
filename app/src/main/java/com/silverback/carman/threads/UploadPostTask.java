@@ -14,7 +14,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadPostTask.class);
 
     // Objects
-    private Runnable mUploadPostRunnable;
+    private final Runnable mUploadPostRunnable;
     private Map<String, Object> post;
     private FragmentSharedModel viewModel;
 

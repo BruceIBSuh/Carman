@@ -112,8 +112,7 @@ public class BoardEditFragment extends Fragment implements
 
         // If the post contains any image, the http url should be typecast to uri.
         if(strImgUrlList != null && strImgUrlList.size() > 0) {
-            for(String uriString : strImgUrlList)
-                uriEditImageList.add(Uri.parse(uriString));
+            //for(String uriString : strImgUrlList) uriEditImageList.add(Uri.parse(uriString));
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
@@ -131,7 +130,7 @@ public class BoardEditFragment extends Fragment implements
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.editRecyclerImages.setLayoutManager(linearLayout);
-        imgAdapter = new BoardImageAdapter(uriEditImageList, this);
+        imgAdapter = new BoardImageAdapter(getContext(), uriEditImageList, this);
         binding.editRecyclerImages.setAdapter(imgAdapter);
 
         binding.etEditContent.setText(new SpannableStringBuilder(content));
@@ -244,14 +243,8 @@ public class BoardEditFragment extends Fragment implements
     }
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        /*
-        if(item.getItemId() == R.id.action_upload_post) {
-            log.i("edited upload clicked");
-            prepareUpdate();
-            return true;
-        }
-        */
-        return false;
+        if(item.getItemId() == R.id.action_upload_post) prepareUpdate();
+        return true;
     }
 
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
@@ -275,8 +268,8 @@ public class BoardEditFragment extends Fragment implements
         imgModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
             // Check if the number of attached images equals to the number of uris that are down
             // loaded from Storage.
-            sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
-            uriEditImageList.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
+            //sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0).toString());
+            //uriEditImageList.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
             // No changes are made to attached images.
             if(sparseImageArray.size() == cntUploadImage) updatePost();
         });
@@ -310,7 +303,8 @@ public class BoardEditFragment extends Fragment implements
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
         if(imgUri != null) uriEditImageList.add(position, imgUri);
-        imgAdapter.notifyDataSetChanged();
+        //imgAdapter.notifyDataSetChanged();
+        imgAdapter.notifyItemChanged(position);
         for(Uri uri : uriEditImageList) {
             log.i("uriEditImageList: %s", uri);
         }
@@ -321,16 +315,9 @@ public class BoardEditFragment extends Fragment implements
     @Override
     public void notifyRemovedImageSpan(int position) {
         log.i("Removed Span: %s", position);
+        imgAdapter.notifyItemRemoved(position);
         uriEditImageList.remove(position);
-        imgAdapter.notifyDataSetChanged();
-        for(Uri uri : uriEditImageList) {
-            log.i("uriEditImageList: %s", uri);
-        }
-        for(String url : strImgUrlList) {
-            log.i("http url: %s", url);
-        }
-
-
+        //imgAdapter.notifyDataSetChanged();
         // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
         // is deleted from Storage as well.
         /*
@@ -348,7 +335,8 @@ public class BoardEditFragment extends Fragment implements
     public void setUriFromImageChooser(Uri uri) {
         log.i("ImageChooser URI: %s", uri);
         imgUri = uri;
-        imgUtil.applyGlideToImageSpan(uri, Constants.IMAGESPAN_THUMBNAIL_SIZE, imgModel);
+        final int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
+        ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), uri, spanHandler);
     }
 
 

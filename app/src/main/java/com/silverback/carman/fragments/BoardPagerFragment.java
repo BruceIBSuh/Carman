@@ -243,14 +243,12 @@ public class BoardPagerFragment extends Fragment implements
 
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
-        /*
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
             if(!TextUtils.isEmpty(docId)) {
                 //log.i("Upload Post: %s", docId);
                 queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             }
         });
-        */
 
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
@@ -445,7 +443,7 @@ public class BoardPagerFragment extends Fragment implements
                 //snapshotList.add(document);
                 multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
-            index ++;
+            index++;
         }
 
         // Test Code: for pre-occupying the banner slot.
@@ -482,8 +480,6 @@ public class BoardPagerFragment extends Fragment implements
 
         // ADD THE AD BANNER: refactor required for the convenience's sake.
         multiTypeItemList.add(new MultiTypeItem(1));
-
-
         postingAdapter.notifyItemRangeChanged(start, nextShots.size());
         //binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
 
@@ -723,7 +719,6 @@ public class BoardPagerFragment extends Fragment implements
         public int getViewType() {
             return viewType;
         }
-
 
         public int getItemIndex() {
             return index;

@@ -4,24 +4,25 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.SparseArray;
 
+import androidx.fragment.app.Fragment;
+
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.ImageViewModel;
+
+import java.lang.ref.WeakReference;
 
 public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable.BitmapResizeMethods{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapTask.class);
 
-    static final int UPLOAD_BITMAP_COMPLETE = 1;
-    static final int UPLOAD_BITMAP_FAIL = -1;
-
     // Objects
-    private Runnable mBitmapResizeRunnable;
+    private WeakReference<ImageViewModel> weakReference;
+    private final Runnable mBitmapResizeRunnable;
+    private final SparseArray<Uri> sparseImageArray;
     private ImageViewModel viewModel;
     private Uri imageUri;
     private int position;
-    private SparseArray<String> sparseImageArray;
-
 
     // Constructor
     UploadBitmapTask(Context context) {
@@ -29,19 +30,14 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         sparseImageArray = new SparseArray<>();
     }
 
-    void initBitmapTask(Uri uri, int position, ImageViewModel viewModel) {
+    void initBitmapTask(Uri uri, int position, ImageViewModel model) {
         imageUri = uri;
         this.position = position;
-        this.viewModel = viewModel;
+        weakReference = new WeakReference<>(model);
     }
 
     Runnable getBitmapResizeRunnable() {
         return mBitmapResizeRunnable;
-    }
-
-
-    void recycle(){
-        //srcList = null;
     }
 
     @Override
@@ -60,27 +56,39 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     }
 
     @Override
-    public void setDownloadBitmapUri(int key, String uri) {
+    public void setDownloadBitmapUri(int key, Uri uri) {
         // Create SparseArray with the uri downloaded from Storage as the value and the position
         // that the attached image is located as the key for purpose of put images in sequentially
         // right position in the content when reading the posting content
         sparseImageArray.put(key, uri);
-        viewModel.getDownloadBitmapUri().postValue(sparseImageArray);
+        if(weakReference != null) {
+            log.i("sparseArray");
+            weakReference.get().getDownloadBitmapUri().postValue(sparseImageArray);
+        }
+
     }
 
     @Override
     public void handleUploadBitmapState(int state) {
         int outState = -1;
         switch(state) {
-            case UPLOAD_BITMAP_COMPLETE:
-                outState = ThreadManager.UPLOAD_BITMAP_COMPLETED;
+            case UploadBitmapRunnable.UPLOAD_BITMAP_COMPLETE:
+                outState = ThreadManager2.TASK_COMPLETE;
                 break;
 
-            case UPLOAD_BITMAP_FAIL:
-                outState = ThreadManager.DOWNLOAD_CURRENT_STATION_FAILED;
+            case UploadBitmapRunnable.UPLOAD_BITMAP_FAIL:
+                outState = ThreadManager2.TASK_FAIL;
                 break;
         }
 
         sThreadManager.handleState(this, outState);
+    }
+
+    public void recycle(){
+        log.i("recycle");
+        if(weakReference != null) {
+            weakReference.clear();
+            weakReference = null;
+        }
     }
 }

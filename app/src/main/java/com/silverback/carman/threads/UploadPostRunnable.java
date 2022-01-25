@@ -16,8 +16,8 @@ public class UploadPostRunnable implements Runnable {
 
     // Objects
     //private Context mContext;
-    private UploadPostMethods mTask;
-    private FirebaseFirestore firestore;
+    private final UploadPostMethods mTask;
+    private final FirebaseFirestore firestore;
 
     public interface UploadPostMethods {
         Map<String, Object> getFirestorePost();
@@ -43,7 +43,7 @@ public class UploadPostRunnable implements Runnable {
         Map<String, Object> post = mTask.getFirestorePost();
         final String userId = (String)post.get("user_id");
         log.i("User ID: %s", userId);
-
+        if(userId == null || TextUtils.isEmpty(userId)) return;
         // Retrieve the user name and pic based on the Id and contain them in the Map
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             if(document.exists()) {

@@ -310,11 +310,14 @@ public class BoardActivity extends BaseActivity implements
             return true;
 
         } else if(item.getItemId() == R.id.action_upload_post) {
+            /*
             boolean isWriteMode = (writePostFragment != null) &&
                     binding.frameContents.getChildAt(0) == writePostFragment.getView();
             if(isWriteMode) writePostFragment.prepareAttachedImages();
             else editPostFragment.prepareUpdate();
-            return true;
+
+             */
+            return false;
 
         } else return super.onOptionsItemSelected(item); // means false
     }
@@ -878,7 +881,7 @@ public class BoardActivity extends BaseActivity implements
     // image media.
     private void getAttachedImageUri(Uri uri) {
         log.i("ActivityResult from GetContent");
-        if(writePostFragment != null) writePostFragment.setUriFromImageChooser(uri);
+        if(writePostFragment != null) writePostFragment.attachThumbnail(uri);
         else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
     }
 

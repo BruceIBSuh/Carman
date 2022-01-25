@@ -33,9 +33,9 @@ public class BoardChooserDlgFragment extends DialogFragment {
     private final int GALLERY = 1;
     private final int CAMERA = 2;
 
-    private DialogBoardChooserBinding binding;
+    //private DialogBoardChooserBinding binding;
     //private OnImageChooserListener mListener;
-    private FragmentSharedModel fragmentModel;
+    //private FragmentSharedModel fragmentModel;
 
     /*
     public interface OnImageChooserListener {
@@ -56,15 +56,11 @@ public class BoardChooserDlgFragment extends DialogFragment {
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        //View localView = View.inflate(getContext(), R.layout.dialog_board_chooser, null);
-        binding = DialogBoardChooserBinding.inflate(LayoutInflater.from(getContext()));
-        //TextView tvGallery = localView.findViewById(R.id.tv_gallery);
-        //TextView tvCamera = localView.findViewById(R.id.tv_camera);
+        DialogBoardChooserBinding binding = DialogBoardChooserBinding.inflate(LayoutInflater.from(requireActivity()));
         FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("Select Image Media")
-                .setView(binding.getRoot());
+        builder.setTitle("Select Image Media").setView(binding.getRoot());
         binding.tvGallery.setOnClickListener(view -> {
             log.i("Gallery selected");
             //mListener.selectMedia(BoardWritingActivity.GALLERY);

@@ -12,7 +12,7 @@ import androidx.lifecycle.ViewModel;
 public class ImageViewModel extends ViewModel {
 
     //private final MutableLiveData<SparseArray> downloadImage = new MutableLiveData<>();
-    private MutableLiveData<SparseArray<String>> downloadBitmapUri;
+    private MutableLiveData<SparseArray<Uri>> downloadBitmapUri;
     private MutableLiveData<SparseArray<ImageSpan>> sparseImageSpanArray;
     private MutableLiveData<Bitmap> glideBitmapTarget;
     private MutableLiveData<Drawable> glideDrawableTarget;
@@ -28,7 +28,7 @@ public class ImageViewModel extends ViewModel {
 
      */
 
-    public MutableLiveData<SparseArray<String>> getDownloadBitmapUri() {
+    public MutableLiveData<SparseArray<Uri>> getDownloadBitmapUri() {
         if(downloadBitmapUri == null) downloadBitmapUri = new MutableLiveData<>();
         return downloadBitmapUri;
     }
