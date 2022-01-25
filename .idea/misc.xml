@@ -19,6 +19,7 @@
         <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.1" />
         <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
         <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.33" />
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />

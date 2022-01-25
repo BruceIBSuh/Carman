@@ -244,10 +244,7 @@ public class BoardPagerFragment extends Fragment implements
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
-            if(!TextUtils.isEmpty(docId)) {
-                //log.i("Upload Post: %s", docId);
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
+            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
@@ -255,16 +252,11 @@ public class BoardPagerFragment extends Fragment implements
         // With All done, receive another LiveData containing the position of the deleted posting item
         // and update the adapter.
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), docId -> {
-            //log.i("Posting removed: %s", docId);
-            if(!TextUtils.isEmpty(docId)) {
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
+            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         fragmentModel.getEditedPosting().observe(requireActivity(), docId -> {
-            if(!TextUtils.isEmpty(docId)) {
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
+            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,

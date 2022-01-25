@@ -108,8 +108,8 @@ import java.util.Objects;
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
-        AppBarLayout.OnOffsetChangedListener,
-        BoardReadDlgFragment.OnEditModeListener {
+        AppBarLayout.OnOffsetChangedListener {
+        //BoardReadDlgFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -221,7 +221,7 @@ public class BoardActivity extends BaseActivity implements
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
             if(fragment instanceof BoardReadDlgFragment) {
                 BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
-                readFragment.setEditModeListener(this);
+                //readFragment.setEditModeListener(this);
             }
         });
 
@@ -443,8 +443,40 @@ public class BoardActivity extends BaseActivity implements
         menu.getItem(1).setVisible(true);
     }
 
+
+    public void addEditFragment(Bundle bundle) {
+        log.i("Edit Menu clicked");
+        log.i("onEditModeClicked");
+        if(writePostFragment != null) writePostFragment = null;
+        if(binding.frameContents.getChildAt(0) instanceof ViewPager2)
+            binding.frameContents.removeView(binding.boardPager);
+
+        editPostFragment = new BoardEditFragment();
+        editPostFragment.setArguments(bundle);
+        getSupportFragmentManager().beginTransaction().addToBackStack(null)
+                .replace(binding.frameContents.getId(), editPostFragment)
+                .commit();
+
+        // Hide the emblem and set the club title if the current page is autoclub.
+        if(category == Constants.BOARD_AUTOCLUB) {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+        } else {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
+        }
+
+
+        // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
+        // workable as BoardPagerFragment comes in.(may replace getViewTreeObeserver() in onCreate().
+        tabHeight = binding.tabBoard.getMeasuredHeight();
+        animTabHeight(false);
+
+        //if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
+        menu.getItem(0).setVisible(false);
+        menu.getItem(1).setVisible(true);
+        binding.fabBoardWrite.setVisibility(View.GONE);
+    }
     // Implement BoardReadDlgFragment.OnEditModeListener when the edit button presses.
-    //@SuppressWarnings("ConstantConditions")
+    /*
     @Override
     public void onEditClicked(Bundle bundle) {
         log.i("onEditModeClicked");
@@ -459,8 +491,11 @@ public class BoardActivity extends BaseActivity implements
                 .commit();
 
         // Hide the emblem and set the club title if the current page is autoclub.
-        if(category == Constants.BOARD_AUTOCLUB) Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
-        else Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
+        if(category == Constants.BOARD_AUTOCLUB) {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
+        } else {
+            Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
+        }
 
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
@@ -473,7 +508,7 @@ public class BoardActivity extends BaseActivity implements
         menu.getItem(1).setVisible(true);
         binding.fabBoardWrite.setVisibility(View.GONE);
     }
-
+    */
 
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
@@ -877,11 +912,9 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri from the
-    // image media.
+    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri.
     private void getAttachedImageUri(Uri uri) {
-        log.i("ActivityResult from GetContent");
-        if(writePostFragment != null) writePostFragment.attachThumbnail(uri);
+        if(writePostFragment != null) writePostFragment.setAttachedImage(uri);
         else if(editPostFragment != null) editPostFragment.setUriFromImageChooser(uri);
     }
 

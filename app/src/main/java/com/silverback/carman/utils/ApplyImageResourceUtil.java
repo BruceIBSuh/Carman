@@ -47,8 +47,7 @@ public class ApplyImageResourceUtil {
     private static final LoggingHelper log = LoggingHelperFactory.create(ApplyImageResourceUtil.class);
 
     // Objects
-    private Context mContext;
-    private int orientation;
+    private final Context mContext;
     //private BitmapTypeRequest<ModelType> bitmapTypeReq;
 
     // Constructor
@@ -74,6 +73,7 @@ public class ApplyImageResourceUtil {
                 new String[] { MediaStore.Images.ImageColumns.ORIENTATION },
                 null, null, null);
 
+        int orientation;
         if(cursor != null && cursor.getCount() >= 1) {
             cursor.moveToFirst();
             orientation = cursor.getInt(0);
@@ -85,7 +85,7 @@ public class ApplyImageResourceUtil {
     }
 
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
+    //@SuppressWarnings("ResultOfMethodCallIgnored")
     public Uri rotateBitmapUri(Uri uri, int orientation) {
         Bitmap rotatedBitmap;
         Matrix matrix = new Matrix();
@@ -107,9 +107,12 @@ public class ApplyImageResourceUtil {
         // Temporarily save the rotated image in the cache directory, which will be deleted on exiting
         // the app.
         File imagePath = new File(mContext.getCacheDir(), "images/");
-        if(!imagePath.exists()) imagePath.mkdir();
-        File fRotated = new File(imagePath, "tmpRotated.jpg");
+        if(!imagePath.exists()) {
+            try { if(!imagePath.mkdir()) throw new NullPointerException();}
+            catch(NullPointerException e) {e.printStackTrace();}
+        }
 
+        File fRotated = new File(imagePath, "tmpRotated.jpg");
         // try-resources statement
         try (FileOutputStream fos = new FileOutputStream(fRotated) ){
             Bitmap bitmap = MediaStore.Images.Media.getBitmap(mContext.getContentResolver(), uri);
@@ -129,13 +132,12 @@ public class ApplyImageResourceUtil {
     public int calculateInSampleSize(BitmapFactory.Options options, int orientation) {
         Point size = getDisplaySize();
         int reqWidth = size.x;
-        int reqHeight = size.y;
+        //int reqHeight = size.y;
 
         // Raw dimension of the image
         final int rawWidth = options.outWidth;
         final int rawHeight = options.outHeight;
         int inSampleSize = 1;
-        log.i("Raw image: %s, %s, %s", orientation, rawWidth, rawHeight);
 
         if(orientation == 0 || orientation == 180) {
             //if (rawHeight > reqHeight || rawWidth > reqWidth) {
@@ -256,8 +258,8 @@ public class ApplyImageResourceUtil {
     }
 
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
-    public static void applyGlideToImageSpan(Context context, Uri imgUri, BoardImageSpanHandler spanHandler) {
-        if(imgUri == null) return;
+    public static void applyGlideToImageSpan(Context context, Uri uri, BoardImageSpanHandler spanHandler) {
+        if(uri == null) return;
         final int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
         final float scale = context.getResources().getDisplayMetrics().density;
         int px = (int)(size * scale + 0.5f);
@@ -266,7 +268,7 @@ public class ApplyImageResourceUtil {
                 //.override(px_x, px_y)
                 .override(px)
                 .fitCenter()
-                .load(imgUri)
+                .load(uri)
                 .into(new CustomTarget<Bitmap>() {
                     @Override
                     public void onResourceReady(
@@ -303,16 +305,14 @@ public class ApplyImageResourceUtil {
      * @param isCircle whehter the image is circular or not.
      */
     public void applyGlideToImageView(Uri uri, ImageView imageView, int x, int y, boolean isCircle){
-
         final float scale = mContext.getResources().getDisplayMetrics().density;
         int px_x = (int)(x * scale + 0.5f);
         int px_y = (int)(y * scale + 0.5f);
 
-
         // Set options for size, scale, and crop. The crop option depends on whehter isCircle param
         // is true or not.
         RequestOptions options = new RequestOptions().override(px_x, px_y).centerCrop();
-        if(isCircle) options.circleCrop();
+        if(isCircle) options = options.circleCrop();
 
         Glide.with(mContext).load(uri)
                 .apply(options)

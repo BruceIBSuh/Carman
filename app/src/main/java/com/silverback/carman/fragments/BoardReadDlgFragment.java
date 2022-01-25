@@ -30,6 +30,9 @@ import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.util.SparseLongArray;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -153,9 +156,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
         void onEditClicked(Bundle bundle);
     }
     // Interface for listening to BoardActivity at the lifecycle of onAttachFragment.
+    /*
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
     }
+     */
 
     // Constructor default.
     public BoardReadDlgFragment() {
@@ -169,6 +174,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.context = getContext();
+        setHasOptionsMenu(true);
 
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
@@ -231,7 +237,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
                              Bundle savedInstanceState) {
 
         binding = FragmentBoardReadBinding.inflate(inflater);
-
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
@@ -286,8 +291,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
         binding.imgbtnSendComment.setOnClickListener(this);
 
-        // If the user is the owner of a post, display the edit menu in the toolbar.
-        inflateEditMenuInToolbar();
+
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
@@ -315,6 +319,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
             }
         });
+
+        // If the user is the owner of a post, display the edit menu in the toolbar.
+        inflateEditMenu();
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
@@ -750,7 +757,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private void setCompathyCount() {
         // Prevent repeated connection to Firestore every time when users click the button.
         if(hasCompathy) {
-            Snackbar.make(getView(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
             return;
         }
 
@@ -781,27 +788,26 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // As long as a post belongs to the user,  show the menu in the toolbar which enables the user
     // to edits or delete the post.
-    //@SuppressWarnings("ConstantConditions")
-    private void inflateEditMenuInToolbar() {
+    private void inflateEditMenu() {
         // The userId here means the id of user who writes the posting item whereas the viewId means
         // the id of who reads the item. If both ids are equal, the edit buttons are visible, which
         // means the writer(userId) can edit one's own post.
-        try (FileInputStream fis = getActivity().openFileInput("userId");
+        try (FileInputStream fis = requireActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
             String viewerId = br.readLine();
             if(userId != null && userId.equals(viewerId)) {
-                binding.toolbarBoardRead.inflateMenu(R.menu.menu_board_read);
+                binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
                 binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
                     if(item.getItemId() == R.id.action_board_edit) {
-                        mListener.onEditClicked(getArguments());
+                        //mListener.onEditClicked(getArguments());
+                        ((BoardActivity)requireActivity()).addEditFragment(getArguments());
                         dismiss();
                         return true;
                     } else if(item.getItemId() == R.id.action_board_delete) {
                         String title = getString(R.string.board_alert_delete);
                         String msg = getString(R.string.board_alert_msg);
                         AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
-                                .show(getActivity().getSupportFragmentManager(), null);
+                                .show(requireActivity().getSupportFragmentManager(), null);
                         return true;
                     }
                     return false;

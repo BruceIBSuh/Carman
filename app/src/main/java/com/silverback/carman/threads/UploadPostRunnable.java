@@ -13,6 +13,8 @@ import java.util.Map;
 public class UploadPostRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadPostRunnable.class);
+    static final int UPLOAD_TASK_COMPLETE = 1;
+    static final int UPLOAD_TASK_FAIL = -1;
 
     // Objects
     //private Context mContext;
@@ -23,6 +25,7 @@ public class UploadPostRunnable implements Runnable {
         Map<String, Object> getFirestorePost();
         void setUploadPostThread(Thread thread);
         void notifyUploadDone(String docId);
+        void handleUploadPostState(int state);
     }
 
 
@@ -33,17 +36,19 @@ public class UploadPostRunnable implements Runnable {
 
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mTask.setUploadPostThread(Thread.currentThread());
-
         // Query the user data with the retrieved user id.
         Map<String, Object> post = mTask.getFirestorePost();
         final String userId = (String)post.get("user_id");
-        log.i("User ID: %s", userId);
-        if(userId == null || TextUtils.isEmpty(userId)) return;
+        try{ if (userId == null || TextUtils.isEmpty(userId)) throw new NullPointerException();
+        } catch(NullPointerException e) {
+            mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE);
+            e.printStackTrace();
+            return;
+        }
         // Retrieve the user name and pic based on the Id and contain them in the Map
         firestore.collection("users").document(userId).get().addOnSuccessListener(document -> {
             if(document.exists()) {
@@ -56,10 +61,11 @@ public class UploadPostRunnable implements Runnable {
             // the user data if the post retrieves the user data from different collection.
             firestore.collection("board_general").add(post)
                     .addOnSuccessListener(docref -> {
-                        log.i("Uploade completed");
                         mTask.notifyUploadDone(docref.getId());
+                        mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE);
                     })
-                    .addOnFailureListener(e -> log.e("Upload failed: %s"));
+                    .addOnFailureListener(e -> mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE));
+
         }).addOnFailureListener(aVoid -> {
             log.e("upload failed");
         });

@@ -3,8 +3,7 @@ package com.silverback.carman.fragments;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.TextView;
+import android.view.LayoutInflater;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -12,9 +11,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.silverback.carman.R;
-import com.silverback.carman.logs.LoggingHelper;
-import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.databinding.DialogAlertGeneralBinding;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
@@ -24,11 +21,11 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 public class AlertDialogFragment extends DialogFragment {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(AlertDialogFragment.class);
+    //private static final LoggingHelper log = LoggingHelperFactory.create(AlertDialogFragment.class);
 
-    // Objects
     private static AlertDialogFragment alertFragment;
     private FragmentSharedModel sharedModel;
+
     private String title, message;
     private int category;
 
@@ -37,7 +34,7 @@ public class AlertDialogFragment extends DialogFragment {
     }
 
     // Singleton type constructor
-    static AlertDialogFragment newInstance(String title, String msg, int category) {
+    public static AlertDialogFragment newInstance(String title, String msg, int category) {
         if(alertFragment == null) alertFragment = new AlertDialogFragment();
         Bundle args = new Bundle();
         args.putString("title", title);
@@ -48,35 +45,29 @@ public class AlertDialogFragment extends DialogFragment {
         return alertFragment;
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
-        sharedModel = new ViewModelProvider(getActivity()).get(FragmentSharedModel.class);
-        title = getArguments().getString("title");
-        message = getArguments().getString("message");
-        category = getArguments().getInt("category");
+        if(getArguments() != null) {
+            title = getArguments().getString("title");
+            message = getArguments().getString("message");
+            category = getArguments().getInt("category");
+        }
     }
-
-
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
+        final LayoutInflater inflater = requireActivity().getLayoutInflater();
+        DialogAlertGeneralBinding binding = DialogAlertGeneralBinding.inflate(inflater);
+        binding.tvNumpadTitle.setText(title);
+        binding.tvMessage.setText(message);
 
-        //LayoutInflater inflater = requireActivity().getLayoutInflater();
-        //View localView = inflater.inflate(R.layout.dialog_alert_general, null);
-        View localView = View.inflate(getContext(), R.layout.dialog_alert_general, null);
-
-        TextView tvTitle = localView.findViewById(R.id.tv_numpad_title);
-        TextView tvMessage = localView.findViewById(R.id.tv_message);
-
-        tvTitle.setText(title);
-        tvMessage.setText(message);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setView(localView).setPositiveButton("confirm", (dialog, which) -> {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        builder.setView(binding.getRoot()).setPositiveButton("confirm", (dialog, which) -> {
             switch(category) {
                 case Constants.GAS:
                     sharedModel.setAlertGasResult(true);
@@ -90,7 +81,6 @@ public class AlertDialogFragment extends DialogFragment {
                     sharedModel.getAlertPostResult().setValue(true);
                     break;
             }
-
             dismiss();
 
         }).setNegativeButton("cancel", (dialog, which) -> {
@@ -100,6 +90,4 @@ public class AlertDialogFragment extends DialogFragment {
 
         return builder.create();
     }
-
-
 }

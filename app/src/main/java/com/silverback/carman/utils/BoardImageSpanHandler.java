@@ -7,7 +7,6 @@ import android.text.Spannable;
 import android.text.Spanned;
 import android.text.TextWatcher;
 import android.text.style.ImageSpan;
-import android.view.inputmethod.InputConnection;
 import android.widget.EditText;
 
 import com.silverback.carman.logs.LoggingHelper;
@@ -52,14 +51,13 @@ import java.util.regex.Pattern;
 
 public class BoardImageSpanHandler implements SpanWatcher {
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardImageSpanHandler.class);
-    private final String markup = "\\[image_\\d]\\n";
+    //private final String markup = "\\[image_\\d]\\n";
 
     // Objects
     private Matcher m;
-    private EditText editText;
-    private InputConnection ic;
-    private OnImageSpanListener mListener;
-    private Editable editable;
+    private final EditText editText;
+    private final OnImageSpanListener mListener;
+    private final Editable editable;
     private List<ImageSpan> spanList;
 
     // Interface to notify BoardWriteFragment that an image span is removed so that the fragment
@@ -71,7 +69,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
     // Constructor
     public BoardImageSpanHandler(EditText editText, OnImageSpanListener listener) {
-
         this.editable = editText.getText();
         this.editText = editText;
         mListener = listener;
@@ -142,7 +139,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
             String tag = text.toString().substring(start, end);
             m = Pattern.compile("\\d").matcher(tag);
             while(m.find()) {
-                int position = Integer.valueOf(m.group());
+                int position = Integer.parseInt(m.group());
                 spanList.add(position, (ImageSpan)what);
                 mListener.notifyAddImageSpan((ImageSpan)what, position);
             }
@@ -162,8 +159,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
             while(m.find()) {
                 // Required to subtract 1 from the position in Matcher because it starts with 1
                 // in the finding order.
-                int position = Integer.valueOf(m.group()); // group(0) means all. group(1) first.
-                //log.i("removed span position: %s", position);
+                int position = Integer.parseInt(m.group()); // group(0) means all. group(1) first.
                 spanList.remove(what);
                 mListener.notifyRemovedImageSpan(position);
             }

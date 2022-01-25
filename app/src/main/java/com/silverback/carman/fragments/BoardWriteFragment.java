@@ -64,16 +64,13 @@ public class BoardWriteFragment extends DialogFragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
     // Objects
+    private FragmentBoardWriteBinding binding;
     private BoardImageSpanHandler spanHandler;
-    private ApplyImageResourceUtil applyImageResourceUtil;
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
     private BoardImageAdapter imageAdapter;
-    //private Observer<Integer> chooserObserver;
     private UploadBitmapTask bitmapTask;
     private UploadPostTask postTask;
-
-    private FragmentBoardWriteBinding binding;
     // Fields
     private int tabPage;
     private String userId, userName;
@@ -81,7 +78,6 @@ public class BoardWriteFragment extends DialogFragment implements
     private List<Uri> imgUriList;
     //private ArrayList<String> autofilter;
     private SparseArray<Uri> downloadImages;
-    //private List<Uri> downloadImages;
     //private boolean isGeneralPost;
     //private boolean isNetworkConnected;
 
@@ -90,54 +86,37 @@ public class BoardWriteFragment extends DialogFragment implements
         // Required empty public constructor
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Set the soft input mode, which seems not working.
-        //InputMethodManager imm = (InputMethodManager)requireActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-        //getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
-
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             userName = getArguments().getString("userName");
             tabPage = getArguments().getInt("tabPage");
         }
-
-        // Make the toolbar menu available in the Fragment.
+        // Required for Fragment
         setHasOptionsMenu(true);
         //isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
-        applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
+        //ApplyImageResourceUtil applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
         imgUriList = new ArrayList<>();
         downloadImages = new SparseArray<>();
-        //downloadImages = new ArrayList<>();
-
-
+        // ViewModels
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-
-        // Special attention should be paid when using ViewModel with requireActivity() as its
-        // viewlifecyclerowner because ViewModel.observe() retains the existing value even after
-        // the frament is removed from the parent activity.
-        //chooserObserver = integer -> log.i("ingerger: %s", integer);
-        //fragmentModel.getImageChooser().observe(requireActivity(), chooserObserver);
     }
 
-    //@SuppressWarnings({"ConstantConditions", "ClickableViewAccessibility"})
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        //localView = inflater.inflate(R.layout.fragment_board_write, container, false);
         binding = FragmentBoardWriteBinding.inflate(inflater);
-
-        // RecyclerView to display attched images which are handled in onActivityResult()
+        // RecyclerView for displaying attached posting thumbnail images on the bottom side.
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.recyclerImages.setLayoutManager(linearLayout);
         //recyclerImageView.setHasFixedSize(true);
         imageAdapter = new BoardImageAdapter(getContext(), imgUriList, this);
         binding.recyclerImages.setAdapter(imageAdapter);
-        // To scroll the edittext inside (nested)scrollview.
-        /*
+
+        /* To scroll the edittext inside (nested)scrollview.
         binding.etBoardContent.setOnTouchListener((view, event) -> {
             if(view.hasFocus()) {
                 view.getParent().requestDisallowInterceptTouchEvent(true);
@@ -148,11 +127,12 @@ public class BoardWriteFragment extends DialogFragment implements
             }
             return false;
         });
-         */
+        */
+
+        spanHandler = new BoardImageSpanHandler(binding.etBoardContent, this);
         // The event handler for the Image Attach button to select an image media(gallery or camera)
         binding.btnAttachImage.setOnClickListener(btn -> selectImageMedia());
-        // Util class to protect image spans
-        spanHandler = new BoardImageSpanHandler(binding.etBoardContent, this);
+
         return binding.getRoot();
     }
 
@@ -174,33 +154,10 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
-        // to which startActivityForResult() is invoked by the parent activity and the result will be
-        // notified to the activity and it is, in turn, sent back here by calling
+        // BoardChooserDlgFragment notifies the viewmodel of which image media is selected.
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
         });
-
-        // The result of startActivityForResult() invoked in the parent activity should be notified
-        // to the activity and it is, in turn, sent back here via a viewmodel livedata with the image
-        // uri, with which the image span and the recyclerview are displayed with a new image.
-        /*
-        imgViewModel.getUriFromImageChooser().observe(getViewLifecycleOwner(), imgUri -> {
-            // Glide creates a processed bitmap with the uri which the result intent from MediaStore
-            // contains and as the process completes, the bitmap is sent to ImageViewModel for putting
-            // it to the imagespan, which is defined in getGlideBitmapTarget() of onActivityCreated().
-            int x = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-            int y = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-            //applyImageResourceUtil.applyGlideToImageSpan(imgUri, x, y, imgViewModel);
-
-            // Partial binding to show the image. RecyclerView.setHasFixedSize() is allowed to make
-            // additional pics.
-            uriImgList.add(imgUri);
-            final int position = uriImgList.size() - 1;
-            //imageAdapter.notifyItemInserted(position);
-            imageAdapter.notifyItemChanged(position);
-        });
-        */
 
         // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
         // This method translates an image to an appropriate extent for fitting the imagespan.
@@ -213,39 +170,30 @@ public class BoardWriteFragment extends DialogFragment implements
             //spanHandler.setImageSpanToPost(imgSpan);
             spanHandler.setImageSpan(imgSpan);
         });
-
          */
 
-        // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
-        // the result is notified as SparseArray which indicates the position and uriString of image.
-
+        // UploadBitmapTask compresses and uploads an image to Storage, the uri of which is notified
+        // the viewmodel.
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
-            // Check if the number of attached images equals to the number of uris that are down
-            // loaded from Storage.
             downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
-            if(imgUriList.size() == downloadImages.size()) {
-                // On completing optimization of attached images, start uploading a post.
-                uploadPostToFirestore();
-            }
+            if(imgUriList.size() == downloadImages.size()) uploadPostToFirestore();
         });
 
-        // REFACTOR REQUIRED!! ProgressBar DialogFragment is deprecated.
-        // On completion of uploading a post to Firestore, dismiss ProgressBarDialogFragment and add the
-        // viewpager which contains BoardPagerFragment to the frame of the parent activity. Not only
-        // this, this viewmodel notifies BoardPagerFragment of the completion for making a query.
+        // UploadPostTask uploads the post to Firestore, the document id of which is notified the
+        // viewmodel.
+        /*
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
-            log.i("New Posting in BoardWRiteFragment: %s, %s", docId, TextUtils.isEmpty(docId));
-            //if(pbFragment != null) pbFragment.dismiss();
             binding.progbarBoardWrite.setVisibility(View.GONE);
             ((BoardActivity)requireActivity()).addViewPager();
         });
+
+         */
 
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        //if(spanHandler != null) spanHandler = null;
         if(bitmapTask != null) bitmapTask = null;
         if(postTask != null) postTask = null;
     }
@@ -272,8 +220,16 @@ public class BoardWriteFragment extends DialogFragment implements
         spanHandler.removeImageSpan(position);
     }
 
-    // Image attaching button event handler to call a media(gallery or camera) to capture images,
-    // the uri of which are sent to an intent of onActivityResult()
+    // Invokded by the activity callback defined in the parent actvitiy. OnImageSpanListener defined
+    // in BoardImageSpanHandler implements notifyAddImageSpan(), notifyRemoveImageSpan() when adding
+    // or removing a thumbnail image.
+    public void setAttachedImage(Uri imgUri) {
+        this.imgUri = imgUri;
+        ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imgUri, spanHandler);
+    }
+
+    // Event Handler for the image attachment button, which calls DialogFragment to choose a image
+    // media.
     private void selectImageMedia() {
         ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
@@ -296,7 +252,6 @@ public class BoardWriteFragment extends DialogFragment implements
          * could have selected the text backwards and thus start would have a higher value
          * than the end value which is not allowed for Editable.replace().
          */
-        // Put linefeeder into the edittext when the image interleaves b/w the lines
         //int start = Math.max(etPostBody.getSelectionStart(), 0);
         //int end = Math.max(etPostBody.getSelectionEnd(), 0);
         int start = binding.etBoardContent.getSelectionStart();
@@ -304,14 +259,7 @@ public class BoardWriteFragment extends DialogFragment implements
         binding.etBoardContent.getText().replace(start, end, "\n");
     }
 
-    // Invoked ActivityResult callback defined the parent activity passing the image uri, no matter
-    // where it is from Gallery or Camera. The util class notifies spanHandler of adding or removing
-    // an item.
-    public void attachThumbnail(Uri imgUri) {
-        final int size = Constants.IMAGESPAN_THUMBNAIL_SIZE;
-        ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imgUri, spanHandler);
-        this.imgUri = imgUri;
-    }
+
 
     /*
      * UPLOAD PROCESS
@@ -320,6 +268,7 @@ public class BoardWriteFragment extends DialogFragment implements
      * Second, check whether the attached images safely completes uploading.
      * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
      */
+
     // Invoked when the upload menu in the toolbar is pressed.
     public void prepareAttachedImages() {
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
@@ -340,8 +289,7 @@ public class BoardWriteFragment extends DialogFragment implements
             // A download url from Storage each time when an attached image is successfully
             // downsized and scaled down, then uploaded to Storage is transferred via
             // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
-
-            binding.progbarBoardWrite.setVisibility(View.VISIBLE);
+            //binding.progbarBoardWrite.setVisibility(View.VISIBLE);
             for(int i = 0; i < imgUriList.size(); i++) {
                 final Uri uri = imgUriList.get(i);
                 bitmapTask = ThreadManager2.startBitmapUploadTask(getContext(), uri, i, imgViewModel);
@@ -364,11 +312,8 @@ public class BoardWriteFragment extends DialogFragment implements
             }
 
         });
-
          */
     }
-
-
 
     private void uploadPostToFirestore() {
         //if(!doEmptyCheck()) return;
@@ -398,7 +343,6 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("post_content", binding.etBoardContent.getText().toString());
         if(downloadImages.size() > 0) post.put("post_images",  downloadUriList);
         post.put("post_autoclub", tabPage == Constants.BOARD_AUTOCLUB);
-
         // To show or hide a post of the autoclub depends on the value of isGeneralPost. The default
         // value is set to true such that any post, no matter what is autoclub or general post,
         // it would be shown in every board. However, as long as an autoclub post set isGeneral value
@@ -409,8 +353,6 @@ public class BoardWriteFragment extends DialogFragment implements
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             ArrayList<String> autofilter = ((BoardActivity)requireActivity()).getAutoFilterValues();
             isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
-            // Create the auto_filter field data structure by converting the autofilter list to
-            // nested Map.
             Map<String, Boolean> filters = new HashMap<>();
             for(String field : autofilter) filters.put(field, true);
             post.put("auto_filter", filters);
@@ -420,11 +362,9 @@ public class BoardWriteFragment extends DialogFragment implements
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager2.uploadPostTask(getContext(), post, fragmentModel);
-        //binding.progbarBoardWrite.setVisibility(View.GONE);
-        //((BoardActivity)requireActivity()).addViewPager();
+        ((BoardActivity)requireActivity()).addViewPager();
+
     }
-
-
 
     private boolean doEmptyCheck() {
         // If either userId or userName is empty, throw NullPointerException and retrn false;

@@ -55,9 +55,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * This fragment is to edit an existing post if and only if a user is the owner of the post.
- */
+
 public class BoardEditFragment extends Fragment implements
         BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
@@ -81,9 +79,7 @@ public class BoardEditFragment extends Fragment implements
     private SparseArray<String> sparseImageArray;
     private UploadBitmapTask bitmapTask;
 
-    // UIs
     private FragmentBoardEditBinding binding;
-
     // Fields
     private String title, content;
     private int cntUploadImage;
@@ -116,7 +112,7 @@ public class BoardEditFragment extends Fragment implements
         }
 
         imgUtil = new ApplyImageResourceUtil(getContext());
-        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
@@ -125,7 +121,6 @@ public class BoardEditFragment extends Fragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = FragmentBoardEditBinding.inflate(inflater);
         binding.etBoardEditTitle.setText(title);
-
         // Create RecyclerView to display attached images
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -149,12 +144,10 @@ public class BoardEditFragment extends Fragment implements
             final float scale = getResources().getDisplayMetrics().density;
             int size = (int)(Constants.IMAGESPAN_THUMBNAIL_SIZE * scale + 0.5f);
             int index = 0;
-
             while(m.find()) {
                 final Uri uri = uriEditImageList.get(index);
                 final int pos = index;
-                Glide.with(this).asBitmap()
-                        .placeholder(R.drawable.ic_image_holder)
+                Glide.with(this).asBitmap().placeholder(R.drawable.ic_image_holder)
                         .override(size)
                         .fitCenter()
                         .load(uri)
@@ -162,7 +155,6 @@ public class BoardEditFragment extends Fragment implements
                             @Override
                             public void onResourceReady(
                                     @NonNull Bitmap res, @Nullable Transition<? super Bitmap> transition) {
-
                                 ImageSpan imgspan = new ImageSpan(requireContext(), res);
                                 sparseSpanArray.put(pos, imgspan);
                                 // No guarantee to get bitmaps sequentially because Glide handles
@@ -176,7 +168,6 @@ public class BoardEditFragment extends Fragment implements
                                 }
 
                             }
-
                             @Override
                             public void onLoadCleared(@Nullable Drawable placeholder) {}
                         });

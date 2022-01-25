@@ -22,7 +22,6 @@ public class ThreadTask {
         sThreadManager = ThreadManager2.getInstance();
     }
 
-
     void recycle() {
         log.i("recycle task");
     }

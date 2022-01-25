@@ -35,9 +35,7 @@ import java.util.Objects;
  */
 
 public class UploadBitmapRunnable implements Runnable {
-
     private static final LoggingHelper log = LoggingHelperFactory.create(UploadBitmapRunnable.class);
-
     // Constants
     static final int UPLOAD_BITMAP_COMPLETE = 1;
     static final int UPLOAD_BITMAP_FAIL = -1;
@@ -75,11 +73,9 @@ public class UploadBitmapRunnable implements Runnable {
         final Uri uri = callback.getAttachedImageUri();
         final int position = callback.getImagePosition();
         int orientation;
-        log.i("uri and position: %s, %s", uri, position);
 
         //File imgFile = new File(Objects.requireNonNull(uri).getPath());
         //log.i("ImageFile check: %s, %s", imgFile.exists(), imgFile);
-
         // Set BitmapFactory.Options
         try(InputStream is = context.getContentResolver().openInputStream(uri)) {
             BitmapFactory.Options options = new BitmapFactory.Options();
@@ -95,7 +91,6 @@ public class UploadBitmapRunnable implements Runnable {
                 // Compress the Bitmap which already resized down by calculating the inSampleSize.
                 Bitmap resizedBitmap = BitmapFactory.decodeStream(in, null, options);
                 if(resizedBitmap == null) throw new NullPointerException();
-
                 if(orientation > 0) {
                     Matrix matrix = new Matrix();
                     matrix.postRotate(orientation);
@@ -106,64 +101,9 @@ public class UploadBitmapRunnable implements Runnable {
                 // Upload the compressed image(less than 1 MB) to Firebase Storage
                 uploadBitmapToStorage(bmpByteArray, position);
             }
-
-        } catch(IOException | NullPointerException e) {
-            log.e("IOException: %s", e.getMessage());
-            e.printStackTrace();
-        }
-
+        } catch(IOException | NullPointerException e) {e.printStackTrace();}
     }
 
-    /*
-    private int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        // Raw dimension of the image
-        final int rawHeight = options.outHeight;
-        final int rawWidth = options.outWidth;
-        int inSampleSize = 1;
-
-        if(rawHeight > reqHeight || rawWidth > reqWidth) {
-            final int halfHeight = rawHeight / 2;
-            final int halfWidth = rawWidth / 2;
-
-            while((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-
-        log.i("scale: %s", inSampleSize);
-
-        return inSampleSize;
-    }
-
-
-    //private byte[] compressBitmap(InputStream in, BitmapFactory.Options options)  {
-    private byte[] compressBitmap(final Bitmap resizedBitmap, BitmapFactory.Options options)  {
-        final int MAX_IMAGE_SIZE = 1024 * 1024;
-        //Bitmap resizedBitmap = BitmapFactory.decodeStream(in, null, options);
-        //Bitmap resizedBitmap = bitmap;
-        log.i("Resized Bitmap: %s", resizedBitmap);
-
-        int compressDensity = 100;
-        int streamLength;
-        ByteArrayOutputStream baos;
-        byte[] bmpByteArray;
-        // Compress the raw image down to the MAX_IMAGE_SIZE
-        do{
-            baos = new ByteArrayOutputStream();
-            resizedBitmap.compress(Bitmap.CompressFormat.JPEG, compressDensity, baos);
-            bmpByteArray = baos.toByteArray();
-            streamLength = bmpByteArray.length;
-            compressDensity -= 5;
-            log.i("compress density: %s", streamLength / 1024 + " kb");
-
-        } while(streamLength >= MAX_IMAGE_SIZE);
-
-        return bmpByteArray;
-
-    }
-    */
-
-    //@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadBitmapToStorage(byte[] bitmapByteArray, final int position) {
         log.i("uploadBitmapToStorage thread: %s", Thread.currentThread());
         // Create the storage reference of an image uploading to Firebase Storage
@@ -176,7 +116,7 @@ public class UploadBitmapRunnable implements Runnable {
                 .addOnFailureListener(e -> log.e("UploadFailed: %s", e.getMessage()));
 
         uploadTask.continueWithTask(task -> {
-            log.i("Firebase Thread: %s", Thread.currentThread());
+            log.i("Firebase Storage Thread: %s", Thread.currentThread());
             if(!task.isSuccessful()) {
                 log.e("upload bitmap task failed"); // refaactor required!
             }

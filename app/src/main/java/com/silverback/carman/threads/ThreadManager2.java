@@ -110,27 +110,10 @@ public class ThreadManager2 {
                 ThreadTask task = (ThreadTask) msg.obj;
                 if(task instanceof UploadBitmapTask) {
                     log.i("upload compressed bitmap done");
-                    switch(msg.what) {
-                        case TASK_COMPLETE:
-                            log.i("main handler");
-                            recycleTask(task);
-                            break;
-                        case TASK_FAIL:
-                            recycleTask(task);
-                            break;
-                        default:super.handleMessage(msg);
-                    }
+                    recycleTask(task);
                 } else if(task instanceof UploadPostTask) {
-                    switch(msg.what) {
-                        case TASK_COMPLETE:
-                            log.i("post upload done");
-                            recycleTask(task);
-                            break;
-                        case TASK_FAIL:
-                            log.i("post upload failed");
-                            recycleTask(task);
-                            break;
-                    }
+                    log.i("upload post done");
+                    recycleTask(task);
                 }
             }
         };
@@ -178,11 +161,6 @@ public class ThreadManager2 {
 
             case FIRESTORE_STATION_SET_COMPLETED:
                 log.i("upload station info to Firestore");
-                msg.sendToTarget();
-                break;
-
-            case UPLOAD_BITMAP_COMPLETED:
-                log.i("upload image to Storage done");
                 msg.sendToTarget();
                 break;
 
@@ -348,7 +326,7 @@ public class ThreadManager2 {
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
 
         } else if(task instanceof UploadPostTask) {
-            ((UploadPostTask) task).recycle();
+            task.recycle();
             mUploadPostTaskQueue.offer((UploadPostTask)task);
         }
 
