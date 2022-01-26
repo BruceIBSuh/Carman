@@ -284,7 +284,7 @@ public class ThreadManager2 {
         return stnListTask;
     }
 
-    public static UploadBitmapTask startBitmapUploadTask(
+    public static UploadBitmapTask uploadBitmapTask(
             Context context, final Uri uriImage, final int position, ImageViewModel model) {
 
         UploadBitmapTask uploadBitmapTask = InnerClazz.sInstance.mUploadBitmapTaskQueue.poll();

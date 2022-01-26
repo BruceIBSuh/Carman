@@ -8,6 +8,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable-anydpi/ic_image_holder.xml" value="0.16666666666666666" />
         <entry key="app/src/main/res/drawable/bg_service_boxing.xml" value="0.33" />
         <entry key="app/src/main/res/drawable/dot_indicator_default.xml" value="0.3509259259259259" />
         <entry key="app/src/main/res/drawable/dot_indicator_selected.xml" value="0.3509259259259259" />
@@ -19,7 +20,6 @@
         <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.1" />
         <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
         <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.33" />
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
@@ -47,6 +47,7 @@
         <entry key="app/src/main/res/menu/menu_board_read.xml" value="0.2625" />
         <entry key="app/src/main/res/menu/menu_options_board.xml" value="0.25885416666666666" />
         <entry key="app/src/main/res/menu/menu_options_main.xml" value="0.29814814814814816" />
+        <entry key="app/src/main/res/menu/options_board_read.xml" value="0.23697916666666666" />
         <entry key="app/src/main/res/xml/autopreference.xml" value="0.1" />
         <entry key="app/src/main/res/xml/pref_autodata.xml" value="0.1" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.2859375" />

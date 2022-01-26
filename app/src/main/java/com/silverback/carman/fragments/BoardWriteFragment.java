@@ -3,9 +3,6 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -33,7 +30,6 @@ import com.silverback.carman.adapters.BoardImageAdapter;
 import com.silverback.carman.databinding.FragmentBoardWriteBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.ThreadManager;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.threads.UploadBitmapTask;
 import com.silverback.carman.threads.UploadPostTask;
@@ -43,8 +39,6 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,7 +126,6 @@ public class BoardWriteFragment extends DialogFragment implements
         spanHandler = new BoardImageSpanHandler(binding.etBoardContent, this);
         // The event handler for the Image Attach button to select an image media(gallery or camera)
         binding.btnAttachImage.setOnClickListener(btn -> selectImageMedia());
-
         return binding.getRoot();
     }
 
@@ -156,6 +149,7 @@ public class BoardWriteFragment extends DialogFragment implements
         super.onViewCreated(view, savedInstanceState);
         // BoardChooserDlgFragment notifies the viewmodel of which image media is selected.
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            log.i("chooser in BoardWrite");
             ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
         });
 
@@ -180,7 +174,7 @@ public class BoardWriteFragment extends DialogFragment implements
         });
 
         // UploadPostTask uploads the post to Firestore, the document id of which is notified the
-        // viewmodel.
+        // viewmodel. --> move to uploadPostToFirestore()
         /*
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
             binding.progbarBoardWrite.setVisibility(View.GONE);
@@ -223,7 +217,7 @@ public class BoardWriteFragment extends DialogFragment implements
     // Invokded by the activity callback defined in the parent actvitiy. OnImageSpanListener defined
     // in BoardImageSpanHandler implements notifyAddImageSpan(), notifyRemoveImageSpan() when adding
     // or removing a thumbnail image.
-    public void setAttachedImage(Uri imgUri) {
+    public void addImageThumbnail(Uri imgUri) {
         this.imgUri = imgUri;
         ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imgUri, spanHandler);
     }
@@ -292,7 +286,7 @@ public class BoardWriteFragment extends DialogFragment implements
             //binding.progbarBoardWrite.setVisibility(View.VISIBLE);
             for(int i = 0; i < imgUriList.size(); i++) {
                 final Uri uri = imgUriList.get(i);
-                bitmapTask = ThreadManager2.startBitmapUploadTask(getContext(), uri, i, imgViewModel);
+                bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
             }
 
         }

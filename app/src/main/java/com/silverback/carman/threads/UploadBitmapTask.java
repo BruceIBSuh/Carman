@@ -87,11 +87,13 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
             weakReference.clear();
             weakReference = null;
         }
-
+        /*
         if(sparseImageArray != null) {
             sparseImageArray.clear();
             sparseImageArray = null;
         }
+
+         */
 
     }
 }

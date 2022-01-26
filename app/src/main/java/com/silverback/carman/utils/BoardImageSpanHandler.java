@@ -77,7 +77,6 @@ public class BoardImageSpanHandler implements SpanWatcher {
 
         editText.addTextChangedListener(new TextWatcher() {
             boolean isSurroundedText = false;
-
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after){
                 //log.i("beforeTextChanged: %s, %s, %s", start, count, after);

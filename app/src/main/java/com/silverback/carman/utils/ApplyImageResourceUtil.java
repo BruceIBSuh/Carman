@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
+import android.util.SparseArray;
 import android.view.Display;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -25,6 +26,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.ImageViewModel;
@@ -48,11 +50,13 @@ public class ApplyImageResourceUtil {
 
     // Objects
     private final Context mContext;
+    private static SparseArray<ImageSpan> sparseArray;
     //private BitmapTypeRequest<ModelType> bitmapTypeReq;
 
     // Constructor
     public ApplyImageResourceUtil(Context context) {
         mContext = context;
+        sparseArray = new SparseArray<>();
     }
 
     // Calculate the screen size
@@ -257,6 +261,7 @@ public class ApplyImageResourceUtil {
                 .into(view);
     }
 
+
     // Glide applies images to Bitmap which should be generally set to the imageview or imagespan.
     public static void applyGlideToImageSpan(Context context, Uri uri, BoardImageSpanHandler spanHandler) {
         if(uri == null) return;
@@ -290,7 +295,6 @@ public class ApplyImageResourceUtil {
                         // clear it here as you can no longer have the bitmap
                     }
                 });
-
     }
 
 

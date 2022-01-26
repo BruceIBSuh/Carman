@@ -122,7 +122,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     //private QueryCommentPagingUtil queryCommentPagingUtil;
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
-    private OnEditModeListener mListener;
+    //private OnEditModeListener mListener;
     private FirebaseFirestore firestore;
     private FirebaseStorage firebaseStorage;
     private DocumentReference postRef;
@@ -139,6 +139,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // UIs
     private FragmentBoardReadBinding binding;
     // Fields
+    private Bundle bundle;
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String userId, documentId;
@@ -152,11 +153,11 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     // Interface for notifying BoardActivity of pressing the edit menu in the toolbar which is visible
     // only when a user reads his/her own post
+    /*
     public interface OnEditModeListener {
         void onEditClicked(Bundle bundle);
     }
     // Interface for listening to BoardActivity at the lifecycle of onAttachFragment.
-    /*
     public void setEditModeListener(OnEditModeListener listener) {
         mListener = listener;
     }
@@ -190,6 +191,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
+            bundle = getArguments();
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
             position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
@@ -786,21 +788,23 @@ public class BoardReadDlgFragment extends DialogFragment implements
 
     }
 
-    // As long as a post belongs to the user,  show the menu in the toolbar which enables the user
+    // As long as a post belongs to the user, show the menu in the toolbar which enables the user
     // to edits or delete the post.
+    //
+    // The userId means the id of the post item owner whereas the viewId means that of who reads
+    // item.  The edit buttons turn visible only when both ids are equal, which means the reader
+    // is the post owner.
     private void inflateEditMenu() {
-        // The userId here means the id of user who writes the posting item whereas the viewId means
-        // the id of who reads the item. If both ids are equal, the edit buttons are visible, which
-        // means the writer(userId) can edit one's own post.
         try (FileInputStream fis = requireActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
             String viewerId = br.readLine();
             if(userId != null && userId.equals(viewerId)) {
                 binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
                 binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
                     if(item.getItemId() == R.id.action_board_edit) {
                         //mListener.onEditClicked(getArguments());
-                        ((BoardActivity)requireActivity()).addEditFragment(getArguments());
+                        ((BoardActivity)requireActivity()).addEditFragment(bundle);
                         dismiss();
                         return true;
                     } else if(item.getItemId() == R.id.action_board_delete) {
