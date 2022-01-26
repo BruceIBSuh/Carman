@@ -194,7 +194,7 @@ public class FragmentSharedModel extends ViewModel {
         return editedPosting;
     }
 
-    // Communicate b/w BoardPagerFragment and BoardReadDlgFragment to pass a new comment in a post.
+    // Communicate b/w BoardPagerFragment and BoardReadFragment to pass a new comment in a post.
     public MutableLiveData<SparseLongArray> getNewComment() {
         if(newComment == null) newComment = new MutableLiveData<>();
         return newComment;

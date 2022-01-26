@@ -62,7 +62,7 @@ import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
-import com.silverback.carman.fragments.BoardReadDlgFragment;
+import com.silverback.carman.fragments.BoardReadFragment;
 import com.silverback.carman.fragments.BoardWriteFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -90,14 +90,14 @@ import java.util.Objects;
  * The fragment to write a post(BoardWriteFragment) comes in when clicking the fab, replacing the
  * viewpager the activity contains. The fragment to edit a post(BoardEditFragment) replaces the
  * viewpager in the same way when clicking the edit button.  The edit button turns visible in the
- * toolbar as long as the fragment to read a post(BoardReadDlgFragment) pops up and the post is
+ * toolbar as long as the fragment to read a post(BoardReadFragment) pops up and the post is
  * owned by the user.
  *
  * Communications b/w the fragments are mostly made with the livedata defined in FramentSharedModel.
  * Some cases use interfaces, though.
  *
  * OnAutoFilterCheckBoxListener passes any change of the checkbox values to BoardPagerFragment for
- * dynamically querying posts based on it.  OnEditModeListener defined in BoardReadDlgFragment
+ * dynamically querying posts based on it.  OnEditModeListener defined in BoardReadFragment
  * notifies that the user chooses the edit button to open BoardEditFragment.
  *
  * The toolbar menu should be basically handled in the parent activity but may be controlled by
@@ -109,7 +109,7 @@ public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
         AppBarLayout.OnOffsetChangedListener {
-        //BoardReadDlgFragment.OnEditModeListener {
+        //BoardReadFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
@@ -219,8 +219,8 @@ public class BoardActivity extends BaseActivity implements
         // onAttachFragment(childFragment) is deprecated in API 28. Instead, use this defined in
         // JetPack androidx.
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
-            if(fragment instanceof BoardReadDlgFragment) {
-                BoardReadDlgFragment readFragment = (BoardReadDlgFragment)fragment;
+            if(fragment instanceof BoardReadFragment) {
+                BoardReadFragment readFragment = (BoardReadFragment)fragment;
                 //readFragment.setEditModeListener(this);
             }
         });
@@ -483,7 +483,7 @@ public class BoardActivity extends BaseActivity implements
                 .commit();
     }
 
-    // Invoked by the options menu in BoardReadDlgFragment to replace the viewpager with
+    // Invoked by the options menu in BoardReadFragment to replace the viewpager with
     // BoardEditFragment
     public void addEditFragment(Bundle bundle) {
         getViewModelStore().clear();
@@ -501,13 +501,6 @@ public class BoardActivity extends BaseActivity implements
         String title = (category == Constants.BOARD_AUTOCLUB) ? String.valueOf(clubTitle)
                 : getString(R.string.board_title_edit);
         Objects.requireNonNull(getSupportActionBar()).setTitle(title);
-        /*
-        if(category == Constants.BOARD_AUTOCLUB) {
-            Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
-        } else {
-            Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_edit));
-        }
-         */
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
         // workable as BoardPagerFragment comes in.(may replace getViewTreeObeserver() in onCreate().
@@ -520,7 +513,7 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setVisibility(View.GONE);
     }
 
-    // Implement BoardReadDlgFragment.OnEditModeListener when the edit button presses.
+    // Implement BoardReadFragment.OnEditModeListener when the edit button presses.
     /*
     @Override
     public void onEditClicked(Bundle bundle) {

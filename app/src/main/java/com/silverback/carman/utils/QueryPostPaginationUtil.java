@@ -115,7 +115,7 @@ public class QueryPostPaginationUtil {
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
-    // Make an initial query of comments in BoardReadDlgFragment.
+    // Make an initial query of comments in BoardReadFragment.
     public void setCommentQuery(DocumentReference docRef){
         querySnapshot = null;
         this.field = "timestamp";

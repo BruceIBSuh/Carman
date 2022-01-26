@@ -4,7 +4,6 @@ package com.silverback.carman.fragments;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
-import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -71,7 +70,7 @@ import java.util.Objects;
  *
  * Instead of using SnapshotListener for realtime update, which seems difficult to handle cache data
  * in the viewpager fragments, the util simply reads posts using get() and updates are made by requerying
- * posts notified by the viewmodel(FragmentSharedModel). Comments in BoardReadDlgFragment, however,
+ * posts notified by the viewmodel(FragmentSharedModel). Comments in BoardReadFragment, however,
  * applies SnapshotListener.
  *
  * Refactoring based on MVVM to improve the query performance should be made. At the moment, related
@@ -247,7 +246,7 @@ public class BoardPagerFragment extends Fragment implements
             if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
-        // The post has been deleted in BoardReadDlgFragment which sequentially popped up AlertDialog
+        // The post has been deleted in BoardReadFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the position of the deleted posting item
         // and update the adapter.
@@ -260,7 +259,7 @@ public class BoardPagerFragment extends Fragment implements
         });
 
         // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
-        // the livedata of which is created when a comment has finished uploadingb in BoardReadDlgFragment.
+        // the livedata of which is created when a comment has finished uploadingb in BoardReadFragment.
         fragmentModel.getNewComment().observe(requireActivity(), sparseArray ->
                 postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray)
         );
@@ -356,7 +355,7 @@ public class BoardPagerFragment extends Fragment implements
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
-        BoardReadDlgFragment readPostFragment = new BoardReadDlgFragment();
+        BoardReadFragment readPostFragment = new BoardReadFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
         log.i("tabPage: %s", currentPage);
@@ -383,7 +382,7 @@ public class BoardPagerFragment extends Fragment implements
 
         if(snapshot.get("post_images") != null) {
             BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
-            bundle.putStringArrayList("uriImgList", Objects.requireNonNull(objImages).getPostImages());
+            bundle.putStringArrayList("urlImgList", Objects.requireNonNull(objImages).getPostImages());
         }
 
         readPostFragment.setArguments(bundle);

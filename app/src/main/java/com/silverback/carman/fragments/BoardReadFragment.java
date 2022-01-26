@@ -30,9 +30,6 @@ import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.util.SparseLongArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -101,12 +98,12 @@ import java.util.regex.Pattern;
  * This dialogfragment reads a post content in the full size when tapping  an item recycled in
  * BoardPagerFragment.
  */
-public class BoardReadDlgFragment extends DialogFragment implements
+public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadDlgFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadFragment.class);
 
     // Constants
     private static final int STATE_COLLAPSED = 0;
@@ -131,7 +128,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     private FragmentSharedModel sharedModel;
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
-    private List<String> imgUriList;
+    private List<String> urlImgList;
     private List<DocumentSnapshot> commentShotList;
     //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
@@ -139,7 +136,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // UIs
     private FragmentBoardReadBinding binding;
     // Fields
-    private Bundle bundle;
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String userId, documentId;
@@ -164,7 +160,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
      */
 
     // Constructor default.
-    public BoardReadDlgFragment() {
+    public BoardReadFragment() {
         // Required empty public constructor
     }
 
@@ -191,14 +187,13 @@ public class BoardReadDlgFragment extends DialogFragment implements
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
-            bundle = getArguments();
             tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
             position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
-            imgUriList = getArguments().getStringArrayList("uriImgList");
+            urlImgList = getArguments().getStringArrayList("urlImgList");
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
@@ -233,7 +228,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
          */
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -322,8 +316,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
             }
         });
 
-        // If the user is the owner of a post, display the edit menu in the toolbar.
-        inflateEditMenu();
+        // If the user is the owner of a post, display the edit menu in the toolbar, which should
+        // use MenuInflater and create menu dynimically. onCreateOptionsMenu does not work.
+        inflateEditOptionMenu();
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
@@ -336,7 +331,6 @@ public class BoardReadDlgFragment extends DialogFragment implements
         queryPaginationUtil.setCommentQuery(postRef);
         return binding.getRoot();
     }
-
 
     @NonNull
     @Override
@@ -366,9 +360,9 @@ public class BoardReadDlgFragment extends DialogFragment implements
             // Confirmed in the didalog.
             if(result) {
                 // If the post contains any image, delete the image(s) from Storage first
-                if(imgUriList.size() > 0){
-                    for(int i = 0; i < imgUriList.size(); i++) {
-                        StorageReference imgRef = firebaseStorage.getReferenceFromUrl(imgUriList.get(i));
+                if(urlImgList.size() > 0){
+                    for(int i = 0; i < urlImgList.size(); i++) {
+                        StorageReference imgRef = firebaseStorage.getReferenceFromUrl(urlImgList.get(i));
                         imgRef.delete().addOnSuccessListener(bVoid -> {
                             // Notify BoardPagerFragment that the post has been deleted.
                             log.i("attached images deleted");
@@ -642,7 +636,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
             imgSet.applyTo(parent);
 
             // Consider to apply Glide thumbnail() method.
-            Glide.with(context).asBitmap().load(imgUriList.get(index))
+            Glide.with(context).asBitmap().load(urlImgList.get(index))
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).fitCenter().into(imgView);
 
             start = m.end();
@@ -794,7 +788,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
     // The userId means the id of the post item owner whereas the viewId means that of who reads
     // item.  The edit buttons turn visible only when both ids are equal, which means the reader
     // is the post owner.
-    private void inflateEditMenu() {
+    private void inflateEditOptionMenu() {
         try (FileInputStream fis = requireActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
@@ -804,7 +798,7 @@ public class BoardReadDlgFragment extends DialogFragment implements
                 binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
                     if(item.getItemId() == R.id.action_board_edit) {
                         //mListener.onEditClicked(getArguments());
-                        ((BoardActivity)requireActivity()).addEditFragment(bundle);
+                        ((BoardActivity)requireActivity()).addEditFragment(getArguments());
                         dismiss();
                         return true;
                     } else if(item.getItemId() == R.id.action_board_delete) {

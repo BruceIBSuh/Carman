@@ -118,7 +118,6 @@
         android:layout_margin="8dp"
         android:src="@drawable/fab_write"
         android:contentDescription="@null"
-        app:alpha="0.3"
         app:borderWidth="0dp"
         app:backgroundTint="@android:color/holo_green_dark"
         app:rippleColor="@color/colorPrimary"

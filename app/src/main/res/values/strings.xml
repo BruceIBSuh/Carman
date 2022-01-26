@@ -205,7 +205,7 @@
     <string name="board_msg_optimize_image">첨부이미지 최적화</string>
     <string name="board_msg_uploading">업로드 진행중입니다</string>
     <string name="board_msg_downsize_image">이미지 최적화중입니다</string>
-    <!--BoardActivity$BoardReadDlgFragment-->
+    <!--BoardActivity$BoardReadFragment-->
     <string name="board_title_comment">댓글 작성</string>
     <string name="board_btn_compathy">공감</string>
     <string name="board_btn_comment">댓글</string>
