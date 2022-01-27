@@ -4,8 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.util.SparseArray;
 
-import androidx.fragment.app.Fragment;
-
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.ImageViewModel;
@@ -18,14 +16,14 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
 
     // Objects
     private WeakReference<ImageViewModel> weakReference;
-    private final Runnable mBitmapResizeRunnable;
+    private final Runnable mBitmapUploadRunnable;
     private SparseArray<Uri> sparseImageArray;
     private Uri imageUri;
     private int position;
 
     // Constructor
     UploadBitmapTask(Context context) {
-        mBitmapResizeRunnable = new UploadBitmapRunnable(context, this);
+        mBitmapUploadRunnable = new UploadBitmapRunnable(context, this);
         sparseImageArray = new SparseArray<>();
     }
 
@@ -35,8 +33,8 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         weakReference = new WeakReference<>(model);
     }
 
-    Runnable getBitmapResizeRunnable() {
-        return mBitmapResizeRunnable;
+    Runnable getBitmapUploadRunnable() {
+        return mBitmapUploadRunnable;
     }
 
     @Override

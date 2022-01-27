@@ -69,9 +69,9 @@ public class BoardWriteFragment extends DialogFragment implements
     private int tabPage;
     private String userId, userName;
     private Uri imgUri;
-    private List<Uri> imgUriList;
+    private List<Uri> uriImageList;
     //private ArrayList<String> autofilter;
-    private SparseArray<Uri> downloadImages;
+    private SparseArray<Uri> sparseUriArray;
     //private boolean isGeneralPost;
     //private boolean isNetworkConnected;
 
@@ -92,8 +92,8 @@ public class BoardWriteFragment extends DialogFragment implements
         setHasOptionsMenu(true);
         //isNetworkConnected = BaseActivity.notifyNetworkConnected(getContext());
         //ApplyImageResourceUtil applyImageResourceUtil = new ApplyImageResourceUtil(getContext());
-        imgUriList = new ArrayList<>();
-        downloadImages = new SparseArray<>();
+        uriImageList = new ArrayList<>();
+        sparseUriArray = new SparseArray<>();
         // ViewModels
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
@@ -107,7 +107,7 @@ public class BoardWriteFragment extends DialogFragment implements
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.recyclerImages.setLayoutManager(linearLayout);
         //recyclerImageView.setHasFixedSize(true);
-        imageAdapter = new BoardImageAdapter(getContext(), imgUriList, this);
+        imageAdapter = new BoardImageAdapter(getContext(), uriImageList, this);
         binding.recyclerImages.setAdapter(imageAdapter);
 
         /* To scroll the edittext inside (nested)scrollview.
@@ -137,7 +137,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.action_upload_post) prepareAttachedImages();
+        if(item.getItemId() == R.id.action_upload_post) uploadImageToStorage();
         return true;
     }
 
@@ -153,24 +153,11 @@ public class BoardWriteFragment extends DialogFragment implements
             ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
         });
 
-        // The imgUri received as a result of startActivityForResult() is applied to applyGlideToImageSpan().
-        // This method translates an image to an appropriate extent for fitting the imagespan.
-        /*
-        imgViewModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
-            log.i("Bitmap received: %s, %s", uriImgList.size(), bitmap);
-            ImageSpan imgSpan = new ImageSpan(requireContext(), bitmap);
-            // Manage the image spans using BoardImageSpanHandler helper class.
-            //this.imageSpan = imgSpan;
-            //spanHandler.setImageSpanToPost(imgSpan);
-            spanHandler.setImageSpan(imgSpan);
-        });
-         */
-
         // UploadBitmapTask compresses and uploads an image to Storage, the uri of which is notified
         // the viewmodel.
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
-            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
-            if(imgUriList.size() == downloadImages.size()) uploadPostToFirestore();
+            sparseUriArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
+            if(uriImageList.size() == sparseUriArray.size()) uploadPostToFirestore();
         });
 
         // UploadPostTask uploads the post to Firestore, the document id of which is notified the
@@ -197,13 +184,13 @@ public class BoardWriteFragment extends DialogFragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        imgUriList.add(position, imgUri);
+        uriImageList.add(position, imgUri);
         imageAdapter.notifyItemChanged(position);
     }
 
     @Override
     public void notifyRemovedImageSpan(int position) {
-        imgUriList.remove(position);
+        uriImageList.remove(position);
         imageAdapter.notifyItemRemoved(position);
     }
 
@@ -228,7 +215,7 @@ public class BoardWriteFragment extends DialogFragment implements
         ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
-        if(imgUriList.size() >= Constants.MAX_IMAGE_NUMS) {
+        if(uriImageList.size() >= Constants.MAX_IMAGE_NUMS) {
             String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
             Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return;
@@ -263,68 +250,26 @@ public class BoardWriteFragment extends DialogFragment implements
      * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
      */
 
-    // Invoked when the upload menu in the toolbar is pressed.
-    public void prepareAttachedImages() {
+    public void uploadImageToStorage() {
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
         if(!doEmptyCheck()) return;
-        // getChildFragmentManager().beginTransaction().add(android.R.id.content, pbFragment).commit();
-        // No image posting makes an immediate uploading but postings with images attached
-        // should take the uploading process that images starts uploading first and image
-        // URIs would be sent back if uploading images is successful,then uploading gets
-        // started with image URIs, adding it to a document of Firestore.
-        if(imgUriList.size() == 0) uploadPostToFirestore();
+
+        if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
         else {
-            // Image Attachment button that starts UploadBitmapTask as many as the number of
-            // images. In case the task starts with UploadBitmapTask multi-threading which
-            // runs in ThreadManager, thread contentions may occur, replacing one with the
-            // other which makes last image cover the other ones.
-            // A download url from Storage each time when an attached image is successfully
-            // downsized and scaled down, then uploaded to Storage is transferred via
-            // ImageViewModel.getDownloadBitmapUri() as a live data of SparseArray.
             //binding.progbarBoardWrite.setVisibility(View.VISIBLE);
-            for(int i = 0; i < imgUriList.size(); i++) {
-                final Uri uri = imgUriList.get(i);
+            for(int i = 0; i < uriImageList.size(); i++) {
+                final Uri uri = uriImageList.get(i);
                 bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
             }
-
         }
-
-        // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
-        // the result is notified as SparseArray which indicates the position and uriString of image.
-        /*
-        imgViewModel.getDownloadBitmapUri().observe(requireActivity(), sparseArray -> {
-            // Check if the number of attached images equals to the number of uris that are down
-            // loaded from Storage.
-            downloadImages.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
-            if(imgUriList.size() == downloadImages.size()) {
-                // On completing optimization of attached images, start uploading a post.
-                //pbFragment.dismiss();
-                binding.progbarBoardWrite.setVisibility(View.GONE);
-                uploadPostToFirestore();
-            }
-
-        });
-         */
     }
+
 
     private void uploadPostToFirestore() {
         //if(!doEmptyCheck()) return;
         // UserId should be passed from the parent activity. If not, the process should end here.
         //if(TextUtils.isEmpty(userId)) return;
-
-        // Cast SparseArray containing download urls from Storage to String array
-        // Something wrong around here because a posting item contains an image despite no image
-        // attached.
-        List<String> downloadUriList = null;
-        if(downloadImages.size() > 0) {
-            downloadUriList = new ArrayList<>(downloadImages.size());
-            for (int i = 0; i < downloadImages.size(); i++) {
-                downloadUriList.add(downloadImages.keyAt(i), downloadImages.valueAt(i).toString());
-            }
-        }
-
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
         post.put("user_name", userName);
@@ -335,23 +280,26 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
         post.put("post_content", binding.etBoardContent.getText().toString());
-        if(downloadImages.size() > 0) post.put("post_images",  downloadUriList);
+        // If the post has any images attached.
+        if(sparseUriArray.size() > 0) {
+            List<String> images = new ArrayList<>(sparseUriArray.size());
+            for(int i = 0; i < sparseUriArray.size(); i++)
+                images.add(sparseUriArray.keyAt(i), sparseUriArray.valueAt(i).toString());
+            post.put("post_images",  images);
+        }
         post.put("post_autoclub", tabPage == Constants.BOARD_AUTOCLUB);
-        // To show or hide a post of the autoclub depends on the value of isGeneralPost. The default
-        // value is set to true such that any post, no matter what is autoclub or general post,
-        // it would be shown in every board. However, as long as an autoclub post set isGeneral value
-        // to false, it would not be shown in the general board; only in the autoclub.
-        // On the other hand, the autofilter values as Arrays should be turned into Map with autofilter
-        // as key and timestamp as value, which avoid creating composite index
-        boolean isGeneralPost;
+
         if(tabPage == Constants.BOARD_AUTOCLUB) {
             ArrayList<String> autofilter = ((BoardActivity)requireActivity()).getAutoFilterValues();
-            isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
             Map<String, Boolean> filters = new HashMap<>();
             for(String field : autofilter) filters.put(field, true);
             post.put("auto_filter", filters);
-        } else isGeneralPost = true;
-        post.put("post_general", isGeneralPost);
+
+            boolean isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
+            post.put("post_general", isGeneralPost);
+
+        } else post.put("post_general", true);
+
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.

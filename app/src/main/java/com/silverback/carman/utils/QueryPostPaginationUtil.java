@@ -43,29 +43,25 @@ public class QueryPostPaginationUtil {
     // keyword in the client side.
     public void setPostQuery(int category, boolean isViewOrder) {
         this.category = category;
-        colRef = firestore.collection("board_general");
+        //colRef = firestore.collection("board_general");
+        colRef = firestore.collection("user_post");
         switch(category){
             case Constants.BOARD_RECENT:
-                log.i("BOARD_RECENT");
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_POPULAR:
-                log.i("BOARD_POPULAR");
                 this.field = "cnt_view";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_AUTOCLUB:
-                log.i("BOARD_AUTOCLUB");
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-
                 query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case Constants.BOARD_NOTIFICATION:
-                log.i("BOARD_NOTIFICATION");
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }

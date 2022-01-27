@@ -243,6 +243,7 @@ public class BoardPagerFragment extends Fragment implements
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
+            log.i("new posting: %s", docId);
             if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
@@ -416,11 +417,13 @@ public class BoardPagerFragment extends Fragment implements
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
         if(querySnapshot == null || querySnapshot.size() == 0) {
+            progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
         }
 
         if(currentPage == Constants.BOARD_AUTOCLUB && TextUtils.isEmpty(automaker)) {
+            progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
         }

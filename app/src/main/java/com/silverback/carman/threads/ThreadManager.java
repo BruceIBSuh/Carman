@@ -9,7 +9,6 @@ import android.os.Message;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentManager;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -17,9 +16,6 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.PagerAdapterViewModel;
-import com.silverback.carman.viewmodels.ServiceCenterViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.Map;
 import java.util.Queue;
@@ -427,7 +423,7 @@ public class ThreadManager {
         else log.i("recycler task");
 
         //uploadBitmapTask.initBitmapTask(uriImage, position, model);
-        sInstance.mDownloadThreadPool.execute(uploadBitmapTask.getBitmapResizeRunnable());
+        sInstance.mDownloadThreadPool.execute(uploadBitmapTask.getBitmapUploadRunnable());
 
         return uploadBitmapTask;
     }

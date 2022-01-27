@@ -1,7 +1,5 @@
 package com.silverback.carman.threads;
 
-import static com.google.firebase.storage.StorageTaskScheduler.sInstance;
-
 import android.content.Context;
 import android.location.Location;
 import android.net.Uri;
@@ -10,9 +8,6 @@ import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-import androidx.lifecycle.LifecycleOwner;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -20,13 +15,8 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.PagerAdapterViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -71,6 +61,9 @@ public class ThreadManager2 {
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     private final BlockingQueue<UploadPostTask> mUploadPostTaskQueue;
+
+    private final BlockingQueue<UpdatePostTask> mUploadPostTaskQueue2;
+
     private final ThreadPoolExecutor threadPoolExecutor;
     private final Handler mMainHandler;
 
@@ -96,6 +89,8 @@ public class ThreadManager2 {
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mUploadPostTaskQueue = new LinkedBlockingQueue<>();
 
+        mUploadPostTaskQueue2 = new LinkedBlockingQueue<>();
+
         threadPoolExecutor = new ThreadPoolExecutor(
                 CORE_POOL_SIZE,
                 MAXIMUM_POOL_SIZE,
@@ -114,7 +109,8 @@ public class ThreadManager2 {
                 } else if(task instanceof UploadPostTask) {
                     log.i("upload post done");
                     recycleTask(task);
-                }
+                } else recycleTask(task);
+
             }
         };
     }
@@ -289,8 +285,9 @@ public class ThreadManager2 {
 
         UploadBitmapTask uploadBitmapTask = InnerClazz.sInstance.mUploadBitmapTaskQueue.poll();
         if(uploadBitmapTask == null) uploadBitmapTask = new UploadBitmapTask(context);
+
         uploadBitmapTask.initBitmapTask(uriImage, position, model);
-        InnerClazz.sInstance.threadPoolExecutor.execute(uploadBitmapTask.getBitmapResizeRunnable());
+        InnerClazz.sInstance.threadPoolExecutor.execute(uploadBitmapTask.getBitmapUploadRunnable());
 
         return uploadBitmapTask;
     }
@@ -304,6 +301,17 @@ public class ThreadManager2 {
         InnerClazz.sInstance.threadPoolExecutor.execute(uploadPostTask.getUploadPostRunnable());
 
         return uploadPostTask;
+    }
+
+    public static UpdatePostTask updatePostTask(
+            Context context, Map<String, Object> post, List<String> removedImages, List<Uri> newImages) {
+        UpdatePostTask updatePostTask = InnerClazz.sInstance.mUploadPostTaskQueue2.poll();
+
+        if(updatePostTask == null) updatePostTask = new UpdatePostTask(context);
+        updatePostTask.initTask(post, removedImages, newImages);
+        InnerClazz.sInstance.threadPoolExecutor.execute(updatePostTask.getUploadPostRunnable2());
+
+        return updatePostTask;
     }
 
 

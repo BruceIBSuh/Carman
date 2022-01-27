@@ -45,7 +45,7 @@ public class UploadPostRunnable implements Runnable {
         final String userId = (String)post.get("user_id");
         try{ if (userId == null || TextUtils.isEmpty(userId)) throw new NullPointerException();
         } catch(NullPointerException e) {
-            mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE);
+            mTask.handleUploadPostState(UPLOAD_TASK_FAIL);
             e.printStackTrace();
             return;
         }
@@ -59,17 +59,14 @@ public class UploadPostRunnable implements Runnable {
             }
             // Upload the post along with the queried user data, which may prevent latency to load
             // the user data if the post retrieves the user data from different collection.
-            firestore.collection("board_general").add(post)
+            firestore.collection("user_post").add(post)
                     .addOnSuccessListener(docref -> {
                         mTask.notifyUploadDone(docref.getId());
                         mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE);
                     })
                     .addOnFailureListener(e -> mTask.handleUploadPostState(UPLOAD_TASK_COMPLETE));
 
-        }).addOnFailureListener(aVoid -> {
-            log.e("upload failed");
-        });
-
+        }).addOnFailureListener(aVoid -> log.e("upload failed"));
     }
 
 }
