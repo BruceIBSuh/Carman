@@ -286,7 +286,8 @@ public class BoardActivity extends BaseActivity implements
                 // viewpager.
                 boolean isWriteMode = (writePostFragment != null) &&
                         binding.frameContents.getChildAt(0) == writePostFragment.getView();
-                String msg = (isWriteMode)? getString(R.string.board_msg_cancel_write) :
+                String msg = (isWriteMode)?
+                        getString(R.string.board_msg_cancel_write) :
                         getString(R.string.board_msg_cancel_edit);
 
                 Fragment target = (isWriteMode) ? writePostFragment : editPostFragment;
@@ -303,7 +304,7 @@ public class BoardActivity extends BaseActivity implements
                     animTabHeight(true);
 
                     //menu.getItem(1).setVisible(false);
-                    addViewPager();
+                    addViewPager(0);
                 }).show();
             }
 
@@ -790,7 +791,7 @@ public class BoardActivity extends BaseActivity implements
      * title reset. If the current page stays in the auto club, additional measures should be taken.
      * Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
      */
-    public void addViewPager() {
+    public void addViewPager(int action) {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
         if(binding.frameContents.getChildCount() > 0) {
@@ -817,9 +818,11 @@ public class BoardActivity extends BaseActivity implements
             if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
-        //pagerAdapter.notifyDataSetChanged();
         log.i("board caregerory: %s", category);
         //pagerAdapter.notifyItemChanged(category);
+        if(action == 1) pagerAdapter.notifyItemChanged(category);
+        else if(action == 2) pagerAdapter.notifyItemRemoved(category);
+
         addTabIconAndTitle(this, binding.tabBoard);
     }
 

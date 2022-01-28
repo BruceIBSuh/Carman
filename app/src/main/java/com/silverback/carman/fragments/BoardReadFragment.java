@@ -128,7 +128,7 @@ public class BoardReadFragment extends DialogFragment implements
     private FragmentSharedModel sharedModel;
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
-    private List<String> urlImgList;
+    private List<String> uriStringList;
     private List<DocumentSnapshot> commentShotList;
     //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
@@ -193,7 +193,8 @@ public class BoardReadFragment extends DialogFragment implements
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
-            urlImgList = getArguments().getStringArrayList("urlImgList");
+            uriStringList = getArguments().getStringArrayList("urlImgList");
+            log.i("Img uri: %s", uriStringList.toString());
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
@@ -204,7 +205,7 @@ public class BoardReadFragment extends DialogFragment implements
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
         // the listener to prevent connecting to the server. Instead, update the collection using
         // Source.Cache.
-        postRef = firestore.collection("board_general").document(documentId);
+        postRef = firestore.collection("user_post").document(documentId);
         /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
                 .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
@@ -356,24 +357,24 @@ public class BoardReadFragment extends DialogFragment implements
         // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
         // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
         // the model from automatically invoking the method, initially set the value to false;
-        sharedModel.getAlertPostResult().observe(requireActivity(), result -> {
+        sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), result -> {
             // Confirmed in the didalog.
             if(result) {
                 // If the post contains any image, delete the image(s) from Storage first
-                if(urlImgList.size() > 0){
-                    for(int i = 0; i < urlImgList.size(); i++) {
-                        StorageReference imgRef = firebaseStorage.getReferenceFromUrl(urlImgList.get(i));
-                        imgRef.delete().addOnSuccessListener(bVoid -> {
-                            // Notify BoardPagerFragment that the post has been deleted.
-                            log.i("attached images deleted");
-                        }).addOnFailureListener(Throwable::printStackTrace);
+                if(uriStringList.size() > 0){
+                    //for(int i = 0; i < urlImgList.size(); i++) {
+                    for (String url : uriStringList) {
+                        firebaseStorage.getReferenceFromUrl(url).delete()
+                                .addOnSuccessListener(aVoid -> log.i("delete image from Storage"))
+                                .addOnFailureListener(Exception::printStackTrace);
                     }
                 }
 
                 // Delete the post then notify BoardPagerFragment of successfully deleting it for
                 // updating the list.
                 postRef.delete().addOnSuccessListener(aVoid -> {
-                    sharedModel.getRemovedPosting().setValue(documentId);
+                    //sharedModel.getRemovedPosting().setValue(documentId);
+                    ((BoardActivity)requireActivity()).addViewPager(2);
                     dismiss();
                     // Method reference in Lambda which uses class name and method name w/o parenthesis
                 }).addOnFailureListener(Throwable::printStackTrace);
@@ -636,7 +637,7 @@ public class BoardReadFragment extends DialogFragment implements
             imgSet.applyTo(parent);
 
             // Consider to apply Glide thumbnail() method.
-            Glide.with(context).asBitmap().load(urlImgList.get(index))
+            Glide.with(context).asBitmap().load(uriStringList.get(index))
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).fitCenter().into(imgView);
 
             start = m.end();

@@ -152,14 +152,12 @@ public class BoardPagerFragment extends Fragment implements
             autoFilter = getArguments().getStringArrayList("autoFilter");
             if(autoFilter != null && autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
-
         // Make the toolbar menu available in the Fragment.
         setHasOptionsMenu(true);
 
         // Instantiate objects.
         multiTypeItemList = new ArrayList<>();
         //snapshotList = new ArrayList<>();
-
 
         firestore = FirebaseFirestore.getInstance();
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -230,7 +228,6 @@ public class BoardPagerFragment extends Fragment implements
         isLoading = true;
         //if(snapshotList.size() == 0)
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-        // progbar.setVisibility(View.VISIBLE);
 
         return binding.getRoot();
     }
@@ -239,14 +236,17 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        log.i("onViewCreated in BoardPagerFragment invoked by ViewModel");
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
+        /* not invoked by the viewmodel. Instead, call notifyItemChanged() in addViewPager().
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
             log.i("new posting: %s", docId);
-            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            if(!TextUtils.isEmpty(docId)) {
+                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            }
         });
-
+        */
         // The post has been deleted in BoardReadFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the position of the deleted posting item
@@ -410,12 +410,12 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         log.i("firstQurey");
-        //snapshotList.clear();
         index = 0;
         multiTypeItemList.clear();
 
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
+        /*
         if(querySnapshot == null || querySnapshot.size() == 0) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
@@ -427,6 +427,8 @@ public class BoardPagerFragment extends Fragment implements
             binding.recyclerBoardPostings.setEmptyView(binding.tvEmptyView);
             return;
         }
+
+         */
 
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
@@ -565,7 +567,7 @@ public class BoardPagerFragment extends Fragment implements
         @Override
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
-            fabWrite.setAlpha(0.5f);
+            fabWrite.setAlpha(0.8f);
 
             //WrapContentLinearLayoutManager layout = (WrapContentLinearLayoutManager)recyclerView.getLayoutManager();
             LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();

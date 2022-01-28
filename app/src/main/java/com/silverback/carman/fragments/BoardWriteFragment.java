@@ -137,7 +137,10 @@ public class BoardWriteFragment extends DialogFragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.action_upload_post) uploadImageToStorage();
+        if(item.getItemId() == R.id.action_upload_post) {
+            binding.progbarBoardWrite.setVisibility(View.VISIBLE);
+            uploadImageToStorage();
+        }
         return true;
     }
 
@@ -161,15 +164,12 @@ public class BoardWriteFragment extends DialogFragment implements
         });
 
         // UploadPostTask uploads the post to Firestore, the document id of which is notified the
-        // viewmodel. --> move to uploadPostToFirestore()
-        /*
+        // viewmodel
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
+            log.i("new post notified: %s", docId);
             binding.progbarBoardWrite.setVisibility(View.GONE);
-            ((BoardActivity)requireActivity()).addViewPager();
+            ((BoardActivity)requireActivity()).addViewPager(1);
         });
-
-         */
-
     }
 
     @Override
@@ -249,7 +249,6 @@ public class BoardWriteFragment extends DialogFragment implements
      * Second, check whether the attached images safely completes uploading.
      * Third, start to upload the post to FireStore, then on notifying completion, dismiss.
      */
-
     public void uploadImageToStorage() {
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
@@ -257,7 +256,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
         if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
         else {
-            //binding.progbarBoardWrite.setVisibility(View.VISIBLE);
             for(int i = 0; i < uriImageList.size(); i++) {
                 final Uri uri = uriImageList.get(i);
                 bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
@@ -293,9 +291,9 @@ public class BoardWriteFragment extends DialogFragment implements
             ArrayList<String> autofilter = ((BoardActivity)requireActivity()).getAutoFilterValues();
             Map<String, Boolean> filters = new HashMap<>();
             for(String field : autofilter) filters.put(field, true);
-            post.put("auto_filter", filters);
-
             boolean isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
+
+            post.put("auto_filter", filters);
             post.put("post_general", isGeneralPost);
 
         } else post.put("post_general", true);
@@ -304,7 +302,9 @@ public class BoardWriteFragment extends DialogFragment implements
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
         postTask = ThreadManager2.uploadPostTask(getContext(), post, fragmentModel);
-        ((BoardActivity)requireActivity()).addViewPager();
+        //binding.progbarBoardWrite.setVisibility(View.GONE);
+        //((BoardActivity)requireActivity()).addViewPager();
+
 
     }
 

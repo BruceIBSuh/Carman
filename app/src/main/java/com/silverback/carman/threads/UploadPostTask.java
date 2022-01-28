@@ -45,6 +45,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
 
     @Override
     public void notifyUploadDone(String documentId) {
+        log.i("notifyUploaddone: %s", documentId);
         if(!TextUtils.isEmpty(documentId))
             weakModelRef.get().getNewPosting().postValue(documentId);
     }

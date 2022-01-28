@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
@@ -79,11 +80,14 @@ public class BoardEditFragment extends Fragment implements
     private SparseArray<ImageSpan> sparseSpanArray;
     private SparseArray<Uri> sparseImageArray;
 
+    private List<String> imgListRemoved;
+
     private UploadBitmapTask bitmapTask;
     private UpdatePostTask updatePostTask;
 
     private FragmentBoardEditBinding binding;
     // Fields
+    private String documentId;
     private String title, content;
     private int cntUpdateImages;
 
@@ -98,9 +102,11 @@ public class BoardEditFragment extends Fragment implements
         setHasOptionsMenu(true);
         if(getArguments() != null) {
             bundle = getArguments();
+            documentId = getArguments().getString("documentId");
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
             imgUriStringList = getArguments().getStringArrayList("urlImgList");
+
         }
 
         firestore = FirebaseFirestore.getInstance();
@@ -113,6 +119,7 @@ public class BoardEditFragment extends Fragment implements
         sparseSpanArray = new SparseArray<>();
         sparseImageArray = new SparseArray<>();
         imgEditUriList = new ArrayList<>();
+
 
         // If the post contains any image, the http url should be typecast to uri.
         if(imgUriStringList != null && imgUriStringList.size() > 0) {
@@ -181,8 +188,10 @@ public class BoardEditFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.action_upload_post)
+        if (item.getItemId() == R.id.action_upload_post) {
+            binding.pbBoardEdit.setVisibility(View.VISIBLE);
             updateImageToStorage();//uploadPostUpdate();
+        }
         return true;
     }
 
@@ -210,7 +219,7 @@ public class BoardEditFragment extends Fragment implements
             // loaded from Storage.
             log.i("sparseArray: %s, %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
             sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
-            imgEditUriList.set(sparseArray.keyAt(0), Uri.parse(sparseArray.valueAt(0).toString()));
+            imgEditUriList.set(sparseArray.keyAt(0), Uri.parse(String.valueOf(sparseArray.valueAt(0))));
 
             if(sparseImageArray.size() == cntUpdateImages) updatePost();
         });
@@ -236,8 +245,8 @@ public class BoardEditFragment extends Fragment implements
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
         log.i("notifyAddImageSpan");
-        if(imgUri != null) imgEditUriList.add(position, imgUri);
         imgAdapter.notifyItemChanged(position);
+        if(imgUri != null) imgEditUriList.add(position, imgUri);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
@@ -246,6 +255,7 @@ public class BoardEditFragment extends Fragment implements
         log.i("notifyRemovedImageSpan");
         imgAdapter.notifyItemRemoved(position);
         imgEditUriList.remove(position);
+
         // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
         // is deleted from Storage as well.
         /* Not good b/c it cannot turn it back when calcelling.
@@ -335,33 +345,29 @@ public class BoardEditFragment extends Fragment implements
     // If any images is removed, delete them from Firebase Storage.
     public void updateImageToStorage() {
         // Hide the soft input if it is visible.
-        log.i("updateImageToStorage");
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
 
         // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
         // images should be deleted and new images be processed with downsize and rotation if necessary.
-        if(imgEditUriList.size() == 0) updatePost(); // The post originally contains no images.
-        else {
+        //if(imgEditUriList.size() == 0) updatePost(); // The post originally contains no images.
+        //else {
             if(imgUriStringList != null && imgUriStringList.size() > 0) {
                 List<String> removedImages = new ArrayList<>();
                 for (Uri uri : imgEditUriList) removedImages.add(uri.toString());
                 imgUriStringList.removeAll(removedImages);
                 log.i("Image: %s:", imgUriStringList.size());
 
-                // Delete removed images in the post from Storage.
-                for (String url : imgUriStringList) {
+                for(String url : imgUriStringList) {
                     storage.getReferenceFromUrl(url).delete()
-                            .addOnSuccessListener(aVoid -> log.i("delete image from Storage"))
+                            .addOnSuccessListener(aVoid -> log.i("delete post image"))
                             .addOnFailureListener(Exception::printStackTrace);
                 }
             }
 
-
             // Newly added images, the uri of which should have the scheme of "content://" instead
             // of "http://".
-            log.i("uploadbitmaptask started");
             cntUpdateImages = 0;
             for(int i = 0; i < imgEditUriList.size(); i++) {
                 if(Objects.equals(imgEditUriList.get(i).getScheme(), "content")) {
@@ -371,17 +377,16 @@ public class BoardEditFragment extends Fragment implements
                     bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), imgUri, i, imgModel);
                 }
             }
-        }
+        //}
     }
 
 
-
     private void updatePost(){
-        String docId = bundle.getString("documentId");
-        if(docId == null || TextUtils.isEmpty(docId)) return;
+        //String docId = bundle.getString("documentId");
+        if(documentId == null || TextUtils.isEmpty(documentId)) return;
 
         //final DocumentReference docref = firestore.collection("board_general").document(docId);
-        final DocumentReference docref = firestore.collection("user_post").document(docId);
+        final DocumentReference docref = firestore.collection("user_post").document(documentId);
         docref.update("post_images", FieldValue.delete());
 
         Map<String, Object> updatePost = new HashMap<>();
@@ -389,7 +394,7 @@ public class BoardEditFragment extends Fragment implements
         updatePost.put("post_content", binding.etEditContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
 
-        // Once deleting the existing image list, then upload a new image url list.
+        // Once having deleted the existing images list, then upload a new image url list.
         if(imgEditUriList.size() > 0) {
             List<String> downloadList = new ArrayList<>();
             for(Uri uri : imgEditUriList) downloadList.add(uri.toString());
@@ -397,11 +402,33 @@ public class BoardEditFragment extends Fragment implements
         }
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
-            sharedModel.getNewPosting().setValue(docId);
-            ((BoardActivity)requireActivity()).addViewPager();
+            binding.pbBoardEdit.setVisibility(View.GONE);
+            sharedModel.getNewPosting().setValue(documentId);
+            ((BoardActivity)requireActivity()).addViewPager(1);
         }).addOnFailureListener(Exception::printStackTrace);
 
     }
+    /*
+    private void deletePost() {
+        if(imgUriStringList != null && imgUriStringList.size() > 0) {
+            for (String uri : imgUriStringList) {
+                storage.getReferenceFromUrl(uri).delete()
+                        .addOnSuccessListener(aVoid -> {
+                            log.i("delete image from Storage");
+                        })
+                        .addOnFailureListener(Exception::printStackTrace);
+            }
+        }
+
+        firestore.collection("user_post").document(documentId).delete()
+                .addOnSuccessListener(bVoid -> {
+                    log.i("deletet post");
+                    binding.pbBoardEdit.setVisibility(View.GONE);
+                    ((BoardActivity)requireActivity()).addViewPager();
+                })
+                .addOnFailureListener(Exception::printStackTrace);
+    }
+    */
 
     private boolean doEmptyCheck() {
         if(TextUtils.isEmpty(binding.etBoardEditTitle.getText())) {
