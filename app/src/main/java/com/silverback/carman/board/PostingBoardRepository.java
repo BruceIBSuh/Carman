@@ -1,5 +1,10 @@
 package com.silverback.carman.board;
 
+import static com.silverback.carman.BoardActivity.NOTIFICATION;
+import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.POPULAR;
+import static com.silverback.carman.BoardActivity.RECENT;
+
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -21,7 +26,7 @@ public class PostingBoardRepository implements
     private Query query;
     private DocumentSnapshot lastVisibleshot;
     private boolean isLastPage;
-    private int page;
+    //private int page;
 
     public PostingBoardRepository() {
         firestore = FirebaseFirestore.getInstance();
@@ -30,22 +35,22 @@ public class PostingBoardRepository implements
 
     public void setPostingQuery(int page) {
         query = colRef;
-        this.page = page;
+        //this.page = page;
 
         switch(page) {
-            case Constants.BOARD_RECENT:
+            case RECENT:
                 query = query.whereEqualTo("post_general", true)
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGINATION);
                 break;
 
-            case Constants.BOARD_POPULAR:
+            case POPULAR:
                 query = query.whereEqualTo("post_general", true)
-                        .orderBy("cnt_view", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                        .orderBy("cnt_view", Query.Direction.DESCENDING).limit(PAGINATION);
                 break;
 
-            case Constants.BOARD_NOTIFICATION:
+            case NOTIFICATION:
                 query = firestore.collection("board_admin")
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGINATION);
                 break;
         }
 
@@ -53,7 +58,7 @@ public class PostingBoardRepository implements
 
     public void setCommentQuery(DocumentReference docRef){
         query = docRef.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(Constants.PAGINATION);
+                .limit(PAGINATION);
     }
 
     // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class

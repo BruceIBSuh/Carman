@@ -1,5 +1,7 @@
 package com.silverback.carman.board;
 
+import static com.silverback.carman.BoardActivity.PAGINATION;
+
 import androidx.annotation.Nullable;
 
 import com.google.firebase.firestore.CollectionReference;
@@ -67,7 +69,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
     public void setPostingQuery(boolean isViewOrder) {
         log.i("view order: %s", isViewOrder);
         field = (isViewOrder)? "cnt_view" : "timestamp";
-        Query firstQuery = colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION);
+        Query firstQuery = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION);
         listenerRegit = firstQuery.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }
 
@@ -78,7 +80,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
         log.i("querySnapshot: %s", querySnapshot.size());
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
-                .limit(Constants.PAGINATION);
+                .limit(PAGINATION);
 
         listenerRegit = nextQuery.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }

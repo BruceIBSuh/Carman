@@ -414,6 +414,7 @@ public class ThreadManager {
     }
 
     // Upload the downsized user image to Firebase Storage
+    /*
     public static UploadBitmapTask startBitmapUploadTask(
             Context context, Uri uriImage, int position, ImageViewModel model) {
 
@@ -427,6 +428,8 @@ public class ThreadManager {
 
         return uploadBitmapTask;
     }
+
+     */
 
     /*
     public static AttachedBitmapTask startAttachedBitmapTask(

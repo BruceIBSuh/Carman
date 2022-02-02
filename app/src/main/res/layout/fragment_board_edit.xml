@@ -73,8 +73,6 @@
         app:layout_constraintTop_toBottomOf="@+id/view_edit_header"
         app:layout_constraintBottom_toTopOf="@+id/edit_recycler_images"
         tools:ignore="autofill" />
-
-
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/edit_recycler_images"
         android:layout_width="0dp"
@@ -84,15 +82,35 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <ProgressBar
-        android:id="@+id/pb_board_edit"
-        style="?android:attr/progressBarStyle"
+    <LinearLayout
+        android:id="@+id/pb_container"
         android:visibility="gone"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="@+id/et_edit_content"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view_edit_header" />
-
+        app:layout_constraintTop_toTopOf="@+id/view_edit_header"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/et_edit_content">
+        <ProgressBar
+            android:id="@+id/pb_board_edit"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/pb_container"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/pb_container" />
+        <TextView
+            android:id="@+id/tv_pb_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/pb_board_edit"/>
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

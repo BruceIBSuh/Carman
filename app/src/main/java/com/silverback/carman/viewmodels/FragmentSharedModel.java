@@ -37,7 +37,7 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
-    private MutableLiveData<String> removedPosting;
+    private MutableLiveData<Integer> removedPosting;
     private MutableLiveData<String> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
 
@@ -167,13 +167,6 @@ public class FragmentSharedModel extends ViewModel {
         return imageChooser;
     }
 
-    /**
-     * Board-related LiveData
-     * getNewPosting()
-     * getRemovedPosting()
-     * getEditPosting()
-     * @return MutableLiveData<String>
-     */
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
 
@@ -183,7 +176,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
-    public MutableLiveData<String> getRemovedPosting() {
+    public MutableLiveData<Integer> getRemovedPosting() {
         if(removedPosting == null) removedPosting = new MutableLiveData<>();
         return removedPosting;
     }

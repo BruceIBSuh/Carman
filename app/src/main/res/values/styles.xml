@@ -36,6 +36,11 @@
 
     <style name="CarmanRatingBar" parent="android:style/Widget.Material.RatingBar.Small" />
 
+    <style name="Widget.Theme.AppCompat.Light.NoActionBar.ButtonBar.Fullscreen" parent="">
+        <item name="android:background">@color/black_overlay</item>
+        <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
+    </style>
+
     <!-- Toolbar Action Button in the autoclub of BoardActivity -->
     <!--
     <style name="EmblemButtonStyle" parent="ThemeOverlay.AppCompat.Light">

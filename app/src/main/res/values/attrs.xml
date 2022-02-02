@@ -51,7 +51,7 @@
         <attr name="miscColor" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="StatGraphView" >
+    <declare-styleable name="StatGraphView">
         <attr name="graphAxisColor" format="color|reference" />
         <attr name="graphLabelColor" format="color|reference" />
     </declare-styleable>
@@ -75,7 +75,7 @@
         <attr name="btn4" format="string|reference" />
     </declare-styleable>
 
-    <declare-styleable name="NameDialogPreference" >
+    <declare-styleable name="NameDialogPreference">
         <attr name="indicator" format="reference" />
     </declare-styleable>
 
@@ -86,6 +86,10 @@
 
     <declare-styleable name="ViewPagerWithIndicator">
 
+    </declare-styleable>
+    <declare-styleable name="FullscreenAttrs">
+        <attr name="fullscreenBackgroundColor" format="color" />
+        <attr name="fullscreenTextColor" format="color" />
     </declare-styleable>
 
 </resources>

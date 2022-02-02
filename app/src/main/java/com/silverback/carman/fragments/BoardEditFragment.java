@@ -28,7 +28,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
@@ -42,7 +41,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.threads.UploadBitmapTask;
-import com.silverback.carman.threads.UpdatePostTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.BoardImageSpanHandler;
 import com.silverback.carman.utils.Constants;
@@ -58,7 +56,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
-public class BoardEditFragment extends Fragment implements
+public class BoardEditFragment extends DialogFragment implements
         BoardImageSpanHandler.OnImageSpanListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
@@ -66,30 +64,27 @@ public class BoardEditFragment extends Fragment implements
     private static final String REGEX_MARKUP = "\\[image_\\d]\\n";
 
     // Objects
+    private FragmentBoardEditBinding binding;
+
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
-    private Bundle bundle;
+    private UploadBitmapTask bitmapTask;
+
     private BoardImageAdapter imgAdapter;
     private BoardImageSpanHandler spanHandler;
-    private ApplyImageResourceUtil imgUtil;
-    private ImageViewModel imgModel;
-    private FragmentSharedModel sharedModel;
-    private Uri imgUri;
-    private List<String> imgUriStringList; // Url(http://) transferred from BoardReadFragment
-    private List<Uri> imgEditUriList; // Uri(content://)
     private SparseArray<ImageSpan> sparseSpanArray;
-    private SparseArray<Uri> sparseImageArray;
 
-    private List<String> imgListRemoved;
+    private FragmentSharedModel sharedModel;
+    private ImageViewModel imgModel;
 
-    private UploadBitmapTask bitmapTask;
-    private UpdatePostTask updatePostTask;
+    private Uri mImageUri;
+    private List<String> uriStringList;
+    private List<Uri> uriEditList;
 
-    private FragmentBoardEditBinding binding;
     // Fields
     private String documentId;
     private String title, content;
-    private int cntUpdateImages;
+    private int numImgAdded;
 
     // Default Constructor
     public BoardEditFragment() {
@@ -101,32 +96,32 @@ public class BoardEditFragment extends Fragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         if(getArguments() != null) {
-            bundle = getArguments();
+            //bundle = getArguments();
             documentId = getArguments().getString("documentId");
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
-            imgUriStringList = getArguments().getStringArrayList("urlImgList");
+            uriStringList = getArguments().getStringArrayList("urlImgList");
 
         }
 
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
 
-        imgUtil = new ApplyImageResourceUtil(getContext());
+        //imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         sparseSpanArray = new SparseArray<>();
-        sparseImageArray = new SparseArray<>();
-        imgEditUriList = new ArrayList<>();
+        //sparseImageArray = new SparseArray<>();
+        uriEditList = new ArrayList<>();
 
 
         // If the post contains any image, the http url should be typecast to uri.
-        if(imgUriStringList != null && imgUriStringList.size() > 0) {
-            for(String uriString : imgUriStringList) imgEditUriList.add(Uri.parse(uriString));
+        if(uriStringList != null && uriStringList.size() > 0) {
+            for(String uriString : uriStringList) {
+                uriEditList.add(Uri.parse(uriString));
+            }
         }
-
-
     }
 
     @Override
@@ -138,7 +133,7 @@ public class BoardEditFragment extends Fragment implements
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.editRecyclerImages.setLayoutManager(linearLayout);
-        imgAdapter = new BoardImageAdapter(getContext(), imgEditUriList, this);
+        imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
         binding.editRecyclerImages.setAdapter(imgAdapter);
 
         binding.etEditContent.setText(new SpannableStringBuilder(content));
@@ -151,7 +146,7 @@ public class BoardEditFragment extends Fragment implements
         // should be put into SparseArray. It seems that List.add(int, obj) does not work here.
         // Once the sparsearray completes to hold all imagespans, it should be converted to spanList
         // to pass to BoardImageSpanHander.setImageSpanList().
-        if(imgEditUriList != null && imgEditUriList.size() > 0) setThumbnailImages();
+        if(uriEditList != null && uriEditList.size() > 0) setThumbnailImages();
 
         // Scroll the edittext inside (nested)scrollview.
         // warning message is caused by onPermClick not implemented. Unless the method is requried
@@ -189,7 +184,7 @@ public class BoardEditFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == R.id.action_upload_post) {
-            binding.pbBoardEdit.setVisibility(View.VISIBLE);
+            binding.pbContainer.setVisibility(View.VISIBLE);
             updateImageToStorage();//uploadPostUpdate();
         }
         return true;
@@ -205,23 +200,12 @@ public class BoardEditFragment extends Fragment implements
             ((BoardActivity)requireActivity()).getImageFromChooser(chooser)
         );
 
-        // On completing to apply Glide with an image selected from the chooser, set it to the span.
-        /*
-        imgModel.getGlideBitmapTarget().observe(getViewLifecycleOwner(), bitmap -> {
-            ImageSpan imgSpan = new ImageSpan(view.getContext(), bitmap);
-            spanHandler.setImageSpan(imgSpan);
-        });
-        */
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
         imgModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
-            // Check if the number of attached images equals to the number of uris that are down
-            // loaded from Storage.
-            log.i("sparseArray: %s, %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
-            sparseImageArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
-            imgEditUriList.set(sparseArray.keyAt(0), Uri.parse(String.valueOf(sparseArray.valueAt(0))));
-
-            if(sparseImageArray.size() == cntUpdateImages) updatePost();
+            uriEditList.set(sparseArray.keyAt(0), sparseArray.valueAt(0));
+            numImgAdded--;
+            if(numImgAdded == 0) updatePost();
         });
     }
 
@@ -235,7 +219,6 @@ public class BoardEditFragment extends Fragment implements
     // in the recyclerview thumbnail
     @Override
     public void removeImage(int position) {
-        log.i("removeImage: %s", position);
         spanHandler.removeImageSpan(position);
     }
 
@@ -244,25 +227,16 @@ public class BoardEditFragment extends Fragment implements
     // expression.
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
-        log.i("notifyAddImageSpan");
+        log.i("added image uri: %s", mImageUri);
         imgAdapter.notifyItemChanged(position);
-        if(imgUri != null) imgEditUriList.add(position, imgUri);
+        if(mImageUri != null) uriEditList.add(position, mImageUri);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
     public void notifyRemovedImageSpan(int position) {
-        log.i("notifyRemovedImageSpan");
         imgAdapter.notifyItemRemoved(position);
-        imgEditUriList.remove(position);
-
-        // On deleting an image by pressing the handle in a recyclerview thumbnail, the image file
-        // is deleted from Storage as well.
-        /* Not good b/c it cannot turn it back when calcelling.
-        storage.getReferenceFromUrl(urlImgList.get(position)).delete()
-                .addOnSuccessListener(aVoid ->log.i("delete image from Storage"))
-                .addOnFailureListener(Exception::printStackTrace);
-        */
+        if(uriEditList.get(position) != null) uriEditList.remove(position);
     }
 
     // The attach button event handler to call the imge media chooser.
@@ -270,7 +244,7 @@ public class BoardEditFragment extends Fragment implements
         ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
-        if(imgEditUriList.size() >= Constants.MAX_IMAGE_NUMS) {
+        if(uriEditList.size() >= Constants.MAX_IMAGE_NUMS) {
             String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
             Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return;
@@ -292,7 +266,6 @@ public class BoardEditFragment extends Fragment implements
         //int end = Math.max(etPostBody.getSelectionEnd(), 0);
         int start = binding.etEditContent.getSelectionStart();
         int end = binding.etEditContent.getSelectionEnd();
-        log.i("select range; %s, %s", start, end);
         binding.etEditContent.getText().replace(start, end, "\n");
     }
 
@@ -306,7 +279,7 @@ public class BoardEditFragment extends Fragment implements
         int index = 0;
         while(m.find()) {
             final int pos = index;
-            final Uri uri = imgEditUriList.get(pos);
+            final Uri uri = uriEditList.get(pos);
             Glide.with(this).asBitmap().placeholder(R.drawable.ic_image_holder)
                     .override(size)
                     .fitCenter()
@@ -320,7 +293,7 @@ public class BoardEditFragment extends Fragment implements
                             // No guarantee to get bitmaps sequentially because Glide handles
                             // images on an async basis. Thus, SparseArray<ImageSpan> should be
                             // used to keep the position of an image.
-                            if(sparseSpanArray.size() == imgUriStringList.size()) {
+                            if(sparseSpanArray.size() == uriStringList.size()) {
                                 for(int i = 0; i < sparseSpanArray.size(); i++)
                                     spanList.add(i, sparseSpanArray.get(i));
                                 spanHandler.setImageSpanList(spanList);
@@ -334,13 +307,12 @@ public class BoardEditFragment extends Fragment implements
         }
     }
 
-    // Add a thumbnail in the content. It is invoked by getAttachedImageUri(), ActivityResult
+    // Add a thumbnail in the content, which is invoked by getAttachedImageUri(), ActivityResult
     // callback by ActivityResultContract.GetContent
     public void addImageThumbnail(Uri uri) {
-        imgUri = uri;
+        mImageUri = uri;
         ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), uri, spanHandler);
     }
-
 
     // If any images is removed, delete them from Firebase Storage.
     public void updateImageToStorage() {
@@ -349,86 +321,57 @@ public class BoardEditFragment extends Fragment implements
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
 
-        // If no images are attached, upload the post w/o processing images. Otherwise, beofore-editing
-        // images should be deleted and new images be processed with downsize and rotation if necessary.
-        //if(imgEditUriList.size() == 0) updatePost(); // The post originally contains no images.
-        //else {
-            if(imgUriStringList != null && imgUriStringList.size() > 0) {
-                List<String> removedImages = new ArrayList<>();
-                for (Uri uri : imgEditUriList) removedImages.add(uri.toString());
-                imgUriStringList.removeAll(removedImages);
-                log.i("Image: %s:", imgUriStringList.size());
+        binding.tvPbMessage.setText("Image being compressed and uploading...");
 
-                for(String url : imgUriStringList) {
-                    storage.getReferenceFromUrl(url).delete()
-                            .addOnSuccessListener(aVoid -> log.i("delete post image"))
-                            .addOnFailureListener(Exception::printStackTrace);
-                }
+        List<String> tempList = new ArrayList<>();
+        for(Uri uri : uriEditList) tempList.add(uri.toString());
+        uriStringList.removeAll(tempList);
+        if(uriStringList != null && uriStringList.size() > 0) {
+            for(String url : uriStringList) {
+                storage.getReferenceFromUrl(url).delete();//.addOnSuccessListener(aVoid -> {});
             }
+            uriStringList.clear();
+        }
 
-            // Newly added images, the uri of which should have the scheme of "content://" instead
-            // of "http://".
-            cntUpdateImages = 0;
-            for(int i = 0; i < imgEditUriList.size(); i++) {
-                if(Objects.equals(imgEditUriList.get(i).getScheme(), "content")) {
-                    cntUpdateImages++;
-                    log.i("count: %s", cntUpdateImages);
-                    final Uri imgUri = imgEditUriList.get(i);
-                    bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), imgUri, i, imgModel);
-                }
+        numImgAdded = 0;
+        for(int i = 0; i < uriEditList.size(); i++) {
+            if(Objects.equals(uriEditList.get(i).getScheme(), "content")) {
+                numImgAdded++;
+                final Uri imgUri = uriEditList.get(i);
+                bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), imgUri, i, imgModel);
             }
-        //}
+        }
+        //log.i("flag: %s", bitmapTask);
+        if(bitmapTask == null) updatePost();
     }
 
+    private void updatePost() {
+        if (documentId == null || TextUtils.isEmpty(documentId)) return;
 
-    private void updatePost(){
-        //String docId = bundle.getString("documentId");
-        if(documentId == null || TextUtils.isEmpty(documentId)) return;
+        binding.tvPbMessage.setText("Post is uploading...");
 
         //final DocumentReference docref = firestore.collection("board_general").document(docId);
         final DocumentReference docref = firestore.collection("user_post").document(documentId);
-        docref.update("post_images", FieldValue.delete());
-
         Map<String, Object> updatePost = new HashMap<>();
         updatePost.put("post_title", binding.etBoardEditTitle.getText().toString());
         updatePost.put("post_content", binding.etEditContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
 
-        // Once having deleted the existing images list, then upload a new image url list.
-        if(imgEditUriList.size() > 0) {
-            List<String> downloadList = new ArrayList<>();
-            for(Uri uri : imgEditUriList) downloadList.add(uri.toString());
-            updatePost.put("post_images", downloadList);
+        // Update the post_image field, if any.
+        List<String> postImages = new ArrayList<>();
+        if (uriEditList.size() > 0) {
+            docref.update("post_images", FieldValue.delete());
+            for (Uri uri : uriEditList) postImages.add(uri.toString());
+            updatePost.put("post_images", postImages);
         }
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
-            binding.pbBoardEdit.setVisibility(View.GONE);
-            sharedModel.getNewPosting().setValue(documentId);
-            ((BoardActivity)requireActivity()).addViewPager(1);
+            //binding.pbBoardEdit.setVisibility(View.GONE);
+            binding.pbContainer.setVisibility(View.GONE);
+            //sharedModel.getNewPosting().setValue(documentId);
+            ((BoardActivity) requireActivity()).addViewPager();
         }).addOnFailureListener(Exception::printStackTrace);
-
     }
-    /*
-    private void deletePost() {
-        if(imgUriStringList != null && imgUriStringList.size() > 0) {
-            for (String uri : imgUriStringList) {
-                storage.getReferenceFromUrl(uri).delete()
-                        .addOnSuccessListener(aVoid -> {
-                            log.i("delete image from Storage");
-                        })
-                        .addOnFailureListener(Exception::printStackTrace);
-            }
-        }
-
-        firestore.collection("user_post").document(documentId).delete()
-                .addOnSuccessListener(bVoid -> {
-                    log.i("deletet post");
-                    binding.pbBoardEdit.setVisibility(View.GONE);
-                    ((BoardActivity)requireActivity()).addViewPager();
-                })
-                .addOnFailureListener(Exception::printStackTrace);
-    }
-    */
 
     private boolean doEmptyCheck() {
         if(TextUtils.isEmpty(binding.etBoardEditTitle.getText())) {

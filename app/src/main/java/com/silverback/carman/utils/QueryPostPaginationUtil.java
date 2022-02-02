@@ -1,9 +1,20 @@
 package com.silverback.carman.utils;
 
+import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.NOTIFICATION;
+import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.POPULAR;
+import static com.silverback.carman.BoardActivity.RECENT;
+
+import androidx.annotation.Nullable;
+
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
@@ -46,39 +57,66 @@ public class QueryPostPaginationUtil {
         //colRef = firestore.collection("board_general");
         colRef = firestore.collection("user_post");
         switch(category){
-            case Constants.BOARD_RECENT:
+            case RECENT:
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
-            case Constants.BOARD_POPULAR:
+            case POPULAR:
                 this.field = "cnt_view";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
-            case Constants.BOARD_AUTOCLUB:
+            case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
-            case Constants.BOARD_NOTIFICATION:
+            case NOTIFICATION:
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
-
         /*
-        query.limit(Constants.PAGINATION).get().addOnSuccessListener(querySnapshot -> {
+        query.limit(PAGINATION).addSnapshotListener(new EventListener<QuerySnapshot>() {
+            @Override
+            public void onEvent(QuerySnapshot querySanpshot, FirebaseFirestoreException e) {
+                if(e != null) return;
+                for(DocumentChange dc : querySanpshot.getDocumentChanges()) {
+                    switch(dc.getType()) {
+                        case ADDED:
+                            log.i("ADDED: %s", dc.getDocument().getData());
+                            break;
+                        case MODIFIED:
+                            log.i("MODIFIED: %s", dc.getDocument().getData());
+                            break;
+                        case REMOVED:
+                            log.i("REMOVED: %s", dc.getDocument().getData());
+                            break;
+                    }
+                }
+            }
+        });
+         */
+
+        query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
 
-        */
-        query.limit(Constants.PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+        /*
+        query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
+
+            for(DocumentSnapshot doc : querySnapshot) {
+                String source = doc != null && doc.getMetadata().hasPendingWrites()?"LOCAL":"SERVER";
+                if(source.matches("LOCAL")) log.i("cached data");
+                else log.i("server data");
+            }
+
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
-
+        */
 
     }
 
@@ -88,21 +126,21 @@ public class QueryPostPaginationUtil {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         //if(category == Constants.BOARD_POPULAR) query = colRef.whereEqualTo("post_general", true);
         switch(category) {
-            case Constants.BOARD_RECENT: case Constants.BOARD_POPULAR:
+            case RECENT: case POPULAR:
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
-            case Constants.BOARD_AUTOCLUB:
+            case AUTOCLUB:
                 query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
-            case Constants.BOARD_NOTIFICATION:
+            case NOTIFICATION:
                 query = firestore.collection("admin_post").orderBy(field, Query.Direction.DESCENDING);
                 break;
         }
 
-        query.startAfter(lastVisible).limit(Constants.PAGINATION).get().addOnSuccessListener(
+        query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(
                 nextSnapshot -> {
                     this.querySnapshot = nextSnapshot;
-                    if(nextSnapshot.size() >= Constants.PAGINATION) {
+                    if(nextSnapshot.size() >= PAGINATION) {
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
                         mCallback.getLastQueryResult(nextSnapshot);
@@ -115,7 +153,7 @@ public class QueryPostPaginationUtil {
         querySnapshot = null;
         this.field = "timestamp";
         colRef = docRef.collection("comments");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(Constants.PAGINATION).get()
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
                 .addOnSuccessListener(queryCommentShot -> {
                     // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
                     // is set to true, which disables the recyclerview scroll listener to call setNextQuery().

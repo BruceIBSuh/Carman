@@ -70,6 +70,7 @@ public class UploadBitmapRunnable implements Runnable {
 
         final Uri uri = callback.getAttachedImageUri();
         final int position = callback.getImagePosition();
+        log.i("image position in UploadBitmapTask: %s", position);
         int orientation;
 
         //File imgFile = new File(Objects.requireNonNull(uri).getPath());

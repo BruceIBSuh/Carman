@@ -1,5 +1,7 @@
 package com.silverback.carman.adapters;
 
+import static com.silverback.carman.BoardActivity.AUTOCLUB;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -40,7 +42,7 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        if(position == Constants.BOARD_AUTOCLUB)  isAutoClub = true;
+        if(position == AUTOCLUB)  isAutoClub = true;
         return BoardPagerFragment.newInstance(position, cbValues);
     }
 

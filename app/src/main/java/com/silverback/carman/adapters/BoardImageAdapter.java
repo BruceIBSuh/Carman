@@ -39,12 +39,6 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Vi
         void removeImage(int position);
         //void attachImage(Bitmap bmp, int pos);
     }
-    // Constructor
-    public BoardImageAdapter(Context context, List<Uri> uriList, OnBoardAttachImageListener listener){
-        this.context = context;
-        uriImageList = uriList;
-        mListener = listener;
-    }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         private final Button btnDelImage;
@@ -64,6 +58,12 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Vi
         public Button getDelButton() {
             return btnDelImage;
         }
+    }
+    // Constructor
+    public BoardImageAdapter(Context context, List<Uri> uriList, OnBoardAttachImageListener listener){
+        this.context = context;
+        uriImageList = uriList;
+        mListener = listener;
     }
 
     @NonNull

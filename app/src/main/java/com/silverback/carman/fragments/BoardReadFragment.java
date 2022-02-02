@@ -16,9 +16,12 @@
 package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
+import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -64,7 +67,6 @@ import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -112,9 +114,11 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private DialogInterface.OnDismissListener mDismissListener;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
+    //private OnDialogDismissListener dialogDismissListener;
     private ListenerRegistration regListener;
     //private QueryCommentPagingUtil queryCommentPagingUtil;
     private QueryPostPaginationUtil queryPaginationUtil;
@@ -159,6 +163,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
      */
 
+
     // Constructor default.
     public BoardReadFragment() {
         // Required empty public constructor
@@ -171,7 +176,6 @@ public class BoardReadFragment extends DialogFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.context = getContext();
-        setHasOptionsMenu(true);
 
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
@@ -187,14 +191,13 @@ public class BoardReadFragment extends DialogFragment implements
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         if(getArguments() != null) {
-            tabPage = getArguments().getInt("tabPage");//for displaying the title of viewpager page.
+            tabPage = getArguments().getInt("tabPage");
             position = getArguments().getInt("position");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
             uriStringList = getArguments().getStringArrayList("urlImgList");
-            log.i("Img uri: %s", uriStringList.toString());
             userId = getArguments().getString("userId");
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
@@ -241,6 +244,12 @@ public class BoardReadFragment extends DialogFragment implements
         binding.toolbarBoardRead.setNavigationOnClickListener(view -> dismiss());
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         autoTitle = ((BoardActivity)requireActivity()).getAutoClubTitle();
+
+        //setHasOptionsMenu(true);
+        // If the user is the owner of a post, display the edit menu in the toolbar, which should
+        // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
+        // in DialogFragment
+        createEditOptionsMenu();
 
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
@@ -316,14 +325,8 @@ public class BoardReadFragment extends DialogFragment implements
                 binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
             }
         });
-
-        // If the user is the owner of a post, display the edit menu in the toolbar, which should
-        // use MenuInflater and create menu dynimically. onCreateOptionsMenu does not work.
-        inflateEditOptionMenu();
-
         // Rearrange the text by paragraphs
         readContentView(postContent);
-
         // Query comments
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
@@ -340,6 +343,7 @@ public class BoardReadFragment extends DialogFragment implements
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
     }
+
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -360,25 +364,20 @@ public class BoardReadFragment extends DialogFragment implements
         sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), result -> {
             // Confirmed in the didalog.
             if(result) {
-                // If the post contains any image, delete the image(s) from Storage first
-                if(uriStringList.size() > 0){
-                    //for(int i = 0; i < urlImgList.size(); i++) {
-                    for (String url : uriStringList) {
-                        firebaseStorage.getReferenceFromUrl(url).delete()
-                                .addOnSuccessListener(aVoid -> log.i("delete image from Storage"))
-                                .addOnFailureListener(Exception::printStackTrace);
-                    }
-                }
-
-                // Delete the post then notify BoardPagerFragment of successfully deleting it for
-                // updating the list.
                 postRef.delete().addOnSuccessListener(aVoid -> {
-                    //sharedModel.getRemovedPosting().setValue(documentId);
-                    ((BoardActivity)requireActivity()).addViewPager(2);
+                    if(uriStringList != null && uriStringList.size() > 0){
+                        for (String url : uriStringList)
+                            firebaseStorage.getReferenceFromUrl(url).delete();
+                    }
+                    log.i("another viewmodel invoked: %s", position);
+                    //sharedModel.getRemovedPosting().setValue(postRef.getId());
+                    // notifyItemRemoved required!!
+                    //sharedModel.getRemovedPosting().setValue(position);
+                    //((BoardActivity)requireActivity()).addViewPager();
                     dismiss();
-                    // Method reference in Lambda which uses class name and method name w/o parenthesis
                 }).addOnFailureListener(Throwable::printStackTrace);
-            }
+
+            } else dismiss();
         });
     }
 
@@ -386,6 +385,12 @@ public class BoardReadFragment extends DialogFragment implements
     public void onPause() {
         super.onPause();
         regListener.remove();
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        log.i("onDismiss");
     }
 
     @Override
@@ -413,6 +418,7 @@ public class BoardReadFragment extends DialogFragment implements
                 binding.etComment.requestFocus();
                 isCommentVisible = !isCommentVisible;
             }
+
         } else if(v.getId() == R.id.imgbtn_send_comment) {
             if(TextUtils.isEmpty(binding.etComment.getText())) {
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
@@ -434,7 +440,7 @@ public class BoardReadFragment extends DialogFragment implements
         }
         // In case the first query retrieves shots less than the pagination number, no more loading
         // is made.
-        isLoading = postShots.size() < Constants.PAGINATION;
+        isLoading = postShots.size() < PAGINATION;
     }
 
     @Override
@@ -444,7 +450,7 @@ public class BoardReadFragment extends DialogFragment implements
             commentAdapter.notifyDataSetChanged();
         }
 
-        isLoading = nextShots.size() < Constants.PAGINATION;
+        isLoading = nextShots.size() < PAGINATION;
     }
 
     @Override
@@ -494,7 +500,7 @@ public class BoardReadFragment extends DialogFragment implements
                         //pbPaging.setVisibility(View.VISIBLE);
                         queryCommentPagingUtil.setNextQuery();
 
-                        //if(currentPage != Constants.BOARD_AUTOCLUB) queryPostSnapshot(currentPage);
+                        //if(currentPage != AUTOCLUB) queryPostSnapshot(currentPage);
                         //else if(!isLastPage) clubRepo.setNextQuery();
                     }
                 }
@@ -559,7 +565,8 @@ public class BoardReadFragment extends DialogFragment implements
 
                     // Create the viewmodel livedata as SparseArray<Long>
                     SparseLongArray sparseArray = new SparseLongArray();
-                    sparseArray.put(position, document.getLong("cnt_comment") + 1);
+                    Long cntComment = (Long)document.get("cnt_comment");
+                    if(cntComment != null) sparseArray.put(position, cntComment + 1);
                     sharedModel.getNewComment().setValue(sparseArray);
 
                 }).addOnFailureListener(e -> {
@@ -568,7 +575,7 @@ public class BoardReadFragment extends DialogFragment implements
                 });
 
                 // Hide the soft input method.
-                ((InputMethodManager)(getActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
                         .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
                 // Make the comment view invisible and reset the flag.
@@ -737,7 +744,7 @@ public class BoardReadFragment extends DialogFragment implements
 
             case STATE_EXPANDED:
                 binding.toolbarBoardRead.setNavigationIcon(R.drawable.ic_action_navigation);
-                if(tabPage == Constants.BOARD_AUTOCLUB) binding.toolbarBoardRead.setTitle(autoTitle);
+                if(tabPage == AUTOCLUB) binding.toolbarBoardRead.setTitle(autoTitle);
                 else binding.toolbarBoardRead.setTitle(tabTitle);
                 binding.toolbarBoardRead.setSubtitle("");
                 binding.toolbarBoardRead.setLogo(null);
@@ -789,7 +796,7 @@ public class BoardReadFragment extends DialogFragment implements
     // The userId means the id of the post item owner whereas the viewId means that of who reads
     // item.  The edit buttons turn visible only when both ids are equal, which means the reader
     // is the post owner.
-    private void inflateEditOptionMenu() {
+    private void createEditOptionsMenu() {
         try (FileInputStream fis = requireActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
@@ -800,13 +807,13 @@ public class BoardReadFragment extends DialogFragment implements
                     if(item.getItemId() == R.id.action_board_edit) {
                         //mListener.onEditClicked(getArguments());
                         ((BoardActivity)requireActivity()).addEditFragment(getArguments());
-                        dismiss();
                         return true;
                     } else if(item.getItemId() == R.id.action_board_delete) {
                         String title = getString(R.string.board_alert_delete);
                         String msg = getString(R.string.board_alert_msg);
                         AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
                                 .show(requireActivity().getSupportFragmentManager(), null);
+
                         return true;
                     }
                     return false;
@@ -924,6 +931,7 @@ public class BoardReadFragment extends DialogFragment implements
         public long getCompathyCount() {
             return cntCompathy;
         }
-
     }
+
+
 }

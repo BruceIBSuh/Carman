@@ -19,14 +19,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardRecyclerviewPostBinding;
-import com.silverback.carman.fragments.BoardPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -41,19 +39,17 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Constants
     private final int CONTENT_VIEW_TYPE = 0;
     private final int AD_VIEW_TYPE = 1;
-    private final int AD_POSITION = 20;
 
     // Objects
-    private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
+    //private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
 
     private Context context;
     private final OnRecyclerItemClickListener mListener;
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
-    //private final List<DocumentSnapshot> snapshotList;
+    private final List<DocumentSnapshot> snapshotList;
     private int category;
-    private int index = 0;
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
@@ -87,25 +83,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
-        AdViewHolder(View view) {
+        public AdViewHolder(View view) {
             super(view);
         }
     }
 
-
-
     // Constructor
-    //public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
-    public BoardPostingAdapter(
-            List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
-
+    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
+    //public BoardPostingAdapter(List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
         super();
         mListener = listener;
-        //snapshotList = snapshots;
-        this.multiTypeItemList = multiTypeItemList;
+        snapshotList = snapshots;
+        //this.multiTypeItemList = multiTypeItemList;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
         setHasStableIds(true);
-
     }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
@@ -117,7 +108,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         imgUtil = new ApplyImageResourceUtil(context);
         switch(category) {
             case CONTENT_VIEW_TYPE:
-                postBinding = BoardRecyclerviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
+                postBinding = BoardRecyclerviewPostBinding.inflate(
+                        LayoutInflater.from(context), viewGroup, false);
                 return new PostViewHolder(postBinding);
 
             case AD_VIEW_TYPE:
@@ -125,6 +117,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 CardView bannerView = (CardView)LayoutInflater.from(context)
                         .inflate(R.layout.cardview_board_banner, viewGroup, false);
                 return new AdViewHolder(bannerView);
+
         }
 
     }
@@ -135,12 +128,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 PostViewHolder postHolder = (PostViewHolder)holder;
-                DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
+                DocumentSnapshot snapshot = snapshotList.get(position);
+                //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
-                int index = multiTypeItemList.get(position).getItemIndex();
+                //int index = multiTypeItemList.get(position).getItemIndex();
                 postHolder.tvTitle.setText(snapshot.getString("post_title"));
-                postHolder.tvNumber.setText(String.valueOf(index + 1));
+                //postHolder.tvNumber.setText(String.valueOf(index + 1));
+                postHolder.tvNumber.setText(String.valueOf(position + 1));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
@@ -223,14 +218,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         }
         */
-        category = multiTypeItemList.get(position).getViewType();
+        //category = multiTypeItemList.get(position).getViewType();
         return position;
     }
 
     @Override
     public int getItemCount() {
-        //return snapshotList.size();
-        return multiTypeItemList.size();
+        return snapshotList.size();
+        //return multiTypeItemList.size();
     }
 
     void bindUserImage(Uri uri) {

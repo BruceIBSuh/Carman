@@ -3,9 +3,8 @@ package com.silverback.carman.adapters;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
@@ -14,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
+import com.silverback.carman.databinding.CardviewBoardCommentBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -24,67 +24,39 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapter.ViewHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
-
-    // Objects
-    private ApplyImageResourceUtil imgUtil;
     private final List<DocumentSnapshot> snapshotList;
-    private final FirebaseFirestore firestore;
     private final SimpleDateFormat sdf;
 
     // Constructor
     public BoardCommentAdapter(List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
-        firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
+
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         CardView cardview = (CardView) LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_board_comment, parent, false);
-
-        imgUtil = new ApplyImageResourceUtil(parent.getContext());
-        return new CommentViewHolder(cardview);
+        ApplyImageResourceUtil imgUtil = new ApplyImageResourceUtil(parent.getContext());
+        return new ViewHolder(cardview, imgUtil);
     }
 
-
-    @SuppressWarnings("ConstantConditions")
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DocumentSnapshot document = snapshotList.get(position);
-        //holder.tvCommentUser.setText(document.getString("user"));
-        if(document.getDate("timestamp") != null) {
-            Date timestamp = document.getDate("timestamp");
-            ((CommentViewHolder)holder).tvTimestamp.setText(sdf.format(timestamp));
-        }
+        holder.bindComment(document, sdf);
 
-        ((CommentViewHolder)holder).tvCommentContent.setText(document.getString("comment"));
-
-        // Retrieve the user name from the "users" collection.
         String userId = document.getString("userId");
-        //if(userId != null && !userId.isEmpty()) {
-        if(!TextUtils.isEmpty(userId)) {
-            firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
-                    DocumentSnapshot doc = task.getResult();
-                    ((CommentViewHolder)holder).tvCommentUser.setText(doc.getString("user_name"));
-                    // Check if the user_pic field exists. If so, attach the user image. Otherwise,
-                    // attach the default image.
-                    if(!TextUtils.isEmpty(doc.getString("user_pic")))
-                        ((CommentViewHolder)holder).bindUserImage(Uri.parse(doc.getString("user_pic")));
-                    else ((CommentViewHolder)holder).bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_gray"));
-                }
-            });
-        }
+        holder.bindUserProfile(userId);
     }
 
 
     @Override
-    public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
@@ -99,24 +71,47 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         return snapshotList.size();
     }
 
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        private final CardviewBoardCommentBinding binding;
+        private final FirebaseFirestore firestore;
+        private final ApplyImageResourceUtil imgUtil;
 
-    class CommentViewHolder extends RecyclerView.ViewHolder {
-        ImageView imgUserPic;
-        TextView tvCommentUser, tvTimestamp;
-        TextView tvCommentContent;
-
-        CommentViewHolder(CardView cardview) {
-            super(cardview);
-            imgUserPic = cardview.findViewById(R.id.img_comment_user);
-            tvCommentUser = cardview.findViewById(R.id.tv_comment_user);
-            tvTimestamp = cardview.findViewById(R.id.tv_comment_timestamp);
-            tvCommentContent = cardview.findViewById(R.id.tv_comment_content);
+        public ViewHolder(@NonNull View itemView, ApplyImageResourceUtil imgUtil) {
+            super(itemView);
+            binding = CardviewBoardCommentBinding.bind(itemView);
+            firestore = FirebaseFirestore.getInstance();
+            this.imgUtil = imgUtil;
         }
 
-        void bindUserImage(Uri uri) {
-            int x = imgUserPic.getWidth();
-            int y = imgUserPic.getHeight();
-            imgUtil.applyGlideToImageView(uri, imgUserPic, x, y, true);
+        public void bindComment(DocumentSnapshot document, SimpleDateFormat sdf) {
+            if(document.getDate("timestamp") != null) {
+                Date date = document.getDate("timestamp");
+                if(date != null) binding.tvCommentTimestamp.setText(sdf.format(date));
+            }
+            binding.tvCommentContent.setText(document.getString("comment"));
+        }
+
+        public void bindUserProfile(String userId) {
+            if(!TextUtils.isEmpty(userId)) {
+                firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        DocumentSnapshot doc = task.getResult();
+                        binding.tvCommentUser.setText(doc.getString("user_name"));
+
+                        if(!TextUtils.isEmpty(doc.getString("user_pic"))) {
+                            setUserImage(Uri.parse(doc.getString("user_pic")));
+                        } else {
+                            setUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_gray"));
+                        }
+                    }
+                });
+            }
+        }
+
+        private void setUserImage(Uri uri) {
+            int x = binding.imgCommentUser.getWidth();
+            int y = binding.imgCommentUser.getHeight();
+            imgUtil.applyGlideToImageView(uri, binding.imgCommentUser, x, y, true);
         }
     }
 }

@@ -20,7 +20,6 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -38,7 +37,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -51,7 +49,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
-import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
@@ -62,7 +59,7 @@ import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
-import com.silverback.carman.fragments.BoardReadFragment;
+import com.silverback.carman.fragments.BoardWriteDlgFragment;
 import com.silverback.carman.fragments.BoardWriteFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -108,23 +105,30 @@ import java.util.Objects;
 public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
+
         AppBarLayout.OnOffsetChangedListener {
         //BoardReadFragment.OnEditModeListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
+    public static final int PAGINATION = 15;
+    public static final int RECENT = 0;
+    public static final int POPULAR = 1;
+    public static final int AUTOCLUB = 2;
+    public static final int NOTIFICATION = 3;
+
+
     // Objects
     private ActivityBoardBinding binding;
     private OnAutoFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    private Menu menu;
     private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
-
     // UIs
     private TextView tvAutoFilterLabel;
     private CheckBox cbGeneral;
+    private MenuItem menuItem;
 
     // Fields
     private List<CheckBox> chkboxList;
@@ -138,26 +142,6 @@ public class BoardActivity extends BaseActivity implements
     private boolean isLocked;
     private int category;
 
-    // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
-    // in both BoardPostingAdapter and BoardPagerFragment.
-    public static class PostImages {
-        @PropertyName("post_images")
-        private ArrayList<String> postImageList;
-        public PostImages() {
-            // Mst have a public no-argument constructor
-        }
-        public PostImages(ArrayList<String> postImageList) {
-            this.postImageList = postImageList;
-        }
-        @PropertyName("post_images")
-        public ArrayList<String> getPostImages() {
-            return postImageList;
-        }
-        @PropertyName("post_images")
-        public void setPostImages(ArrayList<String> postImageList) {
-            this.postImageList = postImageList;
-        }
-    }
     // Interface to notify BoardPagerFragment that a checkbox value changes, which simultaneously
     // queries posts with new conditions to make the recyclerview updated.
     public interface OnAutoFilterCheckBoxListener {
@@ -185,7 +169,8 @@ public class BoardActivity extends BaseActivity implements
         setSupportActionBar(binding.boardToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        category = Constants.BOARD_RECENT;
+        //category = Constants.BOARD_RECENT;
+        category = RECENT;
 
         // chkboxList is created by whether the autodata is set. cbAutoFilter is created
         // by wheteher each checkbox item is checked.
@@ -218,12 +203,16 @@ public class BoardActivity extends BaseActivity implements
 
         // onAttachFragment(childFragment) is deprecated in API 28. Instead, use this defined in
         // JetPack androidx.
+        /*
         getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
             if(fragment instanceof BoardReadFragment) {
-                BoardReadFragment readFragment = (BoardReadFragment)fragment;
+                log.i("BoardReadFragment added");
+                //BoardReadFragment readFragment = (BoardReadFragment)fragment;
                 //readFragment.setEditModeListener(this);
             }
         });
+
+         */
 
         // Add the listeners to the viewpager and AppbarLayout
         //binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
@@ -256,15 +245,15 @@ public class BoardActivity extends BaseActivity implements
      * What's difference b/w return true and super.onCreateOptionsMenu(menu) is, if true, no menu
      * items are able to be set in the child.
      */
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_board, menu);
-        this.menu = menu;
-        this.menu.getItem(0).setVisible(false);
-        this.menu.getItem(1).setVisible(false);
-
-        return super.onCreateOptionsMenu(menu);
+        //menuItem = menu.findItem(R.id.action_automaker_emblem);
+        menuItem = menu.getItem(0);
+        return true;
     }
+
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
@@ -273,7 +262,13 @@ public class BoardActivity extends BaseActivity implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == android.R.id.home) {
+        if (item.getItemId() == android.R.id.home) {
+            finish();
+            return true;
+        } else return super.onOptionsItemSelected(item);
+    }
+        /*
+        {
             // Check which child view the framelayout contains; if it contains the viewpager, just
             // finish the activity; otherwise, add the viewpager to the framelayout.
             if(binding.frameContents.getChildAt(0) instanceof ViewPager2) {
@@ -304,42 +299,44 @@ public class BoardActivity extends BaseActivity implements
                     animTabHeight(true);
 
                     //menu.getItem(1).setVisible(false);
-                    addViewPager(0);
+                    addViewPager();
                 }).show();
             }
 
             return true;
 
         } else if(item.getItemId() == R.id.action_upload_post) {
-            /*
+
             boolean isWriteMode = (writePostFragment != null) &&
                     binding.frameContents.getChildAt(0) == writePostFragment.getView();
             if(isWriteMode) writePostFragment.prepareAttachedImages();
             else editPostFragment.prepareUpdate();
 
-             */
+
             return false;
 
         } else return super.onOptionsItemSelected(item); // means false
-    }
 
+    }
+    */
     // Implement the abstract class of ViewPager2.OnPageChangeCallback, which has replaced the previous
     // interface type.
     private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
-            //tabPage = position;
-            //menu.getItem(0).setVisible(false);
+            //menuItem.setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
+            category = position;
+
             animAutoFilter(false);
 
             switch(position) {
-                case Constants.BOARD_RECENT | Constants.BOARD_POPULAR:
+                case RECENT | POPULAR:
                     Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
                     break;
 
-                case Constants.BOARD_AUTOCLUB:
+                case AUTOCLUB:
                     //isAutoFilter = true;
                     try { createAutoFilterCheckBox(BoardActivity.this, jsonAutoFilter, binding.autofilter);}
                     catch(NullPointerException e) {setNoAutoFilterText();}
@@ -348,7 +345,7 @@ public class BoardActivity extends BaseActivity implements
                     if(cbAutoFilter.size() > 0) {
                         clubTitle = createAutoClubTitle();
                         Objects.requireNonNull(getSupportActionBar()).setTitle(clubTitle);
-                        menu.getItem(0).setVisible(true);
+                        menuItem.setVisible(true);
                     } else {
                         final String autoclub = getString(R.string.board_tab_title_autoclub);
                         Objects.requireNonNull(getSupportActionBar()).setTitle(autoclub);
@@ -356,21 +353,20 @@ public class BoardActivity extends BaseActivity implements
                     animAutoFilter(true);
                     break;
 
-                case Constants.BOARD_NOTIFICATION:
+                case NOTIFICATION:
+                    binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                     final String noti = getString(R.string.board_tab_title_notification);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(noti);
-                    binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                     break;
             }
 
-            category = position;
+
         }
     };
 
     // Implement AppBarLayout.OnOffsetChangedListener
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
-
 
     // Floating Action Button click event handler
     // When clicking the fab to write a post, make BoardEditFragment null if it remains in the
@@ -381,7 +377,7 @@ public class BoardActivity extends BaseActivity implements
     // This event handler applies only to the floating action button.
     @Override
     public void onClick(View view) {
-        if(view.getId() != R.id.fab_board_write) return;
+        //if(view.getId() != R.id.fab_board_write) return;
         String userName = mSettings.getString(Constants.USER_NAME, null);
 
         if(TextUtils.isEmpty(userName)) {
@@ -399,15 +395,27 @@ public class BoardActivity extends BaseActivity implements
         // down to 0 each time the button clicks.
         tabHeight = binding.tabBoard.getMeasuredHeight();
 
-        if(!TextUtils.isEmpty(userName)) addWriteFragment(userName);
+        // !!!!TEMP CODING
+        //if(!TextUtils.isEmpty(userName)) addWriteFragment(userName);
+        if(!TextUtils.isEmpty(userName)) {
+            //new BoardWriteDlgFragment().show(getSupportFragmentManager(), "writeFagment");
+            BoardWriteDlgFragment fragment = new BoardWriteDlgFragment();
+
+            Bundle args = new Bundle();
+            args.putString("userId", userId); // userId defined in BaseActivity
+            args.putString("userName", userName);
+            args.putInt("page", category);
+            fragment.setArguments(args);
+
+            getSupportFragmentManager().beginTransaction()
+                    .add(android.R.id.content, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        }
 
         // Visibility control on menu and fab.
-        binding.fabBoardWrite.setVisibility(View.INVISIBLE);
-        menu.getItem(1).setVisible(true);
+        //menu.getItem(1).setVisible(true);
     }
-
-
-
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
     // CheckBox values will be used for conditions for querying posts. At the same time, the automodel
@@ -433,17 +441,54 @@ public class BoardActivity extends BaseActivity implements
         // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
         // fragment but also the tab titles. Thus, recreate the title here.
         addTabIconAndTitle(this, binding.tabBoard);
-        log.i("cbAutofilter checked: %s, %s", chkbox, isChecked);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
 
+    /*
+     * Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
+     * the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
+     * remove the fragment out of the container, then regain the viewpager with the toolbar menu and
+     * title reset. If the current page stays in the auto club, additional measures should be taken.
+     * Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
+     */
+    public void addViewPager() {
+        // If any view exists in the framelayout, remove all views out of the layout and add the
+        // viewpager
+
+        if(binding.frameContents.getChildCount() > 0) {
+            //binding.frameContents.removeView(binding.frameContents.getChildAt(0));
+            binding.frameContents.removeAllViews();
+        }
+
+        // If the tabLayout height is 0,  put the height back to the default size.
+        //if(!isTabHeight) animTabHeight(true);
+        animTabHeight(true);
+        binding.frameContents.addView(binding.boardPager);
+        binding.fabBoardWrite.setVisibility(View.VISIBLE);
+        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
+        // Animations should differ according to whether the current page is on the auto club.
+        if(category == AUTOCLUB){
+            // BUG: java.lang.NullPointerException: Attempt to invoke virtual method
+            // 'void android.widget.TextView.setVisibility(int)' on a null object reference
+            Objects.requireNonNull(tvAutoFilterLabel).setVisibility(View.VISIBLE);
+            cbGeneral.setVisibility(View.GONE);
+            getSupportActionBar().setTitle(createAutoClubTitle());
+            menuItem.setVisible(true);
+            //if(!menu.getItem(0).isVisible()) menu.getItem(0).setVisible(true);
+            //if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
+        }
+
+        log.i("board caregerory: %s", category);
+        //pagerAdapter.notifyItemChanged(category);
+        addTabIconAndTitle(this, binding.tabBoard);
+    }
 
     // When clicking the fab, replace the BoardPagerFragment with BoardWriteFragment to write a post.
     private void addWriteFragment(String userName) {
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
-        getViewModelStore().clear();
-        if(editPostFragment != null) editPostFragment = null;
+        //getViewModelStore().clear();
+        //if(editPostFragment != null) editPostFragment = null;
         if(binding.frameContents.getChildCount() > 0)
             binding.frameContents.removeView(binding.boardPager);
 
@@ -454,7 +499,7 @@ public class BoardActivity extends BaseActivity implements
         args.putInt("tabPage", category);
 
         // Handle the toolbar menu as the write board comes in.
-        if(category != Constants.BOARD_AUTOCLUB) {
+        if(category != AUTOCLUB){
             Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_title_write));
             animTabHeight(false); // false: tab height = 0;
 
@@ -474,13 +519,14 @@ public class BoardActivity extends BaseActivity implements
             cbGeneral.setVisibility(View.VISIBLE);
             //if(!isAutoFilter) animAutoFilter(isAutoFilter);
             animAutoFilter(true);
-            menu.getItem(0).setVisible(false);
+            menuItem.setVisible(false);
         }
 
         writePostFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
-                //.addToBackStack(null)
-                .replace(binding.frameContents.getId(), writePostFragment)
+                .addToBackStack(null)
+                .add(binding.frameContents.getId(), writePostFragment)
+                //.add(android.R.id.content, writePostFragment)
                 .commit();
     }
 
@@ -499,8 +545,8 @@ public class BoardActivity extends BaseActivity implements
                 .commit();
 
         // Hide the emblem and set the club title if the current page is autoclub
-        String title = (category == Constants.BOARD_AUTOCLUB) ? String.valueOf(clubTitle)
-                : getString(R.string.board_title_edit);
+        //String title = (category == Constants.BOARD_AUTOCLUB) ?
+        String title = (category == AUTOCLUB)?String.valueOf(clubTitle):getString(R.string.board_title_edit);
         Objects.requireNonNull(getSupportActionBar()).setTitle(title);
 
         // Save the height of BoardTabLayout before its size becoms 0 to enable animTabHeight to be
@@ -509,8 +555,8 @@ public class BoardActivity extends BaseActivity implements
         animTabHeight(false);
 
         //if(menu.getItem(0).isVisible()) menu.getItem(0).setVisible(false);
-        menu.getItem(0).setVisible(false);
-        menu.getItem(1).setVisible(true);
+        menuItem.setVisible(false);
+        //menu.getItem(1).setVisible(true);
         binding.fabBoardWrite.setVisibility(View.GONE);
     }
 
@@ -784,47 +830,7 @@ public class BoardActivity extends BaseActivity implements
 
     }
 
-    /*
-     * Upon completion of uploading a post in BoardWriteFragment or BoardEditFragment when selecting
-     * the upload menu, or upon cancellation of writing or editing a post when selecting the up Button,
-     * remove the fragment out of the container, then regain the viewpager with the toolbar menu and
-     * title reset. If the current page stays in the auto club, additional measures should be taken.
-     * Aysnc issue may occur with FireStore. Thus, this method should be carefully invoked.
-     */
-    public void addViewPager(int action) {
-        // If any view exists in the framelayout, remove all views out of the layout and add the
-        // viewpager
-        if(binding.frameContents.getChildCount() > 0) {
-            //binding.frameContents.removeView(binding.frameContents.getChildAt(0));
-            binding.frameContents.removeAllViews();
-        }
-        // If the tabLayout height is 0,  put the height back to the default size.
-        //if(!isTabHeight) animTabHeight(true);
-        animTabHeight(true);
 
-        binding.frameContents.addView(binding.boardPager);
-        binding.fabBoardWrite.setVisibility(View.VISIBLE);
-        Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
-
-        // Animations should differ according to whether the current page is on the auto club.
-        if(category == Constants.BOARD_AUTOCLUB) {
-            // BUG: java.lang.NullPointerException: Attempt to invoke virtual method
-            // 'void android.widget.TextView.setVisibility(int)' on a null object reference
-            Objects.requireNonNull(tvAutoFilterLabel).setVisibility(View.VISIBLE);
-            cbGeneral.setVisibility(View.GONE);
-
-            getSupportActionBar().setTitle(createAutoClubTitle());
-            if(!menu.getItem(0).isVisible()) menu.getItem(0).setVisible(true);
-            if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
-        }
-
-        log.i("board caregerory: %s", category);
-        //pagerAdapter.notifyItemChanged(category);
-        if(action == 1) pagerAdapter.notifyItemChanged(category);
-        else if(action == 2) pagerAdapter.notifyItemRemoved(category);
-
-        addTabIconAndTitle(this, binding.tabBoard);
-    }
 
     // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media
     // (camera or gallery) to select in BoardChooserDlgFragment. According to the selected media,
@@ -835,7 +841,6 @@ public class BoardActivity extends BaseActivity implements
             case Constants.GALLERY:
                 mGetContent.launch("image/*");
                 break;
-
             case Constants.CAMERA: // Camera
                 checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
                     File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
@@ -844,10 +849,8 @@ public class BoardActivity extends BaseActivity implements
                     mTakePicture.launch(photoUri);
                 });
                 break;
-
             default: break;
         }
-
     }
 
     // ActivityResult callback invoked by activityResultCallback to get the result from SettingActivity
@@ -874,14 +877,14 @@ public class BoardActivity extends BaseActivity implements
 
                 // Update the pagerAdapter
                 pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyItemChanged(Constants.BOARD_AUTOCLUB);
-                binding.boardPager.setCurrentItem(Constants.BOARD_AUTOCLUB, true);
+                pagerAdapter.notifyItemChanged(AUTOCLUB);
+                binding.boardPager.setCurrentItem(AUTOCLUB, true);
 
                 clubTitle = createAutoClubTitle();
                 if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
                 addTabIconAndTitle(this, binding.tabBoard);
                 //menu.getItem(0).setVisible(true);
-                menu.getItem(0).getActionView().setVisibility(View.VISIBLE);
+                menuItem.getActionView().setVisibility(View.VISIBLE);
                 break;
 
             default: break;
@@ -928,5 +931,24 @@ public class BoardActivity extends BaseActivity implements
         return binding.progbarBoardLoading;
     }
 
-
+    // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
+    // in both BoardPostingAdapter and BoardPagerFragment.
+    public static class PostImages {
+        @PropertyName("post_images")
+        private ArrayList<String> postImageList;
+        public PostImages() {
+            // Mst have a public no-argument constructor
+        }
+        public PostImages(ArrayList<String> postImageList) {
+            this.postImageList = postImageList;
+        }
+        @PropertyName("post_images")
+        public ArrayList<String> getPostImages() {
+            return postImageList;
+        }
+        @PropertyName("post_images")
+        public void setPostImages(ArrayList<String> postImageList) {
+            this.postImageList = postImageList;
+        }
+    }
 }

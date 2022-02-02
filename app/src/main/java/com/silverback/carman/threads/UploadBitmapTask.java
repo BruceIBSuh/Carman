@@ -17,7 +17,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     // Objects
     private WeakReference<ImageViewModel> weakReference;
     private final Runnable mBitmapUploadRunnable;
-    private SparseArray<Uri> sparseImageArray;
+    private final SparseArray<Uri> sparseImageArray;
     private Uri imageUri;
     private int position;
 
@@ -31,6 +31,7 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         imageUri = uri;
         this.position = position;
         weakReference = new WeakReference<>(model);
+        //this.model = model;
     }
 
     Runnable getBitmapUploadRunnable() {
@@ -52,16 +53,13 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         setCurrentThread(thread);
     }
 
+
     @Override
-    public void setDownloadBitmapUri(int key, Uri uri) {
-        // Create SparseArray with the uri downloaded from Storage as the value and the position
-        // that the attached image is located as the key for purpose of put images in sequentially
-        // right position in the content when reading the posting content
+    public void setDownloadBitmapUri(final int key, final Uri uri) {
         sparseImageArray.put(key, uri);
         if(weakReference != null) {
             weakReference.get().getDownloadBitmapUri().postValue(sparseImageArray);
         }
-
     }
 
     @Override
@@ -81,17 +79,11 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
     }
 
     public void recycle(){
+        sparseImageArray.clear();
         if(weakReference != null) {
             weakReference.clear();
             weakReference = null;
         }
-        /*
-        if(sparseImageArray != null) {
-            sparseImageArray.clear();
-            sparseImageArray = null;
-        }
-
-         */
 
     }
 }

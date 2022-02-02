@@ -26,6 +26,9 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
+    private final int RECENT = 0;
+    private final int NOTIFICATION = 3;
+
     // Objects
     private final MainContentAdapterListener mListener;
     private final FirebaseFirestore firestore;
@@ -66,7 +69,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
                 notiBinding.imgbtnNotification.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(Constants.BOARD_NOTIFICATION)
+                    mListener.onClickPostingIcon(NOTIFICATION)
                 );
                 return new ContentViewHolder(notiBinding.getRoot());
 
@@ -77,7 +80,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 carlifeBinding.imgbtnCarlife.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(Constants.BOARD_RECENT)
+                    mListener.onClickPostingIcon(RECENT)
                 );
                 return new ContentViewHolder(carlifeBinding.getRoot());
 

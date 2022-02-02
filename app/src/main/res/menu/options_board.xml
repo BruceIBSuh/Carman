@@ -13,11 +13,9 @@
         android:visible="false"
         app:actionLayout="@layout/view_action_emblem"
         app:showAsAction="ifRoom|withText" />
-
     <item
         android:id="@+id/action_upload_post"
         android:icon="@drawable/ic_board_upload"
         android:visible="false"
         app:showAsAction="ifRoom|withText" />
-
 </menu>

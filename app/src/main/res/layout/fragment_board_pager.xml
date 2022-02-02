@@ -7,9 +7,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.BoardPagerFragment">
-
-    <!--<androidx.recyclerview.widget.RecyclerView-->
+    <!--
     <com.silverback.carman.views.PostingRecyclerView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    -->
+    <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_board_postings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

@@ -1,5 +1,7 @@
 package com.silverback.carman.board;
 
+import static com.silverback.carman.BoardActivity.PAGINATION;
+
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 
@@ -93,7 +95,7 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
         // Listeners are notified of the last visible post and the last post.
         final int shotSize = querySnapshot.size();
-        if(shotSize < Constants.PAGINATION) {
+        if(shotSize < PAGINATION) {
             lastPostCallback.setLastPage(true);
             listenerRegit.remove();
         } else {

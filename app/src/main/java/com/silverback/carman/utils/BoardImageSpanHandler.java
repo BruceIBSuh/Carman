@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
+/*
  * When SpanWatcher is attached to a Spannable, its methods will be called to notify that other
  * markup objects have been added, changed, or removed.
  *
@@ -242,6 +242,7 @@ public class BoardImageSpanHandler implements SpanWatcher {
     // from the adapter.
     public void removeImageSpan(int position) {
         log.i("adapter position: %s", position);
+        if(spanList.size() == 0) return;
         int start = editable.getSpanStart(spanList.get(position));
         int end = editable.getSpanEnd(spanList.get(position));
 

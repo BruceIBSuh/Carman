@@ -386,5 +386,7 @@
     <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>
     <string name="error_no_network_upload_fail">네트워크를 찾을 수 없습니다</string>
     <string name="error_index_retry">확인</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 
 </resources>
