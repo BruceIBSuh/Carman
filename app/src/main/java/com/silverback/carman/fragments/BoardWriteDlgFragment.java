@@ -5,10 +5,8 @@ import static com.silverback.carman.BoardActivity.AUTOCLUB;
 
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -16,15 +14,12 @@ import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
@@ -35,7 +30,6 @@ import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
-import com.silverback.carman.databinding.FragmentBoardWriteBinding;
 import com.silverback.carman.databinding.FragmentBoardWriteTempBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -103,6 +97,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         binding.toolbarBoardWrite.setTitle("POST WRITING");
         binding.toolbarBoardWrite.setNavigationOnClickListener(view -> dismiss());
         createPostWriteMenu();
+
         //RecyclerView to display attached images
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
@@ -116,8 +111,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         //Create the autofilter
         if(page == AUTOCLUB) {
-            autofilter = requireArguments().getString("autofilter");
             animAutoFilter();
+            autofilter = requireArguments().getString("autofilter");
             try {setAutoFilter(autofilter); }
             catch (JSONException e) {e.printStackTrace();}
         } else binding.scrollviewAutofilter.setVisibility(View.GONE);
