@@ -8,52 +8,47 @@
     android:background="#F5F5F5">
 
     <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appbar_board_write"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fitsSystemWindows="true"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
         <com.google.android.material.appbar.CollapsingToolbarLayout
-            android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:fitsSystemWindows="true"
-            android:gravity="start"
-            app:toolbarId="@+id/toolbar_board_write"
             app:contentScrim="?attr/colorPrimary"
+            app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed"
             app:titleEnabled="false"
-            app:layout_scrollFlags="scroll|enterAlways|exitUntilCollapsed" >
+            app:toolbarId="@+id/toolbar_board_write">
             <HorizontalScrollView
                 android:id="@+id/scrollview_autofilter"
                 android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
+                android:layout_height="30dp"
                 android:layout_marginBottom="?attr/actionBarSize"
                 android:background="@android:color/holo_blue_bright"
                 android:scrollbarSize="0dp"
-                app:layout_collapseMode="parallax">
+                app:layout_collapseMode="pin">
                 <LinearLayout
+                    android:id="@+id/layout_autofilter"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_gravity="center_vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/board_autoclub_set" />
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:orientation="horizontal">
                 </LinearLayout>
             </HorizontalScrollView>
             <androidx.appcompat.widget.Toolbar
-                android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
                 android:id="@+id/toolbar_board_write"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
                 app:contentInsetLeft="8dp"
                 app:contentInsetStart="8dp"
-                app:titleMarginStart="16dp"
-                app:titleTextColor="#FFFFFF"
+                app:layout_collapseMode="pin"
                 app:navigationIcon="?homeAsUpIndicator"
-                app:layout_collapseMode="pin" />
+                app:titleMarginStart="16dp"
+                app:titleTextColor="#FFFFFF" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
@@ -62,20 +57,19 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#FF9900"
-        app:layout_dodgeInsetEdges="top"
+        app:layout_dodgeInsetEdges="bottom"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-        <!--
         <View
-            android:id="@+id/view_header"
-            android:layout_width="match_parent"
+            android:id="@+id/view"
+            android:layout_width="0dp"
             android:layout_height="40dp"
-            android:background="@color/bgBoardWriteTitle"
-            android:padding="3dp"
-            app:layout_constraintTop_toTopOf="@id/constraintLayout"
-            app:layout_constraintEnd_toEndOf="@id/constraintLayout"
-            app:layout_constraintStart_toStartOf="@id/constraintLayout" />
+            android:background="#E0E0E0"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
-            android:id="@+id/tv_label_title"
+            android:id="@+id/textView9"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -83,127 +77,203 @@
             android:text="@string/boardwrite_label_title"
             android:textSize="@dimen/mediumText"
             android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@id/view_header"
-            app:layout_constraintStart_toStartOf="@id/view_header"
-            app:layout_constraintTop_toTopOf="@id/view_header" />
-            -->
-        <!-- set the background to null for removing the underline in the edittext-->
-        <!--
+            app:layout_constraintBottom_toBottomOf="@+id/view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/view" />
+
         <EditText
-            android:id="@+id/et_board_write_title"
+            android:id="@+id/editTextTextPersonName"
             android:layout_width="0dp"
             android:layout_height="30dp"
             android:layout_marginStart="16dp"
-            android:background="#F5F5F5"
+            android:layout_marginEnd="16dp"
+            android:background="#FFFFFF"
             android:ems="10"
             android:gravity="center_vertical"
             android:hint="@null"
             android:inputType="text"
             android:textSize="@dimen/mediumText"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
-            app:layout_constraintEnd_toStartOf="@+id/btn_attach_image"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_title"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_title"
-            tools:ignore="autofill" />
+            app:layout_constraintBottom_toBottomOf="@+id/view"
+            app:layout_constraintEnd_toStartOf="@+id/btn_image"
+            app:layout_constraintStart_toEndOf="@+id/textView9"
+            app:layout_constraintTop_toTopOf="@+id/view"
+            tools:ignore="autofill,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
 
         <Button
-            android:id="@+id/btn_attach_image"
+            android:id="@+id/btn_image"
             android:layout_width="30dp"
             android:layout_height="25dp"
             android:layout_marginEnd="8dp"
             android:background="@drawable/btn_attach_image"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
-            app:layout_constraintEnd_toEndOf="@+id/view_header"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_title" />
-            -->
-        <!--
-        <View
-            android:id="@+id/view_underline"
+            app:layout_constraintBottom_toBottomOf="@+id/view"
+            app:layout_constraintEnd_toEndOf="@+id/view"
+            app:layout_constraintTop_toTopOf="@+id/view"
+            app:srcCompat="@drawable/btn_attach_image"
+            tools:ignore="SpeakableTextPresentCheck" />
+        <EditText
+            android:id="@+id/et_post_content"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="8dp"
-            android:background="@android:color/transparent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_label_title" />
-        -->
-        <!--
-        textNoSuggestions required to prevent the spell check from popping up, which blocks
-        the value of Selection.getSelectionStart() to tell where is the imagespan
-        -->
-    <!--
-        <EditText
-            android:id="@+id/et_board_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
             android:layout_marginBottom="16dp"
             android:background="@null"
+            android:ems="10"
             android:gravity="start|top"
-            android:hint="@null"
             android:inputType="textMultiLine|textNoSuggestions"
             android:padding="8dp"
             android:scrollbars="vertical"
             android:textSize="@dimen/smallText"
-            app:layout_constraintTop_toBottomOf="@+id/view_header"
-            app:layout_constraintEnd_toEndOf="@id/constraintLayout"
-            app:layout_constraintStart_toStartOf="@id/constraintLayout"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view"
             tools:ignore="autofill" />
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_images"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            app:layout_constraintTop_toBottomOf="@id/et_board_content"
-            app:layout_constraintEnd_toEndOf="@id/constraintLayout"
-            app:layout_constraintStart_toStartOf="@id/constraintLayout" />
-            -->
-        <!--
-        <ProgressBar
-            android:id="@+id/progbar_board_write"
-            style="?android:attr/progressBarStyle"
-            android:visibility="gone"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="@+id/et_board_content"
+            android:background="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/et_board_content" />
+            app:layout_constraintStart_toStartOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <!--
+            <View
+                android:id="@+id/view_header"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@color/bgBoardWriteTitle"
+                android:padding="3dp"
+                app:layout_constraintTop_toTopOf="@id/constraintLayout"
+                app:layout_constraintEnd_toEndOf="@id/constraintLayout"
+                app:layout_constraintStart_toStartOf="@id/constraintLayout" />
+            <TextView
+                android:id="@+id/tv_label_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:labelFor="@id/et_board_edit_title"
+                android:text="@string/boardwrite_label_title"
+                android:textSize="@dimen/mediumText"
+                android:textStyle="bold"
+                app:layout_constraintBottom_toBottomOf="@id/view_header"
+                app:layout_constraintStart_toStartOf="@id/view_header"
+                app:layout_constraintTop_toTopOf="@id/view_header" />
+                -->
+    <!-- set the background to null for removing the underline in the edittext-->
+    <!--
+    <EditText
+        android:id="@+id/et_board_write_title"
+        android:layout_width="0dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="16dp"
+        android:background="#F5F5F5"
+        android:ems="10"
+        android:gravity="center_vertical"
+        android:hint="@null"
+        android:inputType="text"
+        android:textSize="@dimen/mediumText"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
+        app:layout_constraintEnd_toStartOf="@+id/btn_attach_image"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_title"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_title"
+        tools:ignore="autofill" />
+
+    <Button
+        android:id="@+id/btn_attach_image"
+        android:layout_width="30dp"
+        android:layout_height="25dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/btn_attach_image"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
+        app:layout_constraintEnd_toEndOf="@+id/view_header"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_title" />
         -->
     <!--
-        <LinearLayout
-            android:id="@+id/pb_write_container"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:alpha="0.8"
-            android:gravity="center"
-            android:orientation="vertical"
-            app:layout_constraintBottom_toBottomOf="@id/et_board_content"
+    <View
+        android:id="@+id/view_underline"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_title" />
+    -->
+    <!--
+    textNoSuggestions required to prevent the spell check from popping up, which blocks
+    the value of Selection.getSelectionStart() to tell where is the imagespan
+    -->
+    <!--
+    <EditText
+        android:id="@+id/et_board_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="16dp"
+        android:background="@null"
+        android:gravity="start|top"
+        android:hint="@null"
+        android:inputType="textMultiLine|textNoSuggestions"
+        android:padding="8dp"
+        android:scrollbars="vertical"
+        android:textSize="@dimen/smallText"
+        app:layout_constraintTop_toBottomOf="@+id/view_header"
+        app:layout_constraintEnd_toEndOf="@id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@id/constraintLayout"
+        tools:ignore="autofill" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_images"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/et_board_content"
+        app:layout_constraintEnd_toEndOf="@id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@id/constraintLayout" />
+        -->
+    <!--
+    <ProgressBar
+        android:id="@+id/progbar_board_write"
+        style="?android:attr/progressBarStyle"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="@+id/et_board_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/et_board_content" />
+    -->
+    <!--
+    <LinearLayout
+        android:id="@+id/pb_write_container"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0.8"
+        android:gravity="center"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="@id/et_board_content"
+        app:layout_constraintEnd_toEndOf="@id/constraintLayout"
+        app:layout_constraintStart_toStartOf="@id/constraintLayout"
+        app:layout_constraintTop_toTopOf="@id/et_board_content">
+        <ProgressBar
+            android:id="@+id/pb_board_write"
+            style="?android:attr/progressBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/pb_write_container"
             app:layout_constraintEnd_toEndOf="@id/constraintLayout"
             app:layout_constraintStart_toStartOf="@id/constraintLayout"
-            app:layout_constraintTop_toTopOf="@id/et_board_content">
-            <ProgressBar
-                android:id="@+id/pb_board_write"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="@+id/pb_write_container"
-                app:layout_constraintEnd_toEndOf="@id/constraintLayout"
-                app:layout_constraintStart_toStartOf="@id/constraintLayout"
-                app:layout_constraintTop_toBottomOf="@+id/pb_write_container" />
-            <TextView
-                android:id="@+id/tv_pb_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                app:layout_constraintEnd_toEndOf="@id/constraintLayout"
-                app:layout_constraintStart_toStartOf="@id/constraintLayout"
-                app:layout_constraintTop_toTopOf="@id/pb_board_write" />
-        </LinearLayout>
-        -->
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+            app:layout_constraintTop_toBottomOf="@+id/pb_write_container" />
+        <TextView
+            android:id="@+id/tv_pb_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="@id/constraintLayout"
+            app:layout_constraintStart_toStartOf="@id/constraintLayout"
+            app:layout_constraintTop_toTopOf="@id/pb_board_write" />
+    </LinearLayout>
+    -->

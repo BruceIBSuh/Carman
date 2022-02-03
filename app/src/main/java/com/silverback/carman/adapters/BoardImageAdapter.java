@@ -75,7 +75,7 @@ public class BoardImageAdapter extends RecyclerView.Adapter<BoardImageAdapter.Vi
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, final int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Uri uri = uriImageList.get(position);
         bindImageToHolder(holder, uri);
         // Invoke the callback method when clicking the image button in order to remove the clicked

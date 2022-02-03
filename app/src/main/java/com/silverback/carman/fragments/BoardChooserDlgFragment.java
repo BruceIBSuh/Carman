@@ -5,6 +5,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -33,6 +34,9 @@ public class BoardChooserDlgFragment extends DialogFragment {
     private final int GALLERY = 1;
     private final int CAMERA = 2;
 
+    private DialogBoardChooserBinding binding;
+    private FragmentSharedModel fragmentModel;
+
     //private DialogBoardChooserBinding binding;
     //private OnImageChooserListener mListener;
     //private FragmentSharedModel fragmentModel;
@@ -50,15 +54,14 @@ public class BoardChooserDlgFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        DialogBoardChooserBinding binding = DialogBoardChooserBinding.inflate(LayoutInflater.from(requireActivity()));
-        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-
+        LayoutInflater inflater = getLayoutInflater();
+        DialogBoardChooserBinding binding = DialogBoardChooserBinding.inflate(inflater);
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Select Image Media").setView(binding.getRoot());
         binding.tvGallery.setOnClickListener(view -> {

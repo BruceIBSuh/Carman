@@ -123,8 +123,9 @@ public class BoardActivity extends BaseActivity implements
     private ActivityBoardBinding binding;
     private OnAutoFilterCheckBoxListener mListener;
     private BoardPagerAdapter pagerAdapter;
-    private BoardWriteFragment writePostFragment;
+    //private BoardWriteFragment writePostFragment;
     private BoardEditFragment editPostFragment;
+    private BoardWriteDlgFragment writePostFragment;
     // UIs
     private TextView tvAutoFilterLabel;
     private CheckBox cbGeneral;
@@ -399,16 +400,17 @@ public class BoardActivity extends BaseActivity implements
         //if(!TextUtils.isEmpty(userName)) addWriteFragment(userName);
         if(!TextUtils.isEmpty(userName)) {
             //new BoardWriteDlgFragment().show(getSupportFragmentManager(), "writeFagment");
-            BoardWriteDlgFragment fragment = new BoardWriteDlgFragment();
-
+            writePostFragment = new BoardWriteDlgFragment();
+            getViewModelStore().clear();
             Bundle args = new Bundle();
             args.putString("userId", userId); // userId defined in BaseActivity
             args.putString("userName", userName);
             args.putInt("page", category);
-            fragment.setArguments(args);
+            if(category == AUTOCLUB) args.putString("autofilter", jsonAutoFilter);
 
+            writePostFragment.setArguments(args);
             getSupportFragmentManager().beginTransaction()
-                    .add(android.R.id.content, fragment)
+                    .add(android.R.id.content, writePostFragment)
                     .addToBackStack(null)
                     .commit();
         }
@@ -492,7 +494,7 @@ public class BoardActivity extends BaseActivity implements
         if(binding.frameContents.getChildCount() > 0)
             binding.frameContents.removeView(binding.boardPager);
 
-        writePostFragment = new BoardWriteFragment();
+        //writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
         args.putString("userName", userName);
@@ -853,6 +855,12 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
+    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri.
+    public void getAttachedImageUri(Uri uri) {
+        if(writePostFragment != null) writePostFragment.addImageThumbnail(uri);
+        else if(editPostFragment != null) editPostFragment.addImageThumbnail(uri);
+    }
+
     // ActivityResult callback invoked by activityResultCallback to get the result from SettingActivity
     // to set the auto club.
     private void getSettingResultBack(ActivityResult result) {
@@ -891,11 +899,7 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri.
-    private void getAttachedImageUri(Uri uri) {
-        if(writePostFragment != null) writePostFragment.addImageThumbnail(uri);
-        else if(editPostFragment != null) editPostFragment.addImageThumbnail(uri);
-    }
+
 
     // ActivityResult callback by mTakePicture, which get the boolean value when successfully taking
     // picture back to the callback, then launch ActivityResultContract.GetContent to get the image
