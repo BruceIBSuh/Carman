@@ -164,7 +164,6 @@ public class BoardPagerFragment extends Fragment implements
         snapshotList = new ArrayList<>();
 
         firestore = FirebaseFirestore.getInstance();
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgutil = new ApplyImageResourceUtil(getContext());
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
@@ -199,7 +198,6 @@ public class BoardPagerFragment extends Fragment implements
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        log.i("BoardPagerFragment onCreateView()");
         binding = FragmentBoardPagerBinding.inflate(inflater);
         // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
         //WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
@@ -240,20 +238,14 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        log.i("onViewCreated in BoardPagerFragment invoked by ViewModel");
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
         // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
         // upon which currentPage the viewpager contains.
         // not invoked by the viewmodel. Instead, call notifyItemChanged() in addViewPager().
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
             log.i("new posting: %s", docId);
-            postingAdapter.notifyItemInserted(0);
-            ((BoardActivity)requireActivity()).addViewPager();
-            /*
-            if(!TextUtils.isEmpty(docId)) {
-                queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-            }
-
-             */
+            queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         // The post has been deleted in BoardReadFragment which sequentially popped up AlertDialog
@@ -282,6 +274,8 @@ public class BoardPagerFragment extends Fragment implements
          */
 
     }
+
+
 
     @Override
     public void onResume() {
@@ -358,7 +352,7 @@ public class BoardPagerFragment extends Fragment implements
     public void onCheckBoxValueChange(ArrayList<String> autofilter) {
         this.autoFilter = autofilter;
         //pagerAdapter.notifyDataSetChanged();
-        pagerAdapter.notifyItemChanged(AUTOCLUB, autofilter);
+        //pagerAdapter.notifyItemChanged(AUTOCLUB, autofilter);
 
         //pageHelper.setPostingQuery(BoardActivity.AUTOCLUB, isViewOrder);
         // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
@@ -582,7 +576,6 @@ public class BoardPagerFragment extends Fragment implements
     private void sortClubPost(DocumentSnapshot snapshot) {
         snapshotList.add(snapshot);
         //multiTypeItemList.add(new MultiTypeItem(0, index, snapshot));
-        /*
         if(snapshot.get("auto_filter") == null) snapshotList.remove(snapshot);
         else {
             for(String filter : autoFilter) {
@@ -592,8 +585,6 @@ public class BoardPagerFragment extends Fragment implements
                 }
             }
         }
-
-         */
     }
 
     // RecyclerView.OnScrollListener is an abstract class to receive messages when a scrolling event

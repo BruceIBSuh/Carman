@@ -69,7 +69,7 @@ public class QueryPostPaginationUtil {
 
             case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = colRef.orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.whereEqualTo("post_autoclub", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case NOTIFICATION:
@@ -98,25 +98,26 @@ public class QueryPostPaginationUtil {
         });
          */
 
+        /*
         query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
+        */
 
-        /*
         query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-
+            /*
             for(DocumentSnapshot doc : querySnapshot) {
                 String source = doc != null && doc.getMetadata().hasPendingWrites()?"LOCAL":"SERVER";
                 if(source.matches("LOCAL")) log.i("cached data");
                 else log.i("server data");
             }
-
+             */
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
-        */
+
 
     }
 

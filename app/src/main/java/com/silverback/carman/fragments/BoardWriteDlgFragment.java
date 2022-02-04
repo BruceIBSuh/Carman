@@ -14,11 +14,13 @@ import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -27,12 +29,16 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.FieldValue;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
 import com.silverback.carman.databinding.FragmentBoardWriteTempBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.ThreadManager2;
+import com.silverback.carman.threads.UploadBitmapTask;
+import com.silverback.carman.threads.UploadPostTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.BoardImageSpanHandler;
 import com.silverback.carman.utils.Constants;
@@ -43,10 +49,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BoardWriteDlgFragment extends DialogFragment implements
-        BoardImageSpanHandler.OnImageSpanListener,
+        BoardImageSpanHandler.OnImageSpanListener, CompoundButton.OnCheckedChangeListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
@@ -54,17 +62,22 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private FragmentBoardWriteTempBinding binding;
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
+    private UploadBitmapTask bitmapTask;
+    private UploadPostTask postTask;
+
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
 
     private List<Uri> uriImageList;
     private SparseArray<Uri> sparseUriArray;
+    private List<String> cbAutoFilter;
 
     private Uri imageUri;
     private String userId;
     private String userName;
     private String autofilter;
     private int page;
+    private boolean isGeneralPost;
 
     public BoardWriteDlgFragment() {
         // empty constructor which might be referenced by FragmentFactory
@@ -83,8 +96,9 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        cbAutoFilter = new ArrayList<>();
+
+
 
     }
 
@@ -115,7 +129,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             autofilter = requireArguments().getString("autofilter");
             try {setAutoFilter(autofilter); }
             catch (JSONException e) {e.printStackTrace();}
-        } else binding.scrollviewAutofilter.setVisibility(View.GONE);
+        } //else binding.scrollviewAutofilter.setVisibility(View.GONE);
 
         return binding.getRoot();
     }
@@ -131,22 +145,27 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
         });
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
+            log.i("Storage download url:%s,  %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
             sparseUriArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
             if(uriImageList.size() == sparseUriArray.size()) uploadPostToFirestore();
         });
-
-
     }
+
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         log.i("onDismiss");
+        if(bitmapTask != null) bitmapTask = null;
+        if(postTask != null) postTask = null;
     }
 
 
@@ -169,6 +188,15 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         spanHandler.removeImageSpan(position);
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
+        final int index = (int)chkbox.getTag();
+        log.i("checkbox index: %s", index);
+        if(isChecked) cbAutoFilter.add(chkbox.getText().toString());
+        else cbAutoFilter.remove(chkbox.getText().toString());
+    }
+
+    // Invoked in the parent activity to set an image uri which has received from the image media.
     public void addImageThumbnail(Uri uri) {
         log.i("attached Image Uri: %s", uri);
         this.imageUri = uri;
@@ -178,6 +206,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private void createPostWriteMenu() {
         binding.toolbarBoardWrite.inflateMenu(R.menu.options_board_write);
         binding.toolbarBoardWrite.setOnMenuItemClickListener(item -> {
+            uploadImageToStorage();
             return true;
         });
     }
@@ -196,8 +225,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         animTab.start();
     }
 
-
-
     //Create the autofilter checkbox
     private void setAutoFilter(String json) throws JSONException {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -209,35 +236,42 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             throw new NullPointerException("no auto data");
         }
 
-        CheckBox cbAutoOnly = new CheckBox(getContext());
-        cbAutoOnly.setText(getString(R.string.board_filter_chkbox_general));
-        cbAutoOnly.setTextColor(Color.WHITE);
-        cbAutoOnly.setChecked(true);
-        binding.layoutAutofilter.addView(cbAutoOnly, params);
+        CheckBox cbGeneral = new CheckBox(getContext());
+        cbGeneral.setTag(0);
+        cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
+        cbGeneral.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        //cbAutoOnly.setTextColor(Color.WHITE);
+        cbGeneral.setChecked(true);
+        isGeneralPost = true;
+        cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneralPost = isChecked);
+        binding.layoutAutofilter.addView(cbGeneral, params);
 
         for(int i = 0; i < jsonAuto.length() - 1; i++) { // Exclude the auto type.
-            CheckBox cb = new CheckBox(getContext());
-            cb.setTag(i);
-            cb.setTextColor(Color.WHITE);
+            CheckBox cbType = new CheckBox(getContext());
+            cbType.setTag(i);
+            cbType.setOnCheckedChangeListener(this);
+            cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            //cb.setTextColor(Color.WHITE);
             if(jsonAuto.optString(i).equals("null")) {
                 switch(i) {
-                    case 1: cb.setText(R.string.pref_auto_model);break;
-                    case 2: cb.setText(R.string.pref_engine_type);break;
-                    case 3: cb.setText(R.string.board_filter_year);break;
+                    case 1: cbType.setText(R.string.pref_auto_model);break;
+                    case 2: cbType.setText(R.string.pref_engine_type);break;
+                    case 3: cbType.setText(R.string.board_filter_year);break;
                 }
-                cb.setEnabled(false);
+                cbType.setEnabled(false);
             } else {
                 // The automaker is required to be checked as far as jsonAuto has been set not to be
                 // null. Other autofilter values depends on whether it is the locked mode
                 // which retrieves its value from SharedPreferences.
-                cb.setText(jsonAuto.optString(i));
+                cbType.setText(jsonAuto.optString(i));
                 if(i == 0) {
-                    cb.setChecked(true);
-                    cb.setEnabled(true);
+                    cbType.setChecked(true);
+                    cbAutoFilter.add(jsonAuto.optString(0));
+                    cbType.setEnabled(false);
                 }
             }
-            binding.layoutAutofilter.addView(cb, params);
-            //chkboxList.add(cb);
+
+            binding.layoutAutofilter.addView(cbType, params);
         }
     }
 
@@ -270,8 +304,74 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         binding.etPostContent.getText().replace(start, end, "\n");
     }
 
-    private void uploadPostToFirestore(){
+    //If any image is attached, compress images and upload them to Storage using a worker thread.
+    private void uploadImageToStorage() {
+        ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        if(!doEmptyCheck()) return;
 
+        if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
+        else {
+            //binding.pbWriteContainer.setVisibility(View.VISIBLE);
+            //binding.tvPbMessage.setText("Image beging compressed...");
+            for(int i = 0; i < uriImageList.size(); i++) {
+                final Uri uri = uriImageList.get(i);
+                bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
+            }
+        }
+    }
+
+    private void uploadPostToFirestore() {
+        //binding.tvPbMessage.setText("Image Uploading...");
+        Map<String, Object> post = new HashMap<>();
+        post.put("user_id", userId);
+        post.put("user_name", userName);
+        post.put("post_title", binding.etPostTitle.getText().toString());
+        post.put("timestamp", FieldValue.serverTimestamp());
+        //post.put("timestamp", System.currentTimeMillis());
+        post.put("cnt_comment", 0);
+        post.put("cnt_compathy", 0);
+        post.put("cnt_view", 0);
+        post.put("post_content", binding.etPostContent.getText().toString());
+        // If the post has any images attached.
+        if(sparseUriArray.size() > 0) {
+            List<String> images = new ArrayList<>(sparseUriArray.size());
+            for(int i = 0; i < sparseUriArray.size(); i++)
+                images.add(sparseUriArray.keyAt(i), sparseUriArray.valueAt(i).toString());
+            post.put("post_images",  images);
+        }
+
+        post.put("post_autoclub", page == AUTOCLUB);
+        if(page == AUTOCLUB) {
+            Map<String, Boolean> filters = new HashMap<>();
+            for(String field : cbAutoFilter) filters.put(field, true);
+            post.put("auto_filter", filters);
+            post.put("post_general", isGeneralPost);
+        } else post.put("post_general", true);
+
+
+        // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
+        // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
+        postTask = ThreadManager2.uploadPostTask(getContext(), post, fragmentModel);
+        dismiss();
+    }
+
+    private boolean doEmptyCheck() {
+        // If either userId or userName is empty, throw NullPointerException and retrn false;
+        try {
+            if(TextUtils.isEmpty(userId)||TextUtils.isEmpty(userName)) throw new NullPointerException();
+        } catch(NullPointerException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        if(TextUtils.isEmpty(binding.etPostTitle.getText())) {
+            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_title), Snackbar.LENGTH_SHORT).show();
+            return false;
+        } else if(TextUtils.isEmpty(binding.etPostContent.getText())){
+            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
+            return false;
+        } else return true;
     }
 
 

@@ -17,6 +17,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     // Objects
     private final Runnable mUploadPostRunnable;
     private WeakReference<FragmentSharedModel> weakModelRef;
+    private FragmentSharedModel model;
     private Map<String, Object> post;
 
     // Constructor
@@ -26,6 +27,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
 
     void initPostTask(Map<String, Object> post, FragmentSharedModel model) {
        this.post = post;
+       this.model = model;
        weakModelRef = new WeakReference<>(model);
     }
 
@@ -46,8 +48,10 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     @Override
     public void notifyUploadDone(String documentId) {
         log.i("notifyUploaddone: %s", documentId);
-        if(!TextUtils.isEmpty(documentId))
+        if(!TextUtils.isEmpty(documentId)) {
             weakModelRef.get().getNewPosting().postValue(documentId);
+            model.getNewPosting().postValue(documentId);
+        }
     }
 
     @Override
@@ -70,6 +74,7 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
             weakModelRef.clear();
             weakModelRef = null;
         }
+
         if(post != null) post.clear();
     }
 }

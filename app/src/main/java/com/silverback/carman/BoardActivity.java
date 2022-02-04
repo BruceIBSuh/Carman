@@ -339,6 +339,7 @@ public class BoardActivity extends BaseActivity implements
 
                 case AUTOCLUB:
                     //isAutoFilter = true;
+                    /*
                     try { createAutoFilterCheckBox(BoardActivity.this, jsonAutoFilter, binding.autofilter);}
                     catch(NullPointerException e) {setNoAutoFilterText();}
                     catch(JSONException e) {e.printStackTrace();}
@@ -351,6 +352,9 @@ public class BoardActivity extends BaseActivity implements
                         final String autoclub = getString(R.string.board_tab_title_autoclub);
                         Objects.requireNonNull(getSupportActionBar()).setTitle(autoclub);
                     }
+
+                     */
+
                     animAutoFilter(true);
                     break;
 
@@ -396,12 +400,10 @@ public class BoardActivity extends BaseActivity implements
         // down to 0 each time the button clicks.
         tabHeight = binding.tabBoard.getMeasuredHeight();
 
-        // !!!!TEMP CODING
-        //if(!TextUtils.isEmpty(userName)) addWriteFragment(userName);
         if(!TextUtils.isEmpty(userName)) {
             //new BoardWriteDlgFragment().show(getSupportFragmentManager(), "writeFagment");
             writePostFragment = new BoardWriteDlgFragment();
-            getViewModelStore().clear();
+            //getViewModelStore().clear();
             Bundle args = new Bundle();
             args.putString("userId", userId); // userId defined in BaseActivity
             args.putString("userName", userName);
@@ -411,7 +413,7 @@ public class BoardActivity extends BaseActivity implements
             writePostFragment.setArguments(args);
             getSupportFragmentManager().beginTransaction()
                     .add(android.R.id.content, writePostFragment)
-                    .addToBackStack(null)
+                    //.addToBackStack(null)
                     .commit();
         }
 
@@ -425,19 +427,31 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
         final int index = (int)chkbox.getTag();
+        log.i("checkbox index:%s", index);
         if(isChecked) {
+            cbAutoFilter.add(chkbox.getText().toString());
+            chkboxList.set(index, (CheckBox)chkbox);
+            /*
             if(index == 1) cbAutoFilter.add(index, chkbox.getText().toString());
             else cbAutoFilter.add(chkbox.getText().toString());
-        } else cbAutoFilter.remove(chkbox.getText().toString());
+             */
+        } else {
+            cbAutoFilter.remove(chkbox.getText().toString());
+            chkboxList.remove(index);
+        }
 
         //for(String filter : cbAutoFilter) log.i("filter : %s", filter);
         // As far as the automodel checkbox value changes, the toolbar title will be reset using
         // creteAutoClubTitle().
+
         clubTitle = createAutoClubTitle();
+        log.i("club title change: %s", clubTitle);
         if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
+
         // Referenced in BoardPagerFragment for purpose of requerying posts with new
         // conditions
         mListener.onCheckBoxValueChange(cbAutoFilter);
+
 
         // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to
         // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
@@ -456,7 +470,6 @@ public class BoardActivity extends BaseActivity implements
     public void addViewPager() {
         // If any view exists in the framelayout, remove all views out of the layout and add the
         // viewpager
-
         if(binding.frameContents.getChildCount() > 0) {
             //binding.frameContents.removeView(binding.frameContents.getChildAt(0));
             binding.frameContents.removeAllViews();
@@ -473,19 +486,19 @@ public class BoardActivity extends BaseActivity implements
             // BUG: java.lang.NullPointerException: Attempt to invoke virtual method
             // 'void android.widget.TextView.setVisibility(int)' on a null object reference
             Objects.requireNonNull(tvAutoFilterLabel).setVisibility(View.VISIBLE);
-            cbGeneral.setVisibility(View.GONE);
+            //cbGeneral.setVisibility(View.GONE);
             getSupportActionBar().setTitle(createAutoClubTitle());
             menuItem.setVisible(true);
             //if(!menu.getItem(0).isVisible()) menu.getItem(0).setVisible(true);
             //if(menu.getItem(1).isVisible()) menu.getItem(1).setVisible(false);
         }
 
-        log.i("board caregerory: %s", category);
-        //pagerAdapter.notifyItemChanged(category);
         addTabIconAndTitle(this, binding.tabBoard);
     }
 
     // When clicking the fab, replace the BoardPagerFragment with BoardWriteFragment to write a post.
+
+    /*
     private void addWriteFragment(String userName) {
         // Create BoardWriteFragment with the user id attached. Remove any view in the framelayout
         // first and put the fragment into it.
@@ -532,10 +545,12 @@ public class BoardActivity extends BaseActivity implements
                 .commit();
     }
 
+     */
+
     // Invoked by the options menu in BoardReadFragment to replace the viewpager with
     // BoardEditFragment
     public void addEditFragment(Bundle bundle) {
-        getViewModelStore().clear();
+        //getViewModelStore().clear();
         if(writePostFragment != null) writePostFragment = null;
         if(binding.frameContents.getChildAt(0) instanceof ViewPager2)
             binding.frameContents.removeView(binding.boardPager);
@@ -650,6 +665,7 @@ public class BoardActivity extends BaseActivity implements
     // the viewpager has the auto club page.
     public SpannableStringBuilder createAutoClubTitle() {
         SpannableStringBuilder ssb = new SpannableStringBuilder();
+        log.i("checckbox size: %s", chkboxList.size());
         if(chkboxList.get(1).isChecked()) {
             ssb.append(chkboxList.get(1).getText()).append(" ").append(chkboxList.get(0).getText());
             for(int i = 2; i < chkboxList.size(); i++) {
@@ -712,7 +728,10 @@ public class BoardActivity extends BaseActivity implements
      */
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
-        if(v.getChildCount() > 0) v.removeAllViews();
+        if(v.getChildCount() > 1) {
+            v.removeAllViews();
+            chkboxList.clear();
+        }
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -729,29 +748,32 @@ public class BoardActivity extends BaseActivity implements
 
         // Dynamically create either the autofilter label in BoardPagerFragment or the general checkbox
         // in BoardWritingFragment
+        /*
         params.topMargin = 0;
         tvAutoFilterLabel = new TextView(context);
         tvAutoFilterLabel.setText(getString(R.string.board_filter_title));
         tvAutoFilterLabel.setTextColor(Color.WHITE);
         tvAutoFilterLabel.setTypeface(tvAutoFilterLabel.getTypeface(), Typeface.BOLD);
         v.addView(tvAutoFilterLabel, params);
-
+        */
         // Create the checkbox that indicates a general post shown not only in the general board
         // but also in the auto club.
+        /*
         cbGeneral = new CheckBox(context);
         cbGeneral.setVisibility(View.GONE);
         cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
         cbGeneral.setTextColor(Color.WHITE);
         v.addView(cbGeneral, params);
         cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneral = isChecked);
-
+        */
         // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
         // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        for(int i = 0; i < jsonAuto.length() - 1; i++) { // Exclude the auto type.
+        for(int i = 0; i < jsonAuto.length() - 1; i++) { //Exclude the auto type.
             CheckBox cb = new CheckBox(context);
             cb.setTag(i);
             cb.setTextColor(Color.WHITE);
+
             if(jsonAuto.optString(i).equals("null")) {
                 log.i("autodata item:%s", jsonAuto.optString(i));
                 switch(i) {
@@ -769,12 +791,12 @@ public class BoardActivity extends BaseActivity implements
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
-
-                } else if(isLocked) {
+              //} else if(isLocked) {
+                } else {
                     final String key = Constants.AUTOFILTER + i;
                     boolean b = mSettings.getBoolean(key, false);
                     cb.setChecked(b);
-                    cb.setEnabled(false);
+                    if(isLocked) cb.setEnabled(false);
                 }
 
                 // Add the checkbox value to the list if it is checked.
@@ -783,7 +805,8 @@ public class BoardActivity extends BaseActivity implements
             }
 
             v.addView(cb, params);
-            chkboxList.add(cb);
+            chkboxList.add(i, cb);
+            log.i("chkboxList: %s", chkboxList.size());
         }
 
         // Create the autofilter lock and handle the event when clicking the imageview.
@@ -817,6 +840,8 @@ public class BoardActivity extends BaseActivity implements
             imgView.setImageResource(resource);
 
             for(int i = 1; i < chkboxList.size(); i++) {
+                chkboxList.get(i).setEnabled(!isLocked);
+                /*
                 if(isLocked) {
                     chkboxList.get(i).setEnabled(false);
                     String key = Constants.AUTOFILTER + i;
@@ -825,6 +850,8 @@ public class BoardActivity extends BaseActivity implements
                 } else if(!jsonAuto.optString(i).equals("null")) {
                     chkboxList.get(i).setEnabled(true);
                 }
+
+                 */
             }
 
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
