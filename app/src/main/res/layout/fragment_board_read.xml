@@ -193,8 +193,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:padding="3dp"
-        android:background="#E0E0E0"
+        android:paddingTop="16dp"
+        android:paddingBottom="24dp"
+        android:background="@android:color/white"
         app:layout_dodgeInsetEdges="bottom">
         <TextView
             android:id="@+id/tv_label_comment"
@@ -212,9 +213,9 @@
             android:layout_width="0dp"
             android:layout_height="60dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
+            android:layout_marginBottom="24dp"
             android:layout_marginStart="8dp"
-            android:background="@android:color/white"
+            android:background="@drawable/bg_colored_border"
             android:gravity="top|start"
             android:inputType="textMultiLine"
             android:padding="8dp"
@@ -225,7 +226,6 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tv_label_comment"
             tools:ignore="autofill" />
-
         <ImageButton
             android:id="@+id/imgbtn_send_comment"
             android:layout_width="wrap_content"
@@ -234,11 +234,9 @@
             android:padding="3dp"
             android:contentDescription="@null"
             android:src="@android:drawable/ic_menu_send"
-            android:background="@drawable/bg_colored_border"
             app:layout_constraintBottom_toBottomOf="@+id/et_comment"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/et_comment" />
-
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -246,7 +244,7 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:background="#CCE5FF"
+        android:background="@color/recyclerDivider"
         android:elevation="2dp"
         android:padding="5dp"
         app:layout_insetEdge="bottom">
@@ -263,7 +261,6 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
         <TextView
             android:id="@+id/tv_btn_compathy"
             android:layout_width="wrap_content"

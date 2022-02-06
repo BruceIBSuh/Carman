@@ -10,8 +10,8 @@
     <dimen name="btnText">11sp</dimen>
 
     <!-- Text Size -->
-    <dimen name="boardTab">11sp</dimen>
-    <dimen name="tableHeader">14dp</dimen>
+    <dimen name="boardTab">14sp</dimen>
+    <dimen name="tableHeader">14sp</dimen>
     <dimen name="extraLargeText">15sp</dimen>
     <dimen name="largeText">15sp</dimen>
     <dimen name="mediumText">14sp</dimen>

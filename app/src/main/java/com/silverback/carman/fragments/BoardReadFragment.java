@@ -51,6 +51,7 @@ import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.bumptech.glide.Glide;
@@ -97,7 +98,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * This dialogfragment reads a post content in the full size when tapping  an item recycled in
+ * This dialogfragment reads a post content in the full size when clicking  an item recycled in
  * BoardPagerFragment.
  */
 public class BoardReadFragment extends DialogFragment implements
@@ -132,7 +133,7 @@ public class BoardReadFragment extends DialogFragment implements
     private FragmentSharedModel sharedModel;
     private BoardCommentAdapter commentAdapter;
     private String postTitle, postContent, userName, userPic;
-    private List<String> uriStringList;
+    private ArrayList<String> uriStringList;
     private List<DocumentSnapshot> commentShotList;
     //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
@@ -162,8 +163,6 @@ public class BoardReadFragment extends DialogFragment implements
         mListener = listener;
     }
      */
-
-
     // Constructor default.
     public BoardReadFragment() {
         // Required empty public constructor
@@ -179,7 +178,8 @@ public class BoardReadFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
-        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        //mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
@@ -218,9 +218,6 @@ public class BoardReadFragment extends DialogFragment implements
                 })
         );
          */
-
-
-
         /*
         // Instantiate PagingQueryHelper to paginate comments in a post.
         //pagingUtil = new PostingClubRepository(firestore);
@@ -228,7 +225,6 @@ public class BoardReadFragment extends DialogFragment implements
         postRepo = new PostingBoardRepository();
         postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
                 .get(PostingBoardViewModel.class);
-
          */
     }
 
@@ -262,11 +258,12 @@ public class BoardReadFragment extends DialogFragment implements
         });
 
         // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
-        // it feasible to listen to scrolling, use the parent scollview listener.
+        // it listen to scrolling, use the parent scollview listener.
         binding.vgNestedscrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
 
-            if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight()) && scrollY > oldScrollY)) {
+            if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
+                    && scrollY > oldScrollY)) {
                 if(!isLoading) {
                     isLoading = true;
                     queryPaginationUtil.setNextQuery();
@@ -362,22 +359,16 @@ public class BoardReadFragment extends DialogFragment implements
         // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
         // the model from automatically invoking the method, initially set the value to false;
         sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), result -> {
-            // Confirmed in the didalog.
             if(result) {
                 postRef.delete().addOnSuccessListener(aVoid -> {
-                    if(uriStringList != null && uriStringList.size() > 0){
+                    if (uriStringList != null && uriStringList.size() > 0) {
                         for (String url : uriStringList)
                             firebaseStorage.getReferenceFromUrl(url).delete();
                     }
-                    log.i("another viewmodel invoked: %s", position);
-                    //sharedModel.getRemovedPosting().setValue(postRef.getId());
-                    // notifyItemRemoved required!!
-                    //sharedModel.getRemovedPosting().setValue(position);
-                    //((BoardActivity)requireActivity()).addViewPager();
+                    sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
-
-            } else dismiss();
+            }
         });
     }
 
@@ -731,7 +722,6 @@ public class BoardReadFragment extends DialogFragment implements
         int size = Math.abs(appbarOffset) / 6;
         spannable.setSpan(new AbsoluteSizeSpan(size), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         binding.toolbarBoardRead.setTitle(spannable);
-
         switch(state) {
             case STATE_COLLAPSED:
                 userPic = (TextUtils.isEmpty(userPic)) ? Constants.imgPath + "ic_user_blank_gray" : userPic;
@@ -792,7 +782,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     // As long as a post belongs to the user, show the menu in the toolbar which enables the user
     // to edits or delete the post.
-    //
+
     // The userId means the id of the post item owner whereas the viewId means that of who reads
     // item.  The edit buttons turn visible only when both ids are equal, which means the reader
     // is the post owner.
@@ -806,8 +796,26 @@ public class BoardReadFragment extends DialogFragment implements
                 binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
                     if(item.getItemId() == R.id.action_board_edit) {
                         //mListener.onEditClicked(getArguments());
-                        ((BoardActivity)requireActivity()).addEditFragment(getArguments());
+                        //((BoardActivity)requireActivity()).addEditFragment(getArguments());
+                        BoardEditFragment editFragment = new BoardEditFragment();
+                        Bundle editBundle = new Bundle();
+                        editBundle.putString("documentId", documentId);
+                        editBundle.putString("postTitle", postTitle);
+                        editBundle.putString("postContent", postContent);
+                        editBundle.putInt("position", position);
+                        if(uriStringList != null && uriStringList.size() > 0){
+                            log.i("uriStringList: %s", uriStringList.size());
+                            editBundle.putStringArrayList("uriImgList", uriStringList);
+                        }
+                        editFragment.setArguments(editBundle);
+                        requireActivity().getSupportFragmentManager().beginTransaction()
+                                .addToBackStack(null)
+                                .add(android.R.id.content, editFragment)
+                                .commit();
+
+                        dismiss();
                         return true;
+
                     } else if(item.getItemId() == R.id.action_board_delete) {
                         String title = getString(R.string.board_alert_delete);
                         String msg = getString(R.string.board_alert_msg);
@@ -819,7 +827,6 @@ public class BoardReadFragment extends DialogFragment implements
                     return false;
                 });
             }
-
         } catch(IOException e) {
             e.printStackTrace();
         }

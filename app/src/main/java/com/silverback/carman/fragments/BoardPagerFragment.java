@@ -2,6 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -39,7 +40,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.adapters.BoardPostingAdapter;
 import com.silverback.carman.databinding.FragmentBoardPagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -80,7 +80,6 @@ import java.util.Objects;
  * codes are commented.
  */
 public class BoardPagerFragment extends Fragment implements
-        BoardActivity.OnAutoFilterCheckBoxListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback,
         //BoardReadFragment.OnDialogDismissListener,
         //QueryClubPostingUtil.OnPaginationListener,
@@ -99,14 +98,13 @@ public class BoardPagerFragment extends Fragment implements
     //private QueryClubPostingUtil clubRepo;
     //private ListenerRegistration listenerRegistration;
     private QueryPostPaginationUtil queryPagingUtil;
-
-    private FragmentSharedModel fragmentModel;
-    private BoardPagerAdapter pagerAdapter;
     private BoardPostingAdapter postingAdapter;
 
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
+
+    private FragmentSharedModel fragmentModel;
 
     // UIs
     private FragmentBoardPagerBinding binding;
@@ -115,6 +113,7 @@ public class BoardPagerFragment extends Fragment implements
     private FloatingActionButton fabWrite;
     //private TextView tvEmptyView;
     //private TextView tvSorting;
+
 
 
     // Fields
@@ -148,15 +147,12 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // When it comes to the autoclub page, it will pass the arguments of page and filter values.
-        // BUG!!: currentPage works only when it comes in first. Require to get an indicator to
-        // tell the current page.
         if(getArguments() != null) {
             currentPage = getArguments().getInt("currentPage");
             autoFilter = getArguments().getStringArrayList("autoFilter");
             if(autoFilter != null && autoFilter.size() > 0) automaker = autoFilter.get(0);
         }
-        // Make the toolbar menu available in the Fragment.
+
         setHasOptionsMenu(true);
 
         // Instantiate objects.
@@ -166,6 +162,7 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         imgutil = new ApplyImageResourceUtil(getContext());
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         progbar = ((BoardActivity)requireActivity()).getLoadingProgressBar();
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
@@ -189,8 +186,7 @@ public class BoardPagerFragment extends Fragment implements
 
         // Implement OnFilterCheckBoxListener to receive values of the chkbox each time any chekcbox
         // values changes.
-        ((BoardActivity)requireActivity()).setAutoFilterListener(this);
-        pagerAdapter = ((BoardActivity)requireActivity()).getPagerAdapter();
+        //BoardPagerAdapter pagerAdapter = ((BoardActivity) requireActivity()).getPagerAdapter();
 
     }
 
@@ -199,13 +195,15 @@ public class BoardPagerFragment extends Fragment implements
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         binding = FragmentBoardPagerBinding.inflate(inflater);
+
         // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
         //WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
+
+        // RecyclerView for displaying posts
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
-
-        binding.recyclerBoardPostings.setHasFixedSize(false); // for banner plugin
+        binding.recyclerBoardPostings.setHasFixedSize(false); //due to banner plugin
         binding.recyclerBoardPostings.setLayoutManager(layout);
         binding.recyclerBoardPostings.addItemDecoration(divider);
         binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
@@ -228,8 +226,8 @@ public class BoardPagerFragment extends Fragment implements
             }
         } else queryPostSnapshot(currentPage);
         */
-        isLoading = true;
         queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        isLoading = true;
 
         return binding.getRoot();
     }
@@ -238,33 +236,28 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-
-        // On completing UploadPostTask, update BoardPostingAdapter to show a new post, which depends
-        // upon which currentPage the viewpager contains.
-        // not invoked by the viewmodel. Instead, call notifyItemChanged() in addViewPager().
+        // UploadBitmapTask notifies the frament of uploading a post being completed and re-query
+        // to update.
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
-            log.i("new posting: %s", docId);
-            queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         // The post has been deleted in BoardReadFragment which sequentially popped up AlertDialog
         // for confirm and the result is sent back, then deletes the posting item from Firestore.
         // With All done, receive another LiveData containing the position of the deleted posting item
         // and update the adapter.
-        /*
-        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), position -> {
-            log.i("Post removed: %s", position);
-            //postingAdapter.notifyItemRemoved(position);
-            //((BoardActivity)requireActivity()).addViewPager();
-            //if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
+            log.i("removed document: %s", pos);
+            //postingAdapter.notifyItemChanged(pos)
+            queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
-        fragmentModel.getEditedPosting().observe(requireActivity(), docId -> {
+        fragmentModel.getEditedPosting().observe(requireActivity(), position -> {
             log.i("edited posting viewmodel");
-            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            //if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+            postingAdapter.notifyItemChanged(position);
         });
-
+        /*
         // Observe the viewmodel for partial binding to BoardPostingAdapter to update the comment count,
         // the livedata of which is created when a comment has finished uploadingb in BoardReadFragment.
         fragmentModel.getNewComment().observe(requireActivity(), sparseArray -> {
@@ -272,10 +265,7 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray);
         });
          */
-
     }
-
-
 
     @Override
     public void onResume() {
@@ -295,6 +285,7 @@ public class BoardPagerFragment extends Fragment implements
             View actionView = menu.getItem(0).getActionView();
             ImageView imgEmblem = actionView.findViewById(R.id.img_action_emblem);
             ProgressBar pbEmblem = actionView.findViewById(R.id.pb_emblem);
+
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
                 //actionView.setVisibility(View.INVISIBLE);
@@ -311,57 +302,13 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if(item.getItemId() == R.id.action_automaker_emblem) {
-            // Initialize fields when clicking the menu for switching timestamp and cnt_view
-            //isLastPage = false;
-            //clubshotList.clear();
-            //clubRepo.setPostingQuery(isViewOrder);
-
-            // Requery the autoclub post with the field switched.
-            //isLoading = true;
-            //pbPaging.setVisibility(View.GONE);
-            //binding.progbarBoardPaging.setVisibility(View.GONE);
-            //queryPagingUtil.setPostQuery(currentPage, isViewOrder);
-
-            // Rotate the automaker emblem
-            ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
-            rotation.setDuration(500);
-            rotation.setInterpolator(new AccelerateDecelerateInterpolator());
-            // Use AnimatorListenerAdapter to take callback methods seletively.
-            rotation.addListener(new AnimatorListenerAdapter(){
-                @Override
-                public void onAnimationEnd(Animator animation, boolean isReverse) {
-                    rotation.cancel();
-                    String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_time) :
-                            getString(R.string.board_autoclub_sort_view);
-                    TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
-                    tvSorting.setText(sorting);
-                    isViewOrder = !isViewOrder;
-                }
-            });
-
-            rotation.start();
+            rotateAutoEmblem(item).start();
             return true;
         }
-
         return false;
     }
 
-    // Implement OnFilterCheckBoxListener which notifies any change of checkbox values, which
-    // perform a new query with new autofilter values set.
-    @Override
-    public void onCheckBoxValueChange(ArrayList<String> autofilter) {
-        this.autoFilter = autofilter;
-        //pagerAdapter.notifyDataSetChanged();
-        //pagerAdapter.notifyItemChanged(AUTOCLUB, autofilter);
-
-        //pageHelper.setPostingQuery(BoardActivity.AUTOCLUB, isViewOrder);
-        // BoardPostingAdapter may be updated by postingAdapter.notifyDataSetChanged() in
-        // setFirstQuery() but it is requried to make BoardPagerAdapter updated in order to
-        // invalidate PostingRecyclerView, a custom recyclerview that contains the empty view
-        // when no dataset exists.
-    }
-
-    // Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
+    //Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     //@SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
@@ -370,14 +317,11 @@ public class BoardPagerFragment extends Fragment implements
         BoardReadFragment readPostFragment = new BoardReadFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
-        log.i("tabPage: %s", currentPage);
-        // TEST CODING FOR UPDATING THE COMMENT NUMBER
-        bundle.putInt("position", position);
+        bundle.putInt("position", position);// TEST CODING FOR UPDATING THE COMMENT NUMBER
 
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
-
-        if(currentPage == BoardActivity.NOTIFICATION) {
+        if(currentPage == NOTIFICATION) {
             bundle.putString("userId", "0000");
             bundle.putString("userName", "Admin");
             bundle.putString("userPic", null);
@@ -562,11 +506,18 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getQueryErrorResult(Exception e) {
-        //progbar.setVisibility(View.GONE);
+        progbar.setVisibility(View.GONE);
         e.printStackTrace();
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
         //isLoading = true;
         binding.recyclerBoardPostings.removeOnScrollListener(scrollListener);
+    }
+
+    //Invoked from the parent activity to pass checkbox changes made by OnCheckedChange() to make
+    //a new query w/ the Autoclub page.
+    public void setCheckBoxValueChange(ArrayList<String> autofilter){
+        this.autoFilter = autofilter;
+        for(String filter : autofilter) log.i("autofilter changed: %s", filter);
     }
 
 
@@ -726,6 +677,25 @@ public class BoardPagerFragment extends Fragment implements
                 });
 
          */
+    }
+    private ObjectAnimator rotateAutoEmblem(MenuItem item) {
+        ObjectAnimator rotation = ObjectAnimator.ofFloat(item.getActionView(), "rotationY", 0.0f, 360f);
+        rotation.setDuration(500);
+        rotation.setInterpolator(new AccelerateDecelerateInterpolator());
+        // Use AnimatorListenerAdapter to take callback methods seletively.
+        rotation.addListener(new AnimatorListenerAdapter(){
+            @Override
+            public void onAnimationEnd(Animator animation, boolean isReverse) {
+                rotation.cancel();
+                String sorting = (isViewOrder)? getString(R.string.board_autoclub_sort_time) :
+                        getString(R.string.board_autoclub_sort_view);
+                TextView tvSorting = item.getActionView().findViewById(R.id.tv_sorting_order);
+                tvSorting.setText(sorting);
+                isViewOrder = !isViewOrder;
+            }
+        });
+
+        return rotation;
     }
 
     public static class MultiTypeItem {

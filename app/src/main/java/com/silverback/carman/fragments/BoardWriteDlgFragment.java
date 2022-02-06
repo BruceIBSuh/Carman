@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class BoardWriteDlgFragment extends DialogFragment implements
         BoardImageSpanHandler.OnImageSpanListener, CompoundButton.OnCheckedChangeListener,
@@ -75,37 +76,43 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private Uri imageUri;
     private String userId;
     private String userName;
-    private String autofilter;
     private int page;
     private boolean isGeneralPost;
 
     public BoardWriteDlgFragment() {
-        // empty constructor which might be referenced by FragmentFactory
+        //empty constructor which might be referenced by FragmentFactory
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        //for rererernce only
+        /*
+        Dialog dialog = getDialog();
+        if (dialog != null){
+            int width = ViewGroup.LayoutParams.MATCH_PARENT;
+            int height = ViewGroup.LayoutParams.MATCH_PARENT;
+            Objects.requireNonNull(dialog.getWindow()).setLayout(width, height);
+        }
+         */
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             userName = getArguments().getString("userName");
             page = getArguments().getInt("page");
         }
-
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
         cbAutoFilter = new ArrayList<>();
-
-
-
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardWriteTempBinding.inflate(inflater);
         binding.toolbarBoardWrite.setTitle("POST WRITING");
@@ -126,8 +133,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         //Create the autofilter
         if(page == AUTOCLUB) {
             animAutoFilter();
-            autofilter = requireArguments().getString("autofilter");
-            try {setAutoFilter(autofilter); }
+            String jsonAutoFilter = requireArguments().getString("autofilter");
+            try {setAutoFilter(jsonAutoFilter); }
             catch (JSONException e) {e.printStackTrace();}
         } //else binding.scrollviewAutofilter.setVisibility(View.GONE);
 
@@ -196,12 +203,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         else cbAutoFilter.remove(chkbox.getText().toString());
     }
 
-    // Invoked in the parent activity to set an image uri which has received from the image media.
-    public void addImageThumbnail(Uri uri) {
-        log.i("attached Image Uri: %s", uri);
-        this.imageUri = uri;
-        ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imageUri, spanHandler);
-    }
+
 
     private void createPostWriteMenu() {
         binding.toolbarBoardWrite.inflateMenu(R.menu.options_board_write);
@@ -239,18 +241,19 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         CheckBox cbGeneral = new CheckBox(getContext());
         cbGeneral.setTag(0);
         cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
-        cbGeneral.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+        cbGeneral.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         //cbAutoOnly.setTextColor(Color.WHITE);
         cbGeneral.setChecked(true);
         isGeneralPost = true;
         cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneralPost = isChecked);
         binding.layoutAutofilter.addView(cbGeneral, params);
 
-        for(int i = 0; i < jsonAuto.length() - 1; i++) { // Exclude the auto type.
+        jsonAuto.remove(2); //exclue the auto type
+        for(int i = 0; i < jsonAuto.length(); i++) { // Exclude the auto type.
             CheckBox cbType = new CheckBox(getContext());
             cbType.setTag(i);
             cbType.setOnCheckedChangeListener(this);
-            cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 13);
+            cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             //cb.setTextColor(Color.WHITE);
             if(jsonAuto.optString(i).equals("null")) {
                 switch(i) {
@@ -302,6 +305,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         int start = binding.etPostContent.getSelectionStart();
         int end = binding.etPostContent.getSelectionEnd();
         binding.etPostContent.getText().replace(start, end, "\n");
+    }
+
+    // Invoked in the parent activity to set an image uri which has received from the image media.
+    public void addImageThumbnail(Uri uri) {
+        log.i("attached Image Uri: %s", uri);
+        this.imageUri = uri;
+        ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imageUri, spanHandler);
     }
 
     //If any image is attached, compress images and upload them to Storage using a worker thread.

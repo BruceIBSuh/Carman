@@ -306,10 +306,10 @@ public class BoardWriteFragment extends Fragment implements
             ArrayList<String> autofilter = ((BoardActivity)requireActivity()).getAutoFilterValues();
             Map<String, Boolean> filters = new HashMap<>();
             for(String field : autofilter) filters.put(field, true);
-            boolean isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
+            //boolean isGeneralPost = ((BoardActivity)requireActivity()).checkGeneralPost();
 
             post.put("auto_filter", filters);
-            post.put("post_general", isGeneralPost);
+            //post.put("post_general", isGeneralPost);
 
         } else post.put("post_general", true);
 

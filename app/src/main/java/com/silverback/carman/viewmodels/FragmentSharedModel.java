@@ -38,7 +38,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<String> newPosting;
     private MutableLiveData<Integer> removedPosting;
-    private MutableLiveData<String> editedPosting;
+    private MutableLiveData<Integer> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
@@ -182,7 +182,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w BoardEditFragment and BoardPagerFragment
-    public MutableLiveData<String> getEditedPosting() {
+    public MutableLiveData<Integer> getEditedPosting() {
         if(editedPosting == null) editedPosting = new MutableLiveData<>();
         return editedPosting;
     }

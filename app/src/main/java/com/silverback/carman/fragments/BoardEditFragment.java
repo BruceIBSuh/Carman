@@ -2,6 +2,8 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
+import android.Manifest;
+import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -11,17 +13,17 @@ import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
@@ -47,9 +49,13 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -78,17 +84,18 @@ public class BoardEditFragment extends DialogFragment implements
     private ImageViewModel imgModel;
 
     private Uri mImageUri;
-    private List<String> uriStringList;
-    private List<Uri> uriEditList;
+    private ArrayList<String> uriStringList;
+    private ArrayList<Uri> uriEditList;
 
     // Fields
     private String documentId;
     private String title, content;
+    private int position;
     private int numImgAdded;
 
     // Default Constructor
     public BoardEditFragment() {
-        // Required empty public constructor
+        //Empty constructor which might be referenced by FragmentFactory
     }
 
     @Override
@@ -96,12 +103,11 @@ public class BoardEditFragment extends DialogFragment implements
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
         if(getArguments() != null) {
-            //bundle = getArguments();
             documentId = getArguments().getString("documentId");
+            position = getArguments().getInt("position");
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
-            uriStringList = getArguments().getStringArrayList("urlImgList");
-
+            uriStringList = getArguments().getStringArrayList("uriImgList");
         }
 
         firestore = FirebaseFirestore.getInstance();
@@ -118,25 +124,32 @@ public class BoardEditFragment extends DialogFragment implements
 
         // If the post contains any image, the http url should be typecast to uri.
         if(uriStringList != null && uriStringList.size() > 0) {
-            for(String uriString : uriStringList) {
-                uriEditList.add(Uri.parse(uriString));
-            }
+            for(String uriString : uriStringList) uriEditList.add(Uri.parse(uriString));
         }
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardEditBinding.inflate(inflater);
+        binding.toolbarBoardEdit.setTitle("POST EDITING");
+        binding.toolbarBoardEdit.setNavigationOnClickListener(view -> dismiss());
+        createEditMenu();
+
         binding.etBoardEditTitle.setText(title);
+        binding.btnAttachImage.setOnClickListener(button -> selectImageMedia());
 
         // Horizontal recycleview for displaying attached images
-        LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
-        linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
-        binding.editRecyclerImages.setLayoutManager(linearLayout);
-        imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
-        binding.editRecyclerImages.setAdapter(imgAdapter);
+        if(uriStringList != null && uriStringList.size() > 0) {
+            LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
+            linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
+            binding.editRecyclerImages.setLayoutManager(linearLayout);
+            imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
+            binding.editRecyclerImages.setAdapter(imgAdapter);
+        }
 
-        binding.etEditContent.setText(new SpannableStringBuilder(content));
+        SpannableStringBuilder ssb = new SpannableStringBuilder(content);
+        binding.etEditContent.setText(ssb);
         spanHandler = new BoardImageSpanHandler(binding.etEditContent, this);
 
         // If the post contains any image, find the markup in the content using Matcher.find() and
@@ -169,12 +182,18 @@ public class BoardEditFragment extends DialogFragment implements
         });
          */
 
-        // Call the gallery or camera to capture images, the URIs of which are sent to an intent
-        // of onActivityResult(int, int, Intent)
-        binding.btnAttachImage.setOnClickListener(button -> selectImageMedia());
+
         return binding.getRoot();
     }
 
+    @NonNull
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
+        Dialog dialog = super.onCreateDialog(savedInstanceState);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        return dialog;
+    }
+    /*
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.getItem(0).setVisible(false);
@@ -190,15 +209,17 @@ public class BoardEditFragment extends DialogFragment implements
         return true;
     }
 
+     */
+
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
-        sharedModel.getImageChooser().observe(requireActivity(), chooser ->
-            ((BoardActivity)requireActivity()).getImageFromChooser(chooser)
-        );
+        sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
+        });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
@@ -239,34 +260,12 @@ public class BoardEditFragment extends DialogFragment implements
         if(uriEditList.get(position) != null) uriEditList.remove(position);
     }
 
-    // The attach button event handler to call the imge media chooser.
-    private void selectImageMedia() {
-        ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-        // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
-        if(uriEditList.size() >= Constants.MAX_IMAGE_NUMS) {
-            String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
-            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-            return;
-        }
-        // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
-        // of which passes the value to getImageChooser().
-        DialogFragment dialog = new BoardChooserDlgFragment();
-        dialog.show(getChildFragmentManager(), "ImageMediaChooser");
-        /*
-         * This works for both, inserting a text at the current position and replacing
-         * any text which is selected by the user. The Math.max() is necessary in the first
-         * and second line because, if there is no selection or focus in the edittext,
-         * getSelectionStart() and getSelectionEnd() will both return -1. On the other hand,
-         * The Math.min() and Math.max() in the third line is necessary because the user
-         * could have selected the text backwards and thus start would have a higher value
-         * than the end value which is not allowed for Editable.replace().
-         */
-        //int start = Math.max(etPostBody.getSelectionStart(), 0);
-        //int end = Math.max(etPostBody.getSelectionEnd(), 0);
-        int start = binding.etEditContent.getSelectionStart();
-        int end = binding.etEditContent.getSelectionEnd();
-        binding.etEditContent.getText().replace(start, end, "\n");
+    private void createEditMenu() {
+        binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
+        binding.toolbarBoardEdit.setOnMenuItemClickListener(item -> {
+            updateImageToStorage();
+            return true;
+        });
     }
 
     // Initially, insert thumbnail images in the content with the urlImgList transferred from
@@ -303,8 +302,38 @@ public class BoardEditFragment extends DialogFragment implements
                         @Override
                         public void onLoadCleared(@Nullable Drawable placeholder) {}
                     });
-             index++;
+            index++;
         }
+    }
+
+    // The attach button event handler to call the imge media chooser.
+    private void selectImageMedia() {
+        ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
+        if(uriEditList.size() >= Constants.MAX_IMAGE_NUMS) {
+            String msg = String.format(getString(R.string.board_msg_image), Constants.MAX_IMAGE_NUMS);
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+            return;
+        }
+        // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
+        // of which passes the value to getImageChooser().
+        DialogFragment dialog = new BoardChooserDlgFragment();
+        dialog.show(getChildFragmentManager(), "ImageMediaChooser");
+        /*
+         * This works for both, inserting a text at the current position and replacing
+         * any text which is selected by the user. The Math.max() is necessary in the first
+         * and second line because, if there is no selection or focus in the edittext,
+         * getSelectionStart() and getSelectionEnd() will both return -1. On the other hand,
+         * The Math.min() and Math.max() in the third line is necessary because the user
+         * could have selected the text backwards and thus start would have a higher value
+         * than the end value which is not allowed for Editable.replace().
+         */
+        //int start = Math.max(etPostBody.getSelectionStart(), 0);
+        //int end = Math.max(etPostBody.getSelectionEnd(), 0);
+        int start = binding.etEditContent.getSelectionStart();
+        int end = binding.etEditContent.getSelectionEnd();
+        binding.etEditContent.getText().replace(start, end, "\n");
     }
 
     // Add a thumbnail in the content, which is invoked by getAttachedImageUri(), ActivityResult
@@ -320,9 +349,9 @@ public class BoardEditFragment extends DialogFragment implements
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
-
         binding.tvPbMessage.setText("Image being compressed and uploading...");
 
+        //get removed images
         List<String> tempList = new ArrayList<>();
         for(Uri uri : uriEditList) tempList.add(uri.toString());
         uriStringList.removeAll(tempList);
@@ -341,7 +370,7 @@ public class BoardEditFragment extends DialogFragment implements
                 bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), imgUri, i, imgModel);
             }
         }
-        //log.i("flag: %s", bitmapTask);
+
         if(bitmapTask == null) updatePost();
     }
 
@@ -366,10 +395,9 @@ public class BoardEditFragment extends DialogFragment implements
         }
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
-            //binding.pbBoardEdit.setVisibility(View.GONE);
             binding.pbContainer.setVisibility(View.GONE);
-            //sharedModel.getNewPosting().setValue(documentId);
-            ((BoardActivity) requireActivity()).addViewPager();
+            sharedModel.getEditedPosting().setValue(position);
+            dismiss();
         }).addOnFailureListener(Exception::printStackTrace);
     }
 
@@ -383,9 +411,5 @@ public class BoardEditFragment extends DialogFragment implements
         } else return true;
 
     }
-
-
-
-
 }
 

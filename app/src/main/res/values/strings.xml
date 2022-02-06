@@ -180,7 +180,7 @@
     <string name="board_tab_title_popular">인기글</string>
     <string name="board_tab_title_autoclub">오토클럽</string>
     <string name="board_tab_title_notification">공지사항</string>
-    <string name="board_filter_title">나의클럽:</string>
+    <string name="board_filter_title">나의클럽</string>
     <string name="board_filter_chkbox_general">일반글</string>
     <string name="board_filter_brand">브랜드</string>
     <string name="board_filter_model">모델명</string>
