@@ -2,15 +2,19 @@ package com.silverback.carman.threads;
 
 import android.content.Context;
 
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
 import java.util.Map;
 
 public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnable.StationPriceMethods {
 
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePriceTask.class);
+
     // Objects
     private OpinetViewModel viewModel;
-    private Runnable mPriceRunnableStation;
+    private final Runnable mPriceRunnableStation;
     private String stnId;
     private boolean isFirst;
 
@@ -52,10 +56,12 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     }
 
     @Override
-    public void saveDifferedPrice() {
-        if(viewModel != null) viewModel.favoritePriceComplete().postValue(true);
+    public void savePriceDiff() {
+        if(viewModel != null) {
+            log.i("savePriceDiff");
+            viewModel.favoritePriceComplete().postValue(true);
+        }
     }
-
 
     public void recycle() {
         isFirst = false;

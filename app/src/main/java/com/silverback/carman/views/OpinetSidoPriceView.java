@@ -56,10 +56,8 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
     //@SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
-        log.i("addPriceView: %s", fuelCode);
         File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
         Uri uriSido = Uri.fromFile(sidoFile);
-
         try(InputStream is = getContext().getContentResolver().openInputStream(uriSido);
             ObjectInputStream ois = new ObjectInputStream(is)){
             //List<Opinet.SidoPrice> sidoPrice = (List<Opinet.SidoPrice>)ois.readObject();

@@ -8,6 +8,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -59,6 +60,7 @@ public class ThreadManager2 {
     private final BlockingQueue<StationListTask> mStnListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
+    private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     private final BlockingQueue<UploadPostTask> mUploadPostTaskQueue;
 
@@ -86,6 +88,7 @@ public class ThreadManager2 {
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
+        mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mUploadPostTaskQueue = new LinkedBlockingQueue<>();
 
@@ -238,10 +241,19 @@ public class ThreadManager2 {
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSigunPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getStationPriceRunnable());
 
-        log.i("queue: %s", InnerClazz.sInstance.threadPoolExecutor.getQueue());
-
         return gasPriceTask;
     }
+
+    public FavoritePriceTask getFavoriteStationTaskk (
+            Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
+        FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
+        if(favPriceTask == null) favPriceTask = new FavoritePriceTask(context);
+        favPriceTask.initTask(model, stnId, isFirst);
+
+        InnerClazz.sInstance.threadPoolExecutor.execute(favPriceTask.getPriceRunnableStation());
+        return favPriceTask;
+    }
+
 
     public LocationTask fetchLocationTask(Context context, LocationViewModel model){
         log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());

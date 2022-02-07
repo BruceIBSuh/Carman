@@ -22,12 +22,13 @@ import com.silverback.carman.utils.Constants;
 
 import java.util.List;
 
-public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.ViewHolder> {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
-    private final int RECENT = 0;
-    private final int NOTIFICATION = 3;
+    private static final int RECENT = 0;
+    private static final int NOTIFICATION = 3;
+    private static final int NUM_CONTENTS = 6;
 
     // Objects
     private final MainContentAdapterListener mListener;
@@ -51,9 +52,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         mainExpPagerAdapter = new MainExpensePagerAdapter(fa.getSupportFragmentManager(), fa.getLifecycle());
     }
 
-    //public MainContentNotificationBinding binding; //DataBiding in JetPack
-    private static class ContentViewHolder extends RecyclerView.ViewHolder {
-        public ContentViewHolder(View itemView) {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        public ViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
             params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_MAIN);
@@ -63,7 +63,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         switch(viewType) {
             case Constants.NOTIFICATION:
@@ -71,35 +71,34 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                 notiBinding.imgbtnNotification.setOnClickListener(view ->
                     mListener.onClickPostingIcon(NOTIFICATION)
                 );
-                return new ContentViewHolder(notiBinding.getRoot());
+                return new ViewHolder(notiBinding.getRoot());
 
             case Constants.VIEWPAGER_EXPENSE:
                 expBinding = MainContentExpenseBinding.inflate(inflater, parent, false);
-                return new ContentViewHolder(expBinding.getRoot());
+                return new ViewHolder(expBinding.getRoot());
 
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 carlifeBinding.imgbtnCarlife.setOnClickListener(view ->
                     mListener.onClickPostingIcon(RECENT)
                 );
-                return new ContentViewHolder(carlifeBinding.getRoot());
+                return new ViewHolder(carlifeBinding.getRoot());
 
             case Constants.BANNER_AD_1: case Constants.BANNER_AD_2:
                 adsBinding = MainContentAdsBinding.inflate(inflater, parent, false);
-                return new ContentViewHolder(adsBinding.getRoot());
+                return new ViewHolder(adsBinding.getRoot());
 
             case Constants.COMPANY_INFO:
                 MainContentFooterBinding footerBinding = MainContentFooterBinding.inflate(inflater, parent, false);
-                return new ContentViewHolder(footerBinding.getRoot());
+                return new ViewHolder(footerBinding.getRoot());
 
-            //default: return new ContentViewHolder(null);
-            default: return new ContentViewHolder(notiBinding.getRoot());
+            default: return new ViewHolder(notiBinding.getRoot());
         }
     }
 
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         switch(position) {
             case Constants.NOTIFICATION:
                 firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
@@ -108,14 +107,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                             RecentPostAdapter adapter = new RecentPostAdapter(querySanpshots);
                             notiBinding.recyclerview.setAdapter(adapter);
                         });
-                /*
-                firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
-                        .get()
-                        .addOnSuccessListener(querySnapshots -> {
-                            RecentPostAdapter recentPostAdapter = new RecentPostAdapter(querySnapshots);
-                            notiBinding.recyclerview.setAdapter(recentPostAdapter);
-                        });
-                 */
                 break;
 
             case Constants.VIEWPAGER_EXPENSE:
@@ -130,14 +121,6 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                             carlifeBinding.recyclerCarlife.setAdapter(adapter);
 
                         });
-                /*
-                firestore.collection("board_general").orderBy("timestamp", Query.Direction.DESCENDING).limit(3)
-                        .get()
-                        .addOnSuccessListener(querySnapshots -> {
-                            RecentPostAdapter carlifeAdapter = new RecentPostAdapter(querySnapshots);
-                            carlifeBinding.recyclerCarlife.setAdapter(carlifeAdapter);
-                        });
-                 */
                 break;
 
             case Constants.BANNER_AD_1:
@@ -151,8 +134,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
@@ -168,7 +150,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
     @Override
     public int getItemCount() {
-        return 6;
+        return NUM_CONTENTS;
     }
 
     @Override

@@ -58,7 +58,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -108,19 +107,13 @@ public class MainActivity extends BaseActivity implements
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
 
 
+
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-        // Create objects
-        imgResUtil = new ApplyImageResourceUtil(this);
-
-        // Set initial values
-        defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
-        arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
-        mPrevLocation = null;
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
@@ -129,7 +122,11 @@ public class MainActivity extends BaseActivity implements
         Objects.requireNonNull(getSupportActionBar()).setHomeButtonEnabled(false);
         String title = mSettings.getString(Constants.USER_NAME, "Carman");
         Objects.requireNonNull(getSupportActionBar()).setTitle(title);
-        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
+
+        // Set initial values to fields
+        defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
+        arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
+        mPrevLocation = null;
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
@@ -145,7 +142,6 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         setGasSpinnerSelection(defaultParams[0]);
 
-
         // Create MainPricePagerAdapter which displays the graphs for the last 3 month total expense
         // and the expense configuration of this month. More pages should be added to analyze the
         // user expense.
@@ -153,32 +149,31 @@ public class MainActivity extends BaseActivity implements
         mainPricePagerAdapter.setFuelCode(defaultParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
 
-
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
+        imgResUtil = new ApplyImageResourceUtil(this);
 
         // Event Handlers
-        binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pageCallback);
+        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
         // Method for implementing ViewModel callbacks to fetch a location and near station list.
         observeViewModel(locationModel);
         observeViewModel(stnModel);
-
-
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        //binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pagerCallback);
+
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
-
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         imgModel.getGlideDrawableTarget().observe(this, resource -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
@@ -187,6 +182,12 @@ public class MainActivity extends BaseActivity implements
         // Return the fuel price pager to the first page.
         binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
 
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        //binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
     }
 
     @Override
@@ -248,15 +249,13 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
         gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
-        // Update the district gas price with a selected gas type
         mainPricePagerAdapter.setFuelCode(gasCode);
         //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
-        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
+        //mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
 
         // Update the average gas price and the hidden price bar.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         setCollapsedPriceBar();
-
 
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
@@ -270,7 +269,7 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {}
 
-    // The following 2 methods implement FinishAppDialogFragment.NoticeDialogListener interface ;
+    // Implement FinishAppDialogFragment.NoticeDialogListener interface ;
     //@SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
@@ -280,7 +279,6 @@ public class MainActivity extends BaseActivity implements
                 if(file.delete()) log.i("file deleted: %s", file.getPath());
             }
         }
-
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
     }
@@ -302,10 +300,11 @@ public class MainActivity extends BaseActivity implements
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback to listen to the viewpager
     // changing a page.
-    private final ViewPager2.OnPageChangeCallback pageCallback = new ViewPager2.OnPageChangeCallback() {
+    private final ViewPager2.OnPageChangeCallback pagerCallback = new ViewPager2.OnPageChangeCallback() {
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
+            log.i("page: %s", position);
         }
     };
 

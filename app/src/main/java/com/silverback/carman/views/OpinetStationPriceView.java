@@ -49,26 +49,21 @@ public class OpinetStationPriceView extends OpinetPriceView {
         tvStnName = findViewById(R.id.expense_tv_station_name);
         tvStnPrice = findViewById(R.id.tv_station_price);
 
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetStationPriceView);
+        TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.OpinetStationPriceView);
         try {
-            priceUpColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stnPriceUp, 0);
-            priceDownColor = typedArray.getColor(R.styleable.OpinetStationPriceView_stnPriceDown, 0);
-            log.i("Color: %d, %d", priceUpColor, priceDownColor);
-
+            priceUpColor = ta.getColor(R.styleable.OpinetStationPriceView_stnPriceUp, 0);
+            priceDownColor = ta.getColor(R.styleable.OpinetStationPriceView_stnPriceDown, 0);
         } finally {
-            typedArray.recycle();
+            ta.recycle();
         }
 
     }
 
     public void addPriceView(String fuelCode) {
-        File stnFile = new File(getContext().getCacheDir(), Constants.FILE_FAVORITE_PRICE);
-        if(!stnFile.exists()) return;
-        //File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
+        File stnFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_FAV_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
         Float price = null;
         Float diff = null;
-
 
         try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
             ObjectInputStream ois = new ObjectInputStream(is)){

@@ -157,7 +157,6 @@ public class IntroActivity extends BaseActivity  {
     // OpinetViewModel which returns the result value. The first placeholder of the favorite will be
     // retrieved from the Room database.
     private void regularInitProcess() {
-
         if(checkPriceUpdate()) {
             // Get the sigun code
             JSONArray json = getDistrictJSONArray();

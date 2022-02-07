@@ -81,7 +81,9 @@ public class Constants {
     public static final String FILE_CACHED_AVG_PRICE = "com.silverback.carman.AVG_PRICE";
     public static final String FILE_CACHED_SIDO_PRICE = "com.silverback.carman.SIDO_PRICE";
     public static final String FILE_CACHED_SIGUN_PRICE = "com.silverback.carman.SIGUN_PRICE";
+    public static final String FILE_CACHED_FAV_PRICE = "com.silverback.carman.FAV_PARICE";
     public static final String FILE_CACHED_NEAR_STATIONS = "com.silverback.carman.STN_LIST";
+
     public static final String FILE_FAVORITE_PRICE = "com.silverback.carman.FAV_PRICE";
     public static final String FILE_DISTRICT_CODE = "com.silverback.carman.DIST_CODE";
     public static final String OPINET_LAST_UPDATE = "com.silverback.carman.UPDATE";

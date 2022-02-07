@@ -42,6 +42,8 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
+        log.i("createFragment: %s", position);
+
         switch(position) {
             case 0:
                 log.i("first district fragment:%s", getItemId(position));
@@ -50,15 +52,16 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
                 log.i("second station fragment:%s", getItemId(position));
                 return favStationFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
             default:
+                log.i("default");
                 return MainPricePagerFragment.getInstance(fuelCode, position);
         }
+
     }
 
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
-        log.i("payloads: %s", payloads.size());
-        if(payloads.size() == 0) {
+        if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
             if(position == 0) districtFragment.reload(0, (String)payloads.get(0));
@@ -66,10 +69,13 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
         }
     }
 
+
     @Override
     public int getItemCount() {
         return NUM_PAGES;
     }
+
+
 
     // Invoked when the spinner changes the value or users reset the top priority gas station.
     public void setFuelCode(String fuelCode) {

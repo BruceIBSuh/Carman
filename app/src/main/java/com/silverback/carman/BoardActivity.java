@@ -239,7 +239,6 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_board, menu);
-        //menuItem = menu.findItem(R.id.action_automaker_emblem);
         menuItem = menu.getItem(0);
         return true;
     }
@@ -263,17 +262,14 @@ public class BoardActivity extends BaseActivity implements
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
-            //menuItem.setVisible(false);
             category = position;
-            animAutoFilter(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
-
             switch(position) {
                 case RECENT | POPULAR:
+                    animAutoFilter(false);
                     final String general = getString(R.string.board_general_title);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(general);
                     break;
-
                 case AUTOCLUB:
                     animAutoFilter(true);
                     if(cbAutoFilter.size() > 0) {
@@ -287,6 +283,7 @@ public class BoardActivity extends BaseActivity implements
                     break;
 
                 case NOTIFICATION:
+                    animAutoFilter(false);
                     binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                     final String noti = getString(R.string.board_tab_title_notification);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(noti);
@@ -317,25 +314,19 @@ public class BoardActivity extends BaseActivity implements
         // down to 0 each time the button clicks.
         //tabHeight = binding.tabBoard.getMeasuredHeight();
 
-        //if(!TextUtils.isEmpty(userName)) {
-            //new BoardWriteDlgFragment().show(getSupportFragmentManager(), "writeFagment");
-            writePostFragment = new BoardWriteDlgFragment();
-            //getViewModelStore().clear();
-            Bundle args = new Bundle();
-            args.putString("userId", userId); // userId defined in BaseActivity
-            args.putString("userName", userName);
-            args.putInt("page", category);
-            if(category == AUTOCLUB) args.putString("autofilter", jsonAutoFilter);
+        // With the user name set, call the dialogfragmt for writing a post.
+        writePostFragment = new BoardWriteDlgFragment();
+        Bundle args = new Bundle();
+        args.putString("userId", userId); // userId defined in BaseActivity
+        args.putString("userName", userName);
+        args.putInt("page", category);
+        if(category == AUTOCLUB) args.putString("autofilter", jsonAutoFilter);
 
-            writePostFragment.setArguments(args);
-            getSupportFragmentManager().beginTransaction()
-                    .add(android.R.id.content, writePostFragment)
-                    //.addToBackStack(null)
-                    .commit();
-        //}
-
-        // Visibility control on menu and fab.
-        //menu.getItem(1).setVisible(true);
+        writePostFragment.setArguments(args);
+        getSupportFragmentManager().beginTransaction()
+                .add(android.R.id.content, writePostFragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
@@ -611,7 +602,6 @@ public class BoardActivity extends BaseActivity implements
     // ActivityResult callback invoked by activityResultCallback to get the result from SettingActivity
     // to set the auto club.
     private void getSettingResultBack(ActivityResult result) {
-        log.i("activity result:%s", result);
         if(result.getData() == null) return;
         switch(result.getResultCode()) {
             case Constants.REQUEST_BOARD_GALLERY:
@@ -638,16 +628,12 @@ public class BoardActivity extends BaseActivity implements
                 clubTitle = createAutoClubTitle();
                 if(getSupportActionBar() != null) getSupportActionBar().setTitle(clubTitle);
                 addTabIconAndTitle(this, binding.tabBoard);
-                //menu.getItem(0).setVisible(true);
                 menuItem.getActionView().setVisibility(View.VISIBLE);
                 break;
 
             default: break;
         }
     }
-
-
-
 
 
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
@@ -672,6 +658,7 @@ public class BoardActivity extends BaseActivity implements
         return binding.progbarBoardLoading;
     }
 
+    // Refactor required!!:
     // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
     // in both BoardPostingAdapter and BoardPagerFragment.
     public static class PostImages {

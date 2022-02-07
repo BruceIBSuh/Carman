@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    tools:context=".fragments.GeneralFragment">
+    tools:context=".fragments.MainPricePagerFragment">
 
     <com.silverback.carman.views.OpinetStationPriceView
         android:id="@+id/stnPriceView"
@@ -27,4 +27,4 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
