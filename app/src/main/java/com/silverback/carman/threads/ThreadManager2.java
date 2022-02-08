@@ -230,24 +230,30 @@ public class ThreadManager2 {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
-    public GasPriceTask startGasPriceTask(
-            Context context, OpinetViewModel model, String distCode, String stnId) {
-        GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
+    public static GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode) {
 
-        if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
-        gasPriceTask.initPriceTask(model, distCode, stnId);
+        GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
+        log.i("gasprice task: %s", gasPriceTask);
+
+        //if(gasPriceTask == null)
+            gasPriceTask = new GasPriceTask(context);
+
+        gasPriceTask.initPriceTask(model, distCode);
+
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSidoPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSigunPriceRunnable());
-        InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getStationPriceRunnable());
+        //InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getStationPriceRunnable());
 
         return gasPriceTask;
     }
 
-    public FavoritePriceTask getFavoriteStationTaskk (
+    public static FavoritePriceTask getFavoriteStationTask (
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
-        FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
-        if(favPriceTask == null) favPriceTask = new FavoritePriceTask(context);
+
+        //FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
+        //if(favPriceTask == null)
+        FavoritePriceTask favPriceTask = new FavoritePriceTask(context);
         favPriceTask.initTask(model, stnId, isFirst);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(favPriceTask.getPriceRunnableStation());
@@ -331,8 +337,8 @@ public class ThreadManager2 {
     private void recycleTask(ThreadTask task) {
         log.i("recycle task: %s", task);
         if(task instanceof GasPriceTask) {
-            //gasPriceTask.recycle();
-            //mGasPriceTaskQueue.offer(gasPriceTask);
+            task.recycle();
+            mGasPriceTaskQueue.offer((GasPriceTask)task);
         } else if(task instanceof LocationTask) {
             locationTask.recycle();
             //locationTask = null;

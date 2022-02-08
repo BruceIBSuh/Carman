@@ -233,6 +233,7 @@ public class BaseActivity extends AppCompatActivity {
     protected boolean checkPriceUpdate() {
         long currentTime = System.currentTimeMillis();
         long lastUpdate = mSettings.getLong(Constants.OPINET_LAST_UPDATE, 0L);
+        log.i("opinet update: %s, %s, %s", currentTime, lastUpdate, currentTime - lastUpdate);
         return (currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
     }
 

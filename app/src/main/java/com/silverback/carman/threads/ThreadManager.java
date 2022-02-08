@@ -275,6 +275,7 @@ public class ThreadManager {
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
+    /*
     public static GasPriceTask startGasPriceTask(
             Context context, OpinetViewModel model, String distCode, String stnId) {
 
@@ -290,6 +291,8 @@ public class ThreadManager {
 
         return gasPriceTask;
     }
+
+     */
 
     // Retrieve the price of a favorite gas station. The boolean isFirst indicates that when it is
     // set to true, the gas station is the first placeholder in the favorite list, the price of which

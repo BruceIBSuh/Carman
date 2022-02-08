@@ -16,6 +16,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.DistCodeDownloadTask;
 import com.silverback.carman.threads.GasPriceTask;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
@@ -90,7 +91,7 @@ public class IntroActivity extends BaseActivity  {
     public void onPause() {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
-        if(gasPriceTask != null) gasPriceTask = null;
+        //if(gasPriceTask != null) gasPriceTask = null;
     }
 
     // Invoked when and only when the application runs for the first time, authenticating the user
@@ -104,7 +105,6 @@ public class IntroActivity extends BaseActivity  {
     private void firstInitProcess() {
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                log.i("current user:%s", mAuth.getUid());
                 Map<String, Object> userData = new HashMap<>();
                 userData.put("user_id", mAuth.getUid());
                 userData.put("user_name", null);
@@ -158,12 +158,11 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         if(checkPriceUpdate()) {
-            // Get the sigun code
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
-            log.i("initial dist code: %s", distCode);
-            mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, distCode, stnId);
+
+            //mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
+                gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, distCode);
                 // Notified of having each price of average, sido, sigun and the first placeholder of the
                 // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
                 // SharedPreferences to check whether the price should be updated for the next initiation.
@@ -173,7 +172,7 @@ public class IntroActivity extends BaseActivity  {
                     binding.pbIntro.setVisibility(View.GONE);
                     finish();
                 });
-            });
+            //});
 
         } else {
             startActivity(new Intent(this, MainActivity.class));

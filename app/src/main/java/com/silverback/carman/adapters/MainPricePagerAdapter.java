@@ -76,7 +76,6 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     }
 
 
-
     // Invoked when the spinner changes the value or users reset the top priority gas station.
     public void setFuelCode(String fuelCode) {
         this.fuelCode = fuelCode;

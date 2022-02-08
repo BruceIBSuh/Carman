@@ -202,7 +202,7 @@ public class Opinet  {
         private String stnCompany;
         private String stnName;
         private String productCd;
-        private Map<String, Float> stnPrice;
+        private final Map<String, Float> stnPrice;
         private Map<String, Float> priceDiff;
 
         StationPrice() {

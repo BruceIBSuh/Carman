@@ -1,6 +1,7 @@
 package com.silverback.carman.threads;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Process;
 
 import com.silverback.carman.logs.LoggingHelper;
@@ -9,14 +10,22 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.XmlPullParserHandler;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.Buffer;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public class FavoritePriceRunnable implements Runnable {
 
@@ -53,46 +62,62 @@ public class FavoritePriceRunnable implements Runnable {
         mCallback.setStnPriceThread(Thread.currentThread());
         String stationId = mCallback.getStationId();
 
-        InputStream in = null;
-        HttpURLConnection conn = null;
-        final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_FAV_PRICE);
-        //final File file = new File(mContext.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         try {
             if(Thread.interrupted()) throw new InterruptedException();
             URL url = new URL(URLStn + stationId);
-            conn = (HttpURLConnection) url.openConnection();
-            in = conn.getInputStream();
-
-            Opinet.StationPrice stnPriceData = xmlHandler.parseStationPrice(in);
-            if(stnPriceData != null) {
-                log.i("new favorite: %s, %s", stnPriceData.getStnName(), stnPriceData.getPriceDiff());
-                // if the favorite placeholder becomes first, the provider saves its price in the cache.
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+            try(InputStream in = conn.getInputStream()) {
+                Opinet.StationPrice currentData = xmlHandler.parseStationPrice(in);
+                //if(stnPriceData != null) {
+                final String stnName = currentData.getStnName();
+                final Map<String, Float> stnPrice = currentData.getStnPrice();
+                // The first favorite station which is to display in the MainActivity viewpager
+                // with the price info.
                 if(mCallback.getIsFirst()) {
-                    savePriceInfo(file, stnPriceData);
-                    //if(!file.exists()) savePriceInfo(stnPriceData);
-                    //else saveDifferedPrice(file, stnPriceData);
+                    final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_FAV_PRICE);
+                    if(!file.exists()) savePriceInfo(file, currentData);
+                    else {
+                        Uri uri = Uri.fromFile(file);
+                        try(InputStream is = mContext.getContentResolver().openInputStream(uri);
+                            ObjectInputStream ois = new ObjectInputStream(is)) {
+                            Opinet.StationPrice prevData = (Opinet.StationPrice)ois.readObject();
+                            if(Objects.equals(prevData.getStnName(), stnName)){
+                                log.i("get the price difference");
+                                Map<String, Float> current = currentData.getStnPrice();
+                                Map<String, Float> prev = prevData.getStnPrice();
+                                Map<String, Float> diffPrice = new HashMap<>();
 
-                // A favorite station selected in FavoriteListFragment, the price of which isn't saved.
-                } else mCallback.setFavoritePrice(stnPriceData.getStnPrice());
+                                for (String key : current.keySet()) {
+                                    Float currentValue = current.get(key);
+                                    Float prevValue = prev.get(key);
+                                    if (currentValue == null) throw new NullPointerException();
+                                    if (prevValue == null) throw new NullPointerException();
+                                    diffPrice.put(key, currentValue - prevValue);
+                                    log.i("price diff: %s",  currentValue - prevValue);
+                                    currentData.setPriceDiff(diffPrice);
+                                }
+                            }
 
-            }
-        } catch(IOException | InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            if(in != null) {
-                try { in.close();}
-                catch (IOException e) { e.printStackTrace(); }
-            }
+                            savePriceInfo(file, currentData);
 
-            if(conn != null) conn.disconnect();
-        }
+                        } catch(IOException | ClassNotFoundException | NullPointerException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                } else mCallback.setFavoritePrice(currentData.getStnPrice());
+            } finally { if(conn != null) conn.disconnect(); }
+
+        } catch(IOException | InterruptedException e){e.printStackTrace(); }
     }
 
     private void savePriceInfo(File file, Object obj) {
+        log.i("save price info");
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
             oos.writeObject(obj);
             mCallback.savePriceDiff();
         } catch (IOException e) { e.printStackTrace(); }
     }
+
 }

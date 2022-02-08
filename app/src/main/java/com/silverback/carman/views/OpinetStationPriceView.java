@@ -3,6 +3,7 @@ package com.silverback.carman.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.net.Uri;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -70,6 +71,7 @@ public class OpinetStationPriceView extends OpinetPriceView {
             Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
 
             String stnName = stnPrice.getStnName();
+            log.i("station name: %s", stnName);
             tvStnName.setText(stnName);
 
             Map<String, Float> mapPrice = stnPrice.getStnPrice();

@@ -38,12 +38,12 @@ public class GasPriceRunnable implements Runnable {
     private static final String URLsido = OPINET + "avgSidoPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String URLsigun = OPINET + "avgSigunPrice.do?out=xml&code=" + API_KEY + "&sido=";
     private static final String SigunCode = "&sigun=";
-    private static final String URLstn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
+    //private static final String URLstn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
 
     static final int AVG = 0;
     static final int SIDO = 1;
     static final int SIGUN = 2;
-    static final int STATION = 3;
+    //static final int STATION = 3;
 
     static final int DOWNLOAD_PRICE_COMPLETE = 1;
     static final int DOWNLOAD_PRICE_FAILED = -1;
@@ -66,7 +66,7 @@ public class GasPriceRunnable implements Runnable {
         void setGasPriceThread(Thread currentThread);
         void handlePriceTaskState(int state);
         String getDistrictCode();
-        String getStationId();
+        //String getStationId();
     }
 
     // Constructor
@@ -80,12 +80,9 @@ public class GasPriceRunnable implements Runnable {
     @Override
     public void run() {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
         String sigunCode = task.getDistrictCode();
         String sidoCode = sigunCode.substring(0, 2);
-        String stnId = task.getStationId();
-        log.i("District code: %s, %s, %s", sigunCode, sidoCode, stnId);
-
+        //String stnId = task.getStationId();
         try {
             switch(category) {
                 case AVG:
@@ -94,6 +91,7 @@ public class GasPriceRunnable implements Runnable {
 
                     URL avgURL = new URL(URLavg);
                     HttpURLConnection avgConn = (HttpURLConnection)avgURL.openConnection();
+
                     try(InputStream avgIn = avgConn.getInputStream()) {
                         List<Opinet.OilPrice> avgList = xmlHandler.parseOilPrice(avgIn);
                         if (!avgList.isEmpty()) {
@@ -101,9 +99,8 @@ public class GasPriceRunnable implements Runnable {
                             savePriceInfo(avgList, Constants.FILE_CACHED_AVG_PRICE);
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    } catch(IOException e) {e.printStackTrace();}
+                    } finally {avgConn.disconnect();}
 
-                    avgConn.disconnect();
                     break;
 
                 case SIDO:
@@ -112,15 +109,15 @@ public class GasPriceRunnable implements Runnable {
 
                     URL sidoURL = new URL(URLsido + sidoCode);
                     HttpURLConnection sidoConn = (HttpURLConnection)sidoURL.openConnection();
+
                     try(InputStream sidoIn = sidoConn.getInputStream()) {
                         List<Opinet.SidoPrice> sidoList = xmlHandler.parseSidoPrice(sidoIn);
                         if (sidoList.size() > 0) {
                             savePriceInfo(sidoList, Constants.FILE_CACHED_SIDO_PRICE);
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    } catch(IOException e) {e.printStackTrace();}
+                    } finally {sidoConn.disconnect();}
 
-                    sidoConn.disconnect();
                     break;
 
                 case SIGUN:
@@ -129,6 +126,7 @@ public class GasPriceRunnable implements Runnable {
 
                     URL sigunURL = new URL(URLsigun + sidoCode + SigunCode + sigunCode);
                     HttpURLConnection sigunConn = (HttpURLConnection)sigunURL.openConnection();
+
                     try(InputStream sigunIn = sigunConn.getInputStream()) {
                         List<Opinet.SigunPrice> sigunList = xmlHandler.parseSigunPrice(sigunIn);
                         if (sigunList.size() > 0) {
@@ -136,16 +134,14 @@ public class GasPriceRunnable implements Runnable {
                             task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             sigunConn.disconnect();
                         } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                    } catch(IOException e) {e.printStackTrace();}
+                    } finally { sigunConn.disconnect(); }
 
-                    sigunConn.disconnect();
                     break;
-
+                /*
                 case STATION:
                     if(stnId != null) {
                         task.setGasPriceThread(Thread.currentThread());
                         if (Thread.interrupted()) throw new InterruptedException();
-
                         URL stnURL = new URL(URLstn + stnId);
                         HttpURLConnection stnConn = (HttpURLConnection) stnURL.openConnection();
                         try (InputStream stnIn = stnConn.getInputStream()) {
@@ -156,10 +152,12 @@ public class GasPriceRunnable implements Runnable {
                                 saveStationPriceDiff(stnPrice);
                                 task.handlePriceTaskState(DOWNLOAD_PRICE_COMPLETE);
                             } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
-                        }catch(IOException e) {e.printStackTrace();}
+                        } catch(IOException e) {e.printStackTrace();}
                         stnConn.disconnect();
                     } else task.handlePriceTaskState(DOWNLOAD_PRICE_FAILED);
                     break;
+
+                 */
             }
 
         } catch (IOException | InterruptedException e) { e.printStackTrace();}

@@ -43,6 +43,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.RecyclerDividerUtil;
@@ -105,9 +106,6 @@ public class MainActivity extends BaseActivity implements
     // is created
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
-
-
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -251,7 +249,7 @@ public class MainActivity extends BaseActivity implements
         gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
         mainPricePagerAdapter.setFuelCode(gasCode);
         //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
-        //mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
+        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
 
         // Update the average gas price and the hidden price bar.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
@@ -342,7 +340,6 @@ public class MainActivity extends BaseActivity implements
     // Implement onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        //binding.progbtnGas.setProgressColor(isStnViewOn);
         if(!isStnViewOn) {
             checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, ()->{
                 binding.progbtnGas.setProgressColor(isStnViewOn);
@@ -358,7 +355,6 @@ public class MainActivity extends BaseActivity implements
             // Return the viewpagers to the initial page.
             binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
             mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, 0);
-
         }
     }
 
@@ -609,37 +605,68 @@ public class MainActivity extends BaseActivity implements
         String district = resultIntent.getStringExtra("distCode");
         String gasType = resultIntent.getStringExtra("gasCode");
         String searchRadius = resultIntent.getStringExtra("searchRadius");
+        log.i("getting result: %s, %s, %s, %s", userName, district, gasType, searchRadius);
 
         // Update the user name
         if(!TextUtils.isEmpty(userName)) {
             Objects.requireNonNull(getSupportActionBar()).setTitle(userName);
         }
 
-        // Update the price in the viewpager, which depends upon whether either district or gas type
-        // or both changes.
-        if(!TextUtils.isEmpty(district) && !TextUtils.isEmpty(gasType)) {
-            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasType);
+        if(!TextUtils.isEmpty(district)) {
+            log.i("GasPriceTask successfully done: %s", gasCode);
+            gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
-                mainPricePagerAdapter.notifyItemChanged(0, gasType);
-                setGasSpinnerSelection(gasType);
-                setCollapsedPriceBar();
-            });
+                if(isDone) {
+                    if(!TextUtils.isEmpty(gasType)) {
+                        isGasTypeChanged = true;
+                        setGasSpinnerSelection(gasType);
+                        defaultParams[0] = gasType;
+                        mainPricePagerAdapter.notifyItemChanged(0, gasType);
+                    }
 
-        } else if(!TextUtils.isEmpty(district) && TextUtils.isEmpty(gasType)) {
-            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district, gasCode);
-            opinetModel.distPriceComplete().observe(this, isComplete -> {
-                log.i("GasPriceTask successfully done");
-                mainPricePagerAdapter.notifyItemChanged(0, gasCode);
-                setCollapsedPriceBar();
+                    setCollapsedPriceBar();
+                    mainPricePagerAdapter.notifyItemChanged(0, gasCode);
+                }
             });
+        }
 
-        } else if(!TextUtils.isEmpty(gasType) && TextUtils.isEmpty(district)) {
+        /*
+        if(!TextUtils.isEmpty(gasType)) {
             isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
             defaultParams[0] = gasType;
             mainPricePagerAdapter.notifyItemChanged(0, gasType);
         }
 
+        // Update the price in the viewpager, which depends upon whether either district or gas type
+        // or both changes.
+        if(district != null && gasType != null) {
+            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district);
+            opinetModel.distPriceComplete().observe(this, isDone -> {
+                if(isDone) {
+                    mainPricePagerAdapter.notifyItemChanged(0, gasType);
+                    setGasSpinnerSelection(gasType);
+                    setCollapsedPriceBar();
+                }
+            });
+
+        } else if (district != null) {
+            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district);
+            opinetModel.distPriceComplete().observe(this, isDone -> {
+                if(isDone) {
+                    log.i("GasPriceTask successfully done: %s", gasCode);
+                    mainPricePagerAdapter.notifyItemChanged(0, gasCode);
+                    setCollapsedPriceBar();
+                }
+            });
+
+        } else if(gasType != null) {
+            isGasTypeChanged = true;
+            setGasSpinnerSelection(gasType);
+            defaultParams[0] = gasType;
+            mainPricePagerAdapter.notifyItemChanged(0, gasType);
+        }
+        */
         // Reset the searching radius for near gas stations.
         if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;

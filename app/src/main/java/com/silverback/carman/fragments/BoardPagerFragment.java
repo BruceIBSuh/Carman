@@ -131,19 +131,17 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    // Singleton for the autoclub page which has the checkbox values and display title names
-    // in the tab menu.
+
     public static BoardPagerFragment newInstance(int page, ArrayList<String> values){
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
         args.putInt("currentPage", page);
         args.putStringArrayList("autoFilter", values);
         fragment.setArguments(args);
+
         return fragment;
     }
 
-
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

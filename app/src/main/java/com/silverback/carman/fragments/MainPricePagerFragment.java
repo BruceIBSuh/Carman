@@ -1,6 +1,7 @@
 package com.silverback.carman.fragments;
 
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,8 +35,6 @@ public class MainPricePagerFragment extends Fragment {
     private static final int STATION_PRICE = 1;
 
     private CarmanDatabase mDB;
-    private static MainPricePagerFragment distFragment;
-    private static MainPricePagerFragment stnFragment;
     private MainPagerDistrictPriceBinding distBinding;
     private MainPagerStationPriceBinding stnBinding;
     private FavoritePriceTask favPriceTask;
@@ -50,6 +49,8 @@ public class MainPricePagerFragment extends Fragment {
         // Default private construcotr leaving empty.
     }
 
+    // ViewPager fragment should instantiate multiple MainPricePagerFragment which depends on
+    // how many page the viewpager contains.
     public static MainPricePagerFragment getInstance(String fuelCode, int page) {
         MainPricePagerFragment fragment = new MainPricePagerFragment();
         Bundle args = new Bundle();
@@ -57,27 +58,11 @@ public class MainPricePagerFragment extends Fragment {
         args.putString("fuelCode", fuelCode);
         fragment.setArguments(args);
         return fragment;
-        /*
-        switch(page) {
-            case 0:
-                distFragment = new MainPricePagerFragment();
-                distFragment.setArguments(args);
-                return distFragment;
-            case 1:
-                stnFragment = new MainPricePagerFragment();
-                stnFragment.setArguments(args);
-                return stnFragment;
-            default:return new MainPricePagerFragment();
-
-        }
-
-         */
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // Objects
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
@@ -98,7 +83,6 @@ public class MainPricePagerFragment extends Fragment {
                 distBinding = MainPagerDistrictPriceBinding.inflate(inflater);
                 distBinding.sidoPriceView.addPriceView(fuelCode);
                 distBinding.sigunPriceView.addPriceView(fuelCode);
-
                 return distBinding.getRoot();
 
             case STATION_PRICE:
@@ -107,12 +91,13 @@ public class MainPricePagerFragment extends Fragment {
                 //stnBinding.stnPriceView.addPriceView(fuelCode);
 
                 mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
-                    if(id == null) {
+                    if(TextUtils.isEmpty(id)) {
                         stnBinding.stnPriceView.removePriceView("No Favorite Station exists");
                     } else {
-                        log.i("The second placeholder should be the first one: %s", id);
-                        favPriceTask = ThreadManager2.getInstance().getFavoriteStationTaskk(getContext(), opinetModel, id, true);
+                        log.i("FavPriceTask");
+                        favPriceTask = ThreadManager2.getFavoriteStationTask(getContext(), opinetModel, id, true);
                         opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
+                            log.i("new station price data saved in the file");
                             stnBinding.stnPriceView.addPriceView(fuelCode);
                         });
                     }
@@ -126,11 +111,10 @@ public class MainPricePagerFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        if(page == STATION_PRICE) {
-            opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
-                stnBinding.stnPriceView.addPriceView(fuelCode);
-            });
-        }
+        opinetModel.getFavoritePriceData().observe(getViewLifecycleOwner(), isDone -> {
+            log.i("new station price data saved in the file");
+            stnBinding.stnPriceView.addPriceView(fuelCode);
+        });
     }
 
     @Override

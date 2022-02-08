@@ -6,6 +6,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
+import java.lang.ref.WeakReference;
 import java.util.Map;
 
 public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnable.StationPriceMethods {
@@ -14,6 +15,7 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
 
     // Objects
     private OpinetViewModel viewModel;
+    private WeakReference<OpinetViewModel> weakModelReference;
     private final Runnable mPriceRunnableStation;
     private String stnId;
     private boolean isFirst;
@@ -24,7 +26,8 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     }
 
     void initTask(OpinetViewModel model, String stnId, boolean isFirst) {
-        viewModel = model;
+        //viewModel = model;
+        weakModelReference = new WeakReference<>(model);
         this.stnId = stnId;
         this.isFirst = isFirst;//check whether it is the firstholder or a station in the list.
     }
@@ -52,19 +55,20 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     // which pops up by clicking the fav button in ExpenseGasFragment
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
-        viewModel.getFavoritePriceData().postValue(data);
+        //viewModel.getFavoritePriceData().postValue(data);
+        weakModelReference.get().getFavoritePriceData().postValue(data);
     }
 
     @Override
     public void savePriceDiff() {
-        if(viewModel != null) {
-            log.i("savePriceDiff");
-            viewModel.favoritePriceComplete().postValue(true);
-        }
+        log.i("savePriceDiff");
+        weakModelReference.get().favoritePriceComplete().postValue(true);
     }
 
     public void recycle() {
-        isFirst = false;
-        stnId = null;
+        if(weakModelReference != null) {
+            weakModelReference.clear();
+            weakModelReference = null;
+        }
     }
 }
