@@ -109,9 +109,11 @@ public class ThreadManager2 {
                 if(task instanceof UploadBitmapTask) {
                     log.i("upload compressed bitmap done");
                     recycleTask(task);
+
                 } else if(task instanceof UploadPostTask) {
                     log.i("upload post done");
                     recycleTask(task);
+
                 } else recycleTask(task);
 
             }
@@ -231,14 +233,11 @@ public class ThreadManager2 {
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
     public static GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode) {
-
         GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
-        log.i("gasprice task: %s", gasPriceTask);
-
         //if(gasPriceTask == null)
             gasPriceTask = new GasPriceTask(context);
-
         gasPriceTask.initPriceTask(model, distCode);
+        log.i("gasprice task: %s", gasPriceTask);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSidoPriceRunnable());
@@ -341,16 +340,14 @@ public class ThreadManager2 {
             mGasPriceTaskQueue.offer((GasPriceTask)task);
         } else if(task instanceof LocationTask) {
             locationTask.recycle();
-            //locationTask = null;
             mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
             //stnListTask.recycle();
             //stnListTask = null;
             //mStnListTaskQueue.offer((StationListTask)task);
         } else if(task instanceof UploadBitmapTask) {
-            ((UploadBitmapTask)task).recycle();
+            task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
-
         } else if(task instanceof UploadPostTask) {
             task.recycle();
             mUploadPostTaskQueue.offer((UploadPostTask)task);

@@ -162,16 +162,16 @@ public class IntroActivity extends BaseActivity  {
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
 
             //mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(this, stnId -> {
-                gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, distCode);
-                // Notified of having each price of average, sido, sigun and the first placeholder of the
-                // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
-                // SharedPreferences to check whether the price should be updated for the next initiation.
-                opinetModel.distPriceComplete().observe(this, isDone -> {
-                    mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
-                    startActivity(new Intent(this, MainActivity.class));
-                    binding.pbIntro.setVisibility(View.GONE);
-                    finish();
-                });
+            gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, distCode);
+            // Notified of having each price of average, sido, sigun and the first placeholder of the
+            // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
+            // SharedPreferences to check whether the price should be updated for the next initiation.
+            opinetModel.distPriceComplete().observe(this, isDone -> {
+                mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
+                startActivity(new Intent(this, MainActivity.class));
+                binding.pbIntro.setVisibility(View.GONE);
+                finish();
+            });
             //});
 
         } else {

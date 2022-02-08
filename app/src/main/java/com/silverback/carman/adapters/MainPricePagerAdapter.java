@@ -24,7 +24,7 @@ import java.util.List;
  * first-set favorite gas station in PreferenceActivity, which is notified by favoritePriceComplete()
  * of OpinetViewModel in GeneralFragment.
  */
-//public class MainPricePagerAdapter extends FragmentStatePagerAdapter {
+
 public class MainPricePagerAdapter extends FragmentStateAdapter {
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(MainPricePagerAdapter.class);
@@ -42,8 +42,6 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        log.i("createFragment: %s", position);
-
         switch(position) {
             case 0:
                 log.i("first district fragment:%s", getItemId(position));

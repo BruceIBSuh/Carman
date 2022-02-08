@@ -146,6 +146,7 @@ public class MainActivity extends BaseActivity implements
         mainPricePagerAdapter = new MainPricePagerAdapter(this);
         mainPricePagerAdapter.setFuelCode(defaultParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
+        binding.mainTopFrame.avgPriceView.addPriceView(defaultParams[0]);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
@@ -248,13 +249,10 @@ public class MainActivity extends BaseActivity implements
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
         gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
         mainPricePagerAdapter.setFuelCode(gasCode);
-        //mainPricePagerAdapter.notifyDataSetChanged();//notifyDataSetChanged() should be the last resort.
-        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
-
-        // Update the average gas price and the hidden price bar.
         binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
+        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
+        // Update the average gas price and the hidden price bar.
         setCollapsedPriceBar();
-
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
@@ -613,9 +611,10 @@ public class MainActivity extends BaseActivity implements
         }
 
         if(!TextUtils.isEmpty(district)) {
-            log.i("GasPriceTask successfully done: %s", gasCode);
+            log.i("district: %s", district);
             gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
+                log.i("viewmodel");
                 if(isDone) {
                     if(!TextUtils.isEmpty(gasType)) {
                         isGasTypeChanged = true;
@@ -625,7 +624,8 @@ public class MainActivity extends BaseActivity implements
                     }
 
                     setCollapsedPriceBar();
-                    mainPricePagerAdapter.notifyItemChanged(0, gasCode);
+                    mainPricePagerAdapter.notifyItemRangeChanged(
+                            0, mainPricePagerAdapter.getItemCount(), gasCode);
                 }
             });
         }

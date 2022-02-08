@@ -87,6 +87,7 @@ public class GasPriceRunnable implements Runnable {
             switch(category) {
                 case AVG:
                     task.setGasPriceThread(Thread.currentThread());
+                    log.i("avg thread: %s", Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
 
                     URL avgURL = new URL(URLavg);
@@ -105,6 +106,7 @@ public class GasPriceRunnable implements Runnable {
 
                 case SIDO:
                     task.setGasPriceThread(Thread.currentThread());
+                    log.i("sido thread: %s", Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
 
                     URL sidoURL = new URL(URLsido + sidoCode);
@@ -122,6 +124,7 @@ public class GasPriceRunnable implements Runnable {
 
                 case SIGUN:
                     task.setGasPriceThread(Thread.currentThread());
+                    log.i("sigun thread: %s", Thread.currentThread());
                     if(Thread.interrupted()) throw new InterruptedException();
 
                     URL sigunURL = new URL(URLsigun + sidoCode + SigunCode + sigunCode);

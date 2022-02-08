@@ -94,6 +94,7 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     }
 
     public void recycle(){
+        log.i("recycle");
         if(weakModelReference != null) {
             weakModelReference.clear();
             weakModelReference = null;

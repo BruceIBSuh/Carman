@@ -94,10 +94,8 @@ public class MainPricePagerFragment extends Fragment {
                     if(TextUtils.isEmpty(id)) {
                         stnBinding.stnPriceView.removePriceView("No Favorite Station exists");
                     } else {
-                        log.i("FavPriceTask");
                         favPriceTask = ThreadManager2.getFavoriteStationTask(getContext(), opinetModel, id, true);
                         opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
-                            log.i("new station price data saved in the file");
                             stnBinding.stnPriceView.addPriceView(fuelCode);
                         });
                     }
