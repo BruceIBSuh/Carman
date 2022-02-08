@@ -76,9 +76,10 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     // Separate the gas price by category and handle it with corresponding viewmodel
     @Override
     public void handlePriceTaskState(int state) {
-        index ++;
         int outstate = -1;
+        index ++;
         if(index == 3) {
+            log.i("gas task done");
             weakModelReference.get().distPriceComplete().postValue(true);
             switch (state) {
                 case GasPriceRunnable.DOWNLOAD_PRICE_COMPLETE:
@@ -94,11 +95,10 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     }
 
     public void recycle(){
-        log.i("recycle");
+        index = 0;
         if(weakModelReference != null) {
             weakModelReference.clear();
             weakModelReference = null;
         }
     }
-
 }

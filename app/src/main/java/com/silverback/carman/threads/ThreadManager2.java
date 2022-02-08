@@ -208,7 +208,8 @@ public class ThreadManager2 {
 
     public GeocoderTask startGeocoderTask(Context context, LocationViewModel model, String addrs) {
         //GeocoderTask geocoderTask = (GeocoderTask)sInstance.mTaskWorkQueue.poll();
-        if(geocoderTask == null) geocoderTask = new GeocoderTask(context);
+        //if(geocoderTask == null)
+            geocoderTask = new GeocoderTask(context);
         geocoderTask.initGeocoderTask(model, addrs);
         InnerClazz.sInstance.threadPoolExecutor.execute(geocoderTask.getGeocoderRunnable());
         return geocoderTask;
@@ -234,10 +235,13 @@ public class ThreadManager2 {
     // file location.
     public static GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode) {
         GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
-        //if(gasPriceTask == null)
-            gasPriceTask = new GasPriceTask(context);
-        gasPriceTask.initPriceTask(model, distCode);
         log.i("gasprice task: %s", gasPriceTask);
+        if(gasPriceTask == null) {
+            log.i("new task created");
+            gasPriceTask = new GasPriceTask(context);
+        }
+
+        gasPriceTask.initPriceTask(model, distCode);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getSidoPriceRunnable());

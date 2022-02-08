@@ -194,7 +194,7 @@ public class MainActivity extends BaseActivity implements
         //activityResultLauncher.unregister();
         if(locationTask != null) locationTask = null;
         if(stationListTask != null) stationListTask = null;
-        if(gasPriceTask != null) gasPriceTask = null;
+        //if(gasPriceTask != null) gasPriceTask = null;
         super.onStop();
     }
 

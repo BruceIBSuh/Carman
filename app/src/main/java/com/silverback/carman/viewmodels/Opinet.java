@@ -9,7 +9,12 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
+
 public class Opinet  {
+
+    private static LoggingHelper log = LoggingHelperFactory.create(Opinet.class);
 
     public static class DistrictCode implements Serializable {
         private String districtCode;
@@ -160,6 +165,7 @@ public class Opinet  {
             return sigunName;
         }
         void setSigunName(String name) {
+            log.i("sigun name: %s", name);
             String[] sigunName = name.split("\\s+", 2); //Excludes Sido name from Sigun name
             this.sigunName = sigunName[1];
         }
