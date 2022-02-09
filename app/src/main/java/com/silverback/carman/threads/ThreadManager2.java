@@ -34,11 +34,16 @@ public class ThreadManager2 {
     static final int TASK_COMPLETE = 1;
     static final int TASK_FAIL = -1;
 
-    static final int FETCH_LOCATION_COMPLETED = 100;
-    static final int DOWNLOAD_NEAR_STATIONS = 101;
-    static final int DOWNLOAD_CURRENT_STATION = 102;
-    static final int FIRESTORE_STATION_GET_COMPLETED = 103;
-    static final int FIRESTORE_STATION_SET_COMPLETED = 104;
+    public final int DOWNLOAD_NEAR_STATIONS = 100;
+    public final int DOWNLOAD_CURRENT_STATION = 101;
+    public final int FIRESTORE_STATION_GET_COMPLETED = 103;
+    public final int FIRESTORE_STATION_SET_COMPLETED = 104;
+
+    static final int FETCH_LOCATION_COMPLETED = 102;
+    //static final int DOWNLOAD_NEAR_STATIONS = 101;
+    //static final int DOWNLOAD_CURRENT_STATION = 102;
+    //static final int FIRESTORE_STATION_GET_COMPLETED = 103;
+    //static final int FIRESTORE_STATION_SET_COMPLETED = 104;
     static final int DISTCODE_COMPLETED = 105;
     static final int UPLOAD_BITMAP_COMPLETED = 106;
     static final int UPLOAD_BITMAP_FAILED = -106;
@@ -146,18 +151,18 @@ public class ThreadManager2 {
             // Firestore. Otherwise, add the station(s) to Firestore w/ the carwash field left null.
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
             // from the Opinet and update other fields including the carwash field in Firestore.
+            case DOWNLOAD_CURRENT_STATION:
+                break;
             case DOWNLOAD_NEAR_STATIONS:
                 InnerClazz.sInstance.threadPoolExecutor.execute(
                         ((StationListTask)task).getFireStoreRunnable());
-                //InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getFireStoreRunnable());
-                //msg.sendToTarget();
                 break;
-
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 log.i("upload station data: %s", task);
-                InnerClazz.sInstance.threadPoolExecutor.execute(((StationListTask)task).setFireStoreRunnalbe());
+                InnerClazz.sInstance.threadPoolExecutor.execute(
+                        ((StationListTask)task).setFireStoreRunnalbe());
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
@@ -235,12 +240,7 @@ public class ThreadManager2 {
     // file location.
     public static GasPriceTask startGasPriceTask(Context context, OpinetViewModel model, String distCode) {
         GasPriceTask gasPriceTask = InnerClazz.sInstance.mGasPriceTaskQueue.poll();
-        log.i("gasprice task: %s", gasPriceTask);
-        if(gasPriceTask == null) {
-            log.i("new task created");
-            gasPriceTask = new GasPriceTask(context);
-        }
-
+        if(gasPriceTask == null) gasPriceTask = new GasPriceTask(context);
         gasPriceTask.initPriceTask(model, distCode);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(gasPriceTask.getAvgPriceRunnable());
@@ -251,7 +251,7 @@ public class ThreadManager2 {
         return gasPriceTask;
     }
 
-    public static FavoritePriceTask getFavoriteStationTask (
+    public static FavoritePriceTask startFavoriteStationTask(
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
         //FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
@@ -277,28 +277,15 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public StationListTask startStationListTask(StationListViewModel model, Location location, String[] params) {
-        // TEST Coding
-        log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
-        /*
-        for(int i = 0; i <  InnerClazz.sInstance.mThreadTaskQueue.size(); i++) {
-            ThreadTask task = InnerClazz.sInstance.mThreadTaskQueue.poll();
-            log.i("current task: %s", task);
-            if(task instanceof StationListTask) {
-                stnListTask = (StationListTask)task;
-                break;
-            }
-        }
-         */
+    public static StationListTask startStationListTask(
+            StationListViewModel model, Location location, String[] params) {
 
-        //stnListTask = (StationListTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        if(stnListTask == null) {
-            log.i("craete stationListTask");
-            stnListTask = new StationListTask();
-        }
-        stnListTask.initStationTask(model, location, params);
-        InnerClazz.sInstance.threadPoolExecutor.execute(stnListTask.getStationListRunnable());
-        return stnListTask;
+        StationListTask stationListTask = (StationListTask)InnerClazz.sInstance.mStnListTaskQueue.poll();
+        if(stationListTask == null) stationListTask = new StationListTask();
+        stationListTask.initStationTask(model, location, params);
+
+        InnerClazz.sInstance.threadPoolExecutor.execute(stationListTask.getStationListRunnable());
+        return stationListTask;
     }
 
     public static UploadBitmapTask uploadBitmapTask(
@@ -338,7 +325,6 @@ public class ThreadManager2 {
 
 
     private void recycleTask(ThreadTask task) {
-        log.i("recycle task: %s", task);
         if(task instanceof GasPriceTask) {
             task.recycle();
             mGasPriceTaskQueue.offer((GasPriceTask)task);
@@ -346,9 +332,8 @@ public class ThreadManager2 {
             locationTask.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
-            //stnListTask.recycle();
-            //stnListTask = null;
-            //mStnListTaskQueue.offer((StationListTask)task);
+            stnListTask.recycle();
+            mStnListTaskQueue.offer((StationListTask)task);
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);

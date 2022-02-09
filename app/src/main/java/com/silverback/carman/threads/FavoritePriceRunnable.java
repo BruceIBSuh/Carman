@@ -43,7 +43,7 @@ public class FavoritePriceRunnable implements Runnable {
     // Interface
     interface StationPriceMethods {
         String getStationId();
-        boolean getIsFirst();
+        boolean getIsFirst();//if true, the station will be viewed in MainActivity w/ the price.
         void setStnPriceThread(Thread thread);
         void setFavoritePrice(Map<String, Float> data);
         void savePriceDiff();
@@ -67,45 +67,49 @@ public class FavoritePriceRunnable implements Runnable {
             URL url = new URL(URLStn + stationId);
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
             try(InputStream in = conn.getInputStream()) {
-                Opinet.StationPrice currentData = xmlHandler.parseStationPrice(in);
-                //if(stnPriceData != null) {
-                final String stnName = currentData.getStnName();
-                final Map<String, Float> stnPrice = currentData.getStnPrice();
-                // The first favorite station which is to display in the MainActivity viewpager
-                // with the price info.
+                Opinet.StationPrice currentStation = xmlHandler.parseStationPrice(in);
+                final String stnName = currentStation.getStnName();
+
                 if(mCallback.getIsFirst()) {
-                    final File file = new File(mContext.getCacheDir(), Constants.FILE_CACHED_FAV_PRICE);
-                    if(!file.exists()) savePriceInfo(file, currentData);
-                    else {
-                        Uri uri = Uri.fromFile(file);
-                        try(InputStream is = mContext.getContentResolver().openInputStream(uri);
-                            ObjectInputStream ois = new ObjectInputStream(is)) {
-                            Opinet.StationPrice prevData = (Opinet.StationPrice)ois.readObject();
-                            if(Objects.equals(prevData.getStnName(), stnName)){
-                                log.i("get the price difference");
-                                Map<String, Float> current = currentData.getStnPrice();
-                                Map<String, Float> prev = prevData.getStnPrice();
-                                Map<String, Float> diffPrice = new HashMap<>();
+                    final File file = new File(mContext.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
+                    if(!file.exists()) {
+                        log.i("favorite station file not exists");
+                        savePriceInfo(file, currentStation);
+                        return;
+                    }
+                    // Read the saved station and compare the saved price w/ the current price if
 
-                                for (String key : current.keySet()) {
-                                    Float currentValue = current.get(key);
-                                    Float prevValue = prev.get(key);
-                                    if (currentValue == null) throw new NullPointerException();
-                                    if (prevValue == null) throw new NullPointerException();
-                                    diffPrice.put(key, currentValue - prevValue);
-                                    log.i("price diff: %s",  currentValue - prevValue);
-                                    currentData.setPriceDiff(diffPrice);
-                                }
+                    Uri uri = Uri.fromFile(file);
+                    try(InputStream is = mContext.getContentResolver().openInputStream(uri);
+                        ObjectInputStream ois = new ObjectInputStream(is)) {
+                        Opinet.StationPrice savedStation = (Opinet.StationPrice)ois.readObject();
+                        log.i("compare price: %s, %s", savedStation.getStnName(), stnName);
+                        if(Objects.equals(savedStation.getStnName(), stnName)){
+                            log.i("get the price difference");
+                            Map<String, Float> current = currentStation.getStnPrice();
+                            Map<String, Float> prev = savedStation.getStnPrice();
+                            Map<String, Float> diffPrice = new HashMap<>();
+
+                            for (String key : current.keySet()) {
+                                log.i("price key: %s", key);
+                                Float currentPrice = current.get(key);
+                                Float savedPrice = prev.get(key);
+                                if (currentPrice == null) throw new NullPointerException();
+                                if (savedPrice == null) throw new NullPointerException();
+                                diffPrice.put(key, currentPrice - savedPrice);
+                                log.i("price diff: %s",  currentPrice - savedPrice);
+                                currentStation.setPriceDiff(diffPrice);
                             }
-
-                            savePriceInfo(file, currentData);
-
-                        } catch(IOException | ClassNotFoundException | NullPointerException e) {
-                            e.printStackTrace();
                         }
 
+                        savePriceInfo(file, currentStation);
+
+                    } catch(IOException | ClassNotFoundException | NullPointerException e) {
+                        e.printStackTrace();
                     }
-                } else mCallback.setFavoritePrice(currentData.getStnPrice());
+
+                } else mCallback.setFavoritePrice(currentStation.getStnPrice());
+
             } finally { if(conn != null) conn.disconnect(); }
 
         } catch(IOException | InterruptedException e){e.printStackTrace(); }

@@ -325,7 +325,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
 
     private void setCurrentStation() {
         if(isGeofenceIntent) return;
-        stnListModel.getCurrentStation().observe(this, curStn -> {
+        stnListModel.getCurrentStation().observe(getViewLifecycleOwner(), curStn -> {
             log.i("current station");
             if(curStn != null) {
                 stnName = curStn.getStnName();
@@ -338,7 +338,6 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 // has registered with Favorite.
                 checkGasFavorite(stnName, stnId);
             }
-
             binding.pbSearchStation.setVisibility(View.GONE);
             binding.imgbtnGasSearch.setVisibility(View.VISIBLE);
         });

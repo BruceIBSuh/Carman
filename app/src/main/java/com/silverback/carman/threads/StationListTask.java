@@ -7,6 +7,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public class StationListTask extends ThreadTask implements
@@ -24,9 +25,12 @@ public class StationListTask extends ThreadTask implements
     static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
+    static final int FIRESTORE_GET_FAIL = -3;
+    static final int FIRESTORE_SET_FAIL = -4;
 
     // Objects
     private StationListViewModel viewModel;
+    private WeakReference<StationListViewModel> weakModelReference;
     private final Runnable mStationListRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
@@ -52,7 +56,8 @@ public class StationListTask extends ThreadTask implements
     void initStationTask(StationListViewModel viewModel, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
-        this.viewModel = viewModel;
+        //this.viewModel = viewModel;
+        weakModelReference = new WeakReference<>(viewModel);
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -62,8 +67,10 @@ public class StationListTask extends ThreadTask implements
 
     // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
-        mStationList = null;
-        defaultParams = null;
+        if(weakModelReference != null) {
+            weakModelReference.clear();
+            weakModelReference = null;
+        }
     }
 
     // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
@@ -76,7 +83,8 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
-        viewModel.getNearStationList().postValue(mStationList);
+        //viewModel.getNearStationList().postValue(mStationList);
+        weakModelReference.get().getNearStationList().postValue(mStationList);
     }
 
     @Override
@@ -92,7 +100,8 @@ public class StationListTask extends ThreadTask implements
         // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
             log.i("Invoke CarWash viewmodel");
-            viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
+            //viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
+            weakModelReference.get().getStationCarWashInfo().postValue(sparseBooleanArray);
         }
     }
 
@@ -100,16 +109,18 @@ public class StationListTask extends ThreadTask implements
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
         //postValue() used in worker thread. In UI thread, use setInputValue().
-        viewModel.getCurrentStation().postValue(station);
+        //viewModel.getCurrentStation().postValue(station);
+        weakModelReference.get().getCurrentStation().postValue(station);
     }
 
-    /*
+
     @Override
     public void notifyException(String msg) {
         //log.i("Exception occurred: %s", msg);
         //viewModel.getExceptionMessage().postValue(msg);
+        weakModelReference.get().getExceptionMessage().postValue(msg);
     }
-    */
+
 
 
     // The following  callbacks are invoked by StationListRunnable to retrieve stations within
@@ -140,31 +151,36 @@ public class StationListTask extends ThreadTask implements
         int outState = -1;
         switch (state) {
             case DOWNLOAD_NEAR_STATIONS:
-                outState = ThreadManager2.DOWNLOAD_NEAR_STATIONS;
+                outState = sThreadManager.DOWNLOAD_NEAR_STATIONS;
                 break;
 
             case DOWNLOAD_CURRENT_STATION:
-                outState = ThreadManager2.DOWNLOAD_CURRENT_STATION;
+                outState = sThreadManager.DOWNLOAD_CURRENT_STATION;
                 break;
 
             case FIRESTORE_GET_COMPLETE:
-                outState = ThreadManager2.FIRESTORE_STATION_GET_COMPLETED;
+                outState = sThreadManager.FIRESTORE_STATION_GET_COMPLETED;
                 break;
 
             case FIRESTORE_SET_COMPLETE:
-                outState = ThreadManager2.FIRESTORE_STATION_SET_COMPLETED;
+                outState = sThreadManager.FIRESTORE_STATION_SET_COMPLETED;
                 break;
 
             case DOWNLOAD_NEAR_STATIONS_FAIL:
-                viewModel.getNearStationList().postValue(mStationList);
+                //viewModel.getNearStationList().postValue(mStationList);
                 outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
                 break;
 
             case DOWNLOAD_CURRENT_STATION_FAIL:
-                viewModel.getCurrentStation().postValue(null);
+                //viewModel.getCurrentStation().postValue(null);
                 outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
                 break;
 
+            case FIRESTORE_GET_FAIL:
+                break;
+
+            case FIRESTORE_SET_FAIL:
+                break;
             default: break;
         }
 

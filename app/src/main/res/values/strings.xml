@@ -389,4 +389,6 @@
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
+    <string name="err_current_station">반경내 주유소를 찾을 수 없습니다</string>
+
 </resources>

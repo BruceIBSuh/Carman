@@ -247,10 +247,16 @@ public class MainActivity extends BaseActivity implements
     // Implement AdapterView(Spinner).OnItemSelectedListener
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
-        gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
+        //gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
+        if(defaultParams[0].matches(arrGasCode[pos])) {
+            gasCode = defaultParams[0];
+        } else {
+            gasCode = arrGasCode[pos];
+            binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
+        }
+
         mainPricePagerAdapter.setFuelCode(gasCode);
-        binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
-        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount(), gasCode);
+        mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount() - 1, gasCode);
         // Update the average gas price and the hidden price bar.
         setCollapsedPriceBar();
         // As far as the near-station recyclerview is in the foreground, update the price info with
@@ -259,7 +265,7 @@ public class MainActivity extends BaseActivity implements
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            stationListTask = sThreadManager.startStationListTask(stnModel, mPrevLocation, defaultParams);
+            stationListTask = ThreadManager2.startStationListTask(stnModel, mPrevLocation, defaultParams);
         }
     }
     @Override

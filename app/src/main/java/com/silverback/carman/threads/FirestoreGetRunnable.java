@@ -4,8 +4,6 @@ import android.os.Process;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.Query;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
@@ -30,6 +28,7 @@ public class FirestoreGetRunnable implements Runnable {
         void setStationTaskThread(Thread thread);
         void setStationId(String stnId);
         void setCarWashInfo(int position, boolean isCarwash);
+        void notifyException(String msg);
         void handleTaskState(int state);
     }
 
@@ -44,9 +43,12 @@ public class FirestoreGetRunnable implements Runnable {
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         stnList = mCallback.getStationList();
+        log.i("FirestoreGetRunnable thread: %s", Thread.currentThread());
+
         try {
             if(Thread.interrupted()) throw new InterruptedException();
         } catch (InterruptedException e) {
+            mCallback.notifyException(e.getLocalizedMessage());
             e.printStackTrace();
         }
 
@@ -55,6 +57,7 @@ public class FirestoreGetRunnable implements Runnable {
             final int pos = i;
             String stnId = stnList.get(pos).getStnId();
             final DocumentReference docRef = firestore.collection("gas_station").document(stnId);
+
             /* Process for adding new gas stations if no documents exists in FireStore, initiating
              * FirestoreSetRunnable with a station id passed which calls Opinet.GasStationInfo
              * to add additional info to FireStore. SnapshotListener notifies the task of being
@@ -62,22 +65,27 @@ public class FirestoreGetRunnable implements Runnable {
              * On the other hand, if any document exists, directly read "carwash" field.
              */
             docRef.addSnapshotListener((snapshot, e) -> {
-                if(e != null) return;
+                if(e != null) {
+                    mCallback.notifyException(e.getLocalizedMessage());
+                    mCallback.handleTaskState(StationListTask.FIRESTORE_GET_FAIL);
+                    return;
+                }
+
                 // Bugs frequently occurred here maybe b/c snapshot.get("carwash") would sometimes
                 // result in null value. Bugs may be fixed by the following way.
                 // If snapshot data is null, make it false to get it countered in SparseBooleanArray
                 // to notify when it should send the notification to end up the array.
                 if(snapshot != null && snapshot.exists()){
                     if(snapshot.get("carwash") != null) {
-                        log.i("car wash:%s", snapshot.get("carwash"));
                         Boolean hasCarwash = snapshot.getBoolean("carwash");
                         if(hasCarwash != null) mCallback.setCarWashInfo(pos, hasCarwash);
                         //mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
                     } else {
                         mCallback.setCarWashInfo(pos, false); //to match the number w/ the station list.
-                        setStationData(pos);
+                        uploadStationData(pos);
                     }
-                } else setStationData(pos);
+
+                } else uploadStationData(pos);
             });
         }
     }
@@ -85,7 +93,7 @@ public class FirestoreGetRunnable implements Runnable {
     // Upload data of a station which have not been uploaded to Firestore before, notifying
     // FirestoreSetRunnable of station ids to have additional information from Opinet and upload
     // it to Firestore.
-    private void setStationData(final int position) {
+    private void uploadStationData(final int position) {
         final String stnId = stnList.get(position).getStnId();
         Map<String, Object> stnData = new HashMap<>();
         stnData.put("stn_name", stnList.get(position).getStnName());

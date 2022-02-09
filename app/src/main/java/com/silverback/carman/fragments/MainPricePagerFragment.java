@@ -10,7 +10,6 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.silverback.carman.R;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.MainPagerDistrictPriceBinding;
 import com.silverback.carman.databinding.MainPagerStationPriceBinding;
@@ -19,9 +18,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.views.OpinetStationPriceView;
 
 /**
  * This fragment is to display the gas prices of the district and the favorite station.
@@ -39,7 +36,6 @@ public class MainPricePagerFragment extends Fragment {
     private MainPagerStationPriceBinding stnBinding;
     private FavoritePriceTask favPriceTask;
     private OpinetViewModel opinetModel;
-    private FragmentSharedModel fragmentModel;
     private int page;
     private String fuelCode;
 
@@ -64,14 +60,12 @@ public class MainPricePagerFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         opinetModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
     }
 
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedStateInstance) {
-        log.i("onCreateView of MainPricePagerFragment");
         if(getArguments() != null) {
             page = getArguments().getInt("page");
             fuelCode = getArguments().getString("fuelCode");
@@ -88,16 +82,14 @@ public class MainPricePagerFragment extends Fragment {
             case STATION_PRICE:
                 log.i("STATION_PRICE");
                 stnBinding = MainPagerStationPriceBinding.inflate(inflater);
-                //stnBinding.stnPriceView.addPriceView(fuelCode);
-
                 mDB.favoriteModel().getFirstFavorite(Constants.GAS).observe(getViewLifecycleOwner(), id -> {
                     if(TextUtils.isEmpty(id)) {
                         stnBinding.stnPriceView.removePriceView("No Favorite Station exists");
                     } else {
-                        favPriceTask = ThreadManager2.getFavoriteStationTask(getContext(), opinetModel, id, true);
-                        opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone -> {
-                            stnBinding.stnPriceView.addPriceView(fuelCode);
-                        });
+                        favPriceTask = ThreadManager2.startFavoriteStationTask(getContext(), opinetModel, id, true);
+                        opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone ->
+                            stnBinding.stnPriceView.addPriceView(fuelCode)
+                        );
                     }
                 });
 

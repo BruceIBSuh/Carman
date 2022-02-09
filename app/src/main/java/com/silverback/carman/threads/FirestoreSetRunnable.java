@@ -49,63 +49,54 @@ public class FirestoreSetRunnable implements Runnable {
     public void run() {
         mCallback.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        log.i("FirestoreSetRunnable: %s", Thread.currentThread());
 
         final String stnId = mCallback.getStationId();
-        String OPINET_DETAIL = OPINET + "&id=" + stnId;
-        HttpURLConnection conn = null;
-        InputStream is = null;
+        final String OPINET_DETAIL = OPINET + "&id=" + stnId;
+        //HttpURLConnection conn = null;
+        //InputStream is = null;
         try {
-            if(Thread.interrupted()) throw new InterruptedException();
+            if (Thread.interrupted()) throw new InterruptedException();
 
             URL url = new URL(OPINET_DETAIL);
-            conn = (HttpURLConnection) url.openConnection();
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             //conn.connect();
+            try (InputStream is = new BufferedInputStream(conn.getInputStream())) {
+                Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
 
-            is = new BufferedInputStream(conn.getInputStream());
-            Opinet.GasStationInfo stnInfo = xmlHandler.parseGasStationInfo(is);
+                boolean isCarwash = stnInfo.getIsCarWash() != null && stnInfo.getIsCarWash().equalsIgnoreCase("Y");
+                boolean isService = stnInfo.getIsService() != null && stnInfo.getIsService().equalsIgnoreCase("Y");
+                boolean isCVS = stnInfo.getIsCVS() != null && stnInfo.getIsCVS().equalsIgnoreCase("Y");
 
-            boolean isCarwash = stnInfo.getIsCarWash() != null && stnInfo.getIsCarWash().equalsIgnoreCase("Y");
-            boolean isService = stnInfo.getIsService() != null && stnInfo.getIsService().equalsIgnoreCase("Y");
-            boolean isCVS = stnInfo.getIsCVS() != null && stnInfo.getIsCVS().equalsIgnoreCase("Y");
+                // Set additional station info to FireStore using Transaction.
+                final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
 
-            // Set additional station info to FireStore using Transaction.
-            final DocumentReference docRef = fireStore.collection("gas_station").document(stnId);
+                Map<String, Object> data = new HashMap<>();
+                data.put("new_addrs", stnInfo.getNewAddrs());
+                data.put("old_addrs", stnInfo.getOldAddrs());
+                data.put("phone", stnInfo.getTelNo());
+                data.put("carwash", isCarwash);
+                data.put("service", isService);
+                data.put("cvs", isCVS);
+                log.i("carwash from StationInfo: %s", isCarwash);
 
-            Map<String, Object> data = new HashMap<>();
-            data.put("new_addrs", stnInfo.getNewAddrs());
-            data.put("old_addrs", stnInfo.getOldAddrs());
-            data.put("phone", stnInfo.getTelNo());
-            data.put("carwash", isCarwash);
-            data.put("service", isService);
-            data.put("cvs", isCVS);
-            log.i("carwash from StationInfo: %s", isCarwash);
+                fireStore.runTransaction(transaction -> {
+                    DocumentSnapshot snapshot = transaction.get(docRef);
+                    if (snapshot.exists()) {
+                        transaction.set(docRef, data, SetOptions.merge());
+                        mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                    }
 
-            fireStore.runTransaction(transaction -> {
-                DocumentSnapshot snapshot = transaction.get(docRef);
-                if(snapshot.exists()) {
-                    transaction.set(docRef, data, SetOptions.merge());
-                    mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
-                }
-
-                return null;
-
-            }).addOnSuccessListener(aVoid -> log.i("Successfully set data to FireStore"))
-                    .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
+                    return null;
+                }).addOnSuccessListener(aVoid -> log.i("Successfully set data to FireStore"))
+                        .addOnFailureListener(e -> log.e("Failed to set data to FireStore:%s", e.getMessage()));
+            } finally { conn.disconnect(); }
 
         } catch (IOException | InterruptedException e) {
             log.e("Exception : %s", e.getMessage());
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (conn != null) conn.disconnect();
         }
     }
 }

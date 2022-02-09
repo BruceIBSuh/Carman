@@ -3,6 +3,8 @@ package com.silverback.carman.threads;
 import android.location.Location;
 import android.os.Process;
 
+import androidx.core.content.ContextCompat;
+
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.coords.GeoPoint;
 import com.silverback.carman.coords.GeoTrans;
@@ -39,7 +41,7 @@ public class StationListRunnable implements Runnable{
         void setStationTaskThread(Thread thread);
         void setStationList(List<Opinet.GasStnParcelable> list);
         void setCurrentStation(Opinet.GasStnParcelable station);
-        //void notifyException(String msg);
+        void notifyException(String msg);
         void handleTaskState(int state);
     }
 
@@ -54,6 +56,7 @@ public class StationListRunnable implements Runnable{
     public void run() {
         mTask.setStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+        log.i("statinlistrunnable thread: %s", Thread.currentThread());
 
         String[] defaultParams = mTask.getDefaultParam();
         Location location = mTask.getStationLocation();
@@ -62,16 +65,15 @@ public class StationListRunnable implements Runnable{
         String fuelCode = defaultParams[0];
         String radius = defaultParams[1];
         String sort = defaultParams[2];
-        log.i("defaultParams: %s, %s, %s", fuelCode, radius, sort);
 
         // Convert longitute and latitude-based location to TM(Transverse Mercator), then again to
-        // Katec location using convertgeocoords which is distributed over internet^^ tnx.
+        // Katec location using the coords package, which is distributed over internet^^.
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
         GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);
         GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
-        log.i("location x, y: %f %f", x, y);
+
         // Complete the OPINET_ARUND URL w/ the given requests
         final String OPINET_AROUND = OPINET
                 + "&x=" + x
@@ -80,44 +82,37 @@ public class StationListRunnable implements Runnable{
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
 
-        XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
-        HttpURLConnection conn = null;
-        InputStream is = null;
         try {
             if(Thread.interrupted()) throw new InterruptedException();
             final URL url = new URL(OPINET_AROUND);
-
-            conn = (HttpURLConnection)url.openConnection();
+            XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
+            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
             conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();
-
-            is = new BufferedInputStream(conn.getInputStream());
-            mStationList = xmlHandler.parseStationListParcelable(is);
-
-            // Get near stations which may be the current station if MIN_RADIUS is given as param or
-            // it should be near stations located within SEARCHING_RADIUS.
-            if(mStationList.size() > 0) {
-                if(radius.matches(Constants.MIN_RADIUS)) {
-                    mTask.setCurrentStation(mStationList.get(0));
-                    mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION);
+            try(InputStream is = new BufferedInputStream(conn.getInputStream())) {
+                mStationList = xmlHandler.parseStationListParcelable(is);
+                // Get near stations which may be the current station if MIN_RADIUS is given as param or
+                // it should be near stations located within SEARCHING_RADIUS.
+                if(mStationList.size() > 0) {
+                    if(radius.matches(Constants.MIN_RADIUS)) {
+                        mTask.setCurrentStation(mStationList.get(0));
+                        mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION);
+                    } else {
+                        mTask.setStationList(mStationList);
+                        mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS);
+                    }
                 } else {
-                    mTask.setStationList(mStationList);
-                    mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS);
+                    if(radius.matches(Constants.MIN_RADIUS)) {
+                        mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
+                    } else mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
                 }
-            } else {
-                if(radius.matches(Constants.MIN_RADIUS)) {
-                    mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
-                } else mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-            }
+            } finally { conn.disconnect(); }
+
         } catch (IOException | InterruptedException e) {
-            //mTask.notifyException(e.getMessage());
+            mTask.notifyException(e.getLocalizedMessage());
             mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
-        } finally {
-            try { if(is != null) is.close(); }
-            catch (IOException e) { e.printStackTrace(); }
-            if(conn != null) conn.disconnect();
         }
     }
 

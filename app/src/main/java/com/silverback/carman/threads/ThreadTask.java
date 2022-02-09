@@ -13,7 +13,7 @@ public class ThreadTask {
     static final int TASK_FAIL = -1;
 
     // Objects
-    protected static ThreadManager2 sThreadManager;
+    protected ThreadManager2 sThreadManager;
     private Thread mCurrentThread;
     Thread mThreadThis;
 
