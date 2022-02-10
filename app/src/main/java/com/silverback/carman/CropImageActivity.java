@@ -14,6 +14,7 @@ import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.google.firebase.appcheck.interop.BuildConfig;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -27,6 +28,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Objects;
 
 
 /**
@@ -81,53 +83,45 @@ public class CropImageActivity extends AppCompatActivity implements View.OnClick
     @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onClick(View v) {
+        if(v.getId() == R.id.btn_editor_confirm) {
+            // Get the cropped image from DrawView.getCroppedBitmap
+            Bitmap croppedBitmap = drawView.getCroppedBitmap();
+            if(croppedBitmap == null) return;
 
-        switch(v.getId()) {
-            case R.id.btn_editor_confirm:
-                // Get the cropped image from DrawView.getCroppedBitmap
-                Bitmap croppedBitmap = drawView.getCroppedBitmap();
-                if(croppedBitmap == null) return;
+            // Save the cropped image in the internal storage with the path of "images/",
+            // then return its uri using FileProvder
+            File imagePath = new File(getFilesDir(), "images/");
+            if(!imagePath.exists()) imagePath.mkdir();
 
-                // Save the cropped image in the internal storage with the path of "images/",
-                // then return its uri using FileProvder
-                File imagePath = new File(getFilesDir(), "images/");
-                if(!imagePath.exists()) imagePath.mkdir();
+            SimpleDateFormat sdf = new SimpleDateFormat("hhmmss", Locale.US);
+            String filename = sdf.format(Calendar.getInstance().getTimeInMillis());
 
-                SimpleDateFormat sdf = new SimpleDateFormat("hhmmss", Locale.US);
-                String filename = sdf.format(Calendar.getInstance().getTimeInMillis());
+            File imgFile = new File(imagePath, filename + ".jpg");
+            if(imgFile.exists()) imgFile.delete();
 
-                File fCropImage = new File(imagePath, filename + ".jpg");
-                //if(fCropImage.exists()) fCropImage.delete();
+            // Scale down the cropped image to the default size(50kb)
+            byte[] byteUserImage = scaleDownCroppedBitmap(croppedBitmap);
 
-                // Scale down the cropped image to the default size(50kb)
-                byte[] byteUserImage = scaleDownCroppedBitmap(croppedBitmap);
+            try(FileOutputStream fos = new FileOutputStream(imgFile);
+                BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+                bos.write(byteUserImage);
+            } catch(IOException e) {
+                e.printStackTrace();
+            } finally {
+                // FileProvider which convert the file format to the content uri.  It defines
+                // the file path in file_path.xml as a meta data.
+                Uri croppedUri = FileProvider.getUriForFile(
+                        getApplicationContext(), Constants.FILE_IMAGES, imgFile);
 
-                try(FileOutputStream fos = new FileOutputStream(fCropImage);
-                    BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                    bos.write(byteUserImage);
-
-                } catch(IOException e) {
-                    e.printStackTrace();
-
-                } finally {
-                    // FileProvider which convert the file format to the content uri.  It defines
-                    // the file path in file_path.xml as a meta data.
-                    Uri cropUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, fCropImage);
-
-                    Intent resultIntent = new Intent();
-                    resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    resultIntent.setData(cropUri);
-                    setResult(RESULT_OK, resultIntent);
-
-                    finish();
-                }
-
-                break;
-
-            case R.id.btn_editor_cancel:
+                Intent resultIntent = new Intent();
+                resultIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                resultIntent.putExtra("croppedUri", croppedUri.toString());
+                resultIntent.setData(croppedUri);
+                setResult(RESULT_OK, resultIntent);
                 finish();
-                break;
-        }
+            }
+
+        } else finish();
 
     }
 

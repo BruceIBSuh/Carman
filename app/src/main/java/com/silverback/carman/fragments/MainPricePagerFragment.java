@@ -100,14 +100,6 @@ public class MainPricePagerFragment extends Fragment {
     }
 
     @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        opinetModel.getFavoritePriceData().observe(getViewLifecycleOwner(), isDone -> {
-            log.i("new station price data saved in the file");
-            stnBinding.stnPriceView.addPriceView(fuelCode);
-        });
-    }
-
-    @Override
     public void onPause() {
         super.onPause();
         if(favPriceTask != null) favPriceTask = null;

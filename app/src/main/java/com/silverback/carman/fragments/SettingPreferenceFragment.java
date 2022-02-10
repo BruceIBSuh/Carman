@@ -1,13 +1,20 @@
 package com.silverback.carman.fragments;
 
 
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -19,6 +26,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
+import com.silverback.carman.SettingActivity;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.FavoriteProviderDao;
 import com.silverback.carman.logs.LoggingHelper;
@@ -33,6 +41,10 @@ import com.silverback.carman.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.Objects;
 
 /*
@@ -53,23 +65,30 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     private Preference userImagePref;
     private String nickname;
 
-    //private DecimalFormat df;
-
     // Custom preferences defined in views package
     private ProgressBarPreference autoPref; // custom preference to show the progressbar.
     private SpinnerDialogPreference spinnerPref;
     private Preference favorite;
 
-    // Fields
+    private View parentView;
     private JSONArray jsonDistrict;
     private String sigunCode;
     private String regMakerNum;
 
-    //@SuppressWarnings("ConstantConditions")
+
+
+    @Override
+    public View onCreateView(
+            @NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+        this.parentView = parent;
+        return super.onCreateView(inflater, parent, savedInstanceState);
+    }
+
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
+
         String jsonString = requireArguments().getString("district");
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
@@ -97,7 +116,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
-        log.i("maker name: %s", makerName);
         if(TextUtils.isEmpty(makerName) || makerName.matches(getString(R.string.pref_entry_void))) {
             autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         } else {
@@ -187,12 +205,12 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
             // Carmera permission check.
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
-                Snackbar.make(getView(), R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
+                Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;
             }
 
-            DialogFragment dialogFragment = new CropImageDialogFragment();
-            dialogFragment.show(requireActivity().getSupportFragmentManager(), null);
+            DialogFragment dialogFragment = new BoardChooserDlgFragment();
+            dialogFragment.show(getChildFragmentManager(), "imageMediaChooser");
             return true;
         });
 
@@ -236,6 +254,11 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
             spinnerPref.setSummaryProvider(preference -> String.format("%s %s", distList.get(0), distList.get(1)));
             JSONArray jsonArray = new JSONArray(distList);
             mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+        });
+
+        fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), media -> {
+            log.i("ImageMediaChooser: %s", media);
+            ((SettingActivity)requireActivity()).selectImageMedia(media);
         });
     }
 
@@ -297,6 +320,11 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         } else {
             super.onDisplayPreferenceDialog(pref);
         }
+
+    }
+
+    // ActivityResult Callback to get the uri of an attached image
+    private void getAttachedImageUri() {
 
     }
 

@@ -17,7 +17,7 @@ import android.view.ViewGroup;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
-import com.silverback.carman.adapters.SettingFavoriteAdapter;
+import com.silverback.carman.adapters.SettingFavAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.FavoriteProviderEntity;
 import com.silverback.carman.logs.LoggingHelper;
@@ -31,7 +31,7 @@ import java.util.List;
  * A simple {@link Fragment} subclass.
  */
 public class SettingFavorSvcFragment extends Fragment implements
-        SettingFavoriteAdapter.OnFavoriteAdapterListener{
+        SettingFavAdapter.OnFavoriteAdapterListener{
 
     // Constants
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavorSvcFragment.class);
@@ -41,7 +41,7 @@ public class SettingFavorSvcFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private List<FavoriteProviderEntity> favoriteEntityList;
     private SparseArray<DocumentSnapshot> snapshotArray;
-    private SettingFavoriteAdapter mAdapter;
+    private SettingFavAdapter mAdapter;
 
 
     public SettingFavorSvcFragment() {
@@ -74,7 +74,7 @@ public class SettingFavorSvcFragment extends Fragment implements
 
             favoriteEntityList = favoriteList;
             // Make the item drag by invoking ItemTouchHelperCallback
-            mAdapter = new SettingFavoriteAdapter(favoriteList, snapshotArray, this);
+            mAdapter = new SettingFavAdapter(favoriteList, snapshotArray, this);
             ItemTouchHelperCallback callback = new ItemTouchHelperCallback(getContext(), mAdapter);
             ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
             itemTouchHelper.attachToRecyclerView(recyclerView);
@@ -106,21 +106,16 @@ public class SettingFavorSvcFragment extends Fragment implements
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         if(menuItem.getItemId() == android.R.id.home) {
-
+            // Update the placeholder in FavoriteProviderEntity accroding to the position of
+            // edited fasvorte list.
             List<FavoriteProviderEntity> favoriteList = mAdapter.getFavoriteList();
             int position = 0;
-
-            // Update the placeholder in FavoriteProviderEntity accroding to the position of
-            // the edited fasvorte list.
             for(FavoriteProviderEntity entity : favoriteList) {
                 entity.placeHolder = position;
                 position++;
             }
-
             mDB.favoriteModel().updatePlaceHolder(favoriteList);
-
         }
-
         return true;
     }
 

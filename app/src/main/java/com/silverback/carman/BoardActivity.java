@@ -564,7 +564,7 @@ public class BoardActivity extends BaseActivity implements
     // (camera or gallery) to select in BoardChooserDlgFragment. According to the selected media,
     // startActivityForResult() defined in the parent activity is invoked and the result is notified
     // to the activity and it is, in turn, sent back here by calling
-    public void getImageFromChooser(int media) {
+    public void selectImageMedia(int media) {
         switch(media) {
             case Constants.GALLERY:
                 mGetContent.launch("image/*");

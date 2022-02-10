@@ -21,9 +21,8 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     // Objects and Fields
     //private OpinetViewModel viewModel;
     private WeakReference<OpinetViewModel> weakModelReference;
-    private final Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable;//, mStationPriceRunnable;
+    private final Runnable mAvgPriceRunnable, mSidoPriceRunnable, mSigunPriceRunnable;
     private String distCode;
-    private String stnId;
     private int index = 0;
 
     GasPriceTask(Context context) {
@@ -31,15 +30,12 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         mAvgPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.AVG);
         mSidoPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIDO);
         mSigunPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.SIGUN);
-        //mStationPriceRunnable = new GasPriceRunnable(context, this, GasPriceRunnable.STATION);
     }
 
     // Initialize args
     void initPriceTask(OpinetViewModel viewModel, String distCode) {
-        //this.viewModel = viewModel;
         this.distCode = distCode;
         this.weakModelReference = new WeakReference<>(viewModel);
-        //this.stnId = stnId;
     }
 
     // Getter for the Runnable invoked by startGasPriceTask() in ThreadManager
@@ -52,8 +48,6 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
     Runnable getSigunPriceRunnable(){
         return mSigunPriceRunnable;
     }
-    //Runnable getStationPriceRunnable() { return mStationPriceRunnable; }
-
 
     // Callback methods defined in GasPriceRunnable.OpinentPriceListMethods
     @Override
@@ -66,27 +60,19 @@ public class GasPriceTask extends ThreadTask implements GasPriceRunnable.OpinetP
         return distCode;
     }
 
-    /*
-    @Override
-    public String getStationId() {
-        return stnId;
-    }
-     */
-
     // Separate the gas price by category and handle it with corresponding viewmodel
     @Override
     public void handlePriceTaskState(int state) {
         int outstate = -1;
         index ++;
         if(index == 3) {
-            log.i("gas task done");
             weakModelReference.get().distPriceComplete().postValue(true);
             switch (state) {
                 case GasPriceRunnable.DOWNLOAD_PRICE_COMPLETE:
-                    outstate = ThreadManager2.TASK_COMPLETE;
+                    outstate = sThreadManager.TASK_COMPLETE;
                     break;
                 case GasPriceRunnable.DOWNLOAD_PRICE_FAILED:
-                    outstate = ThreadManager2.TASK_FAIL;
+                    outstate = sThreadManager.TASK_FAIL;
                     break;
             }
 

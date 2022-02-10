@@ -42,7 +42,6 @@ public class FavoriteGeofenceHelper {
 
     // Objects
     private final Context context;
-
     private final FirebaseFirestore firestore;
     private final CarmanDatabase mDB;
     private final FavoriteProviderEntity favoriteModel;

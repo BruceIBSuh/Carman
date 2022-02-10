@@ -87,7 +87,7 @@ public class Constants {
     public static final String FILE_FAVORITE_PRICE = "com.silverback.carman.FAV_PRICE";
     public static final String FILE_DISTRICT_CODE = "com.silverback.carman.DIST_CODE";
     public static final String OPINET_LAST_UPDATE = "com.silverback.carman.UPDATE";
-    public static final String FILE_IMAGES = "com.silverback.carman2.fileprovider";
+    public static final String FILE_IMAGES = "com.silverback.carman.fileprovider";
     public static final String FILE_AUTO_DATA = "com.silverback.carman.autodata";
 
 

@@ -56,10 +56,10 @@ import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 /*
- * This activity is largely compolsed of two viewpagers. One viewpager which is synced w/ the tab
- * is at the bottom for holding such fragments as ExpenseGasFragment, ExpenseServiceFragment, and
- * ExpenseStmtsFragment. The other is at the top to hold MainPricePagerFragment w/ MainPricePagerAdapter
- * which, as a single fragment with multiple pages, shows the recent 5 expense statements of the first
+ * This activity is largely compolsed of two viewpagers. The viewpager which is synced w/ the tab
+ * is resided in the bottom, containing such ExpenseGasFragment, ExpenseServiceFragment, and
+ * ExpenseStmtsFragment. The other one is put in the top to hold ExpensePagerFragment which, as a
+ * single fragment with multiple pages, shows the recent 5 expense statements of the first
  * 2 tab-synced fragments and a single page of ExpenseGraphFragment of the last tab-synced one, which
  * may extend to multi pages at a later time.
  *
@@ -81,10 +81,8 @@ import java.util.Objects;
  */
 
 public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffsetChangedListener {
-
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(ExpenseActivity.class);
-
     // Constants
     private final int GAS = 0;
     private final int SVC = 1;

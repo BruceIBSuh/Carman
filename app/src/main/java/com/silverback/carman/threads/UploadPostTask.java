@@ -59,10 +59,10 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
         int outstate = -1;
         switch(state) {
             case UploadPostRunnable.UPLOAD_TASK_COMPLETE:
-                outstate = ThreadManager2.TASK_COMPLETE;
+                outstate = sThreadManager.TASK_COMPLETE;
                 break;
             case UploadPostRunnable.UPLOAD_TASK_FAIL:
-                outstate = ThreadManager2.TASK_FAIL;
+                outstate = sThreadManager.TASK_FAIL;
                 break;
         }
 

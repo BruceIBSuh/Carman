@@ -1,7 +1,6 @@
 package com.silverback.carman;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -19,9 +18,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -56,7 +55,11 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -71,7 +74,7 @@ import java.util.Objects;
 
 public class SettingActivity extends BaseActivity implements
         PreferenceFragmentCompat.OnPreferenceStartFragmentCallback,
-        CropImageDialogFragment.OnSelectImageMediumListener,
+        //CropImageDialogFragment.OnSelectImageMediumListener,
         SharedPreferences.OnSharedPreferenceChangeListener {
 
     // Logging
@@ -113,6 +116,13 @@ public class SettingActivity extends BaseActivity implements
 
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), this::getActivityResultCallback);
+
+    private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
+            new ActivityResultContracts.GetContent(), this::getAttachedImageUriCallback);
+
+    // Getting Uri from Camera
+    private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(), this::getCameraImage);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -355,6 +365,7 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+        log.i("onPreferenceStartFragment");
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager()
                 .getFragmentFactory()
@@ -364,7 +375,6 @@ public class SettingActivity extends BaseActivity implements
         getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {
             log.i("FragmentResultListener: %s, %s", requestKey, result);
         });
-
 
         // Chagne the toolbar title according to the fragment the parent activity contains. When
         // returning to the SettingPrefFragment, the title
@@ -448,7 +458,48 @@ public class SettingActivity extends BaseActivity implements
 
     }
 
+    // Referenced from the fragment to pass the media which has been decided in the dialog fragment.
+    public void selectImageMedia(int media) {
+        log.i("media: %s", media);
+        switch(media) {
+            case 1: //gallery
+                mGetContent.launch("image/*");
+                break;
+            case 2: //camera
+                checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
+                    File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
+                            "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
+                    Uri photoUri = FileProvider.getUriForFile(this, "com.silverback.carman.provider", tmpFile);
+                    mTakePicture.launch(photoUri);
+                });
+                break;
+            default: break;
+        }
+
+    }
+
+    // ActivityResult callback to get the uri of attached image
+    private void getAttachedImageUriCallback(Uri uri) {
+        log.i("image uri: %s", uri);
+        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
+        int orientation = cropHelper.getImageOrientation(uri);
+        if(orientation != 0) uri = cropHelper.rotateBitmapUri(uri, orientation);
+
+        Intent intent = new Intent(this, CropImageActivity.class);
+        intent.setData(uri);
+        intent.putExtra("requestCrop", REQUEST_CODE_CROP);
+        //startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
+        activityResultLauncher.launch(intent);
+    }
+
+    private void getCameraImage(boolean isTaken) {
+        if(isTaken) mGetContent.launch("image/*");
+    }
+
+
     // Implements OnSelectImageMediumListener defined in CropImageDialogFragment
+
+    /*
     @Override
     public void onSelectImageMedia(int which) {
         switch(which) {
@@ -457,13 +508,13 @@ public class SettingActivity extends BaseActivity implements
                 galleryIntent.setType("image/*");
                 galleryIntent.setAction(Intent.ACTION_GET_CONTENT);
                 galleryIntent.putExtra("requestCode", REQUEST_CODE_GALLERY);
-                /*
-                Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-                if (galleryIntent.resolveActivity(getPackageManager()) != null) {
-                    log.i("galleryIntent: %s", galleryIntent);
+
+                //Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+                //if (galleryIntent.resolveActivity(getPackageManager()) != null) {
+                    //log.i("galleryIntent: %s", galleryIntent);
                     //galleryIntent.putExtra(MediaStore.EXTRA_OUTPUT, MediaStore.Images.Media.INTERNAL_CONTENT_URI);
-                }
-                */
+                //}
+
                 //startActivityForResult(galleryIntent, REQUEST_CODE_GALLERY);
                 //startActivityForResult(Intent.createChooser(galleryIntent, "Select Image"), REQUEST_CODE_GALLERY);
                 activityResultLauncher.launch(galleryIntent);
@@ -507,19 +558,23 @@ public class SettingActivity extends BaseActivity implements
                 }
 
                 break;
-
         }
     }
+
+     */
+
 
     // Callback method for ActivityResultLauncher
     private void getActivityResultCallback(ActivityResult result) {
         if(result.getData() == null) return;
-
         ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(this);
         //Uri imageUri = result.getData().getData();
-        Intent intent = result.getData();
-        int orientation;
-
+        String uriString = result.getData().getStringExtra("croppedUri");
+        final Uri croppedImageUri = Objects.requireNonNull(Uri.parse(uriString));
+        // Upload the cropped user image to Firestore with the user id fetched
+        mSettings.edit().putString(Constants.USER_IMAGE, uriString).apply();
+        uploadUserImageToFirebase(croppedImageUri);
+        /*
         switch(result.getResultCode()) {
             case REQUEST_CODE_GALLERY:
                 Uri galleryUri = Objects.requireNonNull(intent.getData());
@@ -547,6 +602,7 @@ public class SettingActivity extends BaseActivity implements
                 activityResultLauncher.launch(cameraIntent);
 
                 break;
+
             case REQUEST_CODE_CROP:
                 final Uri croppedImageUri = Objects.requireNonNull(intent.getData());
                 // Upload the cropped user image to Firestore with the user id fetched
@@ -555,6 +611,8 @@ public class SettingActivity extends BaseActivity implements
 
                 break;
         }
+
+         */
     }
 
     private void addPreferenceFragment(PreferenceFragmentCompat fragment, FragmentManager fm) {
@@ -616,17 +674,17 @@ public class SettingActivity extends BaseActivity implements
     // storage, then move on to get the download url. The url, in turn, is uploaded to "user" collection
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     // At the same time, the new uri has to be uploaded in the documents written by the user.
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    //@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadUserImageToFirebase(Uri uri) {
         log.i("user id of Image upaloading: %s", userId);
         // Popup the progressbar displaying dialogfragment.
-        ProgressBarDialogFragment progbarFragment = new ProgressBarDialogFragment();
+        //ProgressBarDialogFragment progbarFragment = new ProgressBarDialogFragment();
         String msg = (uri == null)?
                 getString(R.string.setting_msg_remove_image):
                 getString(R.string.setting_msg_upload_image);
 
-        progbarFragment.setProgressMsg(msg);
-        getSupportFragmentManager().beginTransaction().add(android.R.id.content, progbarFragment).commit();
+        //progbarFragment.setProgressMsg(msg);
+        //getSupportFragmentManager().beginTransaction().add(android.R.id.content, progbarFragment).commit();
 
         // Instantiate Firebase Storage.
         final StorageReference storageRef = storage.getReference();
@@ -643,9 +701,8 @@ public class SettingActivity extends BaseActivity implements
                             Snackbar.LENGTH_SHORT).show();
 
                     // Dismiss the progbar dialogfragment
-                    progbarFragment.dismiss();
+                    //progbarFragment.dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
-
             }).addOnFailureListener(Throwable::printStackTrace);
 
             return;
@@ -685,7 +742,7 @@ public class SettingActivity extends BaseActivity implements
                                         uri.toString(), Constants.ICON_SIZE_PREFERENCE, imgModel);
 
                                 // Dismiss the prgbar dialogfragment
-                                progbarFragment.dismiss();
+                                //progbarFragment.dismiss();
                             }
                         });
 
@@ -712,6 +769,8 @@ public class SettingActivity extends BaseActivity implements
     public SharedPreferences getSettings() {
         return mSettings;
     }
+
+
 
     // Check if the camera permission is granted.
     private void checkCameraPermission() {

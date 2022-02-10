@@ -67,11 +67,11 @@ public class UploadBitmapTask extends ThreadTask implements UploadBitmapRunnable
         int outState = -1;
         switch(state) {
             case UploadBitmapRunnable.UPLOAD_BITMAP_COMPLETE:
-                outState = ThreadManager2.TASK_COMPLETE;
+                outState = sThreadManager.TASK_COMPLETE;
                 break;
 
             case UploadBitmapRunnable.UPLOAD_BITMAP_FAIL:
-                outState = ThreadManager2.TASK_FAIL;
+                outState = sThreadManager.TASK_FAIL;
                 break;
         }
 

@@ -3,6 +3,7 @@ package com.silverback.carman.adapters;
 import android.graphics.Color;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
@@ -11,13 +12,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.PropertyName;
+import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.database.FavoriteProviderEntity;
+import com.silverback.carman.databinding.CardviewSettingFavoriteBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.ItemTouchHelperCallback;
-import com.silverback.carman.viewholders.FavoriteItemHolder;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,16 +29,16 @@ import java.util.List;
  *
  */
 
-public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHolder> implements
-        ItemTouchHelperCallback.RecyclerItemMoveListener {
+public class SettingFavAdapter extends RecyclerView.Adapter<SettingFavAdapter.ViewHolder>
+        implements ItemTouchHelperCallback.RecyclerItemMoveListener {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavoriteAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingFavAdapter.class);
 
     // Objects
-    private List<FavoriteProviderEntity> favoriteList;
-    private SparseArray<DocumentSnapshot> sparseSnapshotArray;
-    private OnFavoriteAdapterListener mListener;
+    private final List<FavoriteProviderEntity> favoriteList;
+    private final SparseArray<DocumentSnapshot> sparseSnapshotArray;
+    private final OnFavoriteAdapterListener mListener;
     private ViewGroup parent;
 
 
@@ -44,8 +47,44 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         void deleteFavorite(int cqtegory, int position);
     }
 
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        CardviewSettingFavoriteBinding binding;
+        ViewHolder(View view) {
+            super(view);
+            binding = CardviewSettingFavoriteBinding.bind(view);
+        }
+
+        void bindToFavorite(FavoriteProviderEntity favorite) {
+            binding.tvProviderName.setText(favorite.providerName);
+            binding.tvProviderAddrs.setText(favorite.address);
+            if(favorite.providerCode != null) {
+                int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
+                if (imgResource != -1) binding.imgLogo.setImageResource(imgResource);
+            }
+
+        }
+
+        void bindToEval(DocumentSnapshot snapshot) {
+            if(!snapshot.exists()) return;
+
+            EvaluateGasStation eval = snapshot.toObject(EvaluateGasStation.class);
+            if(eval != null) {
+                long favNum = eval.getFavoriteNum();
+                long evalNum = eval.getEvalNum();
+                long evalSum = eval.getEvalSum();
+
+                binding.tvValueRegisterFavorite.setText(String.valueOf(favNum));
+
+                if(evalNum == 0) return;
+                float rating = (float)(evalSum / evalNum);
+                binding.rbFavorite.setStepSize(0.5f);
+                binding.rbFavorite.setRating(rating);
+            }
+        }
+    }
+
     // Constructor
-    public SettingFavoriteAdapter(
+    public SettingFavAdapter(
             List<FavoriteProviderEntity> favoriteList,
             SparseArray<DocumentSnapshot> snapshotArray,
             OnFavoriteAdapterListener listener) {
@@ -58,18 +97,17 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
 
     @NonNull
     @Override
-    public FavoriteItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.parent = parent;
         CardView cardView = (CardView)LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.cardview_setting_favorite, parent, false);
 
-        return new FavoriteItemHolder(cardView);
+        return new ViewHolder(cardView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull FavoriteItemHolder holder, int position) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         final FavoriteProviderEntity provider = favoriteList.get(position);
-
         // Bind the favorite name and address
         holder.bindToFavorite(provider);
 
@@ -79,21 +117,19 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull FavoriteItemHolder holder, int position, @NonNull List<Object> payloads) {
-
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
         // Indicate the first-row favorite with difference color.
         if (position == 0) holder.itemView.setBackgroundColor(Color.parseColor("#B0C4DE"));
         else holder.itemView.setBackgroundColor(Color.WHITE);
         
         if (payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
-        }
-
-        for(Object obj : payloads) {
-            DocumentSnapshot snapshot = (DocumentSnapshot) obj;
-            if(sparseSnapshotArray.size() > 0 && sparseSnapshotArray.get(position) != null) {
-                holder.bindToEval(snapshot);
+        } else {
+            for(Object obj : payloads) {
+                DocumentSnapshot snapshot = (DocumentSnapshot) obj;
+                if(sparseSnapshotArray.size() > 0 && sparseSnapshotArray.get(position) != null) {
+                    holder.bindToEval(snapshot);
+                }
             }
         }
     }
@@ -107,7 +143,6 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
     // The following 2 callback methods
     @Override
     public void onDragItem(int from, int to) {
-
         DocumentSnapshot fromSnapshot;
         DocumentSnapshot toSnapshot;
 
@@ -159,7 +194,6 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         Snackbar snackbar = Snackbar.make(parent, "Do you really remove this item?", Snackbar.LENGTH_SHORT);
         snackbar.setAction("REMOVE", v -> {
             mListener.deleteFavorite(Constants.GAS, pos);
-
             //favoriteList.remove(pos);
             //notifyItemRemoved(pos);
             snackbar.dismiss();
@@ -183,10 +217,45 @@ public class SettingFavoriteAdapter extends RecyclerView.Adapter<FavoriteItemHol
         return favoriteList;
     }
 
-
     // Invoked from SettingFavorGasFragment/SettingFavorSvcFragment as a provider has retrieved
     // any evaluation data from Firestore.
     public void addSparseSnapshotArray(int position, DocumentSnapshot snapshot) {
         sparseSnapshotArray.put(position, snapshot);
+    }
+
+    // @ProperyName marks a field to be renamed when serialized, with which specifies the name
+    // a Java property gets in the JSON of the document.
+    public static class EvaluateGasStation {
+        @PropertyName("eval_num")
+        private long evalNum;
+        @PropertyName("eval_sum")
+        private long evalSum;
+        @PropertyName("favorite_num")
+        private long favoriteNum;
+
+        public EvaluateGasStation() {
+            // Leave empty constructor
+        }
+        /*
+        public EvaluateGasStation(int evalNum, int evalSum, int favoriteNum) {
+            this.evalNum = evalNum;
+            this.evalSum = evalSum;
+            this.favoriteNum = favoriteNum;
+        }
+
+         */
+
+        @PropertyName("eval_num")
+        public long getEvalNum() {
+            return evalNum;
+        }
+        @PropertyName("eval_sum")
+        public long getEvalSum() {
+            return evalSum;
+        }
+        @PropertyName("favorite_num")
+        public long getFavoriteNum() {
+            return favoriteNum;
+        }
     }
 }

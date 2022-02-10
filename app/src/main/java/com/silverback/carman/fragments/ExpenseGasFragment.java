@@ -21,6 +21,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
@@ -115,7 +116,6 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
             //userId = getArguments().getString("userId");
         }
 
-
         // The parent activity gets started by tabbing the Geofence notification w/ the pendingintent
         // that contains the station id, name, geofencing time, and category. The data will fill out
         // the gas or service form acoording to the transferred category.
@@ -131,7 +131,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // Instantiate objects
         firestore = FirebaseFirestore.getInstance();
         mDB = CarmanDatabase.getDatabaseInstance(requireContext());
-        mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
         geofenceHelper = new FavoriteGeofenceHelper(requireContext());
         calendar = Calendar.getInstance(Locale.getDefault());
         df = ((BaseActivity)requireActivity()).getDecimalFormat();
@@ -213,7 +213,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         binding.etGasUnitPrice.addTextChangedListener(new NumberTextWatcher(binding.etGasUnitPrice));
         binding.btnResetRatingbar.setOnClickListener(view -> binding.rbGasStation.setRating(0f));
         binding.imgbtnGasSearch.setOnClickListener(view -> {
-            locationTask = ThreadManager2.getInstance().fetchLocationTask(requireActivity(), locationModel);
+            locationTask = ThreadManager2.fetchLocationTask(requireActivity(), locationModel);
             binding.pbSearchStation.setVisibility(View.VISIBLE);
             binding.imgbtnGasSearch.setVisibility(View.GONE);
         });
@@ -235,8 +235,6 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // the pendingintent passes the name, id, time.
         if(isGeofenceIntent) getGeofenceIntentAction();
 
-
-
         return binding.getRoot();
     }
 
@@ -251,7 +249,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
             if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                 String[] defaultParams = ((BaseActivity)requireActivity()).getNearStationParams();
                 defaultParams[1] = Constants.MIN_RADIUS;
-                stnListTask = ThreadManager2.getInstance().startStationListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager2.startStationListTask(stnListModel, location, defaultParams);
                 mPrevLocation = location;
             } else {
                 binding.pbSearchStation.setVisibility(View.GONE);
@@ -313,7 +311,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // occasionally
         fragmentModel.getCurrentFragment().removeObservers(this);
 
-        if(locationTask != null) locationTask = null;
+        //if(locationTask != null) locationTask = null;
         if(favPriceTask != null) favPriceTask = null;
         if(stnListTask != null) stnListTask = null;
     }

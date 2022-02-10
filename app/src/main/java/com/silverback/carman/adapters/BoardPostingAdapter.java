@@ -64,6 +64,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         final TextView tvPostingOwner;
         final TextView tvCountViews;
         final TextView tvCountComment;
+        final ImageView userImage;
         final ImageView imgAttached;
 
         PostViewHolder(BoardRecyclerviewPostBinding binding) {
@@ -79,6 +80,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvCountViews = binding.tvCountViews;
             tvCountComment = binding.tvCountComment;
             imgAttached = binding.imgAttached;
+            userImage = binding.imgUser;
         }
     }
 

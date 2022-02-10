@@ -5,7 +5,6 @@ import static android.content.Context.INPUT_METHOD_SERVICE;
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 
-import android.app.Dialog;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -17,7 +16,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 
 import androidx.annotation.NonNull;
@@ -161,7 +159,7 @@ public class BoardWriteFragment extends Fragment implements
         // BoardChooserDlgFragment notifies the viewmodel of which image media is selected.
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("chooser in BoardWrite");
-            ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
         });
 
         // UploadBitmapTask compresses and uploads an image to Storage, the uri of which is notified

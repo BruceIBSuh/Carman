@@ -7,13 +7,16 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.LocationViewModel;
 
+import java.lang.ref.WeakReference;
+
 public class LocationTask extends ThreadTask implements LocationRunnable.LocationMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(LocationTask.class);
 
     // Objects
-    private LocationViewModel viewModel;
+    //private LocationViewModel viewModel;
+    private WeakReference<LocationViewModel> weakModelReference;
     private Location mLocation;
     private final Runnable mLocationRunnable;
 
@@ -24,15 +27,20 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void initLocationTask(LocationViewModel viewModel) {
-        this.viewModel = viewModel;
+        //this.viewModel = viewModel;
+        weakModelReference = new WeakReference<>(viewModel);
     }
 
     Runnable getLocationRunnable() {
         return mLocationRunnable;
     }
 
-    void recycle() {
+    public void recycle() {
         if(mLocation != null) mLocation = null;
+        if(weakModelReference != null) {
+            weakModelReference.clear();
+            weakModelReference = null;
+        }
     }
 
     @Override
@@ -44,12 +52,12 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     public void setCurrentLocation(Location location) {
         log.i("current location:%s", location);
         mLocation = location;
-        if(viewModel != null) viewModel.getLocation().postValue(location);
+        weakModelReference.get().getLocation().postValue(location);
     }
 
     @Override
     public void notifyLocationException(String msg) {
-        if(viewModel != null) viewModel.getLocationException().postValue(msg);
+        weakModelReference.get().getLocationException().postValue(msg);
     }
 
     @Override
@@ -57,10 +65,10 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         int outstate = -1;
         switch(state){
             case LocationRunnable.LOCATION_TASK_COMPLETE:
-                outstate = ThreadManager2.FETCH_LOCATION_COMPLETED;
+                outstate = sThreadManager.TASK_COMPLETE;
                 break;
             case LocationRunnable.LOCATION_TASK_FAIL:
-                outstate = ThreadManager2.FETCH_LOCATION_FAILED;
+                outstate = sThreadManager.TASK_FAIL;
                 break;
         }
 

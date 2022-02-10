@@ -31,8 +31,8 @@ public class ThreadManager2 {
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager2.class);
 
     // Constants
-    static final int TASK_COMPLETE = 1;
-    static final int TASK_FAIL = -1;
+    public final int TASK_COMPLETE = 1;
+    public final int TASK_FAIL = -1;
 
     public final int DOWNLOAD_NEAR_STATIONS = 100;
     public final int DOWNLOAD_CURRENT_STATION = 101;
@@ -114,11 +114,9 @@ public class ThreadManager2 {
                 if(task instanceof UploadBitmapTask) {
                     log.i("upload compressed bitmap done");
                     recycleTask(task);
-
                 } else if(task instanceof UploadPostTask) {
                     log.i("upload post done");
                     recycleTask(task);
-
                 } else recycleTask(task);
 
             }
@@ -138,9 +136,6 @@ public class ThreadManager2 {
     void handleState(ThreadTask task, int state) {
         Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
-            case FETCH_LOCATION_COMPLETED:
-                msg.sendToTarget();
-                break;
             // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
             // in different URLs. This process will continue until Firetore will complete to hold up
@@ -264,13 +259,13 @@ public class ThreadManager2 {
     }
 
 
-    public LocationTask fetchLocationTask(Context context, LocationViewModel model){
-        log.i("TaskQueue: %s", InnerClazz.sInstance.mThreadTaskQueue.size());
-        //locationTask = (LocationTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+    public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
+        LocationTask locationTask = InnerClazz.sInstance.mLocationTaskQueue.poll();
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
+
+        log.i("LocationTasK %s", locationTask);
         InnerClazz.sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
-        log.i("Location thread queue: %s", InnerClazz.sInstance.threadPoolExecutor.getQueue());
         return locationTask;
     }
 
@@ -280,9 +275,10 @@ public class ThreadManager2 {
     public static StationListTask startStationListTask(
             StationListViewModel model, Location location, String[] params) {
 
-        StationListTask stationListTask = (StationListTask)InnerClazz.sInstance.mStnListTaskQueue.poll();
+        StationListTask stationListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
         if(stationListTask == null) stationListTask = new StationListTask();
         stationListTask.initStationTask(model, location, params);
+        log.i("StationListTask: %s", stationListTask);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(stationListTask.getStationListRunnable());
         return stationListTask;
@@ -329,10 +325,10 @@ public class ThreadManager2 {
             task.recycle();
             mGasPriceTaskQueue.offer((GasPriceTask)task);
         } else if(task instanceof LocationTask) {
-            locationTask.recycle();
+            task.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationListTask) {
-            stnListTask.recycle();
+            task.recycle();
             mStnListTaskQueue.offer((StationListTask)task);
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();

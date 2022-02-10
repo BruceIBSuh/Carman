@@ -132,7 +132,8 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);
 
-    // POJO in order to typecast any Firestore array field to List
+    // POJO in order to typecast any Firestore array field to List. Use the annotation "@Keep"
+    // so proguard will not delete any methods from this class.
     static class ObjectAutoData {
         @PropertyName("auto_type")
         private Map<String, Integer> autoTypeMap;
@@ -143,8 +144,6 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
             // Must have a public no-argument constructor
         }
         // Initialize all fields
-
-        //public ObjectAutoData(List<String> autoTypeList, List<String> engineTypeList) {
         public ObjectAutoData(Map<String, Integer> autoTypeMap, Map<String, Integer> engineTypeMap) {
             //this.autoTypeList = autoTypeList;
             //this.engineTypeList = engineTypeList;

@@ -2,7 +2,6 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
-import android.Manifest;
 import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -18,11 +17,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,13 +45,9 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -218,7 +210,7 @@ public class BoardEditFragment extends DialogFragment implements
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
         });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,

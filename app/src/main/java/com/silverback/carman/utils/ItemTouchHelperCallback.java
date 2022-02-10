@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
-import com.silverback.carman.adapters.SettingFavoriteAdapter;
+import com.silverback.carman.adapters.SettingFavAdapter;
 import com.silverback.carman.adapters.SettingServiceItemAdapter;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -41,7 +41,7 @@ public class ItemTouchHelperCallback extends ItemTouchHelper.Callback {
         iconTrash = ContextCompat.getDrawable(context, R.drawable.ic_trash);
 
        if(listener instanceof SettingServiceItemAdapter) mListener = (SettingServiceItemAdapter)listener;
-       else if(listener instanceof SettingFavoriteAdapter) mListener = (SettingFavoriteAdapter)listener;
+       else if(listener instanceof SettingFavAdapter) mListener = (SettingFavAdapter)listener;
     }
 
 

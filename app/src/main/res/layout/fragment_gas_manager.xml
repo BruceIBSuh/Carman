@@ -274,7 +274,7 @@
             android:layout_width="wrap_content"
             android:layout_height="16dp"
             android:layout_marginTop="16dp"
-            android:background="#F3F3F3"
+            android:background="@color/recyclerDivider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/tv_label_amount" />
@@ -397,7 +397,7 @@
             android:layout_width="wrap_content"
             android:layout_height="16dp"
             android:layout_marginTop="16dp"
-            android:background="#F3F3F3"
+            android:background="@color/recyclerDivider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/et_extra_expense" />

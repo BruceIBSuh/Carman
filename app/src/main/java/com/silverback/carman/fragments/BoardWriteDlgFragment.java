@@ -6,7 +6,6 @@ import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.DialogInterface;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -14,7 +13,6 @@ import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -52,7 +50,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class BoardWriteDlgFragment extends DialogFragment implements
         BoardImageSpanHandler.OnImageSpanListener, CompoundButton.OnCheckedChangeListener,
@@ -156,7 +153,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).getImageFromChooser(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
         });
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
