@@ -35,9 +35,15 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 android:background="@color/bgToolbar"
+                android:contentInsetLeft="8dp"
+                android:contentInsetStart="8dp"
                 app:layout_collapseMode="pin"
-                app:titleMarginStart="24dp"
-                app:titleTextColor="#FFFFFF" />
+                app:titleMarginStart="16dp"
+                app:titleTextColor="#FFFFFF"
+                app:contentInsetLeft="8dp"
+                app:contentInsetStart="8dp"
+                app:contentInsetRight="0dp"
+                app:contentInsetEnd="0dp" />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

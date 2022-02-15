@@ -304,6 +304,11 @@
     <string name="pref_auto_year">생산년도(연식)</string>
     <string name="pref_auto_reg">가입회원 </string>
 
+    <string name="pref_userpic_title">사용자 이미지 선택</string>
+    <string name="pref_userpic_gallery">갤러리</string>
+    <string name="pref_userpic_camera">카메라</string>
+    <string name="pref_no_userpic">설정하지 않음</string>
+
     <!-- Threads -->
     <string name="location_notify_gps">gps 활성화에 실패하였습니다. 잠시뒤에 다시 시도해 주세요</string>
     <string name="location_notify_network">네트워크 연결에 실패하였습니다. 네트워크를 확인해 주세요</string>

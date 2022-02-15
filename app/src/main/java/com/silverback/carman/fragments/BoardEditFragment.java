@@ -206,7 +206,7 @@ public class BoardEditFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Notified of which media(camera or gallery) to select in BoardChooserDlgFragment, according
+        // Notified of which media(camera or gallery) to select in ImageChooserFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
@@ -310,7 +310,7 @@ public class BoardEditFragment extends DialogFragment implements
         }
         // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
         // of which passes the value to getImageChooser().
-        DialogFragment dialog = new BoardChooserDlgFragment();
+        DialogFragment dialog = new ImageChooserFragment();
         dialog.show(getChildFragmentManager(), "ImageMediaChooser");
         /*
          * This works for both, inserting a text at the current position and replacing

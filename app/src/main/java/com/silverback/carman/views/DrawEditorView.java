@@ -41,7 +41,7 @@ public class DrawEditorView extends View {
     private static final int INIT_SIZE = 200; // deault size of EdgeDots
 
     // Objects
-    private Context context;
+    private final Context context;
     private Bitmap mBitmap;
 
     private Paint paint, canvasPaint;
@@ -62,7 +62,7 @@ public class DrawEditorView extends View {
     private int dotId = -1;
 
     private int dotRds; // radius of the dots
-    private int cropMode = CROP_MODE_CIRCLE;
+    private final int cropMode = CROP_MODE_CIRCLE;
 
     private boolean isBoundary;
     private int toolbarHeight;
@@ -91,13 +91,12 @@ public class DrawEditorView extends View {
     }
 
     private void init() {
-
         setFocusable(true);
         paint = new Paint();
         canvasPaint = new Paint();
 
         Xfermode xfermode = new PorterDuffXfermode(PorterDuff.Mode.CLEAR);
-        canvasPaint.setColor(Color.parseColor("#AA000000")); // Darken the background.
+        canvasPaint.setColor(Color.parseColor("#AA000000")); //darken the background.
 
         paint.setAntiAlias(true);
         paint.setDither(true);
@@ -126,7 +125,6 @@ public class DrawEditorView extends View {
     public void onSizeChanged(int newX, int newY, int oldX, int oldY) {
         //rectPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
         log.i("Toolbar height: %s", toolbarHeight);
-
         // Set the initial points of each dotRds dots.
         p1.x = (newX - INIT_SIZE) / 2;
         p1.y = (newY - toolbarHeight - INIT_SIZE) / 2;
@@ -349,11 +347,10 @@ public class DrawEditorView extends View {
      *
      */
     // Invoked by ViewTreeObserver.OnPreDrawListener
-    // Scale and translate the mBitmap fitting to the ImageView
+    // Scale and translate the bitmap fitting to the ImageView
     //public void setScaleMatrix(Uri uri, int bmX, int bmY, final ImageView imageView){
     public void setScaleMatrix(DisplayMetrics metrics, Uri uri, ImageView imageView){
         //public void setScaleMatrix(Uri uri, ImageView imageView) {
-
         imgViewWidth = imageView.getWidth();
         imgViewHeight = imageView.getHeight();
 
@@ -367,7 +364,6 @@ public class DrawEditorView extends View {
         } catch(IOException e) {
             log.e("IOException: %s", e.getMessage());
         }
-
         // Calculate inSampeSize and downscale the image
         int bmpWidth = opts.outWidth;
         int bmpHeight = opts.outHeight;
@@ -382,7 +378,6 @@ public class DrawEditorView extends View {
                 inSampleSize *= 2;
             }
         }
-
         // Draw the downscaled bitmap
         opts.inJustDecodeBounds = false;
         opts.inSampleSize = inSampleSize;
@@ -392,16 +387,10 @@ public class DrawEditorView extends View {
 
         try {
             mBitmap = BitmapFactory.decodeStream(context.getContentResolver().openInputStream(uri), null, opts);
-
-        } catch(IOException e) {
-            log.e("IOException: %s", e.getMessage());
-        }
-
+        } catch(IOException e) { e.printStackTrace(); }
 
         // Get the scale when the image scales up or down to fit the screen size(match_parent)
-        if(mBitmap == null) {
-            return;
-        }
+        if(mBitmap == null) return;
         scale = Math.min(imgViewWidth / mBitmap.getWidth(), imgViewHeight / mBitmap.getHeight());
 
 
@@ -459,14 +448,13 @@ public class DrawEditorView extends View {
     }
 
     // Draw the area-indicating dots
-    class EdgeDots {
-        private Bitmap bitmap;
-        private Point point;
-        private int id;
+    private static class EdgeDots {
+        private final Bitmap bitmap;
+        private final Point point;
+        private final int id;
 
         // Constructor
         EdgeDots(Context context, int resId, Point point, int id) {
-            //this.context = context;
             this.id = id;
             this.point = point;
             bitmap = BitmapFactory.decodeResource(context.getResources(), resId);
@@ -487,11 +475,9 @@ public class DrawEditorView extends View {
         int getX() {
             return point.x;
         }
-
         int getY() {
             return point.y;
         }
-
         int getID() {
             return id;
         }
@@ -499,7 +485,6 @@ public class DrawEditorView extends View {
         void setX(int x) {
             point.x = x;
         }
-
         void setY(int y) {
             point.y = y;
         }
@@ -507,7 +492,6 @@ public class DrawEditorView extends View {
         void moveX(int x) {
             point.x = point.x + x;
         }
-
         void moveY(int y) {
             point.y = point.y + y;
         }

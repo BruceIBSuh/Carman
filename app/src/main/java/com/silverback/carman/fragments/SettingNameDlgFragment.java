@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.preference.PreferenceDialogFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
@@ -68,13 +69,13 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
         return fm;
     }
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         firestore = FirebaseFirestore.getInstance();
-        mSettings = ((SettingActivity)getActivity()).getSettings();
-        currentName = getArguments().getString("username");
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        currentName = requireArguments().getString("username");
     }
 
     @SuppressWarnings("ConstantConditions")
