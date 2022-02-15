@@ -54,7 +54,7 @@ public class Constants {
     public static final int SNOOZE_DURATION = 1000 * 60 * 60;
 
     // Image and Icon Size
-    public static final int ICON_SIZE_TOOLBAR_USERPIC = 40;
+    public static final int ICON_SIZE_TOOLBAR_USERPIC = 45;
     public static final int ICON_SIZE_PREFERENCE = 40;
     public static final int ICON_SIZE_POSTING_LIST = 35;
     public static final int IMAGESPAN_THUMBNAIL_SIZE = 36;

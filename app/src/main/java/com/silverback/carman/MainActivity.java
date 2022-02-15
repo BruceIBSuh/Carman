@@ -170,12 +170,11 @@ public class MainActivity extends BaseActivity implements
     public void onResume() {
         super.onResume();
         //binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pagerCallback);
-
         String userImg = mSettings.getString(Constants.USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
-        imgModel.getGlideDrawableTarget().observe(this, resource -> {
-            if(getSupportActionBar() != null) getSupportActionBar().setIcon(resource);
+        imgModel.getGlideDrawableTarget().observe(this, userImage -> {
+            if(getSupportActionBar() != null) getSupportActionBar().setIcon(userImage);
         });
 
         // Return the fuel price pager to the first page.
@@ -406,12 +405,12 @@ public class MainActivity extends BaseActivity implements
                     //binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
                     defaultParams[0] = gasCode;
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, defaultParams);
+                    stationListTask = ThreadManager2.startStationListTask(stnModel, location, defaultParams);
 
                 // Station default params changed from SettingPrefActivity.
                 } else if(isRadiusChanged || isGasTypeChanged) {
                     log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
-                    stationListTask = sThreadManager.startStationListTask(stnModel, location, defaultParams);
+                    stationListTask = ThreadManager2.startStationListTask(stnModel, location, defaultParams);
 
                 } else {
                     //binding.pbNearStns.setVisibility(View.GONE);

@@ -561,7 +561,7 @@ public class BoardActivity extends BaseActivity implements
     }
 
     // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media
-    // (camera or gallery) to select in BoardChooserDlgFragment. According to the selected media,
+    // (camera or gallery) to select in ImageChooserFragment. According to the selected media,
     // startActivityForResult() defined in the parent activity is invoked and the result is notified
     // to the activity and it is, in turn, sent back here by calling
     public void selectImageMedia(int media) {

@@ -214,6 +214,7 @@ public class ApplyImageResourceUtil {
                         //model.getGlideDrawableToEmblem().setValue(resource);
                         model.getGlideDrawableTarget().setValue(resource);
                     }
+
                     @Override
                     public void onLoadCleared(@Nullable Drawable placeholder) {}
                 });

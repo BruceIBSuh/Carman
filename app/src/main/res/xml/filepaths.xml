@@ -7,10 +7,10 @@
     <external-cache-path name="external-cache" path="." /> <!--Environment.getExteralCacheDir()-->
     <external-files-path name="external-files" path="." /> <!--Environment.getExternalFilesDir()-->
 
+    <files-path path="." name="userId" />
+    <files-path path="images/" name="userImage" />
     <files-path name="post_images" path="." />
     <files-path path="distcode/" name= "dist"  />
-    <files-path path="images/" name="userImage" />
     <files-path path="images/" name="emblem" />
-    <files-path path="." name="userId" />
     <cache-path path="images/" name="roatedImage" />
 </paths>

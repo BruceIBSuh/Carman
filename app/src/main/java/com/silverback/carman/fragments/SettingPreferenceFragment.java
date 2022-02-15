@@ -1,9 +1,7 @@
 package com.silverback.carman.fragments;
 
 
-import android.Manifest;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
@@ -11,10 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
@@ -41,10 +36,6 @@ import com.silverback.carman.views.SpinnerDialogPreference;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 import java.util.Objects;
 
 /*
@@ -203,13 +194,12 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(Constants.USER_IMAGE);
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
-            // Carmera permission check.
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;
             }
 
-            DialogFragment dialogFragment = new BoardChooserDlgFragment();
+            DialogFragment dialogFragment = new ImageChooserFragment();
             dialogFragment.show(getChildFragmentManager(), "imageMediaChooser");
             return true;
         });

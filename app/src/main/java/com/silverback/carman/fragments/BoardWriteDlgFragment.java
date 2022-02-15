@@ -286,7 +286,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         }
         // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
         // of which passes the value to getImageChooser().
-        DialogFragment dialog = new BoardChooserDlgFragment();
+        DialogFragment dialog = new ImageChooserFragment();
         dialog.show(getChildFragmentManager(), "ImageMediaChooser");
         /*
          * This works for both, inserting a text at the current position and replacing

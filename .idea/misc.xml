@@ -15,12 +15,14 @@
         <entry key="app/src/main/res/drawable/dot_indicator_selector.xml" value="0.3509259259259259" />
         <entry key="app/src/main/res/drawable/state_view_focus.xml" value="0.3509259259259259" />
         <entry key="app/src/main/res/layout/activity_board.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/activity_crop_image.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/activity_expense.xml" value="0.2625" />
         <entry key="app/src/main/res/layout/activity_settings.xml" value="0.10572916666666667" />
         <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/cardview_setting_favorite.xml" value="0.18888888888888888" />
+        <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.24427083333333333" />
+        <entry key="app/src/main/res/layout/dialog_image_chooser.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/dialog_progbar_general.xml" value="0.29074074074074074" />
         <entry key="app/src/main/res/layout/dialog_register_provider.xml" value="0.33" />
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
@@ -33,8 +35,6 @@
         <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_pager_expense.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_service_manager.xml" value="0.5" />
-        <entry key="app/src/main/res/layout/fragment_setting_chklist.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/fragment_setting_favorite.xml" value="0.1" />
         <entry key="app/src/main/res/layout/main_content_carlife.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_expense.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_notification.xml" value="0.33" />
@@ -106,7 +106,7 @@
       </value>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

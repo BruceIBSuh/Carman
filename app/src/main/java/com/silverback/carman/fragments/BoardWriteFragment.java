@@ -156,7 +156,7 @@ public class BoardWriteFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // BoardChooserDlgFragment notifies the viewmodel of which image media is selected.
+        // ImageChooserFragment notifies the viewmodel of which image media is selected.
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("chooser in BoardWrite");
             ((BoardActivity)requireActivity()).selectImageMedia(chooser);
@@ -231,7 +231,7 @@ public class BoardWriteFragment extends Fragment implements
         }
         // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
         // of which passes the value to getImageChooser().
-        DialogFragment dialog = new BoardChooserDlgFragment();
+        DialogFragment dialog = new ImageChooserFragment();
         dialog.show(getChildFragmentManager(), "ImageMediaChooser");
         /*
          * This works for both, inserting a text at the current position and replacing
