@@ -806,6 +806,5 @@ public class SettingActivity extends BaseActivity implements
             }
         }
     }
-
      */
 }
