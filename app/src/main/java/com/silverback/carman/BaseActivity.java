@@ -128,6 +128,7 @@ public class BaseActivity extends AppCompatActivity {
                 if(isGranted) log.i("Granted");
                 else log.i("Denied");
             });
+
     public void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
@@ -137,7 +138,6 @@ public class BaseActivity extends AppCompatActivity {
                     .show();
         } else requestPermissionLaucher.launch(perm);
     }
-
 
 
     // Check a state of the network
