@@ -19,7 +19,6 @@ import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -136,6 +135,7 @@ public class BoardActivity extends BaseActivity implements
     private int category;
 
     // Getting preference values from SettingActivity
+
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), this::getSettingResultBack);
     // Getting Uri from the image media
@@ -573,10 +573,11 @@ public class BoardActivity extends BaseActivity implements
                 checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
                     File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
                             "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
-                    Uri photoUri = FileProvider.getUriForFile(this, "com.silverback.carman.provider", tmpFile);
+                    Uri photoUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, tmpFile);
                     mTakePicture.launch(photoUri);
                 });
                 break;
+
             default: break;
         }
     }

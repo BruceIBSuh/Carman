@@ -81,11 +81,6 @@ public class BaseActivity extends AppCompatActivity {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
 
-    // Implemented by checkRuntimePermission callback to check a specific permission.
-    public interface PermissionCallback {
-        void performAction();
-    }
-
     // Objects
     protected ThreadManager2 sThreadManager;
     protected CarmanDatabase sDB;
@@ -96,14 +91,21 @@ public class BaseActivity extends AppCompatActivity {
     // Fields
     protected boolean isNetworkConnected;
 
+    // Implemented by checkRuntimePermission callback to check a specific permission.
+    public interface PermissionCallback {
+        void performAction();
+    }
+    // Runtime Permission using RequestPermission contract
+    private final ActivityResultLauncher<String> reqPermissionLauncher = registerForActivityResult(
+            new ActivityResultContracts.RequestPermission(), this::getPermissionResult);
+
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Set screen to portrait as indicated with "android:screenOrientation="portrait" in Manifest.xml
-        // android:screenOrientation is not allowed with Android O_MR1 +
+        // for each activity. android:screenOrientation is not allowed with Android O_MR1
         if(Build.VERSION.SDK_INT != Build.VERSION_CODES.O_MR1)
             super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         else super.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
@@ -111,8 +113,6 @@ public class BaseActivity extends AppCompatActivity {
         // Create the Work Thread
         sThreadManager = ThreadManager2.getInstance();
         sDB = CarmanDatabase.getDatabaseInstance(getApplicationContext());
-
-
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         userId = getUserIdFromStorage(this);
@@ -121,29 +121,33 @@ public class BaseActivity extends AppCompatActivity {
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
-
-    // Runtime Permission using RequestPermission contract.
-    private final ActivityResultLauncher<String> requestPermissionLaucher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if(isGranted) log.i("Granted");
-                else log.i("Denied");
-            });
-
     public void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
+            log.i("rationale: %s", perm);
             Snackbar.make(rootView, "Location permission required", Snackbar.LENGTH_INDEFINITE)
-                    .setAction("OK", view -> requestPermissionLaucher.launch(perm))
+                    .setAction("OK", view -> reqPermissionLauncher.launch(perm))
                     .show();
-        } else requestPermissionLaucher.launch(perm);
+        } else {
+            log.i("permission launcher");
+            reqPermissionLauncher.launch(perm);
+        }
     }
+
+    public void getPermissionResult(Boolean isPermitted){
+        if(isPermitted) log.i("permission granted");
+        else log.i("permission denied");
+    }
+
+
 
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {
         ConnectivityManager connManager = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = connManager.getActiveNetworkInfo();
+        log.i("network status: %s", networkInfo);
         return networkInfo != null && networkInfo.isConnected();
         //return connManager.isActiveNetworkMetered();
     }
