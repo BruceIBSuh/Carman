@@ -1,7 +1,7 @@
 package com.silverback.carman;
 
 /*
- * Copyright (c) 2020 SilverBack
+ * Copyright (c) 2020 SilverBack Trust
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,21 +80,20 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected ThreadManager2 sThreadManager;
     protected CarmanDatabase sDB;
     protected String userId;
-    protected static SharedPreferences mSettings;
+    protected SharedPreferences mSettings;
     protected static DecimalFormat df;
 
     // Fields
     protected boolean isNetworkConnected;
 
     // Implemented by checkRuntimePermission callback to check a specific permission.
-    public interface PermCallback {
+    public interface PermissionCallback {
         void performAction();
     }
 
     // Runtime Permission using RequestPermission contract
     private final ActivityResultLauncher<String> reqPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), this::getPermissionResult);
-
 
     @SuppressLint("SourceLockedOrientationActivity")
     @Override
@@ -117,13 +116,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        //reqPermissionLauncher.unregister();
-    }
-
-    public void checkRuntimePermission(View rootView, String perm, String rationale, PermCallback callback){
+    public void checkRuntimePermission(
+            View rootView, String perm, String rationale, PermissionCallback callback){
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
@@ -180,8 +174,6 @@ public abstract class BaseActivity extends AppCompatActivity {
 
         return defaultParams;
     }
-
-
 
     public DecimalFormat getDecimalFormat() {
         DecimalFormat df = (DecimalFormat)NumberFormat.getInstance(Locale.getDefault());

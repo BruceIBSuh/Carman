@@ -91,13 +91,11 @@ public class IntroActivity extends BaseActivity  {
     public void onPause() {
         super.onPause();
         if(distCodeTask != null) distCodeTask = null;
-        //if(gasPriceTask != null) gasPriceTask = null;
+        if(gasPriceTask != null) gasPriceTask = null;
     }
 
     @Override
-    public void getPermissionResult(Boolean isPermitted) {
-
-    }
+    public void getPermissionResult(Boolean isPermitted) {}
 
     // Invoked when and only when the application runs for the first time, authenticating the user
     // in Firebase.Auth. Once authenticated, upload the user to the "user" collection with data null

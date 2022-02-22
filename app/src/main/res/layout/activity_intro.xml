@@ -18,7 +18,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/bg_main_maintitle" />
+        app:srcCompat="@drawable/bg_main_maintitle"
+        tools:ignore="ImageContrastCheck" />
 
     <ProgressBar
         android:id="@+id/pb_intro"
@@ -36,14 +37,16 @@
         android:id="@+id/btn_start"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:src="@drawable/bg_imgbtn_start"
         android:background="@android:color/transparent"
-        android:scaleType="centerInside"
         android:contentDescription="@null"
+        android:fadingEdge="horizontal|vertical"
+        android:scaleType="centerInside"
+        android:src="@drawable/bg_imgbtn_start"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ImageContrastCheck,SpeakableTextPresentCheck" />
 
     <ImageView
         android:id="@+id/imgview_title_sub"
@@ -55,7 +58,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:srcCompat="@drawable/bg_main_subtitle" />
+        app:srcCompat="@drawable/bg_main_subtitle"
+        tools:ignore="ImageContrastCheck" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
