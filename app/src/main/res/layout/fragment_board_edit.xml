@@ -68,7 +68,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="@string/boardwrite_label_title"
+            android:text="@string/board_write_label_title"
             android:labelFor="@id/et_board_edit_title"
             app:layout_constraintBottom_toBottomOf="@+id/view_edit_header"
             app:layout_constraintStart_toStartOf="@+id/view_edit_header"

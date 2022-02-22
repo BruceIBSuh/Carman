@@ -210,7 +210,7 @@ public class BoardEditFragment extends DialogFragment implements
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
         });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,

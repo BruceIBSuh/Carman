@@ -159,7 +159,7 @@ public class BoardWriteFragment extends Fragment implements
         // ImageChooserFragment notifies the viewmodel of which image media is selected.
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("chooser in BoardWrite");
-            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
         });
 
         // UploadBitmapTask compresses and uploads an image to Storage, the uri of which is notified

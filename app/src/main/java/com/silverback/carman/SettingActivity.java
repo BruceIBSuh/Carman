@@ -201,6 +201,10 @@ public class SettingActivity extends BaseActivity implements
         if(gasPriceTask != null) gasPriceTask = null;
     }
 
+    @Override
+    public void getPermissionResult(Boolean isPermitted) {
+
+    }
 
 
     @Override
@@ -364,7 +368,9 @@ public class SettingActivity extends BaseActivity implements
                 break;
 
             case 2: //camera
-                checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
+                final String perm = Manifest.permission.CAMERA;
+                final String rationale = "permission required to use Camera";
+                checkRuntimePermission(binding.getRoot(), perm, rationale, () -> {
                     File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
                             "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
                     Uri photoUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, tmpFile);

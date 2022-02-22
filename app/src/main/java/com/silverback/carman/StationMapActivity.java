@@ -90,6 +90,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         DocumentReference docRef = firestore.collection("gas_station").document(stnId);
         docRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
+                log.i("gas station map:%s", task.getResult());
                 this.document = task.getResult();
                 //if(document.exists()) dispStationInfo();
             }
@@ -227,6 +228,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 
     }
 
+    @Override
+    public void getPermissionResult(Boolean isPermitted) {}
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -260,7 +264,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
         naverMap.setLocationSource(fusedLocationSource);
-        checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, () -> {
+        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+        final String rationale = "permission required to access location";
+        checkRuntimePermission(binding.getRoot(), perm, rationale, () -> {
             naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
         });
 

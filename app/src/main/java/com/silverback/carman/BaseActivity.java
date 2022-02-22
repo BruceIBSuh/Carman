@@ -16,14 +16,12 @@ package com.silverback.carman;
  *
  */
 
-import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
-import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -38,7 +36,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.NetworkType;
@@ -53,7 +50,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.StationListViewModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -73,10 +69,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class BaseActivity extends AppCompatActivity {
+public abstract class BaseActivity extends AppCompatActivity {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BaseActivity.class);
@@ -92,9 +87,10 @@ public class BaseActivity extends AppCompatActivity {
     protected boolean isNetworkConnected;
 
     // Implemented by checkRuntimePermission callback to check a specific permission.
-    public interface PermissionCallback {
+    public interface PermCallback {
         void performAction();
     }
+
     // Runtime Permission using RequestPermission contract
     private final ActivityResultLauncher<String> reqPermissionLauncher = registerForActivityResult(
             new ActivityResultContracts.RequestPermission(), this::getPermissionResult);
@@ -121,27 +117,23 @@ public class BaseActivity extends AppCompatActivity {
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
-    public void checkRuntimePermission(View rootView, String perm, PermissionCallback callback) {
+    @Override
+    public void onPause() {
+        super.onPause();
+        //reqPermissionLauncher.unregister();
+    }
+
+    public void checkRuntimePermission(View rootView, String perm, String rationale, PermCallback callback){
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
-            log.i("rationale: %s", perm);
-            Snackbar.make(rootView, "Location permission required", Snackbar.LENGTH_INDEFINITE)
-                    .setAction("OK", view -> reqPermissionLauncher.launch(perm))
+            Snackbar.make(rootView, rationale, Snackbar.LENGTH_INDEFINITE)
+                    .setAction("OK", v -> reqPermissionLauncher.launch(perm))
                     .show();
-        } else {
-            log.i("permission launcher");
-            reqPermissionLauncher.launch(perm);
-        }
+        } else reqPermissionLauncher.launch(perm);
     }
-
-    public void getPermissionResult(Boolean isPermitted){
-        if(isPermitted) log.i("permission granted");
-        else log.i("permission denied");
-    }
-
-
-
+    // Abstract method to get a permission result in each activity which extends this BaseActivity.
+    public abstract void getPermissionResult(Boolean isPermitted);
 
     // Check a state of the network
     public static boolean notifyNetworkConnected(Context context) {

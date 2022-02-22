@@ -133,9 +133,9 @@ public class BoardActivity extends BaseActivity implements
     //private boolean isAutoFilter, isTabHeight, isLocked;
     private boolean isLocked;
     private int category;
+    private Uri photoUri;
 
     // Getting preference values from SettingActivity
-
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(), this::getSettingResultBack);
     // Getting Uri from the image media
@@ -221,6 +221,9 @@ public class BoardActivity extends BaseActivity implements
         binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onPause();
     }
+
+
+
     @Override
     public void onStop() {
         //activityResultLauncher.unregister();
@@ -254,6 +257,11 @@ public class BoardActivity extends BaseActivity implements
             finish();
             return true;
         } else return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void getPermissionResult(Boolean isPermitted) {
+        log.i("permission result: %s", isPermitted);
     }
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback, which has replaced the previous
@@ -564,16 +572,17 @@ public class BoardActivity extends BaseActivity implements
     // (camera or gallery) to select in ImageChooserFragment. According to the selected media,
     // startActivityForResult() defined in the parent activity is invoked and the result is notified
     // to the activity and it is, in turn, sent back here by calling
-    public void selectImageMedia(int media) {
+    public void selectImageMedia(int media, View rootView) {
         switch(media) {
             case Constants.GALLERY:
                 mGetContent.launch("image/*");
                 break;
             case Constants.CAMERA:
-                checkRuntimePermission(binding.getRoot(), Manifest.permission.CAMERA, () -> {
+                String rationale = "permission required to use camera";
+                checkRuntimePermission(rootView, Manifest.permission.CAMERA, rationale, () -> {
                     File tmpFile = new File(getCacheDir(), new SimpleDateFormat(
                             "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
-                    Uri photoUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, tmpFile);
+                    photoUri = FileProvider.getUriForFile(this, Constants.FILE_IMAGES, tmpFile);
                     mTakePicture.launch(photoUri);
                 });
                 break;
@@ -582,26 +591,19 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
-    // ActivityResult callback invoked by mGetContent, which get the reslt of image uri.
+    // ActivityResultCallback for ActivityResultContracts.GetContent()
     public void getAttachedImageUri(Uri uri) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(android.R.id.content);
-        log.i("attached uri: %s, %s", uri, fragment);
-        if(fragment instanceof BoardWriteDlgFragment) {
-            writePostFragment.addImageThumbnail(uri);
-        } else if(fragment instanceof BoardEditFragment) {
-            ((BoardEditFragment)fragment).addImageThumbnail(uri);
-        }
+        if(fragment instanceof BoardWriteDlgFragment) writePostFragment.addImageThumbnail(uri);
+        else if(fragment instanceof BoardEditFragment) ((BoardEditFragment)fragment).addImageThumbnail(uri);
     }
 
-    // ActivityResult callback by mTakePicture, which get the boolean value when successfully taking
-    // picture back to the callback, then launch ActivityResultContract.GetContent to get the image
-    // uri. No way to send the uri back directly? custom contract?
+    // ActivityResultCalback for ActivityResultContract.TakePicture();
     private void getCameraImage(boolean isTaken) {
-        if(isTaken) mGetContent.launch("image/*");
+        if(isTaken) writePostFragment.addImageThumbnail(photoUri);
     }
 
-    // ActivityResult callback invoked by activityResultCallback to get the result from SettingActivity
-    // to set the auto club.
+    // ActivityResultCallback for ActivityResultContracts.StartActivityForResult()
     private void getSettingResultBack(ActivityResult result) {
         if(result.getData() == null) return;
         switch(result.getResultCode()) {

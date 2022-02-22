@@ -153,7 +153,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).selectImageMedia(chooser);
+            ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
         });
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {

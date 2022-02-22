@@ -205,6 +205,11 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     }
 
     @Override
+    public void getPermissionResult(Boolean isPermitted) {
+
+    }
+
+    @Override
     public void onStop(){
         super.onStop();
         binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
@@ -526,7 +531,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         WeakReference<Fragment> weakFragment = pagerAdapter.weakFragmentReference(currentPage);
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             String permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
-            checkRuntimePermission(binding.getRoot(), permission, () -> {
+            String rationale = "Permission required to use Background Location";
+            checkRuntimePermission(binding.getRoot(), permission, rationale, () -> {
                 if(weakFragment.get() instanceof ExpenseGasFragment) {
                     ((ExpenseGasFragment)weakFragment.get()).addGasFavorite();
                 } else if(weakFragment.get() instanceof ExpenseServiceFragment) {

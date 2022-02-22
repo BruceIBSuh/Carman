@@ -189,6 +189,11 @@ public class MainActivity extends BaseActivity implements
     }
 
     @Override
+    public void getPermissionResult(Boolean isPermitted) {
+
+    }
+
+    @Override
     public void onStop() {
         //activityResultLauncher.unregister();
         if(locationTask != null) locationTask = null;
@@ -344,9 +349,11 @@ public class MainActivity extends BaseActivity implements
     public void locateNearStations(View view) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
-            checkRuntimePermission(binding.getRoot(), Manifest.permission.ACCESS_FINE_LOCATION, ()->{
+            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+            final String rationale = "permission required to use Fine Location";
+            checkRuntimePermission(binding.getRoot(), perm, rationale,  ()->{
                 binding.progbtnGas.setProgressColor(isStnViewOn);
-                locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
             });
 
         } else {
