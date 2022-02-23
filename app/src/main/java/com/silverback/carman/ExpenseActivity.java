@@ -95,7 +95,6 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private ExpenseGraphFragment expenseGraphFragment;
     private NumberPadFragment numPad;
     private MemoPadFragment memoPad;
-    private ExpenseRecentAdapter recentAdapter;
 
     //private ThreadTask tabPagerTask;
     private LocationTask locationTask;
@@ -390,7 +389,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
     private void createExpenseViewPager() {
         // Add the viewpager in the framelayout.
         recentExpensePager = new ViewPager2(this);
-        recentAdapter = new ExpenseRecentAdapter(getSupportFragmentManager(), getLifecycle());
+        ExpenseRecentAdapter recentAdapter = new ExpenseRecentAdapter(getSupportFragmentManager(), getLifecycle());
         recentExpensePager.setAdapter(recentAdapter);
         recentExpensePager.setCurrentItem(0);
         new TabLayoutMediator(binding.topframePage, recentExpensePager, true, true,

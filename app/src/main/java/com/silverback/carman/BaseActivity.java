@@ -69,6 +69,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public abstract class BaseActivity extends AppCompatActivity {
@@ -225,58 +226,6 @@ public abstract class BaseActivity extends AppCompatActivity {
         return (currentTime - lastUpdate) > Constants.OPINET_UPDATE_INTERVAL;
     }
 
-    // Reference method to get a debug Hashkey for Kakao
-    // or by using Terminal,
-    // keytool -exportcert -alias androiddebugkey -keystore <debug_keystore_path>
-    // -storepass android -keypass android | openssl sha1 -binary | openssl base64
-    /*
-    protected void getHashKey() {
-        try {
-            PackageInfo info = getPackageManager()
-                    .getPackageInfo("com.silverback.carman2", PackageManager.GET_SIGNATURES);
-
-            for (Signature signature : info.signatures) {
-                MessageDigest md = MessageDigest.getInstance("SHA");
-                md.update(signature.toByteArray());
-                log.i("KeyHash: %s", Base64.encodeToString(md.digest(), Base64.DEFAULT));
-            }
-        } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
-    */
-
-
-
-
-
-    // Programatically, add titles and icons on the TabLayout, which must be invoked after
-    // setupWithViewPager when it is linked to ViewPager.
-    @SuppressWarnings("ConstantConditions")
-    protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
-        List<String> tabTitleList = null;
-        List<Drawable> tabIconList = null;
-
-        if(context instanceof ExpenseActivity) {
-            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
-            Drawable[] icons = {
-                    AppCompatResources.getDrawable(this, R.drawable.ic_gas),
-                    AppCompatResources.getDrawable(this, R.drawable.ic_service),
-                    AppCompatResources.getDrawable(this, R.drawable.ic_stats)};
-            tabIconList = Arrays.asList(icons);
-
-        } else if(context instanceof BoardActivity) {
-            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
-        }
-
-        for(int i = 0; i < tabLayout.getTabCount(); i++) {
-            tabLayout.getTabAt(i).setText(tabTitleList.get(i));
-            if(tabIconList != null) tabLayout.getTabAt(i).setIcon(tabIconList.get(i));
-        }
-    }
-
     // Measures the size of an android attribute based on ?attr/actionBarSize
     public float getActionbarHeight() {
         TypedValue typedValue = new TypedValue();
@@ -335,35 +284,9 @@ public abstract class BaseActivity extends AppCompatActivity {
             return jsonArray;
 
         } catch(JSONException e) {
-            log.e("JSONException: %s", e.getMessage());
-        }
-
-        return null;
-        /*
-        String jsonServiceItem =
-                "[{name:\"엔진오일 및 오일필터\",\"mileage\":8000,\"month\":6}," +
-                "{\"name\":\"에어클리너\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"에어컨 필터\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"에어컨 가스\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"냉각수\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"얼라인먼트\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"타이어 위치 교환\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"타이어 교체\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"브레이크 패드\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"브레이크 라이닝\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"배터리 교체\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"트랜스미션오일 교체\",\"mileage\":5000,\"month\":6}," +
-                "{\"name\":\"타이밍벨트 교체\",\"mileage\":5000,\"month\":6}]";
-
-        try {
-            return  new JSONArray(jsonServiceItem);
-        } catch(JSONException e) {
             e.printStackTrace();
+            return null;
         }
-
-        return null;
-
-         */
     }
 
     // The document id with which user data is uploaded to Firestore is used as USER ID. The Firebase

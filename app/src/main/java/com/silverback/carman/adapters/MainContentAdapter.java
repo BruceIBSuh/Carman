@@ -26,8 +26,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
-    private static final int RECENT = 0;
-    private static final int NOTIFICATION = 3;
+    //private static final int RECENT = 0;
+    //private static final int NOTIFICATION = 3;
     private static final int NUM_CONTENTS = 6;
 
     // Objects
@@ -69,7 +69,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
             case Constants.NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
                 notiBinding.imgbtnNotification.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(NOTIFICATION)
+                    mListener.onClickPostingIcon(Constants.NOTIFICATION)
                 );
                 return new ViewHolder(notiBinding.getRoot());
 
@@ -80,7 +80,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
             case Constants.CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 carlifeBinding.imgbtnCarlife.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(RECENT)
+                    mListener.onClickPostingIcon(Constants.CARLIFE)
                 );
                 return new ViewHolder(carlifeBinding.getRoot());
 

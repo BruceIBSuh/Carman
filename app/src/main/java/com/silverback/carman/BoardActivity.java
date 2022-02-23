@@ -22,6 +22,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
@@ -46,6 +47,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
@@ -54,6 +56,7 @@ import androidx.viewpager2.widget.ViewPager2;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
@@ -376,6 +379,33 @@ public class BoardActivity extends BaseActivity implements
         // fragment but also the tab titles. Thus, recreate the title here.
         addTabIconAndTitle(this, binding.tabBoard);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
+    }
+
+    protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
+        List<String> tabTitleList = null;
+        List<Drawable> tabIconList = null;
+
+        tabTitleList = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
+
+        /*
+        if(context instanceof ExpenseActivity) {
+            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
+            Drawable[] icons = {
+                    AppCompatResources.getDrawable(this, R.drawable.ic_gas),
+                    AppCompatResources.getDrawable(this, R.drawable.ic_service),
+                    AppCompatResources.getDrawable(this, R.drawable.ic_stats)};
+            tabIconList = Arrays.asList(icons);
+
+        } else if(context instanceof BoardActivity) {
+            tabTitleList = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
+        }
+
+         */
+
+        for(int i = 0; i < tabLayout.getTabCount(); i++) {
+            Objects.requireNonNull(tabLayout.getTabAt(i)).setText(tabTitleList.get(i));
+            //Objects.requireNonNull(tabLayout.getTabAt(i)).setIcon(tabIconList.get(i));
+        }
     }
 
     // Slide down the tab as the activity is created.

@@ -47,13 +47,13 @@
         android:id="@+id/spinner_gas"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="3dp"
+        android:minWidth="48dp"
+        android:layout_marginEnd="8dp"
         android:background="@drawable/spinner_main_fuel"
+        android:contentDescription="@string/gas_btn_change"
         app:layout_constraintBottom_toBottomOf="@+id/view_subtitle_spinner"
         app:layout_constraintEnd_toEndOf="@+id/view_subtitle_spinner"
         app:layout_constraintTop_toTopOf="@+id/view_subtitle_spinner" />
-
-    <!--android:background="@drawable/spinner_main_fuel"-->
 
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewpager_price"
@@ -61,7 +61,6 @@
         android:layout_height="65dp"
         android:layout_marginTop="3dp"
         android:background="#C5E1A5"
-        android:padding="8dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

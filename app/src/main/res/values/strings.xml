@@ -198,7 +198,7 @@
     <string name="board_msg_cancel_edit">포스트 편집을 취소합니다</string>
     <!--BoardActivity$BoardWriteFragment -->
     <string name="board_write_label_title">제 목:</string>
-    <string name="board_write_hint_content">내 용</string>
+    <string name="board_write_hint_content">내 용:</string>
     <string name="board_msg_image">이미지 첨부는 최대 <b>%d</b>개까지 가능합니다</string>
     <string name="board_write_category">분 류</string>
     <string name="board_msg_no_title">글의 제목을 넣어주세요</string>
