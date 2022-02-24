@@ -104,7 +104,6 @@ public class QueryPostPaginationUtil {
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
         */
-
         query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             /*
@@ -117,8 +116,20 @@ public class QueryPostPaginationUtil {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
+    }
 
-
+    // Make an initial query of comments in BoardReadFragment.
+    public void setCommentQuery(DocumentReference docRef){
+        querySnapshot = null;
+        this.field = "timestamp";
+        colRef = docRef.collection("comments");
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
+                .addOnSuccessListener(queryCommentShot -> {
+                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+                    this.querySnapshot = queryCommentShot;
+                    mCallback.getFirstQueryResult(queryCommentShot);
+                }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
     // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
@@ -149,17 +160,5 @@ public class QueryPostPaginationUtil {
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
-    // Make an initial query of comments in BoardReadFragment.
-    public void setCommentQuery(DocumentReference docRef){
-        querySnapshot = null;
-        this.field = "timestamp";
-        colRef = docRef.collection("comments");
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
-                .addOnSuccessListener(queryCommentShot -> {
-                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
-                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
-                    this.querySnapshot = queryCommentShot;
-                    mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(mCallback::getQueryErrorResult);
-    }
+
 }

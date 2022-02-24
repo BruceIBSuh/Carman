@@ -1,17 +1,11 @@
 package com.silverback.carman.fragments;
 
 
-import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -283,14 +277,15 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
             stnId = data.providerId;
             isFavoriteGas = true;
 
-            favPriceTask = ThreadManager.startFavoritePriceTask(
+            favPriceTask = ThreadManager2.startFavoritePriceTask(
                     requireActivity(), opinetViewModel, data.providerId, false);
+
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
         opinetViewModel.getFavoritePriceData().observe(getViewLifecycleOwner(), data -> {
-            log.i("Favorite price data: %s", data.get(defaultParams[0]));
-            binding.etGasUnitPrice.setText(String.valueOf(data.get(defaultParams[0])));
+            String fuelCode = mSettings.getString(Constants.FUEL, "B027");
+            binding.etGasUnitPrice.setText(String.valueOf(data.get(fuelCode)));
             binding.etGasUnitPrice.setCursorVisible(false);
         });
     }
@@ -529,7 +524,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
-                favPriceTask = ThreadManager.startFavoritePriceTask(
+                favPriceTask = ThreadManager2.startFavoritePriceTask(
                         requireActivity(), opinetViewModel, stnId, false);
                 break;
             case Constants.SVC:

@@ -179,7 +179,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         if(parent == binding.spinnerSido) {
-            spinnerTask = ThreadManager2.getInstance().loadDistSpinnerTask(getContext(), opinetModel, pos);
+            spinnerTask = ThreadManager2.getInstance().loadDistrictSpinnerTask(getContext(), opinetModel, pos);
             if(pos != mSidoItemPos) mSigunItemPos = 0;
         } else tmpSigunPos = pos;
     }

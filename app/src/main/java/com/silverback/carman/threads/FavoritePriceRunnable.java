@@ -69,7 +69,6 @@ public class FavoritePriceRunnable implements Runnable {
             try(InputStream in = conn.getInputStream()) {
                 Opinet.StationPrice currentStation = xmlHandler.parseStationPrice(in);
                 final String stnName = currentStation.getStnName();
-
                 if(mCallback.getIsFirst()) {
                     final File file = new File(mContext.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
                     if(!file.exists()) {
@@ -78,7 +77,6 @@ public class FavoritePriceRunnable implements Runnable {
                         return;
                     }
                     // Read the saved station and compare the saved price w/ the current price if
-
                     Uri uri = Uri.fromFile(file);
                     try(InputStream is = mContext.getContentResolver().openInputStream(uri);
                         ObjectInputStream ois = new ObjectInputStream(is)) {
@@ -108,7 +106,10 @@ public class FavoritePriceRunnable implements Runnable {
                         e.printStackTrace();
                     }
 
-                } else mCallback.setFavoritePrice(currentStation.getStnPrice());
+                } else {
+                    log.i("favorite station price: %s", currentStation.getStnPrice());
+                    mCallback.setFavoritePrice(currentStation.getStnPrice());
+                }
 
             } finally { if(conn != null) conn.disconnect(); }
 

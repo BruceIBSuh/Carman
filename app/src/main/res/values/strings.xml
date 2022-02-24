@@ -385,8 +385,9 @@
     <string name="btn_dialog_confirm">확인</string>
     <string name="btn_dialog_cancel">취소</string>
 
-    <!-- Permission -->
+    <!-- Permission Rationale Message -->
     <string name="perm_msg_camera">카메라 기능을 사용할 수 없습니다. 권한 설정을 확인해 주세요</string>
+    <string name="perm_background_location">백그라운드 위치 권한 설정이 필요합니다.</string>
 
     <!-- Error Messages -->
     <string name="errror_no_network">네트워크 연결에 실패하였습니다\n확인 후 다시 연결해 주세요</string>

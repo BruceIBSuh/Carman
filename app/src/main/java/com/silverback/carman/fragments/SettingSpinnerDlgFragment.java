@@ -14,7 +14,7 @@ import androidx.preference.PreferenceDialogFragmentCompat;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.SigunSpinnerAdapter;
 import com.silverback.carman.threads.DistCodeSpinnerTask;
-import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
@@ -122,7 +122,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
         // If the Sido spinner is selected as is the default Sido code is transferred
         if(parent == sidoSpinner) {
             // Retrieve a new Sigun code list with the Sido given by by the Sido spinner.
-            spinnerTask = ThreadManager.loadDistCodeSpinnerTask(getContext(), opinetModel, position);
+            spinnerTask = ThreadManager2.getInstance().loadDistrictSpinnerTask(getContext(), opinetModel, position);
             // The Sigun spinner is set to the first position if the Sido spinner changes.
             if(mSidoItemPos != position) mSigunItemPos = 0;
             tmpSidoPos = position;

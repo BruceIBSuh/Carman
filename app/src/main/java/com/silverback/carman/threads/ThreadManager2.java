@@ -66,8 +66,10 @@ public class ThreadManager2 {
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
+    private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     private final BlockingQueue<UploadPostTask> mUploadPostTaskQueue;
+    
 
     private final BlockingQueue<UpdatePostTask> mUploadPostTaskQueue2;
 
@@ -96,6 +98,7 @@ public class ThreadManager2 {
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mUploadPostTaskQueue = new LinkedBlockingQueue<>();
+        mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
 
         mUploadPostTaskQueue2 = new LinkedBlockingQueue<>();
 
@@ -224,10 +227,13 @@ public class ThreadManager2 {
         return geocoderReverseTask;
     }
 
-    public DistCodeSpinnerTask loadDistSpinnerTask(Context context, OpinetViewModel model, int code) {
-        if(distSpinnerTak == null) distSpinnerTak = new DistCodeSpinnerTask(context);
-        distSpinnerTak.initSpinnerDistCodeTask(model, code);
-        InnerClazz.sInstance.threadPoolExecutor.execute(distSpinnerTak.getDistCodeSpinnerRunnable());
+    public DistCodeSpinnerTask loadDistrictSpinnerTask(Context context, OpinetViewModel model, int code) {
+        DistCodeSpinnerTask districtSpinnerTask = InnerClazz.sInstance.mDistCodeSpinnerTaskQueue.poll();
+        if(districtSpinnerTask == null) districtSpinnerTask = new DistCodeSpinnerTask(context);
+
+        districtSpinnerTask.initSpinnerDistCodeTask(model, code);
+        InnerClazz.sInstance.threadPoolExecutor.execute(districtSpinnerTask.getDistCodeSpinnerRunnable());
+
         return distSpinnerTak;
     }
 
@@ -246,12 +252,11 @@ public class ThreadManager2 {
         return gasPriceTask;
     }
 
-    public static FavoritePriceTask startFavoriteStationTask(
+    public static FavoritePriceTask startFavoritePriceTask(
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
-        //FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
-        //if(favPriceTask == null)
-        FavoritePriceTask favPriceTask = new FavoritePriceTask(context);
+        FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
+        if(favPriceTask == null) favPriceTask = new FavoritePriceTask(context);
         favPriceTask.initTask(model, stnId, isFirst);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(favPriceTask.getPriceRunnableStation());

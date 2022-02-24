@@ -61,7 +61,6 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
 
     @Override
     public void savePriceDiff() {
-        log.i("savePriceDiff");
         weakModelReference.get().favoritePriceComplete().postValue(true);
     }
 

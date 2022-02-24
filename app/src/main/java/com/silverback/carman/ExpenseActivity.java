@@ -46,6 +46,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationListTask;
+import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.DatePickerFragment;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -106,7 +107,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     // Fields
     private int currentPage;
-    private int category;
+    //private int category;
     private String pageTitle;
     private boolean isGeofencing;
     private int prevHeight;
@@ -123,7 +124,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         final String action = getIntent().getAction();
         if(TextUtils.isEmpty(action) && Objects.equals(action, Constants.NOTI_GEOFENCE)){
             isGeofencing = true;
-            category = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
+            //category = getIntent().getIntExtra(Constants.GEO_CATEGORY, -1);
         }
 
         expenseGraphFragment = new ExpenseGraphFragment();
@@ -183,7 +184,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         });
 
         // Init the task to get the current location.
-        locationTask = sThreadManager.fetchLocationTask(this, locationModel);
+        locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
         // Worker Thread for getting service items and the current gas station.
         //String jsonSvcItems = mSettings.getString(Constants.SERVICE_ITEMS, null);
         //tabPagerTask = sThreadManager.startExpenseTabPagerTask(pagerModel, jsonSvcItems);
@@ -530,7 +531,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         WeakReference<Fragment> weakFragment = pagerAdapter.weakFragmentReference(currentPage);
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             String permission = Manifest.permission.ACCESS_BACKGROUND_LOCATION;
-            String rationale = "Permission required to use Background Location";
+            String rationale = getString(R.string.perm_background_location);
             checkRuntimePermission(binding.getRoot(), permission, rationale, () -> {
                 if(weakFragment.get() instanceof ExpenseGasFragment) {
                     ((ExpenseGasFragment)weakFragment.get()).addGasFavorite();

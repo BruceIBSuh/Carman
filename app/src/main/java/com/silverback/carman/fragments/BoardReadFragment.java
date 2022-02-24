@@ -48,10 +48,12 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
+import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.bumptech.glide.Glide;
@@ -79,6 +81,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
+import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
@@ -261,7 +264,6 @@ public class BoardReadFragment extends DialogFragment implements
         // it listen to scrolling, use the parent scollview listener.
         binding.vgNestedscrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-
             if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
                     && scrollY > oldScrollY)) {
                 if(!isLoading) {
@@ -284,7 +286,13 @@ public class BoardReadFragment extends DialogFragment implements
 
 
         // RecyclerView for showing comments
-        binding.recyclerComments.setLayoutManager(new LinearLayoutManager(context));
+        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
+        binding.recyclerComments.setHasFixedSize(false); //due to banner plugin
+        binding.recyclerComments.setLayoutManager(layout);
+        binding.recyclerComments.addItemDecoration(divider);
+        binding.recyclerComments.setItemAnimator(new DefaultItemAnimator());
         binding.recyclerComments.setAdapter(commentAdapter);
         //setRecyclerViewScrollListener();
         //binding.recyclerComments.addOnScrollListener(pagingUtil);
@@ -298,7 +306,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
+        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath+"ic_user_blank_gray":userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -423,31 +431,28 @@ public class BoardReadFragment extends DialogFragment implements
     // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods
     // to show comments on the post by the pagination.
     @Override
-    public void getFirstQueryResult(QuerySnapshot postShots) {
-        if(commentShotList.size() > 0) commentShotList.clear();
-        for(DocumentSnapshot comment : postShots) {
-            commentShotList.add(comment);
-            commentAdapter.notifyDataSetChanged();
-        }
+    public void getFirstQueryResult(QuerySnapshot commentShots) {
+        commentShotList.clear();
+        for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
+        commentAdapter.notifyItemRangeChanged(0, commentShotList.size());
         // In case the first query retrieves shots less than the pagination number, no more loading
         // is made.
-        isLoading = postShots.size() < PAGINATION;
+        isLoading = commentShots.size() < PAGINATION;
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        for(DocumentSnapshot comment : nextShots) {
-            commentShotList.add(comment);
-            commentAdapter.notifyDataSetChanged();
-        }
-
+        final int start = commentShotList.size();
+        for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
+        commentAdapter.notifyItemRangeChanged(start, nextShots.size());
         isLoading = nextShots.size() < PAGINATION;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
+        final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
-        commentAdapter.notifyDataSetChanged();
+        commentAdapter.notifyItemRangeChanged(start, lastShots.size());
         isLoading = true;
     }
 

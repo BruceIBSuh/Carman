@@ -261,6 +261,7 @@ public class ThreadManager {
     // Retrieves Sigun list with a sido code given in SettingPreferenceActivity
     // Bugs: no guarantee to coincide the position with the code. For example, Daegu is positioned
     // at 12, whereas the Sido code is 14.
+    /*
     public static DistCodeSpinnerTask loadDistCodeSpinnerTask(
             Context context, OpinetViewModel model, int position) {
 
@@ -272,6 +273,8 @@ public class ThreadManager {
 
         return task;
     }
+
+     */
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
     // file location.
@@ -299,6 +302,7 @@ public class ThreadManager {
     // is shown in GeneralFragment of MainActivity. The firstholder gas pirce is saved as the internal
     // storage and by comparing the saved price and the current price, price difference will be
     // calculated. Otherwise, it just fetches the price of a favorite when selected out the list.
+    /*
     public static FavoritePriceTask startFavoritePriceTask(
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
@@ -310,6 +314,8 @@ public class ThreadManager {
 
         return favPriceTask;
     }
+
+     */
 
     /*
     public static ExpenseTabPagerTask startExpenseTabPagerTask(
