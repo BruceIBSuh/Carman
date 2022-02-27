@@ -108,8 +108,9 @@ public class IntroActivity extends BaseActivity  {
     private void firstInitProcess() {
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
+                if(mAuth.getUid() == null || TextUtils.isEmpty(mAuth.getUid())) return;
                 Map<String, Object> userData = new HashMap<>();
-                userData.put("user_id", mAuth.getUid());
+                //userData.put("user_id", mAuth.getUid());
                 userData.put("user_name", null);
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);

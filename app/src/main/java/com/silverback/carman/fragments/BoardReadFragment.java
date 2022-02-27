@@ -187,7 +187,7 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(commentShotList);
+        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList);
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
@@ -412,7 +412,6 @@ public class BoardReadFragment extends DialogFragment implements
             } else {
                 int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
                 binding.constraintComment.setVisibility(visibility);
-                //constCommentLayout.setVisibility(View.VISIBLE);
                 binding.etComment.getText().clear();
                 binding.etComment.requestFocus();
                 isCommentVisible = !isCommentVisible;
@@ -535,8 +534,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     }
 
-    // Method for uploading the comment to Firestore.
-    //@SuppressWarnings("ConstantConditions")
+    // Method for uploading the comment to Firestore
     private void uploadComment() {
         Map<String, Object> comment = new HashMap<>();
         comment.put("comment", binding.etComment.getText().toString());
@@ -545,10 +543,16 @@ public class BoardReadFragment extends DialogFragment implements
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
-            comment.put("userId", commentId);
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
+            log.i("comment id: %s", commentId);
+            firestore.collection("users").document(commentId).get()
+                    .addOnSuccessListener(doc -> {
+                        log.i("comment owner: %s", doc.getString("user_name"));
+                        comment.put("user_name", doc.getString("user_name"));
+                    })
+                    .addOnFailureListener(Throwable::printStackTrace);
+
+            //comment.put("userId", commentId);
+        } catch(IOException e) {e.printStackTrace();}
 
         // Get the document first, then the comment sub collection is retrieved. If successful, update
         // the comment count in the document and reset the fields.
