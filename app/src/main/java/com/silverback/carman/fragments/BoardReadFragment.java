@@ -24,13 +24,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -322,12 +325,11 @@ public class BoardReadFragment extends DialogFragment implements
 
             if(snapshot != null && snapshot.exists()) {
                 BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
-                //long cntComment = snapshot.getLong("cnt_comment");
-                //long cntCompathy = snapshot.getLong("cnt_compathy");
                 long cntComment = Objects.requireNonNull(board).getCommentCount();
                 long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
                 binding.tvCntComment.setText(String.valueOf(cntComment));
                 binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
+                binding.headerCommentCnt.setText(String.valueOf(cntComment));
             }
         });
         // Rearrange the text by paragraphs
@@ -598,11 +600,10 @@ public class BoardReadFragment extends DialogFragment implements
         // get the right end position.
         final String REGEX_MARKUP = "\\[image_\\d]";
         final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
-
         final ConstraintLayout parent = binding.constraintPosting;
+
         int index = 0;
         int start = 0;
-        //int parent = binding.constraintPosting;
         int target;
         int prevImageId = 0;
 
@@ -626,11 +627,9 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.clone(parent);
             tvSet.connect(tv.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(tv.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 32);
+            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
 
-            // Even if no content exists, ConstrainSet.TOP should be tv.getId() b/c a line is inserted
-            // when attaching an image.
             ImageView imgView = new ImageView(context);
             imgView.setId(View.generateViewId());
             prevImageId = imgView.getId();
@@ -638,9 +637,9 @@ public class BoardReadFragment extends DialogFragment implements
 
             ConstraintSet imgSet = new ConstraintSet();
             imgSet.clone(parent);
-            imgSet.connect(imgView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 0);
-            imgSet.connect(imgView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 0);
-            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 32);
+            imgSet.connect(imgView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
+            imgSet.connect(imgView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
+            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 0);
             imgSet.applyTo(parent);
 
             // Consider to apply Glide thumbnail() method.
@@ -652,26 +651,23 @@ public class BoardReadFragment extends DialogFragment implements
         }
 
         // Coordinate the position b/w the last part, no matter what is image or text in the content,
-        // and the following recycler view by the patterns.
-        // No image attached
-        if(start == 0) {
-            TextView noImageText = new TextView(context);
-            noImageText.setId(View.generateViewId());
-            noImageText.setText(content);
-            parent.addView(noImageText, params);
+        // and the following recyclerview which shows any comment
+        if(start == 0) { // no image attached
+            TextView simpleText = new TextView(context);
+            simpleText.setId(View.generateViewId());
+            simpleText.setText(content);
+            parent.addView(simpleText, params);
 
             ConstraintSet tvSet = new ConstraintSet();
             tvSet.clone(parent);
-            tvSet.connect(noImageText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
-            tvSet.connect(noImageText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(noImageText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 32);
-            tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, noImageText.getId(), ConstraintSet.BOTTOM, 64);
-
+            tvSet.connect(simpleText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
+            tvSet.connect(simpleText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
+            tvSet.connect(simpleText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 16);
+            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, onlyText.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
             tvSet.applyTo(parent);
 
-        // Text exists after the last image. The last textview is constrained to the previous imageview
-        // and the recyclerview constrained to the textview.
-        } else if(start < content.length()) {
+        } else if(start < content.length()) { // text after an attached image
             String lastParagraph = content.substring(start);
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
@@ -683,14 +679,15 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
+            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
             tvSet.applyTo(parent);
 
-        // No text exists after the last image; the recyclerView is constrained to the last ImageView
-        } else if(start == content.length()) {
+        } else if(start == content.length()) { // no text after the last image
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(parent);
-            recyclerSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 64);
+            //recyclerSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
+            recyclerSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
             recyclerSet.applyTo(parent);
         }
 

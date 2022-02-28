@@ -154,7 +154,6 @@
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
-
         <!-- (Nested)ScrollView may have only a single child -->
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraint_posting"
@@ -166,25 +165,61 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                app:layout_constraintGuide_begin="20dp" />
-            <View
-                android:id="@+id/view_underline_header"
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:background="@android:color/transparent"
+                app:layout_constraintGuide_begin="8dp" />
+
+            <RelativeLayout
+                android:id="@+id/header_comment"
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
+                android:background="@drawable/bg_colored_border"
+                android:padding="3dp"
+                android:gravity="center_vertical"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toBottomOf="@null">
+                <TextView
+                    android:id="@+id/tv_subtitle_comment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true"
+                    android:gravity="center_vertical"
+                    android:layout_marginStart="3dp"
+                    android:text="@string/board_comment_header"
+                    android:textSize="@dimen/subtitle"
+                    android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/header_comment_cnt"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentBottom="true"
+                    android:layout_toEndOf="@id/tv_subtitle_comment"
+                    android:layout_marginStart="8dp"
+                    android:text="@null"
+                    android:textColor="@android:color/holo_blue_light"
+                    android:textSize="@dimen/subtitle" />
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_comment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentBottom="true" />
+            </RelativeLayout>
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler_comments"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior"
+                app:layout_constraintTop_toBottomOf="@id/header_comment"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintVertical_bias="0.0" />
         </androidx.constraintlayout.widget.ConstraintLayout>
+
     </androidx.core.widget.NestedScrollView>
 
     <androidx.constraintlayout.widget.ConstraintLayout
