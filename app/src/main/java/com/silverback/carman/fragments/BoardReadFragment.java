@@ -40,6 +40,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -108,7 +109,7 @@ import java.util.regex.Pattern;
  * BoardPagerFragment.
  */
 public class BoardReadFragment extends DialogFragment implements
-        View.OnClickListener,
+        View.OnClickListener, CompoundButton.OnCheckedChangeListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
@@ -184,7 +185,6 @@ public class BoardReadFragment extends DialogFragment implements
 
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
-        //mSettings = ((BaseActivity)requireActivity()).getSharedPreferernces();
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
@@ -212,9 +212,10 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
-        // the listener to prevent connecting to the server. Instead, update the collection using
+        // the listener to prevent connecting to the server. Instead`, update the collection using
         // Source.Cache.
         postRef = firestore.collection("user_post").document(documentId);
+
         /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
                 .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
@@ -265,7 +266,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
         // it listen to scrolling, use the parent scollview listener.
-        binding.vgNestedscrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+        binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
             if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
                     && scrollY > oldScrollY)) {
@@ -275,6 +276,8 @@ public class BoardReadFragment extends DialogFragment implements
                 }
             }
         });
+
+        binding.switchComment.setOnCheckedChangeListener(this);
 
         binding.tvPostTitle.setText(postTitle);
         binding.tvUsername.setText(userName);
@@ -322,7 +325,6 @@ public class BoardReadFragment extends DialogFragment implements
                 e.printStackTrace();
                 return;
             }
-
             if(snapshot != null && snapshot.exists()) {
                 BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
                 long cntComment = Objects.requireNonNull(board).getCommentCount();
@@ -332,6 +334,7 @@ public class BoardReadFragment extends DialogFragment implements
                 binding.headerCommentCnt.setText(String.valueOf(cntComment));
             }
         });
+
         // Rearrange the text by paragraphs
         readContentView(postContent);
         // Query comments
@@ -350,7 +353,6 @@ public class BoardReadFragment extends DialogFragment implements
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
     }
-
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -392,6 +394,22 @@ public class BoardReadFragment extends DialogFragment implements
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
         log.i("onDismiss");
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+        if(b) {
+            binding.recyclerComments.setVisibility(View.VISIBLE);
+            binding.constraintBottom.setVisibility(View.VISIBLE);
+            binding.nestedScrollview.post(new Runnable() {
+                public void run() {
+                    binding.nestedScrollview.scrollTo(0, 150);
+                }
+            });
+        } else {
+            binding.recyclerComments.setVisibility(View.GONE);
+            binding.constraintBottom.setVisibility(View.GONE);
+        }
     }
 
     @Override
@@ -627,7 +645,7 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.clone(parent);
             tvSet.connect(tv.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(tv.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 0);
+            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 16);
             tvSet.applyTo(parent);
 
             ImageView imgView = new ImageView(context);
@@ -650,9 +668,11 @@ public class BoardReadFragment extends DialogFragment implements
             index++;
         }
 
-        // Coordinate the position b/w the last part, no matter what is image or text in the content,
+        // Coordinate the position b/w the last part, no matter what is imageview or textview in the content,
         // and the following recyclerview which shows any comment
-        if(start == 0) { // no image attached
+        // Simple text w/o any image
+        if(start == 0) {
+            log.i("simple text");
             TextView simpleText = new TextView(context);
             simpleText.setId(View.generateViewId());
             simpleText.setText(content);
@@ -662,13 +682,15 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.clone(parent);
             tvSet.connect(simpleText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(simpleText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(simpleText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 16);
-            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, onlyText.getId(), ConstraintSet.BOTTOM, 16);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(simpleText.getId(), ConstraintSet.BOTTOM, binding.guideline.getId(), ConstraintSet.TOP, 16);
+            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
+            //tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
-
-        } else if(start < content.length()) { // text after an attached image
+        // Text after an image
+        } else if(start < content.length()) {
+            log.i("text after an image");
             String lastParagraph = content.substring(start);
+            log.i("substring: %s", lastParagraph.length());
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
             lastView.setText(lastParagraph);
@@ -680,18 +702,21 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
             //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
-
-        } else if(start == content.length()) { // no text after the last image
+        // No text after the last image
+        } else if(start == content.length()) {
+            log.i("image positioned at the last");
             ConstraintSet recyclerSet = new ConstraintSet();
             recyclerSet.clone(parent);
             //recyclerSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
-            recyclerSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
+            recyclerSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.TOP, 0);
             recyclerSet.applyTo(parent);
         }
 
     }
+
+
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every

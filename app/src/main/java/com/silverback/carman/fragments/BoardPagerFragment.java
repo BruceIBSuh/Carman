@@ -340,7 +340,6 @@ public class BoardPagerFragment extends Fragment implements
         }
 
         readPostFragment.setArguments(bundle);
-        //readPostFragment.setDialogDismissListener(this);
         requireActivity().getSupportFragmentManager().beginTransaction()
                 .add(android.R.id.content, readPostFragment)
                 .addToBackStack(null)
