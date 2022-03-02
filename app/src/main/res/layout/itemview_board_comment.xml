@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/constraint_comment"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="3dp"
-    android:padding="3dp">
+    android:padding="8dp">
 
     <ImageView
         android:id="@+id/img_comment_user"
@@ -54,18 +54,87 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/img_comment_user" />
 
-    <TextView
-        android:id="@+id/textView9"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="3dp"
+    <RelativeLayout
+        android:id="@+id/header_reply"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="3dp"
-        android:text="@string/board_comment_reply"
-        android:textSize="@dimen/extraSmallText"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_comment_content" />
+        app:layout_constraintTop_toBottomOf="@id/tv_comment_content">
+        <TextView
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentBottom="true"
+            android:gravity="start|center_vertical"
+            android:text="@string/board_comment_reply"
+            android:textSize="@dimen/extraSmallText" />
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switch_reply"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:scaleX="0.5"
+            android:scaleY="0.5" />
+    </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/recycler_reply"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/header_reply">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView_reply"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_colored_border">
+            <TextView
+                android:id="@+id/tv_label_reply"
+                android:layout_width="100dp"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:gravity="center_vertical"
+                android:text="@string/board_comment_reply"
+                android:textSize="@dimen/extraSmallText"
+                android:textStyle="bold"/>
+            <ImageButton
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_menu_send"
+                android:contentDescription="@null" />
+        </RelativeLayout>
+        <EditText
+            android:id="@+id/et_comment_reply"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:gravity="start|top"
+            android:background="@drawable/bg_colored_border"
+            android:ems="10"
+            android:labelFor="@id/tv_label_reply"
+            android:inputType="textMultiLine"
+            android:hint="Defamation Warning!!"
+            android:importantForAutofill="no"
+            android:scrollbars="vertical" />
+    </LinearLayout>
+
 
     <!--
     <View

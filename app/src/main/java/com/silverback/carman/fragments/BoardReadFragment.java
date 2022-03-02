@@ -50,6 +50,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
@@ -69,10 +70,12 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
@@ -194,7 +197,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         imgUtil = new ApplyImageResourceUtil(getContext());
         imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
 
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");
@@ -208,6 +211,7 @@ public class BoardReadFragment extends DialogFragment implements
             cntComment = getArguments().getInt("cntComment");
             cntCompathy = getArguments().getInt("cntCompahty");
             documentId = getArguments().getString("documentId");
+
         }
 
         // Get the current document reference which should be shared in the fragment.
@@ -224,7 +228,8 @@ public class BoardReadFragment extends DialogFragment implements
                             ? Source.CACHE : Source.SERVER;
                 })
         );
-         */
+        */
+
         /*
         // Instantiate PagingQueryHelper to paginate comments in a post.
         //pagingUtil = new PostingClubRepository(firestore);
@@ -232,7 +237,7 @@ public class BoardReadFragment extends DialogFragment implements
         postRepo = new PostingBoardRepository();
         postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
                 .get(PostingBoardViewModel.class);
-         */
+        */
     }
 
     @Override
@@ -357,6 +362,8 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
         // SET THE USER IMAGE ICON
         // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
         // in which Glide creates the custom target that translates an image fitting to a given
@@ -400,15 +407,11 @@ public class BoardReadFragment extends DialogFragment implements
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
         if(b) {
             binding.recyclerComments.setVisibility(View.VISIBLE);
-            binding.constraintBottom.setVisibility(View.VISIBLE);
-            binding.nestedScrollview.post(new Runnable() {
-                public void run() {
-                    binding.nestedScrollview.scrollTo(0, 150);
-                }
-            });
+            //binding.constraintBottom.setVisibility(View.VISIBLE);
+            //binding.nestedScrollview.post(() -> binding.nestedScrollview.scrollTo(0, 150));
         } else {
             binding.recyclerComments.setVisibility(View.GONE);
-            binding.constraintBottom.setVisibility(View.GONE);
+            //binding.constraintBottom.setVisibility(View.GONE);
         }
     }
 
@@ -424,11 +427,8 @@ public class BoardReadFragment extends DialogFragment implements
                 snackbar.setAction(R.string.board_msg_action_setting, view -> {
                     Intent intent = new Intent(getActivity(), SettingActivity.class);
                     intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                    //startActivityForResult(intent, Constants.REQUEST_BOARD_SETTING_USERNAME);
                     activityResultLauncher.launch(intent);
                 }).show();
-
-
             } else {
                 int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
                 binding.constraintComment.setVisibility(visibility);
@@ -563,15 +563,21 @@ public class BoardReadFragment extends DialogFragment implements
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
-            log.i("comment id: %s", commentId);
-            firestore.collection("users").document(commentId).get()
-                    .addOnSuccessListener(doc -> {
-                        log.i("comment owner: %s", doc.getString("user_name"));
-                        comment.put("user_name", doc.getString("user_name"));
-                    })
-                    .addOnFailureListener(Throwable::printStackTrace);
+            comment.put("user_id", commentId);
 
-            //comment.put("userId", commentId);
+            final DocumentReference docref = firestore.collection("users").document(commentId);
+            firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+                DocumentSnapshot doc = transaction.get(docref);
+                comment.put("user_name", doc.getString("user_name"));
+                comment.put("user_pic", doc.getString("user_pic"));
+
+                postRef.get().addOnCompleteListener(snapshot -> {});
+
+
+                // Success
+                return null;
+            });
+
         } catch(IOException e) {e.printStackTrace();}
 
         // Get the document first, then the comment sub collection is retrieved. If successful, update
@@ -682,10 +688,12 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.clone(parent);
             tvSet.connect(simpleText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(simpleText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(simpleText.getId(), ConstraintSet.BOTTOM, binding.guideline.getId(), ConstraintSet.TOP, 16);
+            tvSet.connect(simpleText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
             //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
             //tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
+
         // Text after an image
         } else if(start < content.length()) {
             log.i("text after an image");
@@ -704,6 +712,7 @@ public class BoardReadFragment extends DialogFragment implements
             //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
             tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
+
         // No text after the last image
         } else if(start == content.length()) {
             log.i("image positioned at the last");
@@ -715,8 +724,6 @@ public class BoardReadFragment extends DialogFragment implements
         }
 
     }
-
-
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
@@ -927,6 +934,8 @@ public class BoardReadFragment extends DialogFragment implements
         }
     }
      */
+
+
     private static class BoardGeneralObject {
         @PropertyName("post_title")
         private String postTitle;
@@ -944,7 +953,7 @@ public class BoardReadFragment extends DialogFragment implements
         private long cntView;
         @PropertyName("cnt_comment")
         private long cntComment;
-        @PropertyName("cnt_ccompathy")
+        @PropertyName("cnt_compathy")
         private long cntCompathy;
 
         public BoardGeneralObject() {
@@ -970,6 +979,4 @@ public class BoardReadFragment extends DialogFragment implements
             return cntCompathy;
         }
     }
-
-
 }

@@ -2,6 +2,7 @@ package com.silverback.carman.adapters;
 
 import android.content.Context;
 import android.net.Uri;
+import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,12 +11,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardCommentBinding;
+import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -31,7 +34,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
     private final FirebaseFirestore firestore;
-    private final List<DocumentSnapshot> snapshotList;
+    private final List<DocumentSnapshot> commentList;
     private final SimpleDateFormat sdf;
     private final ApplyImageResourceUtil imageUtil;
     private final Context context;
@@ -39,7 +42,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     // Constructor
     public BoardCommentAdapter(Context context, List<DocumentSnapshot> snapshotList) {
         this.context = context;
-        this.snapshotList = snapshotList;
+        this.commentList = snapshotList;
 
         firestore = FirebaseFirestore.getInstance();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -66,6 +69,12 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             return commentBinding.imgCommentUser;
         }
 
+        void dispReplyToComment(){
+            commentBinding.switchReply.setOnCheckedChangeListener((compoundButton, b) -> {
+                if(b) commentBinding.recyclerReply.setVisibility(View.VISIBLE);
+                else commentBinding.recyclerReply.setVisibility(View.GONE);
+            });
+        }
 
     }
 
@@ -78,13 +87,13 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        DocumentSnapshot document = snapshotList.get(position);
-        holder.getCommentContentView().setText(document.getString("comment"));
+        DocumentSnapshot comment = commentList.get(position);
+        holder.getCommentContentView().setText(comment.getString("comment"));
 
-        final Date date = document.getDate("timestamp");
+        final Date date = comment.getDate("timestamp");
         if(date != null) holder.getCommentTimestampView().setText(sdf.format(date));
 
-        final String userId = document.getString("userId");
+        final String userId = comment.getString("userId");
         if(userId != null && !TextUtils.isEmpty(userId)) {
             firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
@@ -97,6 +106,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
                 }
             });
         }
+
+        holder.dispReplyToComment();
+
     }
 
     @Override
@@ -111,12 +123,48 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     @Override
     public int getItemCount() {
-        return snapshotList.size();
+        return commentList.size();
     }
+
+
 
     private void setUserImage(ViewHolder holder, String imgPath) {
         int x = holder.getUserImageView().getWidth();
         int y = holder.getUserImageView().getHeight();
         imageUtil.applyGlideToImageView(Uri.parse(imgPath), holder.getUserImageView(), x, y, true);
     }
+
+    private static class ReplyAdapter extends RecyclerView.Adapter<ReplyAdapter.ViewHolder> {
+        private ItemviewBoardReplyBinding replyBinding;
+        private List<DocumentSnapshot> replyList;
+
+        public ReplyAdapter(Context context, List<DocumentSnapshot> replyList) {
+            this.replyList = replyList;
+        }
+
+        public static class ViewHolder extends RecyclerView.ViewHolder {
+            public ViewHolder(ItemviewBoardReplyBinding replyBinding) {
+                super(replyBinding.getRoot());
+            }
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            ItemviewBoardReplyBinding replyBinding = ItemviewBoardReplyBinding.inflate(inflater);
+            return new ReplyAdapter.ViewHolder(replyBinding);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
+        }
+
+        @Override
+        public int getItemCount() {
+            return replyList.size();
+        }
+    }
+
 }

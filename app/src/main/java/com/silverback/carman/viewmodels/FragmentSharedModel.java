@@ -20,7 +20,6 @@ import java.util.List;
 
 public class FragmentSharedModel extends ViewModel {
 
-    private final MutableLiveData<Fragment> fragment = new MutableLiveData<>();
     private final MutableLiveData<SparseIntArray> numpadValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<String>> memopadValue = new MutableLiveData<>();
     private final MutableLiveData<SparseArray<Object>> svcLocation = new MutableLiveData<>();
