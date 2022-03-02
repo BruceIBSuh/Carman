@@ -692,7 +692,7 @@ public class BoardActivity extends BaseActivity implements
     }
 
     // Refactor required!!:
-    // Custom class to typecast the Firestore array field of post_images to ArrayList<String> used
+    // Custom class to typecast Firestore array field of post_images to ArrayList<String> used
     // in both BoardPostingAdapter and BoardPagerFragment.
     public static class PostImages {
         @PropertyName("post_images")

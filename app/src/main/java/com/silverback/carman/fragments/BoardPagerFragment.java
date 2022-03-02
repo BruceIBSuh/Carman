@@ -37,6 +37,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -54,6 +55,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,8 +105,6 @@ public class BoardPagerFragment extends Fragment implements
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
-
-    private FragmentSharedModel fragmentModel;
 
     // UIs
     private FragmentBoardPagerBinding binding;
@@ -160,7 +160,7 @@ public class BoardPagerFragment extends Fragment implements
         firestore = FirebaseFirestore.getInstance();
         imgutil = new ApplyImageResourceUtil(getContext());
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
 
         progbar = ((BoardActivity)requireActivity()).getLoadingProgressBar();
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
@@ -234,6 +234,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(
+                requireActivity()).get(FragmentSharedModel.class);
         // UploadBitmapTask notifies the frament of uploading a post being completed and re-query
         // to update.
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
@@ -319,6 +321,11 @@ public class BoardPagerFragment extends Fragment implements
 
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
+        bundle.putString("userId", snapshot.getString("user_id"));
+        bundle.putString("userName", snapshot.getString("user_name"));
+        bundle.putString("userPic", snapshot.getString("user_pic"));
+
+        /*
         if(currentPage == NOTIFICATION) {
             bundle.putString("userId", "0000");
             bundle.putString("userName", "Admin");
@@ -328,12 +335,11 @@ public class BoardPagerFragment extends Fragment implements
             bundle.putString("userName", snapshot.getString("user_name"));
             bundle.putString("userPic", snapshot.getString("user_pic"));
         }
-
-        bundle.putInt("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")).intValue());
-        bundle.putInt("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")).intValue());
+         */
+        bundle.putLong("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")));
+        bundle.putLong("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")));
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putString("timestamp", sdf.format(Objects.requireNonNull(snapshot.getDate("timestamp"))));
-
         if(snapshot.get("post_images") != null) {
             BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
             bundle.putStringArrayList("urlImgList", Objects.requireNonNull(objImages).getPostImages());
@@ -553,7 +559,6 @@ public class BoardPagerFragment extends Fragment implements
         public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
             super.onScrolled(recyclerView, dx, dy);
             fabWrite.setAlpha(0.8f);
-
             //WrapContentLinearLayoutManager layout = (WrapContentLinearLayoutManager)recyclerView.getLayoutManager();
             LinearLayoutManager layout = (LinearLayoutManager)recyclerView.getLayoutManager();
             if (layout != null) {
@@ -876,9 +881,6 @@ public class BoardPagerFragment extends Fragment implements
         }
     }
     */
-
-
-
 }
 
 

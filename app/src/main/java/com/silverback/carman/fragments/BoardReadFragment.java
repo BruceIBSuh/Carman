@@ -24,16 +24,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
-import android.text.style.ForegroundColorSpan;
 import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -50,7 +47,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
@@ -70,14 +66,12 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
-import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
@@ -184,35 +178,33 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        this.context = getContext();
-
-        firestore = FirebaseFirestore.getInstance();
-        firebaseStorage = FirebaseStorage.getInstance();
-        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
-
-        //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
-        queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
-        commentShotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList);
-
-        imgUtil = new ApplyImageResourceUtil(getContext());
-        imgViewModel = new ViewModelProvider(this).get(ImageViewModel.class);
-
-
         if(getArguments() != null) {
             tabPage = getArguments().getInt("tabPage");
             position = getArguments().getInt("position");
+            documentId = getArguments().getString("documentId");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
             userName = getArguments().getString("userName");
             userPic = getArguments().getString("userPic");
             uriStringList = getArguments().getStringArrayList("urlImgList");
             userId = getArguments().getString("userId");
-            cntComment = getArguments().getInt("cntComment");
-            cntCompathy = getArguments().getInt("cntCompahty");
-            documentId = getArguments().getString("documentId");
-
+            cntComment = (int)getArguments().getLong("cntComment");
+            cntCompathy = (int)getArguments().getLong("cntCompathy");
+            log.i("comment and compathy: %s, %s", cntComment, cntCompathy);
         }
+
+        this.context = requireContext();
+        firestore = FirebaseFirestore.getInstance();
+        firebaseStorage = FirebaseStorage.getInstance();
+        mSettings = PreferenceManager.getDefaultSharedPreferences(context);
+        imgUtil = new ApplyImageResourceUtil(context);
+
+        //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
+        queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
+        commentShotList = new ArrayList<>();
+        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList);
+
+
 
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
@@ -259,42 +251,16 @@ public class BoardReadFragment extends DialogFragment implements
         // in DialogFragment
         createEditOptionsMenu();
 
-        // Implements the abstract method of AppBarStateChangeListener to be notified of the state
-        // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
-        // scroling state.
-        binding.appbarBoardRead.addOnOffsetChangedListener(new AppBarStateChangeListener() {
-            @Override
-            public void onStateChanged(AppBarLayout appBarLayout, int state) {
-                setToolbarTitleIcon(state);
-            }
-        });
-
-        // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
-        // it listen to scrolling, use the parent scollview listener.
-        binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
-                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-            if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
-                    && scrollY > oldScrollY)) {
-                if(!isLoading) {
-                    isLoading = true;
-                    queryPaginationUtil.setNextQuery();
-                }
-            }
-        });
-
-        binding.switchComment.setOnCheckedChangeListener(this);
-
         binding.tvPostTitle.setText(postTitle);
         binding.tvUsername.setText(userName);
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
+        log.i("cntCompathy: %s", cntCompathy);
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
-
         // UPADTE THE FIRESTORE FIELD NAMES REQUIRED !!
         //showUserAutoClub(binding.tvAutoinfo);
-
 
         // RecyclerView for showing comments
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
@@ -309,36 +275,40 @@ public class BoardReadFragment extends DialogFragment implements
         //binding.recyclerComments.addOnScrollListener(pagingUtil);
 
         // Event handler for buttons
+        binding.switchComment.setOnCheckedChangeListener(this);
         binding.imgbtnComment.setOnClickListener(this);
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
         binding.imgbtnSendComment.setOnClickListener(this);
-
-
+        // Implements the abstract method of AppBarStateChangeListener to be notified of the state
+        // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
+        // scroling state.
+        binding.appbarBoardRead.addOnOffsetChangedListener(new AppBarStateChangeListener() {
+            @Override
+            public void onStateChanged(AppBarLayout appBarLayout, int state) {
+                setToolbarTitleIcon(state);
+            }
+        });
+        // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
+        // it listen to scrolling, use the parent scollview listener.
+        binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
+                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
+                    if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
+                            && scrollY > oldScrollY)) {
+                        if(!isLoading) {
+                            isLoading = true;
+                            queryPaginationUtil.setNextQuery();
+                        }
+                    }
+                });
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath+"ic_user_blank_gray":userPic;
+        String userImage = (TextUtils.isEmpty(userPic))?
+                Constants.imgPath + "ic_user_blank_gray" : userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
-        // Realtime update of the comment count and compathy count using SnapshotListener.
-        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
-        // whether the document has local changes that haven't been written to the backend yet.
-        // This property may determine the source of events
-        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            if(e != null) {
-                e.printStackTrace();
-                return;
-            }
-            if(snapshot != null && snapshot.exists()) {
-                BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
-                long cntComment = Objects.requireNonNull(board).getCommentCount();
-                long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
-                binding.tvCntComment.setText(String.valueOf(cntComment));
-                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
-                binding.headerCommentCnt.setText(String.valueOf(cntComment));
-            }
-        });
+
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
@@ -360,9 +330,36 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Realtime update of the comment count and compathy count using SnapshotListener.
+        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
+        // whether the document has local changes that haven't been written to the backend yet.
+        // This property may determine the source of events
+        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+            if(e != null) {
+                e.printStackTrace();
+                return;
+            }
+
+            if(snapshot != null && snapshot.exists()) {
+                //BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
+                //long cntComment = Objects.requireNonNull(board).getCommentCount();
+                //long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
+                long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
+                long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
+                binding.tvCntComment.setText(String.valueOf(cntComment));
+                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
+                binding.headerCommentCnt.setText(String.valueOf(cntComment));
+            }
+        });
+    }
+
+    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         // SET THE USER IMAGE ICON
         // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
@@ -393,14 +390,16 @@ public class BoardReadFragment extends DialogFragment implements
 
     @Override
     public void onPause() {
+        log.i("onPause");
         super.onPause();
-        regListener.remove();
+        //regListener.remove();
     }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
         log.i("onDismiss");
+        super.onDismiss(dialog);
+        //regListener.remove();
     }
 
     @Override
@@ -795,7 +794,6 @@ public class BoardReadFragment extends DialogFragment implements
 
         //final DocumentReference docRef = firestore.collection("board_general").document(documentId);
         final DocumentReference compathyRef = postRef.collection("compathy").document(userId);
-
         compathyRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
