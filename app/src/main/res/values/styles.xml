@@ -59,5 +59,17 @@
     </style>
     -->
 
+    <style name="CarmanPopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:layout_width">100dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@android:color/holo_blue_light</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:listPreferredItemHeightSmall">30dp</item>
+        <item name="android:listPreferredItemPaddingLeft">5dp</item>
+        <item name="android:listPreferredItemPaddingRight">5dp</item>
+
+
+    </style>
+
 
 </resources>

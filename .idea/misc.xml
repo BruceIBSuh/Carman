@@ -33,7 +33,7 @@
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
         <entry key="app/src/main/res/layout/fragment_board_edit.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_board_pager.xml" value="0.24635416666666668" />
-        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_board_write.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_board_write_temp.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_expense_stmts.xml" value="0.25" />
@@ -64,6 +64,7 @@
         <entry key="app/src/main/res/menu/menu_options_board.xml" value="0.25885416666666666" />
         <entry key="app/src/main/res/menu/menu_options_main.xml" value="0.29814814814814816" />
         <entry key="app/src/main/res/menu/options_board_read.xml" value="0.23697916666666666" />
+        <entry key="app/src/main/res/menu/popup_board_comment.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/xml/autopreference.xml" value="0.1" />
         <entry key="app/src/main/res/xml/pref_autodata.xml" value="0.1" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.2859375" />

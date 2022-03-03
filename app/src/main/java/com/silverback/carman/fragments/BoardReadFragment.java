@@ -288,6 +288,7 @@ public class BoardReadFragment extends DialogFragment implements
                 setToolbarTitleIcon(state);
             }
         });
+
         // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
         // it listen to scrolling, use the parent scollview listener.
         binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
@@ -303,12 +304,9 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(userPic))?
-                Constants.imgPath + "ic_user_blank_gray" : userPic;
+        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
-
-
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
@@ -329,31 +327,7 @@ public class BoardReadFragment extends DialogFragment implements
         return dialog;
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        // Realtime update of the comment count and compathy count using SnapshotListener.
-        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
-        // whether the document has local changes that haven't been written to the backend yet.
-        // This property may determine the source of events
-        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            if(e != null) {
-                e.printStackTrace();
-                return;
-            }
 
-            if(snapshot != null && snapshot.exists()) {
-                //BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
-                //long cntComment = Objects.requireNonNull(board).getCommentCount();
-                //long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
-                long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
-                long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
-                binding.tvCntComment.setText(String.valueOf(cntComment));
-                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
-                binding.headerCommentCnt.setText(String.valueOf(cntComment));
-            }
-        });
-    }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
@@ -389,10 +363,36 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        // Realtime update of the comment count and compathy count using SnapshotListener.
+        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
+        // whether the document has local changes that haven't been written to the backend yet.
+        // This property may determine the source of events
+        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
+            if(e != null) {
+                e.printStackTrace();
+                return;
+            }
+
+            if(snapshot != null && snapshot.exists()) {
+                //BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
+                //long cntComment = Objects.requireNonNull(board).getCommentCount();
+                //long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
+                long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
+                long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
+                binding.tvCntComment.setText(String.valueOf(cntComment));
+                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
+                binding.headerCommentCnt.setText(String.valueOf(cntComment));
+            }
+        });
+    }
+
+    @Override
     public void onPause() {
         log.i("onPause");
         super.onPause();
-        //regListener.remove();
+        regListener.remove();
     }
 
     @Override
@@ -429,20 +429,19 @@ public class BoardReadFragment extends DialogFragment implements
                     activityResultLauncher.launch(intent);
                 }).show();
             } else {
-                int visibility = (isCommentVisible) ? View.GONE : View.VISIBLE;
+                int visibility = isCommentVisible ? View.GONE : View.VISIBLE;
+                int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
                 binding.etComment.requestFocus();
+                binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(direction));
                 isCommentVisible = !isCommentVisible;
             }
 
         } else if(v.getId() == R.id.imgbtn_send_comment) {
             if(TextUtils.isEmpty(binding.etComment.getText())) {
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
-                return;
-            }
-
-            uploadComment();
+            } else uploadComment();
         }
     }
 
@@ -547,8 +546,9 @@ public class BoardReadFragment extends DialogFragment implements
         //commentAdapter.notifyDataSetChanged();
         commentAdapter.notifyItemInserted(0);
     }
-
      */
+
+
     private void getActivityResultCallback(ActivityResult result) {
 
     }
@@ -570,10 +570,21 @@ public class BoardReadFragment extends DialogFragment implements
                 comment.put("user_name", doc.getString("user_name"));
                 comment.put("user_pic", doc.getString("user_pic"));
 
-                postRef.get().addOnCompleteListener(snapshot -> {});
+                postRef.collection("comments").document(commentId).set(comment)
+                        .addOnSuccessListener(aVoid -> {
+                            postRef.update("cnt_comment", FieldValue.increment(1));
+                            queryPaginationUtil.setCommentQuery(postRef);
+                        }).addOnFailureListener(e -> {
+                            log.e("coment uploading failed");
+                            e.printStackTrace();
+                        });
 
+                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
-                // Success
+                // Make the comment view invisible and reset the flag.
+                binding.constraintComment.setVisibility(View.GONE);
+                isCommentVisible = !isCommentVisible;
                 return null;
             });
 
@@ -581,6 +592,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Get the document first, then the comment sub collection is retrieved. If successful, update
         // the comment count in the document and reset the fields.
+        /*
         postRef.get().addOnSuccessListener(document -> {
             if(document.exists()) {
                 final CollectionReference colRef = document.getReference().collection("comments");
@@ -608,6 +620,10 @@ public class BoardReadFragment extends DialogFragment implements
                 isCommentVisible = !isCommentVisible;
             }
         });
+
+         */
+
+
     }
 
     // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
@@ -695,9 +711,8 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Text after an image
         } else if(start < content.length()) {
-            log.i("text after an image");
             String lastParagraph = content.substring(start);
-            log.i("substring: %s", lastParagraph.length());
+            log.i("text after an image: %s", lastParagraph.length());
             TextView lastView = new TextView(context);
             lastView.setId(View.generateViewId());
             lastView.setText(lastParagraph);
@@ -708,18 +723,16 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 16);
             tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
 
         // No text after the last image
         } else if(start == content.length()) {
             log.i("image positioned at the last");
-            ConstraintSet recyclerSet = new ConstraintSet();
-            recyclerSet.clone(parent);
-            //recyclerSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 16);
-            recyclerSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.TOP, 0);
-            recyclerSet.applyTo(parent);
+            ConstraintSet imageSet = new ConstraintSet();
+            imageSet.clone(parent);
+            imageSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.TOP, 0);
+            imageSet.applyTo(parent);
         }
 
     }
@@ -932,49 +945,4 @@ public class BoardReadFragment extends DialogFragment implements
         }
     }
      */
-
-
-    private static class BoardGeneralObject {
-        @PropertyName("post_title")
-        private String postTitle;
-        @PropertyName("post_content")
-        private String postContent;
-        @PropertyName("post_general")
-        private boolean isGeneralPost;
-        @PropertyName("timestamp")
-        private long timestamp;
-        @PropertyName("user_id")
-        private String userId;
-        @PropertyName("user_name")
-        private String userName;
-        @PropertyName("cnt_view")
-        private long cntView;
-        @PropertyName("cnt_comment")
-        private long cntComment;
-        @PropertyName("cnt_compathy")
-        private long cntCompathy;
-
-        public BoardGeneralObject() {
-            // Must have a public no-argument constructor
-        }
-
-        public BoardGeneralObject(long view, long comment, long compathy) {
-            this.cntView = view;
-            this.cntComment = comment;
-            this.cntCompathy = compathy;
-        }
-
-        @PropertyName("cnt_view")
-        public long getViewCount() {
-            return cntView;
-        }
-        @PropertyName("cnt_comment")
-        public long getCommentCount() {
-            return cntComment;
-        }
-        @PropertyName("cnt_ccompathy")
-        public long getCompathyCount() {
-            return cntCompathy;
-        }
-    }
 }
