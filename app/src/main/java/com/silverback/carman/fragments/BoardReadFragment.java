@@ -31,7 +31,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
-import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,14 +60,12 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
@@ -107,6 +104,7 @@ import java.util.regex.Pattern;
  */
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
+        BoardCommentAdapter.DeleteCommentListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
@@ -136,7 +134,8 @@ public class BoardReadFragment extends DialogFragment implements
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
     private BoardCommentAdapter commentAdapter;
-    private String postTitle, postContent, userName, userPic;
+    private String documentId, postTitle, postContent, postOwnerId, postOwnerName, postOwnerPic;
+    private String viewerId;
     private ArrayList<String> uriStringList;
     private List<DocumentSnapshot> commentShotList;
     //private ListenerRegistration commentListener;
@@ -147,7 +146,6 @@ public class BoardReadFragment extends DialogFragment implements
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
-    private String userId, documentId;
     private int tabPage;
     private int position; // item poistion in the recyclerview.
     private int appbarOffset;
@@ -184,14 +182,15 @@ public class BoardReadFragment extends DialogFragment implements
             documentId = getArguments().getString("documentId");
             postTitle = getArguments().getString("postTitle");
             postContent = getArguments().getString("postContent");
-            userName = getArguments().getString("userName");
-            userPic = getArguments().getString("userPic");
+            postOwnerName = getArguments().getString("userName");
+            postOwnerPic = getArguments().getString("userPic");
+            postOwnerId = getArguments().getString("userId");
             uriStringList = getArguments().getStringArrayList("urlImgList");
-            userId = getArguments().getString("userId");
             cntComment = (int)getArguments().getLong("cntComment");
             cntCompathy = (int)getArguments().getLong("cntCompathy");
             log.i("comment and compathy: %s, %s", cntComment, cntCompathy);
         }
+
 
         this.context = requireContext();
         firestore = FirebaseFirestore.getInstance();
@@ -202,7 +201,7 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList);
+        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, this);
 
 
 
@@ -211,6 +210,12 @@ public class BoardReadFragment extends DialogFragment implements
         // the listener to prevent connecting to the server. Instead`, update the collection using
         // Source.Cache.
         postRef = firestore.collection("user_post").document(documentId);
+
+        // Get the id of a viewer.
+        try(FileInputStream fis = requireActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            viewerId = br.readLine();
+        } catch(IOException e) {e.printStackTrace();}
 
         /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
@@ -252,10 +257,9 @@ public class BoardReadFragment extends DialogFragment implements
         createEditOptionsMenu();
 
         binding.tvPostTitle.setText(postTitle);
-        binding.tvUsername.setText(userName);
+        binding.tvUsername.setText(postOwnerName);
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
-        log.i("cntCompathy: %s", cntCompathy);
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
         // Retreive the auto data from the server and set it to the view
@@ -304,7 +308,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(userPic))?Constants.imgPath + "ic_user_blank_gray":userPic;
+        String userImage = (TextUtils.isEmpty(postOwnerPic))?Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -370,15 +374,8 @@ public class BoardReadFragment extends DialogFragment implements
         // whether the document has local changes that haven't been written to the backend yet.
         // This property may determine the source of events
         regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            if(e != null) {
-                e.printStackTrace();
-                return;
-            }
-
+            if(e != null) return;
             if(snapshot != null && snapshot.exists()) {
-                //BoardGeneralObject board = snapshot.toObject(BoardGeneralObject.class);
-                //long cntComment = Objects.requireNonNull(board).getCommentCount();
-                //long cntCompathy = Objects.requireNonNull(board).getCompathyCount();
                 long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
                 long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
                 binding.tvCntComment.setText(String.valueOf(cntComment));
@@ -399,18 +396,16 @@ public class BoardReadFragment extends DialogFragment implements
     public void onDismiss(@NonNull DialogInterface dialog) {
         log.i("onDismiss");
         super.onDismiss(dialog);
-        //regListener.remove();
     }
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
         if(b) {
             binding.recyclerComments.setVisibility(View.VISIBLE);
-            //binding.constraintBottom.setVisibility(View.VISIBLE);
-            //binding.nestedScrollview.post(() -> binding.nestedScrollview.scrollTo(0, 150));
+            binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         } else {
             binding.recyclerComments.setVisibility(View.GONE);
-            //binding.constraintBottom.setVisibility(View.GONE);
+            binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
         }
     }
 
@@ -428,6 +423,7 @@ public class BoardReadFragment extends DialogFragment implements
                     intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
                     activityResultLauncher.launch(intent);
                 }).show();
+
             } else {
                 int visibility = isCommentVisible ? View.GONE : View.VISIBLE;
                 int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
@@ -477,6 +473,39 @@ public class BoardReadFragment extends DialogFragment implements
     public void getQueryErrorResult(Exception e) {
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
         isLoading = true;
+    }
+
+    // Implement BoardCommentAdapter.DeleteCommentListener which is invoked by the comment owner
+    @Override
+    public void deleteComment(String commentId, int position) {
+        postRef.collection("comments").document(commentId).delete().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                queryPaginationUtil.setCommentQuery(postRef);
+                postRef.update("cnt_comment", FieldValue.increment(-1));
+            }
+        });
+    }
+
+    @Override
+    public void addCommentReply(DocumentSnapshot comment, CharSequence content) {
+        log.i("add reply");
+        Map<String, Object> object = new HashMap<>();
+        object.put("user_id", viewerId);
+        object.put("timestamp", FieldValue.serverTimestamp());
+        object.put("reply_content", content);
+
+        final DocumentReference docref = firestore.collection("users").document(viewerId);
+        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+            DocumentSnapshot doc = transaction.get(docref);
+            object.put("user_name", doc.getString("user_name"));
+            object.put("user_pic", doc.getString("user_pic"));
+
+            comment.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
+                comment.getReference().update("cnt_reply", FieldValue.increment(1));
+            }).addOnFailureListener(Throwable::printStackTrace);
+
+            return null;
+        });
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
@@ -553,78 +582,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     }
 
-    // Method for uploading the comment to Firestore
-    private void uploadComment() {
-        Map<String, Object> comment = new HashMap<>();
-        comment.put("comment", binding.etComment.getText().toString());
-        comment.put("timestamp", FieldValue.serverTimestamp());
-        // Fetch the comment user id saved in the storage
-        try(FileInputStream fis = requireActivity().openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
-            String commentId =  br.readLine();
-            comment.put("user_id", commentId);
 
-            final DocumentReference docref = firestore.collection("users").document(commentId);
-            firestore.runTransaction((Transaction.Function<Void>) transaction -> {
-                DocumentSnapshot doc = transaction.get(docref);
-                comment.put("user_name", doc.getString("user_name"));
-                comment.put("user_pic", doc.getString("user_pic"));
-
-                postRef.collection("comments").document(commentId).set(comment)
-                        .addOnSuccessListener(aVoid -> {
-                            postRef.update("cnt_comment", FieldValue.increment(1));
-                            queryPaginationUtil.setCommentQuery(postRef);
-                        }).addOnFailureListener(e -> {
-                            log.e("coment uploading failed");
-                            e.printStackTrace();
-                        });
-
-                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
-                // Make the comment view invisible and reset the flag.
-                binding.constraintComment.setVisibility(View.GONE);
-                isCommentVisible = !isCommentVisible;
-                return null;
-            });
-
-        } catch(IOException e) {e.printStackTrace();}
-
-        // Get the document first, then the comment sub collection is retrieved. If successful, update
-        // the comment count in the document and reset the fields.
-        /*
-        postRef.get().addOnSuccessListener(document -> {
-            if(document.exists()) {
-                final CollectionReference colRef = document.getReference().collection("comments");
-                colRef.add(comment).addOnSuccessListener(commentDoc -> {
-                    postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef);
-
-                    // Create the viewmodel livedata as SparseArray<Long>
-                    SparseLongArray sparseArray = new SparseLongArray();
-                    Long cntComment = (Long)document.get("cnt_comment");
-                    if(cntComment != null) sparseArray.put(position, cntComment + 1);
-                    sharedModel.getNewComment().setValue(sparseArray);
-
-                }).addOnFailureListener(e -> {
-                    e.printStackTrace();
-                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-
-                // Hide the soft input method.
-                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
-                // Make the comment view invisible and reset the flag.
-                binding.constraintComment.setVisibility(View.GONE);
-                isCommentVisible = !isCommentVisible;
-            }
-        });
-
-         */
-
-
-    }
 
     // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
     // created by ConstraintSet. Images should be managed by Glide.
@@ -774,11 +732,11 @@ public class BoardReadFragment extends DialogFragment implements
         binding.toolbarBoardRead.setTitle(spannable);
         switch(state) {
             case STATE_COLLAPSED:
-                userPic = (TextUtils.isEmpty(userPic)) ? Constants.imgPath + "ic_user_blank_gray" : userPic;
+                postOwnerPic = (TextUtils.isEmpty(postOwnerPic)) ? Constants.imgPath + "ic_user_blank_gray" : postOwnerPic;
                 binding.toolbarBoardRead.setNavigationIcon(null);
                 binding.toolbarBoardRead.setTitle(spannable);
-                binding.toolbarBoardRead.setSubtitle(userName);
-                imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
+                binding.toolbarBoardRead.setSubtitle(postOwnerName);
+                imgUtil.applyGlideToDrawable(postOwnerPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
                 binding.toolbarBoardRead.setOnClickListener(view -> dismiss());
                 break;
 
@@ -795,26 +753,59 @@ public class BoardReadFragment extends DialogFragment implements
         }
     }
 
+    // Method for uploading the comment to Firestore
+    private void uploadComment() {
+        Map<String, Object> comment = new HashMap<>();
+        comment.put("cnt_reply", 0);
+        comment.put("comment", binding.etComment.getText().toString());
+        comment.put("timestamp", FieldValue.serverTimestamp());
+        // Fetch the comment user id saved in the storage
+        try(FileInputStream fis = requireActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            String commentId =  br.readLine();
+            comment.put("user_id", commentId);
+
+            final DocumentReference docref = firestore.collection("users").document(commentId);
+            firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+                DocumentSnapshot doc = transaction.get(docref);
+                comment.put("user_name", doc.getString("user_name"));
+                comment.put("user_pic", doc.getString("user_pic"));
+
+                postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
+                    postRef.update("cnt_comment", FieldValue.increment(1));
+                    queryPaginationUtil.setCommentQuery(postRef);
+                    binding.nestedScrollview.fullScroll(View.FOCUS_DOWN);
+                }).addOnFailureListener(Throwable::printStackTrace);
+
+                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
+                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+
+                // Make the comment view invisible and reset the flag.
+                binding.constraintComment.setVisibility(View.GONE);
+                isCommentVisible = !isCommentVisible;
+                return null;
+            });
+        } catch(IOException e) {e.printStackTrace();}
+
+    }
+
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
     // documents of which contains user ids
-    //@SuppressWarnings("ConstantConditions")
     private void setCompathyCount() {
+        final String msg = getString(R.string.board_msg_compathy);
         // Prevent repeated connection to Firestore every time when users click the button.
         if(hasCompathy) {
-            Snackbar.make(binding.getRoot(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return;
         }
 
-        //final DocumentReference docRef = firestore.collection("board_general").document(documentId);
-        final DocumentReference compathyRef = postRef.collection("compathy").document(userId);
+        final DocumentReference compathyRef = postRef.collection("compathy").document(viewerId);
         compathyRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot snapshot = task.getResult();
                 if(snapshot != null && snapshot.exists()) {
                     hasCompathy = true;
-                    //docRef.update("cnt_compathy", FieldValue.increment(-1));
-                    //compathyRef.delete();
-                    Snackbar.make(binding.getRoot(), getString(R.string.board_msg_compathy), Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
 
                 } else {
                     postRef.update("cnt_compathy", FieldValue.increment(1));
@@ -823,10 +814,7 @@ public class BoardReadFragment extends DialogFragment implements
                     compathyRef.set(data);
                 }
             }
-
-        }).addOnSuccessListener(aVoid -> log.i("isCompathy exists"))
-                .addOnFailureListener(e -> log.e("isCompathy does not exist: %s", e.getMessage()));
-
+        });
     }
 
     // As long as a post belongs to the user, show the menu in the toolbar which enables the user
@@ -836,11 +824,49 @@ public class BoardReadFragment extends DialogFragment implements
     // item.  The edit buttons turn visible only when both ids are equal, which means the reader
     // is the post owner.
     private void createEditOptionsMenu() {
+        if(postOwnerId != null && postOwnerId.equals(viewerId)) {
+            binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
+            binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
+                if (item.getItemId() == R.id.action_board_edit) {
+                    //mListener.onEditClicked(getArguments());
+                    //((BoardActivity)requireActivity()).addEditFragment(getArguments());
+                    BoardEditFragment editFragment = new BoardEditFragment();
+                    Bundle editBundle = new Bundle();
+                    editBundle.putString("documentId", documentId);
+                    editBundle.putString("postTitle", postTitle);
+                    editBundle.putString("postContent", postContent);
+                    editBundle.putInt("position", position);
+                    if (uriStringList != null && uriStringList.size() > 0) {
+                        log.i("uriStringList: %s", uriStringList.size());
+                        editBundle.putStringArrayList("uriImgList", uriStringList);
+                    }
+                    editFragment.setArguments(editBundle);
+                    requireActivity().getSupportFragmentManager().beginTransaction()
+                            .addToBackStack(null)
+                            .add(android.R.id.content, editFragment)
+                            .commit();
+
+                    dismiss();
+                    return true;
+
+                } else if (item.getItemId() == R.id.action_board_delete) {
+                    String title = getString(R.string.board_alert_delete);
+                    String msg = getString(R.string.board_alert_msg);
+                    AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
+                            .show(requireActivity().getSupportFragmentManager(), null);
+
+                    return true;
+                }
+                return false;
+            });
+        }
+
+        /*
         try (FileInputStream fis = requireActivity().openFileInput("userId");
              BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
 
             String viewerId = br.readLine();
-            if(userId != null && userId.equals(viewerId)) {
+            if(postOwnerId != null && postOwnerId.equals(viewerId)) {
                 binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
                 binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
                     if(item.getItemId() == R.id.action_board_edit) {
@@ -879,11 +905,13 @@ public class BoardReadFragment extends DialogFragment implements
         } catch(IOException e) {
             e.printStackTrace();
         }
+
+         */
     }
 
     // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
     private void showUserAutoClub(final TextView autoInfo) {
-        firestore.collection("users").document(userId).get().addOnCompleteListener(task -> {
+        firestore.collection("users").document(postOwnerId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if(document != null && document.exists()) {

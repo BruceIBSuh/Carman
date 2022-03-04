@@ -40,8 +40,8 @@
         <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_pager_expense.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_service_manager.xml" value="0.5" />
-        <entry key="app/src/main/res/layout/itemview_board_comment.xml" value="0.22" />
-        <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.24427083333333333" />
+        <entry key="app/src/main/res/layout/itemview_board_comment.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_ads.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_content_carlife.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_expense.xml" value="0.25" />

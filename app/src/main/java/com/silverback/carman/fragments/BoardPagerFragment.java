@@ -8,6 +8,7 @@ import static com.silverback.carman.BoardActivity.PAGINATION;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -156,7 +157,6 @@ public class BoardPagerFragment extends Fragment implements
         // Instantiate objects.
         //multiTypeItemList = new ArrayList<>();
         snapshotList = new ArrayList<>();
-
         firestore = FirebaseFirestore.getInstance();
         imgutil = new ApplyImageResourceUtil(getContext());
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -195,14 +195,13 @@ public class BoardPagerFragment extends Fragment implements
         binding = FragmentBoardPagerBinding.inflate(inflater);
 
         // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
-        //WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
-
+        WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
         // RecyclerView for displaying posts
-        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        //LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerBoardPostings.setHasFixedSize(false); //due to banner plugin
-        binding.recyclerBoardPostings.setLayoutManager(layout);
+        binding.recyclerBoardPostings.setLayoutManager(layoutManager);
         binding.recyclerBoardPostings.addItemDecoration(divider);
         binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
@@ -728,7 +727,7 @@ public class BoardPagerFragment extends Fragment implements
 
     // Wrapper class to throw java.lang.IndexOutOfBoundsException: Inconsistency detected.
     // Invalid view holder adapter positionPostViewHolder
-    /*
+
     private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
         // Constructor
         public WrapContentLinearLayoutManager(Context context) {
@@ -744,9 +743,6 @@ public class BoardPagerFragment extends Fragment implements
             }
         }
     }
-
-     */
-
     /*
     // Callback implemented by QueryClubPostingUtil.setPostingQuery() when initiating query for
     // the autoclub post. Receiving a result querysnapshot, categorize each snapshot by type, then

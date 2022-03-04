@@ -210,6 +210,7 @@
     <string name="board_comment_header">댓 글</string>
     <string name="board_comment_switch">보임/가림</string>
     <string name="board_comment_reply">답 글</string>
+    <string name="board_comment_reply_writing">답글쓰기</string>
     <string name="board_title_comment">댓글 작성</string>
     <string name="board_btn_compathy">공감</string>
     <string name="board_btn_comment">댓글</string>
