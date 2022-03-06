@@ -487,22 +487,23 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void addCommentReply(DocumentSnapshot comment, CharSequence content) {
+    public void addCommentReply(DocumentSnapshot commentshot, CharSequence content) {
         log.i("add reply");
         Map<String, Object> object = new HashMap<>();
         object.put("user_id", viewerId);
         object.put("timestamp", FieldValue.serverTimestamp());
-        object.put("reply_content", content);
-
+        object.put("reply_content", content.toString());
         final DocumentReference docref = firestore.collection("users").document(viewerId);
         firestore.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docref);
             object.put("user_name", doc.getString("user_name"));
             object.put("user_pic", doc.getString("user_pic"));
+            log.i("user name and pic:%s, %s", doc.getString("user_name"), doc.getString("user_pic"));
 
-            comment.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
-                comment.getReference().update("cnt_reply", FieldValue.increment(1));
-            }).addOnFailureListener(Throwable::printStackTrace);
+            commentshot.getReference().collection("replies").add(object)
+                    .addOnSuccessListener(aVoid -> {
+                        commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
+                    });
 
             return null;
         });

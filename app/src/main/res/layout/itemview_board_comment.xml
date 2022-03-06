@@ -97,7 +97,7 @@
     </RelativeLayout>
 
     <LinearLayout
-        android:id="@+id/recycler_reply"
+        android:id="@+id/linear_reply"
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -106,9 +106,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header_reply">
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerView_reply"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content" />
+            android:id="@+id/recyclerview_reply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp" />
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="35dp"
