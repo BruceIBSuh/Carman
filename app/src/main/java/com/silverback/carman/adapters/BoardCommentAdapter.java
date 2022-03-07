@@ -1,29 +1,21 @@
 package com.silverback.carman.adapters;
 
-import android.app.ActionBar;
-import android.content.ClipData;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.ContextThemeWrapper;
-import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ListAdapter;
-import android.widget.PopupWindow;
-import android.widget.SimpleAdapter;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.widget.LinearLayoutCompat;
 import androidx.appcompat.widget.ListPopupWindow;
-import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -48,7 +40,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -67,9 +58,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private final Context context;
     private final Context styleWrapper;
 
-    private CommentReplyAdapter replyAdapter;
-    //private final LinearLayoutManager layout;
-    //private final RecyclerDividerUtil divider;
+    private final ArrayAdapter arrayCommentAdapter;
+    private final CommentReplyAdapter replyAdapter;
+    private final RecyclerDividerUtil divider;
 
     private String viewerId;
     private List<DocumentSnapshot> replyList;
@@ -95,11 +86,11 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             viewerId = br.readLine();
         } catch(IOException e) {e.printStackTrace();};
 
+        final String[] items = {"delete", "report", "share"};
+        arrayCommentAdapter = new ArrayAdapter<>(context, R.layout.board_comment_dropdown, items);
 
-//        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-//                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-//        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
-//                0, ContextCompat.getColor(context, R.color.recyclerDivider));
+        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                0, ContextCompat.getColor(context, R.color.recyclerDivider));
         replyAdapter = CommentReplyAdapter.getInstance();
         replyAdapter.setImageUtl(imageUtil);
     }
@@ -163,18 +154,14 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         holder.setReplyVisibility();
 
         setCommentUserPic(holder, commentshot);
-        //holder.getOverflowView().setOnClickListener(view -> setPopupMenu(holder, commentshot, position));
-        holder.getOverflowView().setOnClickListener(view -> setPopupMenu(holder));
+        holder.getOverflowView().setOnClickListener(view -> showListPopupWindow(holder));
         holder.getSendReplyView().setOnClickListener(view -> uploadReply(holder, commentshot));
 
 
         if(Objects.requireNonNull(commentshot.getLong("cnt_reply")) > 0) {
-            LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-            RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
-                    0, ContextCompat.getColor(context, R.color.recyclerDivider));
             replyAdapter.setCommentReplyList(commentshot.getReference());
+            LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
             holder.getRecyclerReplyView().setLayoutManager(layout);
-            //holder.getRecyclerReplyView().setLayoutParams(lp);
             holder.getRecyclerReplyView().addItemDecoration(divider);
             holder.getRecyclerReplyView().setHasFixedSize(false);
             holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
@@ -207,28 +194,39 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         if(TextUtils.isEmpty(content)) return;
 
         commentListener.addCommentReply(commentshot, content);
-        holder.getContentEditText().setText("");
+        holder.getContentEditText().getText().clear();
     }
 
-    private void setPopupMenu(ViewHolder holder) {
-        PopupWindow dropdown = null;
-        LayoutInflater inflater = LayoutInflater.from(context);
-        View layout = inflater.inflate(R.layout.popup_comment, null);
-        layout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+    private void showListPopupWindow(ViewHolder holder) {
+        //LayoutInflater inflater = LayoutInflater.from(context);
+        //View view = inflater.inflate(R.layout.popup_comment, holder.commentBinding.getRoot(), false);
+        ListPopupWindow popupWindow = new ListPopupWindow(context);
+        popupWindow.setAnchorView(holder.getOverflowView());
+        popupWindow.setHeight(300);
+        popupWindow.setContentWidth(200);
+        popupWindow.setHorizontalOffset(-190);
+        Drawable background = ContextCompat.getDrawable(context, android.R.drawable.editbox_background);
+        popupWindow.setBackgroundDrawable(background);
+        popupWindow.setModal(true);
+        popupWindow.setOnItemClickListener((parent, view, i, l) -> {
+            log.i("click");
+        });
+        popupWindow.setAdapter(arrayCommentAdapter);
+        popupWindow.show();
 
-        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
-                ViewGroup.MarginLayoutParams.WRAP_CONTENT, ViewGroup.MarginLayoutParams.WRAP_CONTENT);
-        params.rightMargin = 100;
 
-        dropdown = new PopupWindow(layout,
-                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        /*
+        PopupWindow dropdown = new PopupWindow(view,
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+
         Drawable background = ContextCompat.getDrawable(context, android.R.drawable.editbox_background);
         dropdown.setBackgroundDrawable(background);
-        dropdown.setAnimationStyle(-1);
-        dropdown.showAsDropDown(holder.getOverflowView());
+        dropdown.showAsDropDown(holder.getOverflowView(), -150, -10);
         dropdown.setOverlapAnchor(true);
         dropdown.setOutsideTouchable(true);
         dropdown.update();
+
+         */
 
         /*
         final String commentId = comment.getId();
