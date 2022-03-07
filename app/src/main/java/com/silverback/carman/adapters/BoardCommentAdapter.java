@@ -1,17 +1,28 @@
 package com.silverback.carman.adapters;
 
+import android.app.ActionBar;
+import android.content.ClipData;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+import android.widget.PopupWindow;
+import android.widget.SimpleAdapter;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.LinearLayoutCompat;
+import androidx.appcompat.widget.ListPopupWindow;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -37,6 +48,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -56,9 +68,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private final Context styleWrapper;
 
     private CommentReplyAdapter replyAdapter;
-    private final LinearLayoutManager layout;
-
-    private final RecyclerDividerUtil divider;
+    //private final LinearLayoutManager layout;
+    //private final RecyclerDividerUtil divider;
 
     private String viewerId;
     private List<DocumentSnapshot> replyList;
@@ -84,10 +95,13 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             viewerId = br.readLine();
         } catch(IOException e) {e.printStackTrace();};
 
-        layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
-                0, ContextCompat.getColor(context, R.color.recyclerDivider));
+
+//        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+//                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+//        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+//                0, ContextCompat.getColor(context, R.color.recyclerDivider));
         replyAdapter = CommentReplyAdapter.getInstance();
+        replyAdapter.setImageUtl(imageUtil);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -113,6 +127,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             commentBinding.tvCommentContent.setText(doc.getString("comment"));
             final Date date = doc.getDate("timestamp");
             if(date != null) commentBinding.tvCommentTimestamp.setText(sdf.format(date));
+
+            // Temporary try catch b/c the db isn't complete.
             long count = Objects.requireNonNull(doc.getLong("cnt_reply"));
             commentBinding.headerReplyCnt.setText(String.valueOf(count));
         }
@@ -147,14 +163,15 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         holder.setReplyVisibility();
 
         setCommentUserPic(holder, commentshot);
-
-        holder.getOverflowView().setOnClickListener(view -> setPopupMenu(holder, commentshot, position));
+        //holder.getOverflowView().setOnClickListener(view -> setPopupMenu(holder, commentshot, position));
+        holder.getOverflowView().setOnClickListener(view -> setPopupMenu(holder));
         holder.getSendReplyView().setOnClickListener(view -> uploadReply(holder, commentshot));
 
 
         if(Objects.requireNonNull(commentshot.getLong("cnt_reply")) > 0) {
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
+            RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                    0, ContextCompat.getColor(context, R.color.recyclerDivider));
             replyAdapter.setCommentReplyList(commentshot.getReference());
             holder.getRecyclerReplyView().setLayoutManager(layout);
             //holder.getRecyclerReplyView().setLayoutParams(lp);
@@ -162,8 +179,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             holder.getRecyclerReplyView().setHasFixedSize(false);
             holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
             holder.getRecyclerReplyView().setAdapter(replyAdapter);
-        } else replyAdapter.clearCommentReplyList();
-
+        }
     }
 
     @Override
@@ -194,7 +210,27 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         holder.getContentEditText().setText("");
     }
 
-    private void setPopupMenu(ViewHolder holder, DocumentSnapshot comment, int position) {
+    private void setPopupMenu(ViewHolder holder) {
+        PopupWindow dropdown = null;
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View layout = inflater.inflate(R.layout.popup_comment, null);
+        layout.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
+
+        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
+                ViewGroup.MarginLayoutParams.WRAP_CONTENT, ViewGroup.MarginLayoutParams.WRAP_CONTENT);
+        params.rightMargin = 100;
+
+        dropdown = new PopupWindow(layout,
+                FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT);
+        Drawable background = ContextCompat.getDrawable(context, android.R.drawable.editbox_background);
+        dropdown.setBackgroundDrawable(background);
+        dropdown.setAnimationStyle(-1);
+        dropdown.showAsDropDown(holder.getOverflowView());
+        dropdown.setOverlapAnchor(true);
+        dropdown.setOutsideTouchable(true);
+        dropdown.update();
+
+        /*
         final String commentId = comment.getId();
         final String ownerId = comment.getString("user_id");
 
@@ -217,8 +253,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
             return false;
         });
-
         popupMenu.show();
+
+         */
     }
 
     private static class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapter.ViewHolder> {
@@ -233,12 +270,21 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             return InnerClazz.sInstance;
         }
 
+
         public static class ViewHolder extends RecyclerView.ViewHolder {
+            ItemviewBoardReplyBinding replyBinding;
+            public ViewHolder(View replyView) {
+                super(replyView);
+                replyBinding = ItemviewBoardReplyBinding.bind(replyView);
+            }
+
+            /*
             ItemviewBoardReplyBinding replyBinding;
             public ViewHolder(ItemviewBoardReplyBinding replyBinding) {
                 super(replyBinding.getRoot());
                 this.replyBinding = replyBinding;
             }
+            */
 
             ImageView getReplyUserImage() { return replyBinding.imgReplyUser; }
 
@@ -252,16 +298,20 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         @NonNull
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            final LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+            View replyView = LayoutInflater.from(parent.getContext()).inflate(R.layout.itemview_board_reply, parent, false);
+            return new ViewHolder(replyView);
+            /*
+            final LayoutInflater inflater = LayoutInflater.from(parent.getContext()
             ItemviewBoardReplyBinding replyBinding = ItemviewBoardReplyBinding.inflate(inflater);
             imgutil = new ApplyImageResourceUtil(parent.getContext());
             return new CommentReplyAdapter.ViewHolder(replyBinding);
+
+             */
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             final DocumentSnapshot doc = replyList.get(position);
-            log.i("binding reply: %s", doc.getString("user_name"));
             holder.setReplyProfile(doc);
 
             final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
@@ -275,18 +325,17 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             return replyList.size();
         }
 
+        public void setImageUtl(ApplyImageResourceUtil imgutil) {
+            this.imgutil = imgutil;
+        }
+
         public void setCommentReplyList(DocumentReference commentRef) {
             replyList = new ArrayList<>();
             commentRef.collection("replies").get().addOnSuccessListener(replyShot -> {
                 for(DocumentSnapshot doc : replyShot) {
-                    log.i("reply list: %s", doc.getString("reply_content"));
                     replyList.add(doc);
                 }
             });
-        }
-
-        public void clearCommentReplyList() {
-            replyList.clear();
         }
 
         private void setReplyUserPic(ViewHolder holder, String imgPath) {

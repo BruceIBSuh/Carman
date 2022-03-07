@@ -33,15 +33,15 @@
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
         <entry key="app/src/main/res/layout/fragment_board_edit.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_board_pager.xml" value="0.24635416666666668" />
-        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_board_write.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_board_write_temp.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_expense_stmts.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_pager_expense.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_service_manager.xml" value="0.5" />
-        <entry key="app/src/main/res/layout/itemview_board_comment.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.22" />
+        <entry key="app/src/main/res/layout/itemview_board_comment.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_ads.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_content_carlife.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_expense.xml" value="0.25" />
@@ -52,18 +52,21 @@
         <entry key="app/src/main/res/layout/main_incl_priceinfo.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_pager_district_price.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_pager_station_price.xml" value="0.24427083333333333" />
+        <entry key="app/src/main/res/layout/popup_comment.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/recycler_expense_stmts.xml" value="0.25" />
         <entry key="app/src/main/res/layout/recyclerview_expense_stmts.xml" value="0.1" />
         <entry key="app/src/main/res/layout/settings_pref_category.xml" value="0.33" />
         <entry key="app/src/main/res/layout/spinner_district_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/spinner_district_entry.xml" value="0.2989583333333333" />
         <entry key="app/src/main/res/layout/spinner_main_dropdown.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/spinner_main_fuel.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/view_action_emblem.xml" value="0.5" />
         <entry key="app/src/main/res/layout/view_automaker_emblem.xml" value="0.5" />
         <entry key="app/src/main/res/menu/menu_board_read.xml" value="0.2625" />
         <entry key="app/src/main/res/menu/menu_options_board.xml" value="0.25885416666666666" />
         <entry key="app/src/main/res/menu/menu_options_main.xml" value="0.29814814814814816" />
         <entry key="app/src/main/res/menu/options_board_read.xml" value="0.23697916666666666" />
+        <entry key="app/src/main/res/menu/popup_board_comment.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/xml/autopreference.xml" value="0.1" />
         <entry key="app/src/main/res/xml/pref_autodata.xml" value="0.1" />
         <entry key="app/src/main/res/xml/preferences.xml" value="0.2859375" />

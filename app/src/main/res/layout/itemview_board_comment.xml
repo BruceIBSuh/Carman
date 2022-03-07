@@ -102,19 +102,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:layout_marginStart="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/header_reply">
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerview_reply"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp" />
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="35dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginStart="16dp">
+            android:layout_marginTop="8dp">
             <TextView
                 android:id="@+id/tv_label_reply"
                 android:layout_width="100dp"
@@ -141,7 +136,6 @@
             android:id="@+id/et_comment_reply"
             android:layout_width="match_parent"
             android:layout_height="60dp"
-            android:layout_marginStart="16dp"
             android:gravity="start|top"
             android:padding="8dp"
             android:background="@drawable/bg_colored_border"
@@ -152,6 +146,15 @@
             android:hint="Defamation Warning!!"
             android:importantForAutofill="no"
             android:scrollbars="vertical" />
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerview_reply"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="더보기" />
+
     </LinearLayout>
 
 

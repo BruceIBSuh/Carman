@@ -3,11 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/constraint_reply"
-    android:layout_width="0dp"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@android:color/holo_green_light"
     android:padding="8dp">
-
     <ImageView
         android:id="@+id/img_reply_user"
         android:layout_width="35dp"
@@ -17,7 +15,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
-
     <TextView
         android:id="@+id/tv_user_name"
         android:layout_width="wrap_content"
@@ -27,7 +24,6 @@
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@+id/img_reply_user"
         app:layout_constraintTop_toTopOf="@+id/img_reply_user" />
-
     <TextView
         android:id="@+id/tv_reply_timestamp"
         android:layout_width="wrap_content"
@@ -36,7 +32,6 @@
         android:textSize="@dimen/extraSmallText"
         app:layout_constraintBottom_toBottomOf="@+id/img_reply_user"
         app:layout_constraintStart_toEndOf="@+id/img_reply_user" />
-
     <ImageView
         android:id="@+id/img_reply_overflow"
         android:layout_width="wrap_content"
@@ -45,7 +40,6 @@
         android:src="@drawable/ic_comment_overflow"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
     <TextView
         android:id="@+id/tv_reply_content"
         android:layout_width="0dp"
@@ -54,5 +48,4 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/img_reply_user" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>
