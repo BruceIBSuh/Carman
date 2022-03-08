@@ -219,6 +219,12 @@
     <string name="board_alert_delete">글 삭제</string>
     <string name="board_alert_msg">확인버튼을 누르면 글이 삭제됩니다</string>
     <string name="board_msg_delete">글이 삭제되었습니다</string>
+    <!--BoardActivity$BoardCommentAdapter-->
+    <string name="board_comment_popup_item1">삭 제</string>
+    <string name="board_comment_popup_item2">공 유</string>
+    <string name="board_comment_popup_item3">신 고</string>
+
+
 
     <!--SettingPreferenceActivity-->
     <string name="setting_toolbar_title">기본 정보 및 앱 설정</string>

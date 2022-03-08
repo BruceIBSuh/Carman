@@ -191,6 +191,11 @@ public class BoardReadFragment extends DialogFragment implements
             log.i("comment and compathy: %s, %s", cntComment, cntCompathy);
         }
 
+        // Get the view id for checking whether the post owner equals w/ the viewer
+        try(FileInputStream fis = requireActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
+            viewerId = br.readLine();
+        } catch(IOException e) {e.printStackTrace();}
 
         this.context = requireContext();
         firestore = FirebaseFirestore.getInstance();
@@ -201,9 +206,7 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, this);
-
-
+        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
@@ -211,11 +214,7 @@ public class BoardReadFragment extends DialogFragment implements
         // Source.Cache.
         postRef = firestore.collection("user_post").document(documentId);
 
-        // Get the id of a viewer.
-        try(FileInputStream fis = requireActivity().openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
-            viewerId = br.readLine();
-        } catch(IOException e) {e.printStackTrace();}
+
 
         /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
@@ -477,9 +476,10 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Implement BoardCommentAdapter.DeleteCommentListener which is invoked by the comment owner
     @Override
-    public void deleteComment(String commentId, int position) {
-        postRef.collection("comments").document(commentId).delete().addOnCompleteListener(task -> {
+    public void deleteComment(String docId) {
+        postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
+                log.i("comment removed");
                 queryPaginationUtil.setCommentQuery(postRef);
                 postRef.update("cnt_comment", FieldValue.increment(-1));
             }
