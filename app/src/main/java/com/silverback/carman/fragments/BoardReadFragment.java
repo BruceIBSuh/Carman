@@ -104,7 +104,7 @@ import java.util.regex.Pattern;
  */
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
-        BoardCommentAdapter.DeleteCommentListener,
+        BoardCommentAdapter.PopupMenuListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
@@ -474,25 +474,26 @@ public class BoardReadFragment extends DialogFragment implements
         isLoading = true;
     }
 
-    // Implement BoardCommentAdapter.DeleteCommentListener which is invoked by the comment owner
+    // Implement BoardCommentAdapter.PopupMenuListener which is invoked by the comment owner
     @Override
     public void deleteComment(String docId) {
         postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 log.i("comment removed");
-                queryPaginationUtil.setCommentQuery(postRef);
-                postRef.update("cnt_comment", FieldValue.increment(-1));
+                //queryPaginationUtil.setCommentQuery(postRef);
+                //postRef.update("cnt_comment", FieldValue.increment(-1));
             }
         });
     }
 
     @Override
-    public void addCommentReply(DocumentSnapshot commentshot, CharSequence content) {
+    public void addCommentReply(DocumentSnapshot commentshot, String content) {
         log.i("add reply");
+        /*
         Map<String, Object> object = new HashMap<>();
         object.put("user_id", viewerId);
         object.put("timestamp", FieldValue.serverTimestamp());
-        object.put("reply_content", content.toString());
+        object.put("reply_content", content);
         final DocumentReference docref = firestore.collection("users").document(viewerId);
         firestore.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docref);
@@ -507,6 +508,13 @@ public class BoardReadFragment extends DialogFragment implements
 
             return null;
         });
+
+         */
+    }
+
+    @Override
+    public void test() {
+        log.i("test callback");
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
