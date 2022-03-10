@@ -67,8 +67,15 @@
         <item name="android:listPreferredItemHeightSmall">30dp</item>
         <item name="android:listPreferredItemPaddingLeft">5dp</item>
         <item name="android:listPreferredItemPaddingRight">5dp</item>
+    </style>
 
-
+    <style name="BoardSwitchCompat" parent="Theme.AppCompat.Light">
+        <!-- active thumb & track color (30% transparency) -->
+        <item name="colorControlActivated">@android:color/holo_red_light</item>
+        <!-- inactive thumb color -->
+        <item name="colorSwitchThumbNormal">#f1f1f1</item>
+        <!-- inactive track color (30% transparency) -->
+        <item name="android:colorForeground">#42221f1f</item>
     </style>
 
 

@@ -104,7 +104,7 @@ import java.util.regex.Pattern;
  */
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener, CompoundButton.OnCheckedChangeListener,
-        BoardCommentAdapter.PopupMenuListener,
+        BoardCommentAdapter.CommentAdapterListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
@@ -191,7 +191,7 @@ public class BoardReadFragment extends DialogFragment implements
             log.i("comment and compathy: %s, %s", cntComment, cntCompathy);
         }
 
-        // Get the view id for checking whether the post owner equals w/ the viewer
+        // Get the viewer id for checking whether the post owner is the viewer
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             viewerId = br.readLine();
@@ -213,9 +213,6 @@ public class BoardReadFragment extends DialogFragment implements
         // the listener to prevent connecting to the server. Instead`, update the collection using
         // Source.Cache.
         postRef = firestore.collection("user_post").document(documentId);
-
-
-
         /*
         postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
                 .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
@@ -404,7 +401,7 @@ public class BoardReadFragment extends DialogFragment implements
             binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         } else {
             binding.recyclerComments.setVisibility(View.GONE);
-            binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
+            //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
         }
     }
 
@@ -474,47 +471,62 @@ public class BoardReadFragment extends DialogFragment implements
         isLoading = true;
     }
 
-    // Implement BoardCommentAdapter.PopupMenuListener which is invoked by the comment owner
+    // Implement BoardCommentAdapter.CommentAdapterListener which is invoked by the comment owner
     @Override
-    public void deleteComment(String docId) {
+    public void deleteComment(String docId, int position) {
         postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 log.i("comment removed");
                 //queryPaginationUtil.setCommentQuery(postRef);
-                //postRef.update("cnt_comment", FieldValue.increment(-1));
+                postRef.update("cnt_comment", FieldValue.increment(-1));
+                commentAdapter.notifyItemRemoved(position);
             }
         });
     }
 
+
+    @Override
+    public void deleteCommentReply(BoardCommentAdapter.CommentReplyAdapter adapter,
+                                   String commentId, String replyId, int position) {
+        log.i("delete comment reply: %s, %s", commentId, replyId);
+        postRef.collection("comments").document(commentId).collection("replies").document(replyId)
+                .delete()
+                .addOnCompleteListener(task -> {
+                    log.i("reply deleted");
+                    adapter.notifyItemRemoved(position);
+                });
+    }
+
     @Override
     public void addCommentReply(DocumentSnapshot commentshot, String content) {
-        log.i("add reply");
-        /*
         Map<String, Object> object = new HashMap<>();
         object.put("user_id", viewerId);
         object.put("timestamp", FieldValue.serverTimestamp());
         object.put("reply_content", content);
+
         final DocumentReference docref = firestore.collection("users").document(viewerId);
         firestore.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docref);
             object.put("user_name", doc.getString("user_name"));
             object.put("user_pic", doc.getString("user_pic"));
-            log.i("user name and pic:%s, %s", doc.getString("user_name"), doc.getString("user_pic"));
 
-            commentshot.getReference().collection("replies").add(object)
+            commentshot.getReference().collection("replies")
+                    .add(object)
                     .addOnSuccessListener(aVoid -> {
                         commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
                     });
 
             return null;
         });
-
-         */
     }
 
     @Override
-    public void test() {
-        log.i("test callback");
+    public void notifyReplyChecked(int position) {
+        for(int i = 0; i < commentAdapter.getItemCount();i++) {
+            if(i != position) commentAdapter.notifyItemChanged(i, true);
+        }
+
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
     // Subclass of RecyclerView.ScrollViewListner.

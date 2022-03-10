@@ -44,7 +44,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
-    private final PopupMenuListener commentListener;
+    private final CommentAdapterListener commentListener;
     private final FirebaseFirestore firestore;
 
     private final List<DocumentSnapshot> commentList;
@@ -63,16 +63,17 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private final String viewerId;
     private List<DocumentSnapshot> replyList;
 
-    public interface PopupMenuListener {
-        void deleteComment(String commentId);
+    public interface CommentAdapterListener {
+        void deleteComment(String commentId, int pos);
+        void deleteCommentReply(CommentReplyAdapter adapter, String commentId, String replyId, int pos);
         void addCommentReply(DocumentSnapshot commentshot, String content);
-        void test();
+        void notifyReplyChecked(int position);
     }
 
     // Constructor
-    public BoardCommentAdapter(
-            Context context, List<DocumentSnapshot> commentList, String viewerId,
-            PopupMenuListener listener) {
+    public BoardCommentAdapter(Context context, List<DocumentSnapshot> commentList, String viewerId,
+            CommentAdapterListener listener) {
+
         this.context = context;
         this.commentList = commentList;
         this.viewerId = viewerId;
@@ -87,8 +88,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
         // Intantiate CommentReplyAdapter
         replyAdapter = CommentReplyAdapter.getInstance();
-        replyAdapter.setReplyInitParams(context, popupDropdownUtil, imageUtil, viewerId);
-        replyAdapter.setListener(listener);
+        replyAdapter.setReplyInitParams(popupDropdownUtil, imageUtil, viewerId);
+        replyAdapter.setReplyAdapterListener(listener);
 
     }
 
@@ -115,16 +116,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             final Date date = doc.getDate("timestamp");
             if(date != null) commentBinding.tvCommentTimestamp.setText(sdf.format(date));
 
-            // Temporary try catch b/c the db isn't complete.
             long count = Objects.requireNonNull(doc.getLong("cnt_reply"));
             commentBinding.headerReplyCnt.setText(String.valueOf(count));
-        }
-
-        void setReplyVisibility(){
-            commentBinding.switchReply.setOnCheckedChangeListener((compoundButton, b) -> {
-                if(b) commentBinding.linearReply.setVisibility(View.VISIBLE);
-                else commentBinding.linearReply.setVisibility(View.GONE);
-            });
         }
 
         String getReplyContent() {
@@ -147,11 +140,11 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DocumentSnapshot doc = commentList.get(position);
         holder.setCommentProfile(doc);
-        holder.setReplyVisibility();
+        //holder.setReplyVisibility();
 
         setCommentUserPic(holder, doc);
-        holder.getOverflowView().setOnClickListener(view -> showCommentPopupWindow(holder, doc));
-        holder.getSendReplyView().setOnClickListener(view -> uploadReply(holder, doc));
+        holder.getOverflowView().setOnClickListener(view -> showCommentPopupWindow(holder, doc, position));
+        holder.getSendReplyView().setOnClickListener(view -> uploadCommentReply(holder, doc));
 
         if(Objects.requireNonNull(doc.getLong("cnt_reply")) > 0) {
             replyAdapter.setCommentReplyList(doc.getReference());
@@ -162,12 +155,26 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
             holder.getRecyclerReplyView().setAdapter(replyAdapter);
         }
+
+        holder.commentBinding.switchReply.setOnCheckedChangeListener((compoundButton, b) -> {
+            if(b) {
+                holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+                commentListener.notifyReplyChecked(position);
+            } else holder.commentBinding.linearReply.setVisibility(View.GONE);
+
+        });
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
-        else log.i("Partial Binding:");
+        else {
+            log.i("Partial Binding:%s, %s", pos, payloads);
+            if((boolean)payloads.get(0)) {
+                holder.commentBinding.switchReply.setChecked(false);
+                holder.commentBinding.linearReply.setVisibility(View.GONE);
+            }
+        }
     }
 
     @Override
@@ -185,33 +192,33 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     }
 
 
-    private void uploadReply(ViewHolder holder, DocumentSnapshot commentshot) {
+    private void uploadCommentReply(ViewHolder holder, DocumentSnapshot commentshot) {
         final String content = holder.getReplyContent();
         if(TextUtils.isEmpty(content)) return;
 
-        //commentListener.addCommentReply(commentshot, content);
+        commentListener.addCommentReply(commentshot, content);
         holder.getContentEditText().getText().clear();
     }
 
-    private void showCommentPopupWindow(ViewHolder holder, DocumentSnapshot doc) {
+    private void showCommentPopupWindow(ViewHolder holder, DocumentSnapshot doc, int position) {
         LayoutInflater inflater = LayoutInflater.from(context);
         View view = inflater.inflate(R.layout.popup_comment_overflow, holder.commentBinding.getRoot(), false);
+
         popupDropdownUtil.setInitParams(view, holder.getOverflowView(), doc);
         PopupWindow dropdown = popupDropdownUtil.createPopupWindow();
+
         PopupCommentOverflowBinding binding = PopupCommentOverflowBinding.bind(view);
         if(viewerId.equals(doc.getString("user_id"))) {
-            log.i("remove document");
             binding.tvPopup1.setVisibility(View.VISIBLE);
             binding.tvPopup1.setOnClickListener(v -> {
                 log.i("remove listener");
-                commentListener.deleteComment(doc.getId());
+                commentListener.deleteComment(doc.getId(), position);
                 dropdown.dismiss();
             });
         }
 
         binding.tvPopup2.setOnClickListener(v -> {
             log.i("menu2");
-            commentListener.test();
             dropdown.dismiss();
         });
         binding.tvPopup3.setOnClickListener(v -> {
@@ -223,35 +230,32 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     }
 
     // RecyclerView Adapter for the comment reply.
-    private static class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapter.ViewHolder> {
-        //private Context context;
-        private PopupMenuListener callback;
+    public static class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapter.ViewHolder> {
+        private CommentAdapterListener callback;
+        private DocumentReference commentRef;
         private List<DocumentSnapshot> replyList;
         private ApplyImageResourceUtil imgutil;
         private PopupDropdownUtil popupDropdownUtil;
         private String viewerId;
 
-        private CommentReplyAdapter(){ }
-
+        // static instance using the lazy holder class.
+        private CommentReplyAdapter(){}
         private static class InnerClazz {
             private static final CommentReplyAdapter sInstance = new CommentReplyAdapter();
         }
-
         public static CommentReplyAdapter getInstance() {
             return InnerClazz.sInstance;
         }
 
         public void setReplyInitParams(
-                Context context, PopupDropdownUtil dropdownUtil,
-                ApplyImageResourceUtil imgutil, String viewerId) {
-            //this.context = context;
+                PopupDropdownUtil dropdownUtil, ApplyImageResourceUtil imgutil, String viewerId) {
             this.popupDropdownUtil = dropdownUtil;
             this.imgutil = imgutil;
             this.viewerId = viewerId;
         }
         
-        public void setListener(PopupMenuListener listener) {
-            this.callback = listener;
+        public void setReplyAdapterListener(CommentAdapterListener callback) {
+            this.callback = callback;
         }
 
         public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -284,39 +288,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             final DocumentSnapshot doc = replyList.get(position);
             holder.setReplyProfile(doc);
             setReplyUserPic(holder, doc);
-
-            holder.getOverflowView().setOnClickListener(view -> {
-                LayoutInflater inflater = LayoutInflater.from(view.getContext());
-                View contentView = inflater.inflate(
-                        R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
-                popupDropdownUtil.setInitParams(contentView, holder.getOverflowView(), doc);
-                PopupWindow dropdown = popupDropdownUtil.createPopupWindow();
-
-                PopupCommentOverflowBinding popupBinding = PopupCommentOverflowBinding.bind(contentView);
-                if(viewerId.equals(doc.getString("user_id"))) {
-                    log.i("remove document");
-                    popupBinding.tvPopup1.setVisibility(View.VISIBLE);
-                    popupBinding.tvPopup1.setOnClickListener(v -> {
-                        log.i("remove listener");
-                        callback.deleteComment(doc.getId());
-                        dropdown.dismiss();
-                    });
-                }
-
-                popupBinding.tvPopup2.setOnClickListener(v -> {
-                    log.i("menu2");
-                    dropdown.dismiss();
-                });
-                popupBinding.tvPopup3.setOnClickListener(v -> {
-                    log.i("menu3");
-                    dropdown.dismiss();
-                });
-
-
-
-            });
-
-
+            holder.getOverflowView().setOnClickListener(view ->
+                    showReplyPopupWindow(view, holder, doc, position));
         }
 
         @Override
@@ -326,6 +299,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
         public void setCommentReplyList(DocumentReference commentRef) {
             replyList = new ArrayList<>();
+            this.commentRef = commentRef;
             commentRef.collection("replies").get().addOnSuccessListener(replyShot -> {
                 for(DocumentSnapshot doc : replyShot) replyList.add(doc);
             });
@@ -339,8 +313,32 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             imgutil.applyGlideToImageView(Uri.parse(imgurl), holder.getReplyUserImage(), x, y, true);
         }
 
-    }
+        private void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc, int pos){
+            LayoutInflater inflater = LayoutInflater.from(view.getContext());
+            View contentView = inflater.inflate(
+                    R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
+            popupDropdownUtil.setInitParams(contentView, holder.getOverflowView(), doc);
+            PopupWindow dropdown = popupDropdownUtil.createPopupWindow();
 
+            PopupCommentOverflowBinding popupBinding = PopupCommentOverflowBinding.bind(contentView);
+            if(viewerId.equals(doc.getString("user_id"))) {
+                popupBinding.tvPopup1.setVisibility(View.VISIBLE);
+                popupBinding.tvPopup1.setOnClickListener(v -> {
+                    callback.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
+                    dropdown.dismiss();
+                });
+            }
+
+            popupBinding.tvPopup2.setOnClickListener(v -> {
+                log.i("menu2");
+                dropdown.dismiss();
+            });
+            popupBinding.tvPopup3.setOnClickListener(v -> {
+                log.i("menu3");
+                dropdown.dismiss();
+            });
+        }
+    }
 
 
     // The comment and reply overflow event handler
