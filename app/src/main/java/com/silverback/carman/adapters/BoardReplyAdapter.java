@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.MetadataChanges;
+import com.google.firebase.firestore.Query;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
@@ -25,9 +27,11 @@ import com.silverback.carman.utils.PopupDropdownUtil;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapter.ViewHolder> {
-    final LoggingHelper log = LoggingHelperFactory.create(CommentReplyAdapter.class);
-    //private CommentAdapterListener callback;
+public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.ViewHolder> {
+    final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
+
+    private BoardCommentAdapter.CommentAdapterListener callback;
+    private Query query;
     private DocumentReference commentRef;
     private List<DocumentSnapshot> replyList;
     private ApplyImageResourceUtil imgutil;
@@ -35,11 +39,11 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
     private String viewerId;
 
     // static instance using the lazy holder class.
-    private CommentReplyAdapter(){}
+    private BoardReplyAdapter(){}
     private static class InnerClazz {
-        private static final CommentReplyAdapter sInstance = new CommentReplyAdapter();
+        private static final BoardReplyAdapter sInstance = new BoardReplyAdapter();
     }
-    public static CommentReplyAdapter getInstance() {
+    public static BoardReplyAdapter getInstance() {
         return InnerClazz.sInstance;
     }
 
@@ -51,7 +55,7 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
     }
 
     public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener callback) {
-        //this.callback = callback;
+        this.callback = callback;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -80,12 +84,17 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CommentReplyAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BoardReplyAdapter.ViewHolder holder, int position) {
         final DocumentSnapshot doc = replyList.get(position);
         holder.setReplyProfile(doc);
         setReplyUserPic(holder, doc);
-        holder.getOverflowView().setOnClickListener(view ->
-                showReplyPopupWindow(view, holder, doc, position));
+        holder.getOverflowView().setOnClickListener(v -> showReplyPopupWindow(v, holder, doc, position));
+    }
+
+    @Override
+    public void onBindViewHolder(
+            @NonNull BoardReplyAdapter.ViewHolder holder, int pos, @NonNull List<Object> payloads) {
+        if (payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
     }
 
     @Override
@@ -96,12 +105,28 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
     public void setCommentReplyList(DocumentReference commentRef) {
         replyList = new ArrayList<>();
         this.commentRef = commentRef;
-        commentRef.collection("replies").get().addOnSuccessListener(replyShot -> {
-            for(DocumentSnapshot doc : replyShot) replyList.add(doc);
+        /*
+        query = commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING);
+        query.limit(5).addSnapshotListener((querySnapshot, e) -> {
+            if(e != null) {
+                e.printStackTrace();
+                return;
+            }
+
+            if((querySnapshot != null))// && !querySnapshot.getMetadata().hasPendingWrites())
+                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+
         });
+        */
+        commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING).limit(5)
+                .get()
+                .addOnSuccessListener(replyShot -> {
+                    for(DocumentSnapshot doc : replyShot) replyList.add(doc);
+                });
+
     }
 
-    private void setReplyUserPic(CommentReplyAdapter.ViewHolder holder, DocumentSnapshot doc) {
+    private void setReplyUserPic(BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc) {
         final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
                 doc.getString("user_pic") : Constants.imgPath + "ic_user_blank_gray";
         int x = holder.getReplyUserImage().getWidth();
@@ -109,8 +134,8 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
         imgutil.applyGlideToImageView(Uri.parse(imgurl), holder.getReplyUserImage(), x, y, true);
     }
 
-    private void showReplyPopupWindow(
-            View view, CommentReplyAdapter.ViewHolder holder, DocumentSnapshot doc, int pos){
+    public void showReplyPopupWindow(
+            View view, BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc, int pos){
 
         LayoutInflater inflater = LayoutInflater.from(view.getContext());
         View contentView = inflater.inflate(
@@ -122,7 +147,7 @@ public class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapte
         if(viewerId.equals(doc.getString("user_id"))) {
             popupBinding.tvPopup1.setVisibility(View.VISIBLE);
             popupBinding.tvPopup1.setOnClickListener(v -> {
-                //callback.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
+                callback.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
                 dropdown.dismiss();
             });
         }

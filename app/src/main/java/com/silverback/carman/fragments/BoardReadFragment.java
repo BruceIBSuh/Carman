@@ -60,6 +60,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -73,6 +74,7 @@ import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
+import com.silverback.carman.adapters.BoardReplyAdapter;
 import com.silverback.carman.databinding.FragmentBoardReadBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -91,6 +93,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -117,6 +120,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private InputMethodManager imm;
     private DialogInterface.OnDismissListener mDismissListener;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
@@ -198,6 +202,7 @@ public class BoardReadFragment extends DialogFragment implements
         } catch(IOException e) {e.printStackTrace();}
 
         this.context = requireContext();
+        imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -425,8 +430,13 @@ public class BoardReadFragment extends DialogFragment implements
                 int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
-                binding.etComment.requestFocus();
-                binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(direction));
+
+                if(isCommentVisible) {
+                    binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+                    binding.etComment.requestFocus();
+                    for(int i = 0; i < commentAdapter.getItemCount(); i++) commentAdapter.notifyItemChanged(i, true);
+                }
+
                 isCommentVisible = !isCommentVisible;
             }
 
@@ -471,7 +481,11 @@ public class BoardReadFragment extends DialogFragment implements
         isLoading = true;
     }
 
-    // Implement BoardCommentAdapter.CommentAdapterListener which is invoked by the comment owner
+    // The BoardCommentAdapter.CommentAdapterListener interface impelemts the following methods
+    // deleteComment(): may delete a comment as long as the reader is the owner of a comment.
+    // deleteCommentReply(): may delete a reply as long as the reader is the owner of a reply.
+    // addCommentReply(): may add a comment
+    // notifyReplyChecked(): notified of whether the switch button turns on or off.
     @Override
     public void deleteComment(String docId, int position) {
         postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
@@ -483,22 +497,20 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
     }
-
-
     @Override
-    public void deleteCommentReply(BoardCommentAdapter.CommentReplyAdapter adapter,
-                                   String commentId, String replyId, int position) {
-        log.i("delete comment reply: %s, %s", commentId, replyId);
-        postRef.collection("comments").document(commentId).collection("replies").document(replyId)
-                .delete()
-                .addOnCompleteListener(task -> {
-                    log.i("reply deleted");
-                    adapter.notifyItemRemoved(position);
-                });
+    public void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos) {
+        final DocumentReference commentRef = postRef.collection("comments").document(commentId);
+        commentRef.collection("replies").document(replyId).delete().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                adapter.notifyItemRemoved(pos);
+                commentRef.update("cnt_reply", FieldValue.increment(-1));
+            }
+        });
     }
-
     @Override
-    public void addCommentReply(DocumentSnapshot commentshot, String content) {
+    public void addCommentReply(BoardReplyAdapter adapter, DocumentSnapshot commentshot, String content, int pos) {
+        imm.hideSoftInputFromWindow(requireView().getWindowToken(),0);
+
         Map<String, Object> object = new HashMap<>();
         object.put("user_id", viewerId);
         object.put("timestamp", FieldValue.serverTimestamp());
@@ -510,11 +522,12 @@ public class BoardReadFragment extends DialogFragment implements
             object.put("user_name", doc.getString("user_name"));
             object.put("user_pic", doc.getString("user_pic"));
 
-            commentshot.getReference().collection("replies")
-                    .add(object)
-                    .addOnSuccessListener(aVoid -> {
-                        commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
-                    });
+            commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
+                adapter.notifyItemChanged(0);
+                commentAdapter.notifyItemChanged(pos, false);
+                commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
+
+            });
 
             return null;
         });
@@ -527,6 +540,11 @@ public class BoardReadFragment extends DialogFragment implements
         }
 
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+    }
+
+    @Override
+    public void notifyReplyFocused(View view) {
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.scrollTo(0, view.getBottom()));
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
