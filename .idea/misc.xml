@@ -34,7 +34,7 @@
         <entry key="app/src/main/res/layout/dialog_setting_spinner.xml" value="0.22" />
         <entry key="app/src/main/res/layout/fragment_board_edit.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_board_pager.xml" value="0.24635416666666668" />
-        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/fragment_board_read.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_board_write.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_board_write_temp.xml" value="0.33" />
         <entry key="app/src/main/res/layout/fragment_expense_stmts.xml" value="0.25" />

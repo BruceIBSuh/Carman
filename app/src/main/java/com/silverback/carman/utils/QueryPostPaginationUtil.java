@@ -2,19 +2,15 @@ package com.silverback.carman.utils;
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
 
-import androidx.annotation.Nullable;
-
 import com.google.firebase.firestore.CollectionReference;
-import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
@@ -61,17 +57,14 @@ public class QueryPostPaginationUtil {
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
-
             case POPULAR:
                 this.field = "cnt_view";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
-
             case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = colRef.whereEqualTo("post_autoclub", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
-
             case NOTIFICATION:
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
@@ -104,7 +97,7 @@ public class QueryPostPaginationUtil {
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
         */
-        query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+        query.limit(PAGING_POST).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             /*
             for(DocumentSnapshot doc : querySnapshot) {
@@ -119,18 +112,17 @@ public class QueryPostPaginationUtil {
     }
 
     // Make an initial query of comments in BoardReadFragment.
-    public void setCommentQuery(DocumentReference docRef){
+    public void setCommentQuery(DocumentReference docRef, String field){
         querySnapshot = null;
-        this.field = "timestamp";
+        this.field = field;
         colRef = docRef.collection("comments");
         //colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION)
+        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT)
                 .addSnapshotListener((commentshot, e) -> {
                     if(e != null) return;
                     this.querySnapshot = commentshot;
                     mCallback.getFirstQueryResult(commentshot);
                 });
-
                 /*
                 .get()
                 .addOnSuccessListener(queryCommentShot -> {
@@ -143,9 +135,13 @@ public class QueryPostPaginationUtil {
 
     }
 
+    public void setReplyQuery(DocumentReference docref) {
+
+    }
+
     // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
     // to make an next query, which will be repeated until query comes to the last page.
-    public void setNextQuery() {
+    public void setNextPostQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         //if(category == Constants.BOARD_POPULAR) query = colRef.whereEqualTo("post_general", true);
         switch(category) {
@@ -160,15 +156,30 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-        query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(
+        query.startAfter(lastVisible).limit(PAGING_POST).get().addOnSuccessListener(
                 nextSnapshot -> {
                     this.querySnapshot = nextSnapshot;
-                    if(nextSnapshot.size() >= PAGINATION) {
+                    if(nextSnapshot.size() >= PAGING_POST) {
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
+    }
+
+    public void setNextCommentQuery() {
+        DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        query = colRef.orderBy(field, Query.Direction.DESCENDING);
+        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(nextSnapshot -> {
+            if(nextSnapshot.size() <= 0) return;
+            this.querySnapshot = nextSnapshot;
+            if(nextSnapshot.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(nextSnapshot);
+            else mCallback.getLastQueryResult(nextSnapshot);
+        }).addOnFailureListener(mCallback::getQueryErrorResult);
+    }
+
+    public void setNextReplyQuery() {
+
     }
 
 

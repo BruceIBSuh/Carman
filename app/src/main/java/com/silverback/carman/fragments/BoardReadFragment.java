@@ -17,7 +17,8 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -236,7 +237,6 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
         binding = FragmentBoardReadBinding.inflate(inflater);
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
@@ -261,7 +261,6 @@ public class BoardReadFragment extends DialogFragment implements
         // Retreive the auto data from the server and set it to the view
         // UPADTE THE FIRESTORE FIELD NAMES REQUIRED !!
         //showUserAutoClub(binding.tvAutoinfo);
-
         // RecyclerView for showing comments
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
@@ -277,8 +276,10 @@ public class BoardReadFragment extends DialogFragment implements
         // Event handler for buttons
         binding.switchComment.setOnCheckedChangeListener(this);
         binding.imgbtnComment.setOnClickListener(this);
-        binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
+        binding.btnCommentNext.setOnClickListener(this);
         binding.imgbtnSendComment.setOnClickListener(this);
+        binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
+
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
         // scroling state.
@@ -297,14 +298,15 @@ public class BoardReadFragment extends DialogFragment implements
                             && scrollY > oldScrollY)) {
                         if(!isLoading) {
                             isLoading = true;
-                            queryPaginationUtil.setNextQuery();
+                            queryPaginationUtil.setNextPostQuery();
                         }
                     }
                 });
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(postOwnerPic))?Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
+        String userImage = (TextUtils.isEmpty(postOwnerPic))?
+                Constants.imgPath + "ic_user_blank_gray" : postOwnerPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -315,7 +317,7 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentSnapshot(postRef);
         //queryCommentPagingUtil.setCommentQuery(postRef);
         isLoading = true;
-        queryPaginationUtil.setCommentQuery(postRef);
+        queryPaginationUtil.setCommentQuery(postRef, "timestamp");
         return binding.getRoot();
     }
 
@@ -352,8 +354,7 @@ public class BoardReadFragment extends DialogFragment implements
             if(result) {
                 postRef.delete().addOnSuccessListener(aVoid -> {
                     if (uriStringList != null && uriStringList.size() > 0) {
-                        for (String url : uriStringList)
-                            firebaseStorage.getReferenceFromUrl(url).delete();
+                        for (String url : uriStringList) firebaseStorage.getReferenceFromUrl(url).delete();
                     }
                     sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
@@ -434,7 +435,16 @@ public class BoardReadFragment extends DialogFragment implements
             if(TextUtils.isEmpty(binding.etComment.getText())) {
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
             } else uploadComment();
+
         }
+
+        else if(v.getId() == R.id.btn_comment_next) {
+            int num = cntComment - commentShotList.size();
+            log.i("real num left: %s", num);
+            if(num > 0) queryPaginationUtil.setNextCommentQuery();
+            else Snackbar.make(binding.getRoot(), "No more comment", Snackbar.LENGTH_SHORT).show();
+        }
+
     }
 
     // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods
@@ -446,7 +456,7 @@ public class BoardReadFragment extends DialogFragment implements
         commentAdapter.notifyItemRangeChanged(0, commentShotList.size());
         // In case the first query retrieves shots less than the pagination number, no more loading
         // is made.
-        isLoading = commentShots.size() < PAGINATION;
+        isLoading = commentShots.size() < PAGING_POST;
     }
 
     @Override
@@ -454,7 +464,7 @@ public class BoardReadFragment extends DialogFragment implements
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(start, nextShots.size());
-        isLoading = nextShots.size() < PAGINATION;
+        isLoading = nextShots.size() < PAGING_POST;
     }
 
     @Override
@@ -683,7 +693,7 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.connect(simpleText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(simpleText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(simpleText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 16);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 64);
             //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
             //tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 0);
             tvSet.applyTo(parent);
@@ -702,7 +712,7 @@ public class BoardReadFragment extends DialogFragment implements
             tvSet.connect(lastView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
             tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 0);
+            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
             tvSet.applyTo(parent);
 
         // No text after the last image
@@ -794,7 +804,7 @@ public class BoardReadFragment extends DialogFragment implements
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef);
+                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
                     binding.nestedScrollview.fullScroll(View.FOCUS_DOWN);
                 }).addOnFailureListener(Throwable::printStackTrace);
 

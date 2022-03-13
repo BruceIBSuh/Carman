@@ -46,20 +46,16 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private final CommentAdapterListener commentListener;
     private final FirebaseFirestore firestore;
-
     private final List<DocumentSnapshot> commentList;
     private final ApplyImageResourceUtil imageUtil;
     private final PopupDropdownUtil popupDropdownUtil;
 
     private final Context context;
     //private final Context styleWrapper; // for the PopupMenu
-
     //private final ArrayAdapter arrayCommentAdapter;
     private final CommentReplyAdapter replyAdapter;
     private final RecyclerDividerUtil divider;
-
     //private ListPopupWindow popupWindow;
-
     private final String viewerId;
     private List<DocumentSnapshot> replyList;
 
@@ -141,6 +137,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         DocumentSnapshot doc = commentList.get(position);
         holder.setCommentProfile(doc);
         //holder.setReplyVisibility();
+        log.i("position and size: %s, %s", position, commentList.size());
 
         setCommentUserPic(holder, doc);
         holder.getOverflowView().setOnClickListener(view -> showCommentPopupWindow(holder, doc, position));

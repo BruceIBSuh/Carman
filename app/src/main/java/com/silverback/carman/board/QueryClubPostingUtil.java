@@ -1,6 +1,6 @@
 package com.silverback.carman.board;
 
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 
 import androidx.annotation.Nullable;
 
@@ -15,7 +15,6 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
 
 /*
  * This helper class is to paginate posting items downloaded from Firestore by its category passed
@@ -69,7 +68,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
     public void setPostingQuery(boolean isViewOrder) {
         log.i("view order: %s", isViewOrder);
         field = (isViewOrder)? "cnt_view" : "timestamp";
-        Query firstQuery = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION);
+        Query firstQuery = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_POST);
         listenerRegit = firstQuery.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }
 
@@ -80,7 +79,7 @@ public class QueryClubPostingUtil implements EventListener<QuerySnapshot> {
         log.i("querySnapshot: %s", querySnapshot.size());
         DocumentSnapshot lastDoc = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         Query nextQuery = colRef.orderBy(field, Query.Direction.DESCENDING).startAfter(lastDoc)
-                .limit(PAGINATION);
+                .limit(PAGING_POST);
 
         listenerRegit = nextQuery.addSnapshotListener(MetadataChanges.INCLUDE, this);
     }

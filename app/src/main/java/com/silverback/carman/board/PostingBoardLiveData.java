@@ -1,6 +1,6 @@
 package com.silverback.carman.board;
 
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
@@ -16,7 +16,6 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
 
 /**
  * MVVM Pattern based query and pagination class for the posting board.
@@ -95,7 +94,7 @@ public class PostingBoardLiveData extends LiveData<PostingBoardOperation> implem
 
         // Listeners are notified of the last visible post and the last post.
         final int shotSize = querySnapshot.size();
-        if(shotSize < PAGINATION) {
+        if(shotSize < PAGING_POST) {
             lastPostCallback.setLastPage(true);
             listenerRegit.remove();
         } else {

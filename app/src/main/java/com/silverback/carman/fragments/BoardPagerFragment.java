@@ -2,8 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.NOTIFICATION;
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -38,7 +37,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -56,7 +54,6 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -436,9 +433,9 @@ public class BoardPagerFragment extends Fragment implements
         // the number. Manually update the adapter each time posts amount to the pagination number.
         if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
-            if(snapshotList.size() < PAGINATION) {
+            if(snapshotList.size() < PAGING_POST) {
                 isLoading = true;
-                queryPagingUtil.setNextQuery();
+                queryPagingUtil.setNextPostQuery();
             }
         }
     }
@@ -465,9 +462,9 @@ public class BoardPagerFragment extends Fragment implements
         // number, update the apdater.
         if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
-            if(snapshotList.size() < PAGINATION) {
+            if(snapshotList.size() < PAGING_POST) {
                 isLoading = true;
-                queryPagingUtil.setNextQuery();
+                queryPagingUtil.setNextPostQuery();
             }//else postingAdapter.notifyDataSetChanged();
         }
 
@@ -573,9 +570,9 @@ public class BoardPagerFragment extends Fragment implements
                     // If the totalPostCount is less than PAGINATION, setNextQuery will
                     // return null value, which results in an error as in Notification board. Accrodingly,
                     // a condition has to be added to prevent setNextQuery().
-                    if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
+                    if(currentPage != AUTOCLUB && totalPostCount >= PAGING_POST) {
                         //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
-                        queryPagingUtil.setNextQuery();
+                        queryPagingUtil.setNextPostQuery();
                     }
 
                     //if(currentPage != AUTOCLUB) queryPostSnapshot(currentPage);

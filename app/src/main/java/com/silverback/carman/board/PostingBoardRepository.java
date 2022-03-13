@@ -1,7 +1,7 @@
 package com.silverback.carman.board;
 
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
-import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_POST;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
 
@@ -12,7 +12,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
 
 public class PostingBoardRepository implements
         PostingBoardViewModel.PostingBoardLiveDataCallback,
@@ -40,17 +39,17 @@ public class PostingBoardRepository implements
         switch(page) {
             case RECENT:
                 query = query.whereEqualTo("post_general", true)
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGINATION);
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGING_POST);
                 break;
 
             case POPULAR:
                 query = query.whereEqualTo("post_general", true)
-                        .orderBy("cnt_view", Query.Direction.DESCENDING).limit(PAGINATION);
+                        .orderBy("cnt_view", Query.Direction.DESCENDING).limit(PAGING_POST);
                 break;
 
             case NOTIFICATION:
                 query = firestore.collection("board_admin")
-                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGINATION);
+                        .orderBy("timestamp", Query.Direction.DESCENDING).limit(PAGING_POST);
                 break;
         }
 
@@ -58,7 +57,7 @@ public class PostingBoardRepository implements
 
     public void setCommentQuery(DocumentReference docRef){
         query = docRef.collection("comments").orderBy("timestamp", Query.Direction.DESCENDING)
-                .limit(PAGINATION);
+                .limit(PAGING_POST);
     }
 
     // Implement PostingBoardViewModel.PostingBoardLiveDataCallback to instantiate PostingBoardLiveData.class
