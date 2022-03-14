@@ -3,6 +3,7 @@ package com.silverback.carman.utils;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
 
@@ -124,28 +125,28 @@ public class QueryPostPaginationUtil {
         this.field = "timestamp";
         colRef = docRef.collection("comments");
         //colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION)
-                .addSnapshotListener((commentshot, e) -> {
-                    if(e != null) return;
-                    this.querySnapshot = commentshot;
-                    mCallback.getFirstQueryResult(commentshot);
-                });
+        query = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT);
+        query.addSnapshotListener((commentshot, e) -> {
+            if(e != null) return;
+            this.querySnapshot = commentshot;
+            mCallback.getFirstQueryResult(commentshot);
+        });
 
-                /*
-                .get()
-                .addOnSuccessListener(queryCommentShot -> {
-                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
-                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
-                    this.querySnapshot = queryCommentShot;
-                    mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(mCallback::getQueryErrorResult);
-                 */
+        /*
+        .get()
+        .addOnSuccessListener(queryCommentShot -> {
+            // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+            // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+            this.querySnapshot = queryCommentShot;
+            mCallback.getFirstQueryResult(queryCommentShot);
+        }).addOnFailureListener(mCallback::getQueryErrorResult);
+         */
 
     }
 
     // The recyclerview scorll listener notifies that the view scrolls down to the last item and needs
     // to make an next query, which will be repeated until query comes to the last page.
-    public void setNextQuery() {
+    public void setNextPostQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         //if(category == Constants.BOARD_POPULAR) query = colRef.whereEqualTo("post_general", true);
         switch(category) {
@@ -169,6 +170,15 @@ public class QueryPostPaginationUtil {
                         mCallback.getLastQueryResult(nextSnapshot);
                     }
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
+    }
+
+    public void setNextCommentQuery() {
+        DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(comment -> {
+            this.querySnapshot = comment;
+            if(comment.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(querySnapshot);
+            else mCallback.getLastQueryResult(querySnapshot);
+        }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
 

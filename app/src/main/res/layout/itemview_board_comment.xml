@@ -152,24 +152,17 @@
             android:id="@+id/recyclerview_reply"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-        <Button
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="3dp"
-            android:background="#F5F5F5"
-            android:text="더보기" />
-
+            android:layout_height="2dp"
+            android:background="#F5F5F5" />
+        <Button
+            android:layout_width="40dp"
+            android:layout_height="25dp"
+            android:layout_gravity="end|center_vertical"
+            android:background="@android:color/holo_blue_light"
+            android:text="@string/board_btn_reply"
+            android:textSize="@dimen/extraSmallText"/>
     </LinearLayout>
 
-
-    <!--
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:background="#F5F5F5"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_comment_content" />
-    -->
 </androidx.constraintlayout.widget.ConstraintLayout>

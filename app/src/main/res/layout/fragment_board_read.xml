@@ -146,7 +146,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true"
-        android:paddingBottom="40dp"
         android:scrollbars="vertical"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior">
@@ -215,6 +214,66 @@
                 app:layout_constraintTop_toBottomOf="@id/header_comment"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent" />
+            <!--
+            <RelativeLayout
+                android:id="@+id/relative_write_comment"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@android:color/white"
+                app:layout_constraintTop_toBottomOf="@id/recycler_comments"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" >
+                <TextView
+                    android:id="@+id/tv_label_comment"
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:labelFor="@id/et_comment"
+                    android:text="@string/board_title_comment"
+                    android:textSize="@dimen/smallText"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentTop="true" />
+                <ImageButton
+                    android:id="@+id/imgbtn_send_comment"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignTop="@id/tv_label_comment"
+                    android:layout_alignBottom="@id/tv_label_comment"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:contentDescription="@null"
+                    android:padding="8dp"
+                    android:background="@android:color/transparent"
+                    android:src="@android:drawable/ic_menu_send" />
+                <EditText
+                    android:id="@+id/et_comment"
+                    android:layout_width="match_parent"
+                    android:layout_height="60dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentEnd="true"
+                    android:layout_below="@id/tv_label_comment"
+                    android:layout_margin="8dp"
+                    android:background="@drawable/bg_colored_border"
+                    android:gravity="top|start"
+                    android:inputType="textMultiLine"
+                    android:maxLines="5"
+                    android:padding="8dp"
+                    android:scrollbars="vertical"
+                    android:textSize="@dimen/smallText"
+                    tools:ignore="autofill"/>
+            </RelativeLayout>
+            -->
+            <!-- Dummy space to dodge the bottom menu bar -->
+            <View
+                android:id="@+id/view_dummy"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:background="@android:color/transparent"
+                app:layout_constraintTop_toBottomOf="@id/recycler_comments"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.core.widget.NestedScrollView>
     <!-- comment writing form -->
@@ -243,7 +302,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
             android:contentDescription="@null"
             android:padding="8dp"
             android:background="@android:color/transparent"
@@ -274,14 +332,14 @@
         android:layout_width="match_parent"
         android:layout_height="40dp"
         android:layout_gravity="bottom"
-        android:background="@color/recyclerDivider"
         android:padding="5dp"
+        android:background="@color/recyclerDivider"
         app:layout_insetEdge="bottom">
         <ImageButton
             android:id="@+id/imgbtn_compathy"
             android:layout_width="40dp"
             android:layout_height="30dp"
-            android:layout_marginStart="64dp"
+            android:layout_marginStart="24dp"
             android:background="@android:color/transparent"
             android:contentDescription="@null"
             android:padding="0dp"
@@ -302,6 +360,19 @@
             app:layout_constraintStart_toEndOf="@+id/imgbtn_compathy"
             app:layout_constraintTop_toTopOf="@+id/imgbtn_compathy" />
         <ImageButton
+            android:id="@+id/imgbtn_add_comment"
+            android:layout_width="40dp"
+            android:layout_height="30dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@null"
+            android:padding="0dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_add_comment"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/imgbtn_comment"
+            app:layout_constraintStart_toEndOf="@+id/tv_btn_compathy"
+            app:layout_constraintTop_toTopOf="parent" />
+        <ImageButton
             android:id="@+id/imgbtn_comment"
             android:layout_width="40dp"
             android:layout_height="30dp"
@@ -318,7 +389,7 @@
             android:id="@+id/tv_btn_comment"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="64dp"
+            android:layout_marginEnd="24dp"
             android:text="@string/board_btn_comment"
             android:textSize="@dimen/extraSmallText"
             android:textStyle="bold"

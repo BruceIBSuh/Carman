@@ -1,5 +1,7 @@
 package com.silverback.carman.adapters;
 
+import static com.silverback.carman.BoardActivity.PAGING_REPLY;
+
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -105,9 +107,9 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public void setCommentReplyList(DocumentReference commentRef) {
         replyList = new ArrayList<>();
         this.commentRef = commentRef;
-        /*
+
         query = commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING);
-        query.limit(5).addSnapshotListener((querySnapshot, e) -> {
+        query.limit(PAGING_REPLY).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) {
                 e.printStackTrace();
                 return;
@@ -115,14 +117,15 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
             if((querySnapshot != null))// && !querySnapshot.getMetadata().hasPendingWrites())
                 for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-
         });
-        */
+        /*
         commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING).limit(5)
                 .get()
                 .addOnSuccessListener(replyShot -> {
                     for(DocumentSnapshot doc : replyShot) replyList.add(doc);
                 });
+
+         */
 
     }
 

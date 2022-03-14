@@ -147,6 +147,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
         if(Objects.requireNonNull(doc.getLong("cnt_reply")) > 0) {
             replyAdapter.setCommentReplyList(doc.getReference());
+
             LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
             holder.getRecyclerReplyView().setLayoutManager(layout);
             holder.getRecyclerReplyView().addItemDecoration(divider);

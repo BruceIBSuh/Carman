@@ -2,7 +2,6 @@ package com.silverback.carman.fragments;
 
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -38,7 +37,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -56,7 +54,6 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -438,7 +435,7 @@ public class BoardPagerFragment extends Fragment implements
             //if(multiTypeItemList.size() < PAGINATION) {
             if(snapshotList.size() < PAGINATION) {
                 isLoading = true;
-                queryPagingUtil.setNextQuery();
+                queryPagingUtil.setNextPostQuery();
             }
         }
     }
@@ -467,7 +464,7 @@ public class BoardPagerFragment extends Fragment implements
             //if(multiTypeItemList.size() < PAGINATION) {
             if(snapshotList.size() < PAGINATION) {
                 isLoading = true;
-                queryPagingUtil.setNextQuery();
+                queryPagingUtil.setNextPostQuery();
             }//else postingAdapter.notifyDataSetChanged();
         }
 
@@ -575,7 +572,7 @@ public class BoardPagerFragment extends Fragment implements
                     // a condition has to be added to prevent setNextQuery().
                     if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
                         //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
-                        queryPagingUtil.setNextQuery();
+                        queryPagingUtil.setNextPostQuery();
                     }
 
                     //if(currentPage != AUTOCLUB) queryPostSnapshot(currentPage);
