@@ -213,7 +213,8 @@
     <string name="board_comment_reply_writing">답글쓰기</string>
     <string name="board_title_comment">댓글 작성</string>
     <string name="board_btn_compathy">공감</string>
-    <string name="board_btn_comment">댓글</string>
+    <string name="board_btn_comment">댓글쓰기</string>
+    <string name="board_btn_reply">더보기</string>
     <string name="board_msg_no_comment">댓글 내용이 없습니다</string>
     <string name="board_msg_compathy">이미 공감 표시를 하였습니다</string>림
     <string name="board_alert_delete">글 삭제</string>

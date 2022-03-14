@@ -46,24 +46,29 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private final CommentAdapterListener commentListener;
     private final FirebaseFirestore firestore;
+
     private final List<DocumentSnapshot> commentList;
     private final ApplyImageResourceUtil imageUtil;
     private final PopupDropdownUtil popupDropdownUtil;
 
     private final Context context;
     //private final Context styleWrapper; // for the PopupMenu
+
     //private final ArrayAdapter arrayCommentAdapter;
-    private final CommentReplyAdapter replyAdapter;
+    private final BoardReplyAdapter replyAdapter;
     private final RecyclerDividerUtil divider;
+
     //private ListPopupWindow popupWindow;
+
     private final String viewerId;
     private List<DocumentSnapshot> replyList;
 
     public interface CommentAdapterListener {
         void deleteComment(String commentId, int pos);
-        void deleteCommentReply(CommentReplyAdapter adapter, String commentId, String replyId, int pos);
-        void addCommentReply(DocumentSnapshot commentshot, String content);
+        void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos);
+        void addCommentReply(BoardReplyAdapter adapter, DocumentSnapshot commentshot, String content, int pos);
         void notifyReplyChecked(int position);
+        void notifyReplyFocused(View view);
     }
 
     // Constructor
@@ -82,8 +87,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(context, R.color.recyclerDivider));
 
-        // Intantiate CommentReplyAdapter
-        replyAdapter = CommentReplyAdapter.getInstance();
+        // Intantiate BoardReplyAdapter
+        replyAdapter = BoardReplyAdapter.getInstance();
         replyAdapter.setReplyInitParams(popupDropdownUtil, imageUtil, viewerId);
         replyAdapter.setReplyAdapterListener(listener);
 
@@ -98,9 +103,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             commentBinding = ItemviewBoardCommentBinding.bind(itemView);
         }
 
-        ImageView getUserImageView() {
-            return commentBinding.imgCommentUser;
-        }
+        ImageView getUserImageView() { return commentBinding.imgCommentUser; }
         ImageView getOverflowView() { return commentBinding.imgOverflow; }
         ImageView getSendReplyView() { return commentBinding.imgbtnSendReply; }
         EditText getContentEditText() { return commentBinding.etCommentReply; }
@@ -136,15 +139,15 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DocumentSnapshot doc = commentList.get(position);
         holder.setCommentProfile(doc);
-        //holder.setReplyVisibility();
-        log.i("position and size: %s, %s", position, commentList.size());
 
         setCommentUserPic(holder, doc);
+        holder.getContentEditText().setOnClickListener(commentListener::notifyReplyFocused);
         holder.getOverflowView().setOnClickListener(view -> showCommentPopupWindow(holder, doc, position));
-        holder.getSendReplyView().setOnClickListener(view -> uploadCommentReply(holder, doc));
+        holder.getSendReplyView().setOnClickListener(view -> uploadCommentReply(holder, doc, position));
 
         if(Objects.requireNonNull(doc.getLong("cnt_reply")) > 0) {
             replyAdapter.setCommentReplyList(doc.getReference());
+
             LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
             holder.getRecyclerReplyView().setLayoutManager(layout);
             holder.getRecyclerReplyView().addItemDecoration(divider);
@@ -166,11 +169,18 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     public void onBindViewHolder(@NonNull ViewHolder holder, int pos, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
         else {
-            log.i("Partial Binding:%s, %s", pos, payloads);
             if((boolean)payloads.get(0)) {
                 holder.commentBinding.switchReply.setChecked(false);
                 holder.commentBinding.linearReply.setVisibility(View.GONE);
             }
+            /*
+            else {
+                log.i("reply switch visibility control");
+                holder.commentBinding.switchReply.setChecked(true);
+                holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+            }
+
+             */
         }
     }
 
@@ -189,11 +199,11 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     }
 
 
-    private void uploadCommentReply(ViewHolder holder, DocumentSnapshot commentshot) {
+    private void uploadCommentReply(ViewHolder holder, DocumentSnapshot commentshot, int position) {
         final String content = holder.getReplyContent();
         if(TextUtils.isEmpty(content)) return;
 
-        commentListener.addCommentReply(commentshot, content);
+        commentListener.addCommentReply(replyAdapter, commentshot, content, position);
         holder.getContentEditText().getText().clear();
     }
 
@@ -227,6 +237,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     }
 
     // RecyclerView Adapter for the comment reply.
+    /*
     public static class CommentReplyAdapter extends RecyclerView.Adapter<CommentReplyAdapter.ViewHolder> {
         private CommentAdapterListener callback;
         private DocumentReference commentRef;
@@ -336,7 +347,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             });
         }
     }
-
+    */
 
     // The comment and reply overflow event handler
     /*

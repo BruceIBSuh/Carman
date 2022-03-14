@@ -113,8 +113,9 @@ public class BoardActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
-    public static final int PAGING_POST = 10;
-    public static final int PAGING_COMMENT = 5;
+    public static final int PAGINATION = 10;
+    public static final int PAGING_COMMENT = 3;
+    public static final int PAGING_REPLY = 3;
     public static final int RECENT = 0;
     public static final int POPULAR = 1;
     public static final int AUTOCLUB = 2;

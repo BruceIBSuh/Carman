@@ -2,15 +2,20 @@ package com.silverback.carman.utils;
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
+import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
-import static com.silverback.carman.BoardActivity.PAGING_POST;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
 
+import androidx.annotation.Nullable;
+
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
@@ -57,14 +62,17 @@ public class QueryPostPaginationUtil {
                 this.field = "timestamp";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
+
             case POPULAR:
                 this.field = "cnt_view";
                 query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
+
             case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
                 query = colRef.whereEqualTo("post_autoclub", true).orderBy(field, Query.Direction.DESCENDING);
                 break;
+
             case NOTIFICATION:
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
@@ -97,7 +105,7 @@ public class QueryPostPaginationUtil {
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
         */
-        query.limit(PAGING_POST).addSnapshotListener((querySnapshot, e) -> {
+        query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             /*
             for(DocumentSnapshot doc : querySnapshot) {
@@ -112,30 +120,27 @@ public class QueryPostPaginationUtil {
     }
 
     // Make an initial query of comments in BoardReadFragment.
-    public void setCommentQuery(DocumentReference docRef, String field){
+    public void setCommentQuery(DocumentReference docRef){
         querySnapshot = null;
-        this.field = field;
+        this.field = "timestamp";
         colRef = docRef.collection("comments");
         //colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
-        colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT)
-                .addSnapshotListener((commentshot, e) -> {
-                    if(e != null) return;
-                    this.querySnapshot = commentshot;
-                    mCallback.getFirstQueryResult(commentshot);
-                });
-                /*
-                .get()
-                .addOnSuccessListener(queryCommentShot -> {
-                    // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
-                    // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
-                    this.querySnapshot = queryCommentShot;
-                    mCallback.getFirstQueryResult(queryCommentShot);
-                }).addOnFailureListener(mCallback::getQueryErrorResult);
-                 */
+        query = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT);
+        query.addSnapshotListener((commentshot, e) -> {
+            if(e != null) return;
+            this.querySnapshot = commentshot;
+            mCallback.getFirstQueryResult(commentshot);
+        });
 
-    }
-
-    public void setReplyQuery(DocumentReference docref) {
+        /*
+        .get()
+        .addOnSuccessListener(queryCommentShot -> {
+            // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
+            // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
+            this.querySnapshot = queryCommentShot;
+            mCallback.getFirstQueryResult(queryCommentShot);
+        }).addOnFailureListener(mCallback::getQueryErrorResult);
+         */
 
     }
 
@@ -156,10 +161,10 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-        query.startAfter(lastVisible).limit(PAGING_POST).get().addOnSuccessListener(
+        query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(
                 nextSnapshot -> {
                     this.querySnapshot = nextSnapshot;
-                    if(nextSnapshot.size() >= PAGING_POST) {
+                    if(nextSnapshot.size() >= PAGINATION) {
                         mCallback.getNextQueryResult(nextSnapshot);
                     } else {
                         mCallback.getLastQueryResult(nextSnapshot);
@@ -169,17 +174,11 @@ public class QueryPostPaginationUtil {
 
     public void setNextCommentQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        query = colRef.orderBy(field, Query.Direction.DESCENDING);
-        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(nextSnapshot -> {
-            if(nextSnapshot.size() <= 0) return;
-            this.querySnapshot = nextSnapshot;
-            if(nextSnapshot.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(nextSnapshot);
-            else mCallback.getLastQueryResult(nextSnapshot);
+        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(comment -> {
+            this.querySnapshot = comment;
+            if(comment.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(querySnapshot);
+            else mCallback.getLastQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
-    }
-
-    public void setNextReplyQuery() {
-
     }
 
 

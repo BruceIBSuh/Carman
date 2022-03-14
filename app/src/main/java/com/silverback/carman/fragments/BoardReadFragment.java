@@ -17,8 +17,8 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
-import static com.silverback.carman.BoardActivity.PAGING_POST;
 
 import android.app.Dialog;
 import android.content.Context;
@@ -74,6 +74,7 @@ import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
+import com.silverback.carman.adapters.BoardReplyAdapter;
 import com.silverback.carman.databinding.FragmentBoardReadBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -118,6 +119,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private InputMethodManager imm;
     private DialogInterface.OnDismissListener mDismissListener;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
@@ -153,7 +155,7 @@ public class BoardReadFragment extends DialogFragment implements
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
     private boolean hasCompathy;
-    private boolean isLoading;
+    //private boolean isLoading;
 
     // Interface for notifying BoardActivity of pressing the edit menu in the toolbar which is visible
     // only when a user reads his/her own post
@@ -199,6 +201,7 @@ public class BoardReadFragment extends DialogFragment implements
         } catch(IOException e) {e.printStackTrace();}
 
         this.context = requireContext();
+        imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -237,6 +240,7 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         binding = FragmentBoardReadBinding.inflate(inflater);
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
@@ -261,6 +265,7 @@ public class BoardReadFragment extends DialogFragment implements
         // Retreive the auto data from the server and set it to the view
         // UPADTE THE FIRESTORE FIELD NAMES REQUIRED !!
         //showUserAutoClub(binding.tvAutoinfo);
+
         // RecyclerView for showing comments
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
@@ -276,10 +281,9 @@ public class BoardReadFragment extends DialogFragment implements
         // Event handler for buttons
         binding.switchComment.setOnCheckedChangeListener(this);
         binding.imgbtnComment.setOnClickListener(this);
-        binding.btnCommentNext.setOnClickListener(this);
-        binding.imgbtnSendComment.setOnClickListener(this);
+        binding.imgbtnAddComment.setOnClickListener(this);
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
-
+        binding.imgbtnSendComment.setOnClickListener(this);
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
         // of appbarlayout as it is scrolling, which changes the toolbar title and icon by the
         // scroling state.
@@ -292,6 +296,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
         // it listen to scrolling, use the parent scollview listener.
+        /*
         binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
                 (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
                     if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
@@ -302,11 +307,10 @@ public class BoardReadFragment extends DialogFragment implements
                         }
                     }
                 });
-
+        */
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(postOwnerPic))?
-                Constants.imgPath + "ic_user_blank_gray" : postOwnerPic;
+        String userImage = (TextUtils.isEmpty(postOwnerPic))?Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -316,8 +320,8 @@ public class BoardReadFragment extends DialogFragment implements
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
         //queryCommentPagingUtil.setCommentQuery(postRef);
-        isLoading = true;
-        queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+        //isLoading = true;
+        //queryPaginationUtil.setCommentQuery(postRef);
         return binding.getRoot();
     }
 
@@ -354,7 +358,8 @@ public class BoardReadFragment extends DialogFragment implements
             if(result) {
                 postRef.delete().addOnSuccessListener(aVoid -> {
                     if (uriStringList != null && uriStringList.size() > 0) {
-                        for (String url : uriStringList) firebaseStorage.getReferenceFromUrl(url).delete();
+                        for (String url : uriStringList)
+                            firebaseStorage.getReferenceFromUrl(url).delete();
                     }
                     sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
@@ -398,9 +403,14 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
         if(b) {
+            //queryPaginationUtil.setCommentQuery(postRef);
+            log.i("comment list:%s", commentShotList.size());
+            if(commentShotList.size() == 0) queryPaginationUtil.setCommentQuery(postRef);
             binding.recyclerComments.setVisibility(View.VISIBLE);
-            binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+
         } else {
+            //commentAdapter.notifyItemRangeRemoved(0, commentShotList.size());
+            commentShotList.clear();
             binding.recyclerComments.setVisibility(View.GONE);
             //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
         }
@@ -426,8 +436,13 @@ public class BoardReadFragment extends DialogFragment implements
                 int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
-                binding.etComment.requestFocus();
-                binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(direction));
+
+                if(isCommentVisible) {
+                    binding.etComment.requestFocus();
+                    //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+                    for(int i = 0; i < commentAdapter.getItemCount(); i++) commentAdapter.notifyItemChanged(i, true);
+                }
+
                 isCommentVisible = !isCommentVisible;
             }
 
@@ -436,15 +451,10 @@ public class BoardReadFragment extends DialogFragment implements
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
             } else uploadComment();
 
+        } else if(v.getId() == R.id.imgbtn_add_comment) {
+            log.i("add more comments");
+            queryPaginationUtil.setNextCommentQuery();
         }
-
-        else if(v.getId() == R.id.btn_comment_next) {
-            int num = cntComment - commentShotList.size();
-            log.i("real num left: %s", num);
-            if(num > 0) queryPaginationUtil.setNextCommentQuery();
-            else Snackbar.make(binding.getRoot(), "No more comment", Snackbar.LENGTH_SHORT).show();
-        }
-
     }
 
     // Implement QueryPostPaginationUtil.OnQueryPaginationCallback overriding the follwoing methods
@@ -454,9 +464,12 @@ public class BoardReadFragment extends DialogFragment implements
         commentShotList.clear();
         for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(0, commentShotList.size());
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        int scrollY = binding.nestedScrollview.getHeight();
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
         // In case the first query retrieves shots less than the pagination number, no more loading
         // is made.
-        isLoading = commentShots.size() < PAGING_POST;
+        //isLoading = commentShots.size() < PAGINATION;
     }
 
     @Override
@@ -464,7 +477,8 @@ public class BoardReadFragment extends DialogFragment implements
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(start, nextShots.size());
-        isLoading = nextShots.size() < PAGING_POST;
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        //isLoading = nextShots.size() < PAGINATION;
     }
 
     @Override
@@ -472,16 +486,21 @@ public class BoardReadFragment extends DialogFragment implements
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(start, lastShots.size());
-        isLoading = true;
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        //isLoading = true;
     }
 
     @Override
     public void getQueryErrorResult(Exception e) {
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
-        isLoading = true;
+        //isLoading = true;
     }
 
-    // Implement BoardCommentAdapter.CommentAdapterListener which is invoked by the comment owner
+    // The BoardCommentAdapter.CommentAdapterListener interface impelemts the following methods
+    // deleteComment(): may delete a comment as long as the reader is the owner of a comment.
+    // deleteCommentReply(): may delete a reply as long as the reader is the owner of a reply.
+    // addCommentReply(): may add a comment
+    // notifyReplyChecked(): notified of whether the switch button turns on or off.
     @Override
     public void deleteComment(String docId, int position) {
         postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
@@ -493,22 +512,20 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
     }
-
-
     @Override
-    public void deleteCommentReply(BoardCommentAdapter.CommentReplyAdapter adapter,
-                                   String commentId, String replyId, int position) {
-        log.i("delete comment reply: %s, %s", commentId, replyId);
-        postRef.collection("comments").document(commentId).collection("replies").document(replyId)
-                .delete()
-                .addOnCompleteListener(task -> {
-                    log.i("reply deleted");
-                    adapter.notifyItemRemoved(position);
-                });
+    public void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos) {
+        final DocumentReference commentRef = postRef.collection("comments").document(commentId);
+        commentRef.collection("replies").document(replyId).delete().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                adapter.notifyItemRemoved(pos);
+                commentRef.update("cnt_reply", FieldValue.increment(-1));
+            }
+        });
     }
-
     @Override
-    public void addCommentReply(DocumentSnapshot commentshot, String content) {
+    public void addCommentReply(BoardReplyAdapter adapter, DocumentSnapshot commentshot, String content, int pos) {
+        imm.hideSoftInputFromWindow(requireView().getWindowToken(),0);
+
         Map<String, Object> object = new HashMap<>();
         object.put("user_id", viewerId);
         object.put("timestamp", FieldValue.serverTimestamp());
@@ -520,11 +537,12 @@ public class BoardReadFragment extends DialogFragment implements
             object.put("user_name", doc.getString("user_name"));
             object.put("user_pic", doc.getString("user_pic"));
 
-            commentshot.getReference().collection("replies")
-                    .add(object)
-                    .addOnSuccessListener(aVoid -> {
-                        commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
-                    });
+            commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
+                adapter.notifyItemChanged(0);
+                commentAdapter.notifyItemChanged(pos, false);
+                commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
+
+            });
 
             return null;
         });
@@ -536,7 +554,15 @@ public class BoardReadFragment extends DialogFragment implements
             if(i != position) commentAdapter.notifyItemChanged(i, true);
         }
 
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        int scrollY = binding.nestedScrollview.getHeight();
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
+    }
+
+    @Override
+    public void notifyReplyFocused(View view) {
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
     // Subclass of RecyclerView.ScrollViewListner.
@@ -720,7 +746,7 @@ public class BoardReadFragment extends DialogFragment implements
             log.i("image positioned at the last");
             ConstraintSet imageSet = new ConstraintSet();
             imageSet.clone(parent);
-            imageSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.TOP, 0);
+            imageSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
             imageSet.applyTo(parent);
         }
 
@@ -804,8 +830,8 @@ public class BoardReadFragment extends DialogFragment implements
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                    binding.nestedScrollview.fullScroll(View.FOCUS_DOWN);
+                    queryPaginationUtil.setCommentQuery(postRef);
+                    binding.nestedScrollview.fullScroll(View.FOCUS_UP);
                 }).addOnFailureListener(Throwable::printStackTrace);
 
                 ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))

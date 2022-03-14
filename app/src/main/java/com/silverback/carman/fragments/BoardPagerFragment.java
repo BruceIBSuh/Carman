@@ -2,7 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.PAGING_POST;
+import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -433,7 +433,7 @@ public class BoardPagerFragment extends Fragment implements
         // the number. Manually update the adapter each time posts amount to the pagination number.
         if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
-            if(snapshotList.size() < PAGING_POST) {
+            if(snapshotList.size() < PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextPostQuery();
             }
@@ -462,7 +462,7 @@ public class BoardPagerFragment extends Fragment implements
         // number, update the apdater.
         if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
-            if(snapshotList.size() < PAGING_POST) {
+            if(snapshotList.size() < PAGINATION) {
                 isLoading = true;
                 queryPagingUtil.setNextPostQuery();
             }//else postingAdapter.notifyDataSetChanged();
@@ -570,7 +570,7 @@ public class BoardPagerFragment extends Fragment implements
                     // If the totalPostCount is less than PAGINATION, setNextQuery will
                     // return null value, which results in an error as in Notification board. Accrodingly,
                     // a condition has to be added to prevent setNextQuery().
-                    if(currentPage != AUTOCLUB && totalPostCount >= PAGING_POST) {
+                    if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
                         //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
                         queryPagingUtil.setNextPostQuery();
                     }
