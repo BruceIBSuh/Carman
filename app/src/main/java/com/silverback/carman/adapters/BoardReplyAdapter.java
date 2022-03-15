@@ -101,9 +101,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public void onBindViewHolder(
             @NonNull BoardReplyAdapter.ViewHolder holder, int pos, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
-        else {
-            log.i("reply adapter payloads: %s", payloads.get(0));
-        }
+        else log.i("reply adapter payloads: %s", payloads.get(0));
     }
 
     @Override
@@ -121,8 +119,8 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             if((querySnapshot != null)) for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-            notifyItemRangeChanged(0, replyList.size(), true);
-            commentListener.notifyLoadingReplyDone();
+            notifyItemRangeChanged(0, replyList.size());
+            //commentListener.notifyLoadReplyDone();
         });
 
         /*
@@ -143,7 +141,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
             for(DocumentSnapshot comment : replies) replyList.add(comment);
             notifyItemRangeChanged(start, replyList.size(), true);
 
-            commentListener.notifyLoadingReplyDone();
+            commentListener.notifyLoadReplyDone();
 
         }).addOnFailureListener(Throwable::printStackTrace);
     }

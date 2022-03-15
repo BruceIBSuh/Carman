@@ -191,7 +191,6 @@ public class BoardReadFragment extends DialogFragment implements
             uriStringList = getArguments().getStringArrayList("urlImgList");
             cntComment = (int)getArguments().getLong("cntComment");
             cntCompathy = (int)getArguments().getLong("cntCompathy");
-            log.i("comment and compathy: %s, %s", cntComment, cntCompathy);
         }
 
         // Get the viewer id for checking whether the post owner is the viewer
@@ -210,9 +209,9 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
-        //commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
-        commentAdapter = BoardCommentAdapter.getInstance();
-        commentAdapter.initCommentAdapter(getContext(), commentShotList, viewerId, this);
+        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
+        //commentAdapter = BoardCommentAdapter.getInstance();
+        //commentAdapter.initCommentAdapter(getContext(), commentShotList, viewerId, this);
         log.i("comment adapter: %s", commentAdapter.hashCode());
 
         // Get the current document reference which should be shared in the fragment.
@@ -488,15 +487,14 @@ public class BoardReadFragment extends DialogFragment implements
     public void getLastQueryResult(QuerySnapshot lastShots) {
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
+
         commentAdapter.notifyItemRangeChanged(start, lastShots.size());
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        //isLoading = true;
     }
 
     @Override
     public void getQueryErrorResult(Exception e) {
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
-        //isLoading = true;
     }
 
     // The BoardCommentAdapter.CommentAdapterListener interface impelemts the following methods
@@ -527,7 +525,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyLoadingReplyDone() {
+    public void notifyLoadReplyDone() {
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
     }
@@ -552,7 +550,6 @@ public class BoardReadFragment extends DialogFragment implements
 
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         int scrollY = binding.nestedScrollview.getHeight();
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
     }
 

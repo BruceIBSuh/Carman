@@ -48,33 +48,33 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
-    private CommentAdapterListener commentListener;
-    private FirebaseFirestore firestore;
+    private final CommentAdapterListener commentListener;
+    private final FirebaseFirestore firestore;
 
-    private List<DocumentSnapshot> commentList;
-    private ApplyImageResourceUtil imageUtil;
-    private PopupDropdownUtil popupDropdownUtil;
+    private final List<DocumentSnapshot> commentList;
+    private final ApplyImageResourceUtil imageUtil;
+    private final PopupDropdownUtil popupDropdownUtil;
     //private LinearLayoutManager layout;
-    private RecyclerDividerUtil divider;
+    private final RecyclerDividerUtil divider;
 
-    //private Context context;
+    private final Context context;
     //private final Context styleWrapper; // for the PopupMenu
     //private final ArrayAdapter arrayCommentAdapter;
-    private BoardReplyAdapter replyAdapter;
+    private final BoardReplyAdapter replyAdapter;
     //private ListPopupWindow popupWindow;
-    private String viewerId;
-    private List<DocumentSnapshot> replyList;
+    private final String viewerId;
 
     public interface CommentAdapterListener {
         void deleteComment(String commentId, int pos);
         void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos);
         void notifyUploadDone(boolean isDone);
-        void notifyLoadingReplyDone();
+        void notifyLoadReplyDone();
         void notifyNoData();
         void notifyReplyChecked(int position);
         void notifyReplyFocused(View view);
     }
 
+    /*
     private BoardCommentAdapter(){}
 
     private static class InnerCommentAdapterClazz {
@@ -101,15 +101,13 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         replyAdapter = BoardReplyAdapter.getInstance();
         replyAdapter.setReplyInitParams(popupDropdownUtil, imageUtil, viewerId);
         replyAdapter.setReplyAdapterListener(listener);
-
-
     }
+     */
 
     // Constructor
-    /*
+
     public BoardCommentAdapter(Context context, List<DocumentSnapshot> commentList, String viewerId,
             CommentAdapterListener listener) {
-
         this.context = context;
         this.commentList = commentList;
         this.viewerId = viewerId;
@@ -128,8 +126,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         replyAdapter.setReplyAdapterListener(listener);
 
     }
-
-     */
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ItemviewBoardCommentBinding commentBinding;
@@ -170,9 +166,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        final Context context = parent.getContext();
         View itemView = LayoutInflater.from(context).inflate(R.layout.itemview_board_comment, parent, false);
-
         return new ViewHolder(itemView);
     }
 
@@ -187,17 +181,17 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         holder.getSendReplyView().setOnClickListener(v -> uploadReplyToComment(holder, doc));
         holder.getLoadReplyButton().setOnClickListener(v -> loadNextReplies(doc));
 
-
         holder.commentBinding.switchReply.setOnCheckedChangeListener((compoundButton, isChecked) -> {
             if(isChecked) {
-                commentListener.notifyReplyChecked(position);
                 holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+                //commentListener.notifyReplyChecked(position);
                 try {
                     long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
                     if(cntReply > 0) setRecyclerReplyView(doc, holder);
                     int visible = (cntReply > BoardActivity.PAGING_REPLY) ? View.VISIBLE : View.GONE;
                     holder.commentBinding.btnLoadReplies.setVisibility(visible);
                 } catch(NullPointerException e) { e.printStackTrace();}
+
 
             } else holder.commentBinding.linearReply.setVisibility(View.GONE);
 
@@ -211,12 +205,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             log.i("partial binding");
             /*
             if((boolean)payloads.get(0)) {
-                holder.commentBinding.switchReply.setChecked(true);
-                holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
-            } else {
-                log.i("reply switch visibility control");
-                holder.commentBinding.switchReply.setChecked(true);
-                holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+                holder.commentBinding.switchReply.setChecked(false);
+                holder.commentBinding.linearReply.setVisibility(View.GONE);
             }
 
              */
@@ -230,8 +220,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private void setRecyclerReplyView(DocumentSnapshot doc, ViewHolder holder) {
         log.i("replyAdapter: %s", replyAdapter.hashCode());
-        Context context = holder.commentBinding.getRoot().getContext();
         replyAdapter.queryCommentReply(doc.getReference());
+
         LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         holder.getRecyclerReplyView().setLayoutManager(layout);
         holder.getRecyclerReplyView().addItemDecoration(divider);
@@ -252,7 +242,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private void setCommentUserPic(ViewHolder holder, DocumentSnapshot doc) {
         final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
                 doc.getString("user_pic") : Constants.imgPath + "ic_user_blank_gray";
-
         int x = holder.getUserImageView().getWidth();
         int y = holder.getUserImageView().getHeight();
         imageUtil.applyGlideToImageView(Uri.parse(imgurl), holder.getUserImageView(), x, y, true);
