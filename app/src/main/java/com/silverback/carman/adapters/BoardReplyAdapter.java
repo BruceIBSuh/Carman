@@ -15,8 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
@@ -32,9 +32,10 @@ import java.util.List;
 public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.ViewHolder> {
     final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
 
-    private BoardCommentAdapter.CommentAdapterListener callback;
+    private BoardCommentAdapter.CommentAdapterListener commentListener;
     private Query query;
     private DocumentReference commentRef;
+    private QuerySnapshot querySnapshot;
     private List<DocumentSnapshot> replyList;
     private ApplyImageResourceUtil imgutil;
     private PopupDropdownUtil popupDropdownUtil;
@@ -42,11 +43,12 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
     // static instance using the lazy holder class.
     private BoardReplyAdapter(){}
-    private static class InnerClazz {
+
+    private static class InnerReplyAdapterClazz {
         private static final BoardReplyAdapter sInstance = new BoardReplyAdapter();
     }
     public static BoardReplyAdapter getInstance() {
-        return InnerClazz.sInstance;
+        return InnerReplyAdapterClazz.sInstance;
     }
 
     public void setReplyInitParams(
@@ -54,10 +56,12 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         this.popupDropdownUtil = dropdownUtil;
         this.imgutil = imgutil;
         this.viewerId = viewerId;
+
+        replyList = new ArrayList<>();
     }
 
-    public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener callback) {
-        this.callback = callback;
+    public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener commentListener) {
+        this.commentListener = commentListener;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -96,7 +100,10 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     @Override
     public void onBindViewHolder(
             @NonNull BoardReplyAdapter.ViewHolder holder, int pos, @NonNull List<Object> payloads) {
-        if (payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
+        else {
+            log.i("reply adapter payloads: %s", payloads.get(0));
+        }
     }
 
     @Override
@@ -104,30 +111,44 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         return replyList.size();
     }
 
-    public void setCommentReplyList(DocumentReference commentRef) {
-        replyList = new ArrayList<>();
+    public void queryCommentReply(DocumentReference commentRef) {
+        replyList.clear();
         this.commentRef = commentRef;
+        querySnapshot = null;
 
         query = commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING);
         query.limit(PAGING_REPLY).addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) {
-                e.printStackTrace();
-                return;
-            }
-
-            if((querySnapshot != null))// && !querySnapshot.getMetadata().hasPendingWrites())
-                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+            if(e != null) return;
+            this.querySnapshot = querySnapshot;
+            if((querySnapshot != null)) for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+            notifyItemRangeChanged(0, replyList.size(), true);
+            commentListener.notifyLoadingReplyDone();
         });
+
         /*
-        commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING).limit(5)
-                .get()
-                .addOnSuccessListener(replyShot -> {
-                    for(DocumentSnapshot doc : replyShot) replyList.add(doc);
-                });
+        query.limit(PAGING_REPLY).get().addOnSuccessListener(replyshots -> {
+            this.querySnapshot = replyshots;
+            for(DocumentSnapshot doc : replyshots) replyList.add(doc);
+        });
 
          */
-
     }
+
+    public void queryNextReply() {
+        DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
+        query.startAfter(lastVisible).limit(PAGING_REPLY).get().addOnSuccessListener(replies -> {
+            this.querySnapshot = replies;
+            final int start = replyList.size();
+
+            for(DocumentSnapshot comment : replies) replyList.add(comment);
+            notifyItemRangeChanged(start, replyList.size(), true);
+
+            commentListener.notifyLoadingReplyDone();
+
+        }).addOnFailureListener(Throwable::printStackTrace);
+    }
+
+
 
     private void setReplyUserPic(BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc) {
         final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
@@ -136,6 +157,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         int y = holder.getReplyUserImage().getHeight();
         imgutil.applyGlideToImageView(Uri.parse(imgurl), holder.getReplyUserImage(), x, y, true);
     }
+
 
     public void showReplyPopupWindow(
             View view, BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc, int pos){
@@ -150,7 +172,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         if(viewerId.equals(doc.getString("user_id"))) {
             popupBinding.tvPopup1.setVisibility(View.VISIBLE);
             popupBinding.tvPopup1.setOnClickListener(v -> {
-                callback.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
+                commentListener.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
                 dropdown.dismiss();
             });
         }

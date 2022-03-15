@@ -157,12 +157,14 @@
             android:layout_height="2dp"
             android:background="#F5F5F5" />
         <Button
+            android:id="@+id/btn_load_replies"
+            android:visibility="gone"
             android:layout_width="40dp"
             android:layout_height="25dp"
             android:layout_gravity="end|center_vertical"
             android:background="@android:color/holo_blue_light"
             android:text="@string/board_btn_reply"
-            android:textSize="@dimen/extraSmallText"/>
+            android:textSize="@dimen/extraSmallText" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
