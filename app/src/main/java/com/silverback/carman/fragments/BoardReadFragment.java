@@ -56,6 +56,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -120,7 +121,6 @@ public class BoardReadFragment extends DialogFragment implements
     // Objects
     private Context context;
     private InputMethodManager imm;
-    private DialogInterface.OnDismissListener mDismissListener;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
@@ -210,7 +210,10 @@ public class BoardReadFragment extends DialogFragment implements
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
-        commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
+        //commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
+        commentAdapter = BoardCommentAdapter.getInstance();
+        commentAdapter.initCommentAdapter(getContext(), commentShotList, viewerId, this);
+        log.i("comment adapter: %s", commentAdapter.hashCode());
 
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
@@ -281,7 +284,7 @@ public class BoardReadFragment extends DialogFragment implements
         // Event handler for buttons
         binding.switchComment.setOnCheckedChangeListener(this);
         binding.imgbtnComment.setOnClickListener(this);
-        binding.imgbtnAddComment.setOnClickListener(this);
+        binding.imgbtnLoadComment.setOnClickListener(this);
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
         binding.imgbtnSendComment.setOnClickListener(this);
         // Implements the abstract method of AppBarStateChangeListener to be notified of the state
@@ -401,12 +404,15 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        if(b) {
+    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        if(isChecked) {
             //queryPaginationUtil.setCommentQuery(postRef);
             log.i("comment list:%s", commentShotList.size());
-            if(commentShotList.size() == 0) queryPaginationUtil.setCommentQuery(postRef);
+            if(commentShotList.size() == 0) queryPaginationUtil.setCommentQuery(postRef, "timestamp");
             binding.recyclerComments.setVisibility(View.VISIBLE);
+
+            if(cntComment > PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.VISIBLE);
+            else binding.imgbtnLoadComment.setVisibility(View.GONE);
 
         } else {
             //commentAdapter.notifyItemRangeRemoved(0, commentShotList.size());
@@ -433,7 +439,7 @@ public class BoardReadFragment extends DialogFragment implements
 
             } else {
                 int visibility = isCommentVisible ? View.GONE : View.VISIBLE;
-                int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
+                //int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
 
@@ -451,7 +457,7 @@ public class BoardReadFragment extends DialogFragment implements
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
             } else uploadComment();
 
-        } else if(v.getId() == R.id.imgbtn_add_comment) {
+        } else if(v.getId() == R.id.imgbtn_load_comment) {
             log.i("add more comments");
             queryPaginationUtil.setNextCommentQuery();
         }
@@ -467,9 +473,6 @@ public class BoardReadFragment extends DialogFragment implements
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
-        // In case the first query retrieves shots less than the pagination number, no more loading
-        // is made.
-        //isLoading = commentShots.size() < PAGINATION;
     }
 
     @Override
@@ -522,30 +525,23 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
     }
+
     @Override
-    public void addCommentReply(BoardReplyAdapter adapter, DocumentSnapshot commentshot, String content, int pos) {
-        imm.hideSoftInputFromWindow(requireView().getWindowToken(),0);
+    public void notifyLoadingReplyDone() {
+        int scrollY = binding.nestedScrollview.getHeight();
+        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
+    }
 
-        Map<String, Object> object = new HashMap<>();
-        object.put("user_id", viewerId);
-        object.put("timestamp", FieldValue.serverTimestamp());
-        object.put("reply_content", content);
+    @Override
+    public void notifyUploadDone(boolean isDone) {
+        imm.hideSoftInputFromWindow(requireView().getWindowToken(), 0);
+        String msg = (isDone)?"uploading reply done" : "uploading reply failed";
+        Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+    }
 
-        final DocumentReference docref = firestore.collection("users").document(viewerId);
-        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
-            DocumentSnapshot doc = transaction.get(docref);
-            object.put("user_name", doc.getString("user_name"));
-            object.put("user_pic", doc.getString("user_pic"));
-
-            commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
-                adapter.notifyItemChanged(0);
-                commentAdapter.notifyItemChanged(pos, false);
-                commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
-
-            });
-
-            return null;
-        });
+    @Override
+    public void notifyNoData() {
+        Snackbar.make(binding.getRoot(), "No more replies", Snackbar.LENGTH_SHORT).show();
     }
 
     @Override
@@ -830,7 +826,7 @@ public class BoardReadFragment extends DialogFragment implements
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef);
+                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
                     binding.nestedScrollview.fullScroll(View.FOCUS_UP);
                 }).addOnFailureListener(Throwable::printStackTrace);
 

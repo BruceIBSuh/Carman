@@ -4,6 +4,7 @@ import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
+import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
 
@@ -20,6 +21,8 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+
+import java.util.ArrayList;
 
 public class QueryPostPaginationUtil {
 
@@ -120,12 +123,12 @@ public class QueryPostPaginationUtil {
     }
 
     // Make an initial query of comments in BoardReadFragment.
-    public void setCommentQuery(DocumentReference docRef){
+    public void setCommentQuery(DocumentReference docRef, String field){
         querySnapshot = null;
-        this.field = "timestamp";
-        colRef = docRef.collection("comments");
+        this.field = field;
+        //colRef = docRef.collection("comments");
         //colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
-        query = colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT);
+        query = docRef.collection("comments").orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT);
         query.addSnapshotListener((commentshot, e) -> {
             if(e != null) return;
             this.querySnapshot = commentshot;
@@ -174,9 +177,9 @@ public class QueryPostPaginationUtil {
 
     public void setNextCommentQuery() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(comment -> {
-            this.querySnapshot = comment;
-            if(comment.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(querySnapshot);
+        query.startAfter(lastVisible).limit(PAGING_COMMENT).get().addOnSuccessListener(comments ->{
+            this.querySnapshot = comments;
+            if(comments.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(querySnapshot);
             else mCallback.getLastQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
