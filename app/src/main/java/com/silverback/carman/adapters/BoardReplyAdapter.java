@@ -51,8 +51,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         return InnerReplyAdapterClazz.sInstance;
     }
 
-    public void setReplyInitParams(
-            PopupDropdownUtil dropdownUtil, ApplyImageResourceUtil imgutil, String viewerId) {
+    public void initReplyAdapter(PopupDropdownUtil dropdownUtil, ApplyImageResourceUtil imgutil, String viewerId) {
         this.popupDropdownUtil = dropdownUtil;
         this.imgutil = imgutil;
         this.viewerId = viewerId;
@@ -118,9 +117,11 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         query.limit(PAGING_REPLY).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
-            if((querySnapshot != null)) for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-            notifyItemRangeChanged(0, replyList.size());
-            //commentListener.notifyLoadReplyDone();
+            if((querySnapshot != null)) {
+                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+                notifyItemRangeChanged(0, querySnapshot.size());
+                //commentListener.notifyReplyLoaded();
+            }
         });
 
         /*
@@ -134,14 +135,13 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
     public void queryNextReply() {
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
-        query.startAfter(lastVisible).limit(PAGING_REPLY).get().addOnSuccessListener(replies -> {
-            this.querySnapshot = replies;
+        query.startAfter(lastVisible).limit(PAGING_REPLY).get().addOnSuccessListener(nextShots -> {
+            this.querySnapshot = nextShots;
             final int start = replyList.size();
 
-            for(DocumentSnapshot comment : replies) replyList.add(comment);
-            notifyItemRangeChanged(start, replyList.size(), true);
-
-            commentListener.notifyLoadReplyDone();
+            for(DocumentSnapshot comment : nextShots) replyList.add(comment);
+            notifyItemRangeChanged(start, nextShots.size());
+            //commentListener.notifyReplyLoaded();
 
         }).addOnFailureListener(Throwable::printStackTrace);
     }

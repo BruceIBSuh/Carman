@@ -120,7 +120,6 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
-    private InputMethodManager imm;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
@@ -141,6 +140,7 @@ public class BoardReadFragment extends DialogFragment implements
     private String viewerId;
     private ArrayList<String> uriStringList;
     private List<DocumentSnapshot> commentShotList;
+    private InputMethodManager imm;
     //private ListenerRegistration commentListener;
     //private List<CharSequence> autoclub;
 
@@ -200,11 +200,11 @@ public class BoardReadFragment extends DialogFragment implements
         } catch(IOException e) {e.printStackTrace();}
 
         this.context = requireContext();
-        imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
         firestore = FirebaseFirestore.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
         imgUtil = new ApplyImageResourceUtil(context);
+        imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
@@ -322,7 +322,6 @@ public class BoardReadFragment extends DialogFragment implements
         //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
         //queryCommentSnapshot(postRef);
         //queryCommentPagingUtil.setCommentQuery(postRef);
-        //isLoading = true;
         //queryPaginationUtil.setCommentQuery(postRef);
         return binding.getRoot();
     }
@@ -468,7 +467,7 @@ public class BoardReadFragment extends DialogFragment implements
     public void getFirstQueryResult(QuerySnapshot commentShots) {
         commentShotList.clear();
         for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
-        commentAdapter.notifyItemRangeChanged(0, commentShotList.size());
+        commentAdapter.notifyItemRangeChanged(0, commentShots.size());
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
@@ -480,14 +479,12 @@ public class BoardReadFragment extends DialogFragment implements
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(start, nextShots.size());
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        //isLoading = nextShots.size() < PAGINATION;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
-
         commentAdapter.notifyItemRangeChanged(start, lastShots.size());
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
@@ -525,16 +522,19 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyLoadReplyDone() {
+    public void notifyReplyLoaded() {
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
     }
 
     @Override
-    public void notifyUploadDone(boolean isDone) {
-        imm.hideSoftInputFromWindow(requireView().getWindowToken(), 0);
+    public void notifyReplyUploadDone(int position, boolean isDone) {
+        log.i("upload reply: %s, %s", position, isDone);
+        imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+
         String msg = (isDone)?"uploading reply done" : "uploading reply failed";
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+        commentAdapter.notifyItemChanged(position, false);
     }
 
     @Override
@@ -543,18 +543,16 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyReplyChecked(int position) {
-        for(int i = 0; i < commentAdapter.getItemCount();i++) {
-            if(i != position) commentAdapter.notifyItemChanged(i, true);
-        }
-
+    public void notifyReplySwitchChecked(int position) {
+        if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        commentAdapter.notifyItemChanged(position, true);
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
     }
 
     @Override
-    public void notifyReplyFocused(View view) {
+    public void notifyEditTextFocused(View view) {
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
@@ -823,13 +821,12 @@ public class BoardReadFragment extends DialogFragment implements
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+                    //queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+                    commentAdapter.notifyItemChanged(0);
                     binding.nestedScrollview.fullScroll(View.FOCUS_UP);
                 }).addOnFailureListener(Throwable::printStackTrace);
 
-                ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
-                        .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
+                imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
                 // Make the comment view invisible and reset the flag.
                 binding.constraintComment.setVisibility(View.GONE);
                 isCommentVisible = !isCommentVisible;
