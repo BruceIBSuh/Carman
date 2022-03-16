@@ -125,7 +125,10 @@ public class SettingActivity extends BaseActivity implements
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
 
         // get Intent data, if any.
-        if(getIntent() != null) requestCode = getIntent().getIntExtra("caller", -1);
+        if(getIntent() != null) {
+            requestCode = getIntent().getIntExtra("postingboard", -1);
+            log.i("request code: %s", requestCode);
+        }
 
         // Instantiate objects
         resultIntent = new Intent();

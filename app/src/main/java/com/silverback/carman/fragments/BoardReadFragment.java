@@ -151,6 +151,7 @@ public class BoardReadFragment extends DialogFragment implements
     private String tabTitle;
     private int tabPage;
     private int position; // item poistion in the recyclerview.
+    private int checkedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -210,9 +211,6 @@ public class BoardReadFragment extends DialogFragment implements
         queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
-        //commentAdapter = BoardCommentAdapter.getInstance();
-        //commentAdapter.initCommentAdapter(getContext(), commentShotList, viewerId, this);
-        log.i("comment adapter: %s", commentAdapter.hashCode());
 
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
@@ -334,8 +332,6 @@ public class BoardReadFragment extends DialogFragment implements
         return dialog;
     }
 
-
-
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -409,8 +405,10 @@ public class BoardReadFragment extends DialogFragment implements
             if(commentShotList.size() == 0) queryPaginationUtil.setCommentQuery(postRef, "timestamp");
             binding.recyclerComments.setVisibility(View.VISIBLE);
 
-            if(cntComment > PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.VISIBLE);
-            else binding.imgbtnLoadComment.setVisibility(View.GONE);
+            int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
+            binding.imgbtnLoadComment.setVisibility(visible);
+            //if(cntComment > PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.VISIBLE);
+            //else binding.imgbtnLoadComment.setVisibility(View.GONE);
 
         } else {
             //commentAdapter.notifyItemRangeRemoved(0, commentShotList.size());
@@ -425,26 +423,15 @@ public class BoardReadFragment extends DialogFragment implements
         if(v.getId() == R.id.imgbtn_comment) {
             // Check whether a user name is set. Otherwise, show an messagie in the snackbar to
             // move to SettingPrefActivity to make a user name.
-            String userName = mSettings.getString(Constants.USER_NAME, null);
-            if(TextUtils.isEmpty(userName)) {
-                Snackbar snackbar = Snackbar.make(
-                        binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
-                snackbar.setAction(R.string.board_msg_action_setting, view -> {
-                    Intent intent = new Intent(getActivity(), SettingActivity.class);
-                    intent.putExtra("requestCode", Constants.REQUEST_BOARD_SETTING_USERNAME);
-                    activityResultLauncher.launch(intent);
-                }).show();
-
-            } else {
+            if(checkUserName()) {
                 int visibility = isCommentVisible ? View.GONE : View.VISIBLE;
                 //int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
 
-                if(isCommentVisible) {
+                if(!isCommentVisible) {
                     binding.etComment.requestFocus();
-                    //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-                    for(int i = 0; i < commentAdapter.getItemCount(); i++) commentAdapter.notifyItemChanged(i, true);
+                    commentAdapter.notifyItemChanged(checkedPos, true);
                 }
 
                 isCommentVisible = !isCommentVisible;
@@ -522,12 +509,6 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyReplyLoaded() {
-        int scrollY = binding.nestedScrollview.getHeight();
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
-    }
-
-    @Override
     public void notifyReplyUploadDone(int position, boolean isDone) {
         log.i("upload reply: %s, %s", position, isDone);
         imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
@@ -543,9 +524,17 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyReplySwitchChecked(int position) {
+    public void notifySwitchChecked(int checkedPos, int bindingPos) {
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-        commentAdapter.notifyItemChanged(position, true);
+
+        if(binding.etComment.isFocused()) {
+            binding.constraintComment.setVisibility(View.GONE);
+            isCommentVisible = false;
+        }
+
+        this.checkedPos = bindingPos;
+        if(checkedPos != bindingPos) commentAdapter.notifyItemChanged(checkedPos, true);
+
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         int scrollY = binding.nestedScrollview.getHeight();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
@@ -553,6 +542,10 @@ public class BoardReadFragment extends DialogFragment implements
 
     @Override
     public void notifyEditTextFocused(View view) {
+        log.i("content edit text focused");
+        if(!checkUserName()) {
+            view.clearFocus();
+        }
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
@@ -627,7 +620,8 @@ public class BoardReadFragment extends DialogFragment implements
 
 
     private void getActivityResultCallback(ActivityResult result) {
-
+        log.i("activity result: %s", result.getData());
+        if(result.getData() != null) log.i("user name:");
     }
 
 
@@ -957,6 +951,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
+    /*
     private void showUserAutoClub(final TextView autoInfo) {
         firestore.collection("users").document(postOwnerId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
@@ -981,6 +976,8 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
     }
+
+     */
 
     /*
     private void queryCommentSnapshot(DocumentReference docref) {
@@ -1020,4 +1017,19 @@ public class BoardReadFragment extends DialogFragment implements
         }
     }
      */
+
+    private boolean checkUserName() {
+        String userName = mSettings.getString(Constants.USER_NAME, null);
+        if (TextUtils.isEmpty(userName)) {
+            Snackbar snackbar = Snackbar.make(binding.getRoot(),
+                    getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
+
+            snackbar.setAction(R.string.board_msg_action_setting, view -> {
+                Intent intent = new Intent(getActivity(), SettingActivity.class);
+                intent.putExtra("postingboard", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                activityResultLauncher.launch(intent);
+            }).show();
+            return false;
+        } else return true;
+    }
 }
