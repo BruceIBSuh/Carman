@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.R;
@@ -90,6 +91,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull BoardReplyAdapter.ViewHolder holder, int position) {
+        log.i("position: %s, %s", position, holder.getBindingAdapterPosition());
         final DocumentSnapshot doc = replyList.get(position);
         holder.setReplyProfile(doc);
         setReplyUserPic(holder, doc);
@@ -108,29 +110,36 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         return replyList.size();
     }
 
-    public void queryCommentReply(DocumentReference commentRef) {
+    public void queryCommentReply(DocumentReference commentRef, String field) {
+        log.i("init replyadapter: %s", getItemCount());
+        notifyItemRangeRemoved(0, getItemCount());
         replyList.clear();
+
         this.commentRef = commentRef;
         querySnapshot = null;
-
-        query = commentRef.collection("replies").orderBy("timestamp", Query.Direction.DESCENDING);
+        query = commentRef.collection("replies").orderBy(field, Query.Direction.DESCENDING);
+        /*
         query.limit(PAGING_REPLY).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
             this.querySnapshot = querySnapshot;
             if((querySnapshot != null)) {
                 for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-                notifyItemRangeChanged(0, querySnapshot.size());
+                notifyItemRangeInserted(0, querySnapshot.size());
                 //commentListener.notifyReplyLoaded();
             }
         });
+        */
 
-        /*
-        query.limit(PAGING_REPLY).get().addOnSuccessListener(replyshots -> {
-            this.querySnapshot = replyshots;
-            for(DocumentSnapshot doc : replyshots) replyList.add(doc);
+
+        query.limit(PAGING_REPLY).get().addOnSuccessListener(querySnapshot -> {
+            this.querySnapshot = querySnapshot;
+            if((querySnapshot != null)) {
+                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+                notifyItemRangeInserted(0, querySnapshot.size());
+            }
         });
 
-         */
+
     }
 
     public void queryNextReply() {
@@ -140,15 +149,14 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
             final int start = replyList.size();
 
             for(DocumentSnapshot comment : nextShots) replyList.add(comment);
-            notifyItemRangeChanged(start, nextShots.size());
-            //commentListener.notifyReplyLoaded();
+            notifyItemRangeInserted(start, nextShots.size());
 
         }).addOnFailureListener(Throwable::printStackTrace);
     }
 
 
 
-    private void setReplyUserPic(BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc) {
+    private void setReplyUserPic(ViewHolder holder, DocumentSnapshot doc) {
         final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
                 doc.getString("user_pic") : Constants.imgPath + "ic_user_blank_gray";
         int x = holder.getReplyUserImage().getWidth();
@@ -157,9 +165,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     }
 
 
-    public void showReplyPopupWindow(
-            View view, BoardReplyAdapter.ViewHolder holder, DocumentSnapshot doc, int pos){
-
+    public void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc, int pos) {
         LayoutInflater inflater = LayoutInflater.from(view.getContext());
         View contentView = inflater.inflate(
                 R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
@@ -170,7 +176,13 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         if(viewerId.equals(doc.getString("user_id"))) {
             popupBinding.tvPopup1.setVisibility(View.VISIBLE);
             popupBinding.tvPopup1.setOnClickListener(v -> {
-                commentListener.deleteCommentReply(this, commentRef.getId(), doc.getId(), pos);
+                commentRef.collection("replies").document(doc.getId()).delete()
+                        .addOnSuccessListener(aVoid -> {
+                            commentRef.update("cnt_reply", FieldValue.increment(-1));
+                            notifyItemRemoved(holder.getBindingAdapterPosition());
+                            commentListener.deleteCommentReply(this, commentRef);
+                        }).addOnFailureListener(Throwable::printStackTrace);
+
                 dropdown.dismiss();
             });
         }

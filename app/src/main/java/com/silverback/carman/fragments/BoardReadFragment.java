@@ -402,7 +402,7 @@ public class BoardReadFragment extends DialogFragment implements
         if(isChecked) {
             //queryPaginationUtil.setCommentQuery(postRef);
             log.i("comment list:%s", commentShotList.size());
-            if(commentShotList.size() == 0) queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+            queryPaginationUtil.setCommentQuery(postRef, "timestamp");
             binding.recyclerComments.setVisibility(View.VISIBLE);
 
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
@@ -412,7 +412,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         } else {
             //commentAdapter.notifyItemRangeRemoved(0, commentShotList.size());
-            commentShotList.clear();
+            //commentShotList.clear();
             binding.recyclerComments.setVisibility(View.GONE);
             //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
         }
@@ -433,7 +433,6 @@ public class BoardReadFragment extends DialogFragment implements
                     binding.etComment.requestFocus();
                     commentAdapter.notifyItemChanged(checkedPos, true);
                 }
-
                 isCommentVisible = !isCommentVisible;
             }
 
@@ -444,7 +443,8 @@ public class BoardReadFragment extends DialogFragment implements
 
         } else if(v.getId() == R.id.imgbtn_load_comment) {
             log.i("add more comments");
-            queryPaginationUtil.setNextCommentQuery();
+            if(cntComment > commentAdapter.getItemCount()) queryPaginationUtil.setNextCommentQuery();
+            else notifyNoData();
         }
     }
 
@@ -487,7 +487,12 @@ public class BoardReadFragment extends DialogFragment implements
     // addCommentReply(): may add a comment
     // notifyReplyChecked(): notified of whether the switch button turns on or off.
     @Override
-    public void deleteComment(String docId, int position) {
+    public void deleteComment(boolean isDeleted) {
+        if(isDeleted) {
+            postRef.update("cnt_comment", FieldValue.increment(-1));
+            queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+        }
+        /*
         postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 log.i("comment removed");
@@ -496,26 +501,32 @@ public class BoardReadFragment extends DialogFragment implements
                 commentAdapter.notifyItemRemoved(position);
             }
         });
+
+         */
     }
     @Override
-    public void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos) {
-        final DocumentReference commentRef = postRef.collection("comments").document(commentId);
+    public void deleteCommentReply(BoardReplyAdapter replyAdapter, DocumentReference commentRef) {
+        log.i("post deletion handling");
+        //final DocumentReference commentRef = postRef.collection("comments").document(commentId);
+        /*
         commentRef.collection("replies").document(replyId).delete().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
-                adapter.notifyItemRemoved(pos);
                 commentRef.update("cnt_reply", FieldValue.increment(-1));
+                replyAdapter.notifyItemRemoved(pos);
             }
         });
+
+         */
     }
 
     @Override
-    public void notifyReplyUploadDone(int position, boolean isDone) {
+    public void notifyUploadReplyDone(int position, boolean isDone) {
         log.i("upload reply: %s, %s", position, isDone);
-        imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
         String msg = (isDone)?"uploading reply done" : "uploading reply failed";
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-        commentAdapter.notifyItemChanged(position, false);
+        //commentAdapter.notifyItemChanged(position, false);
     }
 
     @Override
@@ -526,12 +537,12 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void notifySwitchChecked(int checkedPos, int bindingPos) {
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
+        // Hide the comment edittext if the reply switch turns on.
         if(binding.etComment.isFocused()) {
             binding.constraintComment.setVisibility(View.GONE);
             isCommentVisible = false;
         }
-
+        // A new reply switch turns on and another switch should be off.
         this.checkedPos = bindingPos;
         if(checkedPos != bindingPos) commentAdapter.notifyItemChanged(checkedPos, true);
 
@@ -543,9 +554,7 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void notifyEditTextFocused(View view) {
         log.i("content edit text focused");
-        if(!checkUserName()) {
-            view.clearFocus();
-        }
+        if(!checkUserName()) view.clearFocus();
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
@@ -815,8 +824,8 @@ public class BoardReadFragment extends DialogFragment implements
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
                     postRef.update("cnt_comment", FieldValue.increment(1));
-                    //queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                    commentAdapter.notifyItemChanged(0);
+                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+                    //commentAdapter.notifyItemChanged(0, true);
                     binding.nestedScrollview.fullScroll(View.FOCUS_UP);
                 }).addOnFailureListener(Throwable::printStackTrace);
 

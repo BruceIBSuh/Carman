@@ -129,21 +129,20 @@ public class QueryPostPaginationUtil {
         //colRef = docRef.collection("comments");
         //colRef.orderBy(field, Query.Direction.DESCENDING).limit(PAGINATION).get()
         query = docRef.collection("comments").orderBy(field, Query.Direction.DESCENDING).limit(PAGING_COMMENT);
+        /*
         query.addSnapshotListener((commentshot, e) -> {
             if(e != null) return;
             this.querySnapshot = commentshot;
             mCallback.getFirstQueryResult(commentshot);
         });
-
-        /*
-        .get()
-        .addOnSuccessListener(queryCommentShot -> {
+        */
+        query.get().addOnSuccessListener(queryCommentShot -> {
             // What if the first query comes to the last page? "isLoading" field in BoardPagerFragment
             // is set to true, which disables the recyclerview scroll listener to call setNextQuery().
             this.querySnapshot = queryCommentShot;
             mCallback.getFirstQueryResult(queryCommentShot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
-         */
+
 
     }
 

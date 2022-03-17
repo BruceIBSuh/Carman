@@ -63,9 +63,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private boolean isReplyUploaded;
 
     public interface CommentAdapterListener {
-        void deleteComment(String commentId, int pos);
-        void deleteCommentReply(BoardReplyAdapter adapter, String commentId, String replyId, int pos);
-        void notifyReplyUploadDone(int position, boolean isDone);
+        void deleteComment(boolean b);
+        void deleteCommentReply(BoardReplyAdapter adapter, DocumentReference commentRef);
+        void notifyUploadReplyDone(int position, boolean isDone);
         void notifyNoData();
         void notifySwitchChecked(int checkedPos, int bindingPos);
         void notifyEditTextFocused(View view);
@@ -108,7 +108,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         ImageView getUserImageView() { return commentBinding.imgCommentUser; }
         ImageView getOverflowView() { return commentBinding.imgOverflow; }
         ImageView getSendReplyView() { return commentBinding.imgbtnSendReply; }
-        //EditText getContentEditText() { return commentBinding.etCommentReply; }
         RecyclerView getRecyclerReplyView() { return commentBinding.recyclerviewReply; }
         Button getLoadReplyButton() { return commentBinding.btnLoadReplies; }
 
@@ -118,6 +117,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             commentBinding.tvCommentContent.setText(doc.getString("comment"));
             final Date date = doc.getDate("timestamp");
             if(date != null) commentBinding.tvCommentTimestamp.setText(sdf.format(date));
+            // Try-catch should be temporarily put here.
             try {
                 long count = Objects.requireNonNull(doc.getLong("cnt_reply"));
                 commentBinding.headerReplyCnt.setText(String.valueOf(count));
@@ -132,7 +132,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             } else return content;
         }
 
-
     }
 
     @NonNull
@@ -141,20 +140,22 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         //View itemView = LayoutInflater.from(context).inflate(R.layout.itemview_board_comment, parent, false);
         ItemviewBoardCommentBinding commentBinding = ItemviewBoardCommentBinding.inflate(
                 LayoutInflater.from(context), parent, false);
-        commentBinding.etCommentReply.setOnFocusChangeListener((v, b) ->
-                commentListener.notifyEditTextFocused(v));
+        commentBinding.etCommentReply.setOnFocusChangeListener((v, isFocused) -> {
+            if(isFocused) commentListener.notifyEditTextFocused(v);
+        });
+
         //return new ViewHolder(itemView);
         return new ViewHolder(commentBinding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        log.i("all binding: %s", position);
-        DocumentSnapshot doc = commentList.get(position);
+        log.i("all binding: %s, %s", position, holder.getBindingAdapterPosition());
+        DocumentSnapshot doc = commentList.get(holder.getBindingAdapterPosition());
         holder.setCommentProfile(doc);
         setCommentUserPic(holder, doc);
 
-        holder.getOverflowView().setOnClickListener(v -> showCommentPopupWindow(holder, doc, position));
+        holder.getOverflowView().setOnClickListener(v -> showCommentPopupWindow(holder, doc));
         holder.getSendReplyView().setOnClickListener(v -> uploadReplyToComment(holder, doc));
         holder.getLoadReplyButton().setOnClickListener(v -> loadNextReplies(doc));
 
@@ -167,10 +168,10 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
                     int visible = (cntReply > BoardActivity.PAGING_REPLY) ? View.VISIBLE : View.GONE;
                     holder.commentBinding.btnLoadReplies.setVisibility(visible);
                 } catch(NullPointerException e) { e.printStackTrace();}
-                log.i("position: %s, %s", checkedPos, holder.getBindingAdapterPosition());
-                //if(checkedPos != holder.getBindingAdapterPosition()){
-                commentListener.notifySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
-                //}
+
+                if(checkedPos != holder.getBindingAdapterPosition()){
+                    commentListener.notifySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
+                }
                 checkedPos = holder.getBindingAdapterPosition();
             } else holder.commentBinding.linearReply.setVisibility(View.GONE);
         });
@@ -193,26 +194,17 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         return commentList.size();
     }
 
-    private void doReplySwitchHandler(ViewHolder holder, DocumentSnapshot doc, boolean isChecked)
-            throws NullPointerException {
-        if(isChecked) {
-            final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
-            if(cntReply > 0) setRecyclerReplyView(doc, holder);
-            int visible = (cntReply > BoardActivity.PAGING_REPLY) ? View.VISIBLE : View.GONE;
-            holder.commentBinding.btnLoadReplies.setVisibility(visible);
-        } else {
-            holder.commentBinding.linearReply.setVisibility(View.GONE);
-        }
-    }
 
     private void setRecyclerReplyView(DocumentSnapshot doc, ViewHolder holder) {
         // Initialize the static reply adapter every time the parent comment feed changes.
+        log.i("setRecyclerReplyView:%s", replyAdapter.getItemCount());
         if(replyAdapter.getItemCount() > 0) {
             replyAdapter.notifyItemRangeRemoved(0, replyAdapter.getItemCount());
-            log.i("init replyadapter: %s", replyAdapter.getItemCount());
+            log.i("init replyadapter: %s, %s", doc.getString("comment"), replyAdapter.getItemCount());
         }
 
-        replyAdapter.queryCommentReply(doc.getReference());
+
+        replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
         LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         holder.getRecyclerReplyView().setLayoutManager(layout);
         holder.getRecyclerReplyView().addItemDecoration(divider);
@@ -254,23 +246,27 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             object.put("user_pic", doc.getString("user_pic"));
 
             commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
-                replyAdapter.notifyItemChanged(0);
+                //replyAdapter.notifyItemInserted(0);
+                replyAdapter.queryCommentReply(commentshot.getReference(), "timestamp");
+
                 commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
-                commentListener.notifyReplyUploadDone(holder.getBindingAdapterPosition(), true);
+                holder.commentBinding.etCommentReply.clearFocus();
+                holder.commentBinding.etCommentReply.getText().clear();
+                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), true);
 
             }).addOnFailureListener(e -> {
                 e.printStackTrace();
-                commentListener.notifyReplyUploadDone(holder.getBindingAdapterPosition(), false);
+                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), false);
             });
 
             return null;
         });
 
         //commentListener.addCommentReply(replyAdapter, commentshot, content, position);
-        holder.commentBinding.etCommentReply.getText().clear();
+
     }
 
-    private void showCommentPopupWindow(ViewHolder holder, DocumentSnapshot doc, int position) {
+    private void showCommentPopupWindow(ViewHolder holder, DocumentSnapshot doc) {
         ViewGroup rootView = holder.commentBinding.getRoot();
         LayoutInflater inflater = LayoutInflater.from(rootView.getContext());
         View view = inflater.inflate(R.layout.popup_comment_overflow, rootView, false);
@@ -282,8 +278,14 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         if(viewerId.equals(doc.getString("user_id"))) {
             binding.tvPopup1.setVisibility(View.VISIBLE);
             binding.tvPopup1.setOnClickListener(v -> {
-                log.i("remove listener: %s", holder.getBindingAdapterPosition());
-                commentListener.deleteComment(doc.getId(), position);
+                doc.getReference().delete().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) {
+                        //notifyItemRemoved(holder.getBindingAdapterPosition());
+                        commentListener.deleteComment(task.isSuccessful());
+                    }
+
+                });
+
                 dropdown.dismiss();
             });
         }
