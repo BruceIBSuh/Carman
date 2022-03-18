@@ -100,6 +100,7 @@ public class BoardPagerFragment extends Fragment implements
     private QueryPostPaginationUtil queryPagingUtil;
     private BoardPostingAdapter postingAdapter;
 
+    private FragmentSharedModel fragmentModel;
     private ArrayList<String> autoFilter;
     private SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgutil;
@@ -192,13 +193,14 @@ public class BoardPagerFragment extends Fragment implements
         binding = FragmentBoardPagerBinding.inflate(inflater);
 
         // Wrapping class to trhow IndexOutOfBound exception which is occasionally casued by RecyclerView.
-        WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
+        //WrapContentLinearLayoutManager layoutManager = new WrapContentLinearLayoutManager(requireActivity());
         // RecyclerView for displaying posts
-        //LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+
+        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerBoardPostings.setHasFixedSize(false); //due to banner plugin
-        binding.recyclerBoardPostings.setLayoutManager(layoutManager);
+        binding.recyclerBoardPostings.setLayoutManager(layout);
         binding.recyclerBoardPostings.addItemDecoration(divider);
         binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
@@ -230,26 +232,28 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        FragmentSharedModel fragmentModel = new ViewModelProvider(
-                requireActivity()).get(FragmentSharedModel.class);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         // UploadBitmapTask notifies the frament of uploading a post being completed and re-query
         // to update.
-        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docId -> {
-            if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), docref -> {
+            log.i("new posting");
+            /*
+            docref.get().addOnSuccessListener(snapshot -> {
+                postingAdapter.addNewPost(snapshot);
+                binding.recyclerBoardPostings.smoothScrollToPosition(View.FOCUS_UP);
+            }).addOnFailureListener(Throwable::printStackTrace);
+            */
+            if(!TextUtils.isEmpty(docref.getId())) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
-        // The post has been deleted in BoardReadFragment which sequentially popped up AlertDialog
-        // for confirm and the result is sent back, then deletes the posting item from Firestore.
-        // With All done, receive another LiveData containing the position of the deleted posting item
-        // and update the adapter.
-        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
-            log.i("removed document: %s", pos);
-            //postingAdapter.notifyItemChanged(pos)
+        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), position -> {
+            log.i("removed posting: %s", position);
+            //postingAdapter.deletePost(position);
+            //postingAdapter.notifyItemRemoved(position);
             queryPagingUtil.setPostQuery(currentPage, isViewOrder);
         });
 
         fragmentModel.getEditedPosting().observe(requireActivity(), position -> {
-            log.i("edited posting viewmodel");
             //if(!TextUtils.isEmpty(docId)) queryPagingUtil.setPostQuery(currentPage, isViewOrder);
             postingAdapter.notifyItemChanged(position);
         });
@@ -266,6 +270,11 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
@@ -307,9 +316,10 @@ public class BoardPagerFragment extends Fragment implements
     //Implement BoardPostingAdapter.OnRecyclerItemClickListener when an item is clicked.
     //@SuppressWarnings({"unchecked", "ConstantConditions"})
     @Override
-    public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
+    public void onPostClicked(DocumentSnapshot snapshot, int position) {
         // Initiate the task to query the board collection and the user collection.
         // Show the dialog with the full screen. The container is android.R.id.content.
+        log.i("reset position: %s", position);
         BoardReadFragment readPostFragment = new BoardReadFragment();
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
@@ -346,10 +356,12 @@ public class BoardPagerFragment extends Fragment implements
                 .add(android.R.id.content, readPostFragment)
                 .addToBackStack(null)
                 .commit();
-
         // Update the field of "cnt_view" increasing the number.
+        /*  TEMP QUOTE REQUIRED TO REMOVE
         DocumentReference docref = snapshot.getReference();
         addViewCount(docref, position);
+
+         */
     }
 
     /*
@@ -724,7 +736,6 @@ public class BoardPagerFragment extends Fragment implements
 
     // Wrapper class to throw java.lang.IndexOutOfBoundsException: Inconsistency detected.
     // Invalid view holder adapter positionPostViewHolder
-
     private static class WrapContentLinearLayoutManager extends LinearLayoutManager {
         // Constructor
         public WrapContentLinearLayoutManager(Context context) {

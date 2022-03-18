@@ -102,24 +102,26 @@ public class QueryPostPaginationUtil {
         });
          */
 
-        /*
         query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
-        */
+
+        /*
         query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-            /*
+
             for(DocumentSnapshot doc : querySnapshot) {
                 String source = doc != null && doc.getMetadata().hasPendingWrites()?"LOCAL":"SERVER";
                 if(source.matches("LOCAL")) log.i("cached data");
                 else log.i("server data");
             }
-             */
+
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
+         */
+
     }
 
     // Make an initial query of comments in BoardReadFragment.

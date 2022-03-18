@@ -70,6 +70,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
+import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -217,24 +218,7 @@ public class BoardReadFragment extends DialogFragment implements
         // the listener to prevent connecting to the server. Instead`, update the collection using
         // Source.Cache.
         postRef = firestore.collection("user_post").document(documentId);
-        /*
-        postRef.get().addOnSuccessListener(aVoid -> commentListener = postRef.collection("comments")
-                .addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
-                    if(e != null) return;
-                    source = (querySnapshot != null && querySnapshot.getMetadata().hasPendingWrites())
-                            ? Source.CACHE : Source.SERVER;
-                })
-        );
-        */
-
-        /*
-        // Instantiate PagingQueryHelper to paginate comments in a post.
-        //pagingUtil = new PostingClubRepository(firestore);
-        //pagingUtil.setOnPaginationListener(this);
-        postRepo = new PostingBoardRepository();
-        postingModel = new ViewModelProvider(this, new PostingBoardModelFactory(postRepo))
-                .get(PostingBoardViewModel.class);
-        */
+        queryPaginationUtil.setCommentQuery(postRef, "timestamp");
     }
 
     @Override
@@ -254,7 +238,10 @@ public class BoardReadFragment extends DialogFragment implements
         // If the user is the owner of a post, display the edit menu in the toolbar, which should
         // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
         // in DialogFragment
-        createEditOptionsMenu();
+        if(postOwnerId != null && postOwnerId.equals(viewerId)) {
+            createEditOptionsMenu();
+        }
+
 
         binding.tvPostTitle.setText(postTitle);
         binding.tvUsername.setText(postOwnerName);
@@ -316,11 +303,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Rearrange the text by paragraphs
         readContentView(postContent);
-        // Query comments
-        //pagingUtil.setCommentQuery(tabPage, "timestamp", postRef);
-        //queryCommentSnapshot(postRef);
-        //queryCommentPagingUtil.setCommentQuery(postRef);
-        //queryPaginationUtil.setCommentQuery(postRef);
+
         return binding.getRoot();
     }
 
@@ -351,16 +334,20 @@ public class BoardReadFragment extends DialogFragment implements
         // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
         // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
         // the model from automatically invoking the method, initially set the value to false;
-        sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), result -> {
-            if(result) {
+        sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), confirmed -> {
+            if(confirmed) {
+                log.i("bug here");
+                sharedModel.getRemovedPosting().setValue(position);
+                /*
                 postRef.delete().addOnSuccessListener(aVoid -> {
                     if (uriStringList != null && uriStringList.size() > 0) {
-                        for (String url : uriStringList)
-                            firebaseStorage.getReferenceFromUrl(url).delete();
+                        for (String url : uriStringList) firebaseStorage.getReferenceFromUrl(url).delete();
                     }
                     sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
+
+                 */
             }
         });
     }
@@ -368,6 +355,7 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onResume() {
         super.onResume();
+        /*
         // Realtime update of the comment count and compathy count using SnapshotListener.
         // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
         // whether the document has local changes that haven't been written to the backend yet.
@@ -377,18 +365,19 @@ public class BoardReadFragment extends DialogFragment implements
             if(snapshot != null && snapshot.exists()) {
                 long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
                 long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
-                binding.tvCntComment.setText(String.valueOf(cntComment));
-                binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
-                binding.headerCommentCnt.setText(String.valueOf(cntComment));
+                //binding.tvCntComment.setText(String.valueOf(cntComment));
+                //binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
+                //binding.headerCommentCnt.setText(String.valueOf(cntComment));
             }
         });
+
+         */
     }
 
     @Override
     public void onPause() {
         log.i("onPause");
         super.onPause();
-        regListener.remove();
     }
 
     @Override
@@ -402,9 +391,7 @@ public class BoardReadFragment extends DialogFragment implements
         if(isChecked) {
             //queryPaginationUtil.setCommentQuery(postRef);
             log.i("comment list:%s", commentShotList.size());
-            queryPaginationUtil.setCommentQuery(postRef, "timestamp");
             binding.recyclerComments.setVisibility(View.VISIBLE);
-
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             binding.imgbtnLoadComment.setVisibility(visible);
             //if(cntComment > PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.VISIBLE);
@@ -487,22 +474,13 @@ public class BoardReadFragment extends DialogFragment implements
     // addCommentReply(): may add a comment
     // notifyReplyChecked(): notified of whether the switch button turns on or off.
     @Override
-    public void deleteComment(boolean isDeleted) {
-        if(isDeleted) {
-            postRef.update("cnt_comment", FieldValue.increment(-1));
-            queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-        }
-        /*
-        postRef.collection("comments").document(docId).delete().addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
-                log.i("comment removed");
-                //queryPaginationUtil.setCommentQuery(postRef);
-                postRef.update("cnt_comment", FieldValue.increment(-1));
-                commentAdapter.notifyItemRemoved(position);
-            }
-        });
-
-         */
+    public void deleteComment(DocumentSnapshot doc) {
+        postRef.update("cnt_comment", FieldValue.increment(-1)).addOnSuccessListener(bVoid -> {
+            cntComment --;
+            if(cntComment <= PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.GONE);
+            binding.tvCntComment.setText(String.valueOf(cntComment));
+            binding.headerCommentCnt.setText(String.valueOf(cntComment));
+        }).addOnFailureListener(Throwable::printStackTrace);
     }
     @Override
     public void deleteCommentReply(BoardReplyAdapter replyAdapter, DocumentReference commentRef) {
@@ -558,82 +536,10 @@ public class BoardReadFragment extends DialogFragment implements
         binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
-    // Subclass of RecyclerView.ScrollViewListner.
-    /*
-    private void setRecyclerViewScrollListener() {
-        RecyclerView.OnScrollListener scrollListener = new RecyclerView.OnScrollListener(){
-            boolean isScrolling;
-            @Override
-            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                super.onScrollStateChanged(recyclerView, newState);
-
-                //if (newState == RecyclerView.SCROLL_STATE_IDLE) fabWrite.show();
-                if(newState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
-                    log.i("newState: %s", newState);
-                    isScrolling = true;
-                }
-            }
-
-            @Override
-            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                //if (dy > 0 || dy < 0 && fabWrite.isShown()) fabWrite.hide();
-                log.i("onScrolled");
-                LinearLayoutManager layoutManager = ((LinearLayoutManager) recyclerView.getLayoutManager());
-                if (layoutManager != null) {
-                    int firstVisibleProductPosition = layoutManager.findFirstVisibleItemPosition();
-                    int visiblePostCount = layoutManager.getChildCount();
-                    int totalPostCount = layoutManager.getItemCount();
-                    log.i("layout: %s, %s, %s, %s", isScrolling, firstVisibleProductPosition, visiblePostCount, totalPostCount);
-                    if (!isLoading && isScrolling && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                        isScrolling = false;
-                        isLoading = true;
-                        log.i("next query by scrolling");
-                        //pbPaging.setVisibility(View.VISIBLE);
-                        queryCommentPagingUtil.setNextQuery();
-
-                        //if(currentPage != AUTOCLUB) queryPostSnapshot(currentPage);
-                        //else if(!isLastPage) clubRepo.setNextQuery();
-                    }
-                }
-            }
-
-        };
-
-        recyclerComment.addOnScrollListener(scrollListener);
-    }
-
-     */
-
-    // The following callbacks are invoked by PagingQueryHelper to query comments up to the limit
-    // and on showing the last one, another query get started.
-    /*
-    @Override
-    public void setFirstQuery(int page, QuerySnapshot snapshot) {
-        snapshotList.clear();
-        for(DocumentSnapshot document : snapshot) snapshotList.add(document);
-        commentAdapter.notifyDataSetChanged();
-    }
-    @Override
-    public void setNextQueryStart(boolean b) {
-        // Set the visibility of Progressbar to visible.
-    }
-    @Override
-    public void setNextQueryComplete(int page, QuerySnapshot querySnapshot) {
-        if(querySnapshot.size() == 0) return;
-        for(DocumentSnapshot document : querySnapshot) snapshotList.add(document);
-        //commentAdapter.notifyDataSetChanged();
-        commentAdapter.notifyItemInserted(0);
-    }
-     */
-
-
     private void getActivityResultCallback(ActivityResult result) {
         log.i("activity result: %s", result.getData());
         if(result.getData() != null) log.i("user name:");
     }
-
-
 
     // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
     // created by ConstraintSet. Images should be managed by Glide.
@@ -822,11 +728,21 @@ public class BoardReadFragment extends DialogFragment implements
                 comment.put("user_name", doc.getString("user_name"));
                 comment.put("user_pic", doc.getString("user_pic"));
 
-                postRef.collection("comments").add(comment).addOnSuccessListener(aVoid -> {
-                    postRef.update("cnt_comment", FieldValue.increment(1));
-                    queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                    //commentAdapter.notifyItemChanged(0, true);
+                postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
+                    //queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+                    commentRef.get().addOnSuccessListener(snapshot -> {
+                        commentShotList.add(0, snapshot);
+                        commentAdapter.notifyItemInserted(0);
+                    });
+
+                    postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(aVoid->{
+                        cntComment++;
+                        binding.tvCntComment.setText(String.valueOf(cntComment));
+                        binding.headerCommentCnt.setText(String.valueOf(cntComment));
+                    });
+
                     binding.nestedScrollview.fullScroll(View.FOCUS_UP);
+
                 }).addOnFailureListener(Throwable::printStackTrace);
 
                 imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
@@ -835,15 +751,16 @@ public class BoardReadFragment extends DialogFragment implements
                 isCommentVisible = !isCommentVisible;
                 return null;
             });
-        } catch(IOException e) {e.printStackTrace();}
+
+        } catch(IOException | NullPointerException e) {e.printStackTrace();}
 
     }
 
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
     // documents of which contains user ids
     private void setCompathyCount() {
-        final String msg = getString(R.string.board_msg_compathy);
         // Prevent repeated connection to Firestore every time when users click the button.
+        final String msg = getString(R.string.board_msg_compathy);
         if(hasCompathy) {
             Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return;
@@ -856,12 +773,15 @@ public class BoardReadFragment extends DialogFragment implements
                 if(snapshot != null && snapshot.exists()) {
                     hasCompathy = true;
                     Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-
                 } else {
-                    postRef.update("cnt_compathy", FieldValue.increment(1));
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("timestamp", FieldValue.serverTimestamp());
-                    compathyRef.set(data);
+                    postRef.update("cnt_compathy", FieldValue.increment(1)).addOnSuccessListener(aVoid -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("timestamp", FieldValue.serverTimestamp());
+                        compathyRef.set(data);
+                        cntCompathy++;
+                        binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
+
+                    });
                 }
             }
         });
@@ -874,42 +794,38 @@ public class BoardReadFragment extends DialogFragment implements
     // item.  The edit buttons turn visible only when both ids are equal, which means the reader
     // is the post owner.
     private void createEditOptionsMenu() {
-        if(postOwnerId != null && postOwnerId.equals(viewerId)) {
-            binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
-            binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
-                if (item.getItemId() == R.id.action_board_edit) {
-                    //mListener.onEditClicked(getArguments());
-                    //((BoardActivity)requireActivity()).addEditFragment(getArguments());
-                    BoardEditFragment editFragment = new BoardEditFragment();
-                    Bundle editBundle = new Bundle();
-                    editBundle.putString("documentId", documentId);
-                    editBundle.putString("postTitle", postTitle);
-                    editBundle.putString("postContent", postContent);
-                    editBundle.putInt("position", position);
-                    if (uriStringList != null && uriStringList.size() > 0) {
-                        log.i("uriStringList: %s", uriStringList.size());
-                        editBundle.putStringArrayList("uriImgList", uriStringList);
-                    }
-                    editFragment.setArguments(editBundle);
-                    requireActivity().getSupportFragmentManager().beginTransaction()
-                            .addToBackStack(null)
-                            .add(android.R.id.content, editFragment)
-                            .commit();
-
-                    dismiss();
-                    return true;
-
-                } else if (item.getItemId() == R.id.action_board_delete) {
-                    String title = getString(R.string.board_alert_delete);
-                    String msg = getString(R.string.board_alert_msg);
-                    AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
-                            .show(requireActivity().getSupportFragmentManager(), null);
-
-                    return true;
+        binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
+        binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
+            if (item.getItemId() == R.id.action_board_edit) {
+                BoardEditFragment editFragment = new BoardEditFragment();
+                Bundle editBundle = new Bundle();
+                editBundle.putString("documentId", documentId);
+                editBundle.putString("postTitle", postTitle);
+                editBundle.putString("postContent", postContent);
+                editBundle.putInt("position", position);
+                if (uriStringList != null && uriStringList.size() > 0) {
+                    log.i("uriStringList: %s", uriStringList.size());
+                    editBundle.putStringArrayList("uriImgList", uriStringList);
                 }
-                return false;
-            });
-        }
+
+                editFragment.setArguments(editBundle);
+                requireActivity().getSupportFragmentManager().beginTransaction()
+                        .addToBackStack(null)
+                        .add(android.R.id.content, editFragment)
+                        .commit();
+
+                dismiss();
+                //return true;
+
+            } else if (item.getItemId() == R.id.action_board_delete) {
+                String title = getString(R.string.board_alert_delete);
+                String msg = getString(R.string.board_alert_msg);
+                AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
+                        .show(getChildFragmentManager(), null);
+                //return true;
+            }
+            return false;
+        });
 
         /*
         try (FileInputStream fis = requireActivity().openFileInput("userId");

@@ -3,6 +3,8 @@ package com.silverback.carman.threads;
 import android.content.Context;
 import android.text.TextUtils;
 
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -46,11 +48,11 @@ public class UploadPostTask extends ThreadTask implements UploadPostRunnable.Upl
     }
 
     @Override
-    public void notifyUploadDone(String documentId) {
-        log.i("notifyUploaddone: %s", documentId);
-        if(!TextUtils.isEmpty(documentId)) {
-            weakModelRef.get().getNewPosting().postValue(documentId);
-            model.getNewPosting().postValue(documentId);
+    public void notifyUploadPostDone(DocumentReference postRef) {
+        log.i("notifyUploaddone: %s", postRef.getId());
+        if(!TextUtils.isEmpty(postRef.getId())) {
+            weakModelRef.get().getNewPosting().postValue(postRef);
+            //model.getNewPosting().postValue(documentId);
         }
     }
 

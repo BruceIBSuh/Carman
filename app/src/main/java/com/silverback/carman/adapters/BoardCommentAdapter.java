@@ -63,7 +63,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private boolean isReplyUploaded;
 
     public interface CommentAdapterListener {
-        void deleteComment(boolean b);
+        void deleteComment(DocumentSnapshot snapshot);
         void deleteCommentReply(BoardReplyAdapter adapter, DocumentReference commentRef);
         void notifyUploadReplyDone(int position, boolean isDone);
         void notifyNoData();
@@ -151,7 +151,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         log.i("all binding: %s, %s", position, holder.getBindingAdapterPosition());
-        DocumentSnapshot doc = commentList.get(holder.getBindingAdapterPosition());
+        //if(position != holder.getBindingAdapterPosition()) position = holder.getBindingAdapterPosition();
+        DocumentSnapshot doc = commentList.get(position);
         holder.setCommentProfile(doc);
         setCommentUserPic(holder, doc);
 
@@ -185,7 +186,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             if((boolean)payloads.get(0)) {
                 holder.commentBinding.linearReply.setVisibility(View.GONE);
                 holder.commentBinding.switchReply.setChecked(false);
-            }
+            } else log.i("reply switch stay open");
         }
     }
 
@@ -248,11 +249,12 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
                 //replyAdapter.notifyItemInserted(0);
                 replyAdapter.queryCommentReply(commentshot.getReference(), "timestamp");
+                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), true);
 
                 commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
                 holder.commentBinding.etCommentReply.clearFocus();
                 holder.commentBinding.etCommentReply.getText().clear();
-                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), true);
+
 
             }).addOnFailureListener(e -> {
                 e.printStackTrace();
@@ -278,12 +280,10 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         if(viewerId.equals(doc.getString("user_id"))) {
             binding.tvPopup1.setVisibility(View.VISIBLE);
             binding.tvPopup1.setOnClickListener(v -> {
-                doc.getReference().delete().addOnCompleteListener(task -> {
-                    if(task.isSuccessful()) {
-                        //notifyItemRemoved(holder.getBindingAdapterPosition());
-                        commentListener.deleteComment(task.isSuccessful());
-                    }
-
+                doc.getReference().delete().addOnSuccessListener(aVoid -> {
+                    commentList.remove(holder.getBindingAdapterPosition());
+                    notifyItemRemoved(holder.getBindingAdapterPosition());
+                    commentListener.deleteComment(doc);
                 });
 
                 dropdown.dismiss();

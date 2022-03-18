@@ -44,7 +44,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     //private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
 
     private Context context;
-    private final OnRecyclerItemClickListener mListener;
+    private final OnRecyclerItemClickListener mItemClickListener;
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
@@ -53,7 +53,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerItemClickListener {
-        void onPostItemClicked(DocumentSnapshot snapshot, int position);
+        void onPostClicked(DocumentSnapshot snapshot, int position);
     }
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
@@ -94,11 +94,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
     //public BoardPostingAdapter(List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
         super();
-        mListener = listener;
+        mItemClickListener = listener;
         snapshotList = snapshots;
         //this.multiTypeItemList = multiTypeItemList;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        setHasStableIds(true);
+        //setHasStableIds(true); // remove recyclerview blinking issue
     }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
@@ -126,7 +126,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-
+        log.i("onBindingViewHolder");
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 PostViewHolder postHolder = (PostViewHolder)holder;
@@ -137,7 +137,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //int index = multiTypeItemList.get(position).getItemIndex();
                 postHolder.tvTitle.setText(snapshot.getString("post_title"));
                 //postHolder.tvNumber.setText(String.valueOf(index + 1));
-                postHolder.tvNumber.setText(String.valueOf(position + 1));
+                postHolder.tvNumber.setText(String.valueOf(holder.getBindingAdapterPosition() + 1));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
@@ -173,9 +173,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 }
 
                 // Set the listener for clicking the item with position
-                holder.itemView.setOnClickListener(view -> {
-                    if(mListener != null) mListener.onPostItemClicked(snapshot, position);
-                });
+                holder.itemView.setOnClickListener(view ->
+                    mItemClickListener.onPostClicked(snapshot, holder.getBindingAdapterPosition())
+                );
 
                 break;
 
@@ -190,8 +190,10 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
         //holder.setIsRecyclable(false);
+        log.i("partial");
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
+            log.i("partial binding in the posting adapter");
             for(Object payload : payloads) {
                 if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));
@@ -209,26 +211,25 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         //return snapshotList.get(position).hashCode();
     }
 
-    // Guess this will be useful to apply plug-in ads.
+    /*
     @Override
     public int getItemViewType(int position) {
-        /* Seems not working. return value should be position, stragne, though.
         switch(multiTypeItemList.get(position).getViewType()){
             case 0: return CONTENT_VIEW_TYPE;
             case 1: return AD_VIEW_TYPE;
             default: return -1;
-
         }
-        */
         //category = multiTypeItemList.get(position).getViewType();
         return position;
     }
+    */
 
     @Override
     public int getItemCount() {
         return snapshotList.size();
         //return multiTypeItemList.size();
     }
+
 
     void bindUserImage(Uri uri) {
         int size = Constants.ICON_SIZE_POSTING_LIST;
@@ -239,5 +240,17 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         int x = postBinding.imgAttached.getWidth();
         int y = postBinding.imgAttached.getHeight();
         imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
+    }
+
+
+    public void addNewPost(DocumentSnapshot snapshot) {
+        category = CONTENT_VIEW_TYPE;
+        snapshotList.add(0, snapshot);
+        notifyItemInserted(0);
+    }
+
+    public void deletePost(int position) {
+        snapshotList.remove(position);
+        notifyItemRemoved(position);
     }
 }

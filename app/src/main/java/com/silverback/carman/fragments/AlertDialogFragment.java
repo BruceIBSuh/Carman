@@ -26,6 +26,7 @@ public class AlertDialogFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(AlertDialogFragment.class);
 
     private static AlertDialogFragment alertFragment;
+    private Fragment parentFragment;
     private FragmentSharedModel fragmentSharedModel;
     private String title, message;
     private int category;
@@ -50,8 +51,6 @@ public class AlertDialogFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fragmentSharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-
         if(getArguments() != null) {
             title = getArguments().getString("title");
             message = getArguments().getString("message");
@@ -68,6 +67,7 @@ public class AlertDialogFragment extends DialogFragment {
         binding.tvMessage.setText(message);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
+        fragmentSharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         builder.setView(binding.getRoot()).setPositiveButton("confirm", (dialog, which) -> {
             switch(category) {
                 case Constants.GAS:
