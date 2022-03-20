@@ -367,6 +367,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         final DocumentReference docRef = mDB.collection("users").document(userId);
         mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docRef);
+            log.i("user shot: %s, %s", userId, doc.getString("user_name"));
             if(doc.exists()) {
                 post.put("user_name", doc.getString("user_name"));
                 post.put("user_pic", doc.getString("user_pic"));

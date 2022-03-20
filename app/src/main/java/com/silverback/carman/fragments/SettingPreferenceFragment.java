@@ -68,9 +68,9 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
 
 
 
+    @NonNull
     @Override
-    public View onCreateView(
-            @NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
         this.parentView = parent;
         return super.onCreateView(inflater, parent, savedInstanceState);
     }
@@ -95,7 +95,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         Objects.requireNonNull(namePref).setSummary(userName);
 
         if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
-        if(userName != null) nickname = namePref.getSummary().toString();
+        if(userName != null) nickname = Objects.requireNonNull(namePref.getSummary()).toString();
 
         // Call SettingAutoFragment which contains preferences to have car related data which are
         // used as filters for querying the posting board. On clicking the UP button, the preference
@@ -296,7 +296,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
     //@SuppressWarnings("ConstantConditions")
     @Override
-    public void onDisplayPreferenceDialog(Preference pref) {
+    public void onDisplayPreferenceDialog(@NonNull Preference pref) {
         if (pref instanceof SpinnerDialogPreference) {
             DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             spinnerFragment.setTargetFragment(this, 0);

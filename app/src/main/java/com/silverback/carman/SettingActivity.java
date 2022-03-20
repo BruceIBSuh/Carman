@@ -273,12 +273,12 @@ public class SettingActivity extends BaseActivity implements
      */
     //@SuppressWarnings("ConstantConditions")
     @Override
-    public boolean onPreferenceStartFragment(PreferenceFragmentCompat caller, Preference pref) {
+    public boolean onPreferenceStartFragment(@NonNull PreferenceFragmentCompat caller, Preference pref) {
         log.i("onPreferenceStartFragment");
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager()
                 .getFragmentFactory()
-                .instantiate(getClassLoader(), pref.getFragment());
+                .instantiate(getClassLoader(), Objects.requireNonNull(pref.getFragment()));
         fragment.setArguments(args);
 
         getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {

@@ -159,24 +159,25 @@ public class BoardPagerFragment extends Fragment implements
         //multiTypeItemList = new ArrayList<>();
         postingList = new ArrayList<>();
         mDB = FirebaseFirestore.getInstance();
-        source = Source.SERVER;
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
         // show the posting list.
         postingAdapter = new BoardPostingAdapter(postingList, this);
         //postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
-        /*
-        regListener = mDB.collection("user_post").addSnapshotListener(MetadataChanges.INCLUDE, (q, e) -> {
-            if(e != null) return;
-            source = (q != null && q.getMetadata().hasPendingWrites())? Source.CACHE : Source.SERVER;
+        final CollectionReference colRef = mDB.collection("user_post");
 
+        source = Source.SERVER;
+        /*
+        regListener = colRef.addSnapshotListener(MetadataChanges.INCLUDE, (q, e) -> {
+            if(e != null) return;
+            source = (q != null && q.getMetadata().hasPendingWrites())?Source.CACHE:Source.SERVER;
         });
-         */
+        */
 
         if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
         queryPagingUtil.setPostQuery(source, currentPage);
         isLoading = true;
-        source = Source.CACHE; // Refactor required to resonse to realtime change.
+        // Refactor required to resonse to realtime change.
 
         /*
         if(currentPage == AUTOCLUB) {
@@ -265,7 +266,8 @@ public class BoardPagerFragment extends Fragment implements
             if(isDone) {
                 if(postingList.size() > 0) postingList.remove(position); // Why?
                 postingAdapter.notifyItemRemoved(position);
-                queryPagingUtil.setPostQuery(Source.CACHE, currentPage);
+                source = Source.CACHE;
+                queryPagingUtil.setPostQuery(source, currentPage);
             }
         });
     }
