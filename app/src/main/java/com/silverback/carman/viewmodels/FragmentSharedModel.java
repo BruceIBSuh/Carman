@@ -37,8 +37,8 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<DocumentReference> newPosting;
-    private MutableLiveData<Integer> removedPosting;
-    private MutableLiveData<Integer> editedPosting;
+    private MutableLiveData<Boolean> removedPosting;
+    private MutableLiveData<DocumentReference> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
@@ -175,13 +175,13 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
-    public MutableLiveData<Integer> getRemovedPosting() {
+    public MutableLiveData<Boolean> getRemovedPosting() {
         if(removedPosting == null) removedPosting = new MutableLiveData<>();
         return removedPosting;
     }
 
     // Communicate b/w BoardEditFragment and BoardPagerFragment
-    public MutableLiveData<Integer> getEditedPosting() {
+    public MutableLiveData<DocumentReference> getEditedPosting() {
         if(editedPosting == null) editedPosting = new MutableLiveData<>();
         return editedPosting;
     }

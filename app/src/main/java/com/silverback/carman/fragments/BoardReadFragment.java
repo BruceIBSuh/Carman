@@ -15,9 +15,9 @@
  */
 package com.silverback.carman.fragments;
 
+import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 
 import android.app.Dialog;
@@ -50,13 +50,13 @@ import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
-import androidx.core.widget.NestedScrollView;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -67,10 +67,8 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
-import com.google.firebase.firestore.WriteBatch;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -87,9 +85,6 @@ import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -98,7 +93,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -130,8 +124,8 @@ public class BoardReadFragment extends DialogFragment implements
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
     //private OnEditModeListener mListener;
-    private FirebaseFirestore firestore;
-    private FirebaseStorage firebaseStorage;
+    private FirebaseFirestore mDB;
+    private FirebaseStorage storage;
     private DocumentReference postRef;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
@@ -202,14 +196,14 @@ public class BoardReadFragment extends DialogFragment implements
         } catch(IOException e) {e.printStackTrace();}
 
         this.context = requireContext();
-        firestore = FirebaseFirestore.getInstance();
-        firebaseStorage = FirebaseStorage.getInstance();
+        mDB = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
         imgUtil = new ApplyImageResourceUtil(context);
         imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
 
         //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
-        queryPaginationUtil = new QueryPostPaginationUtil(firestore, this);
+        queryPaginationUtil = new QueryPostPaginationUtil(mDB, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
@@ -217,7 +211,7 @@ public class BoardReadFragment extends DialogFragment implements
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
         // the listener to prevent connecting to the server. Instead`, update the collection using
         // Source.Cache.
-        postRef = firestore.collection("user_post").document(documentId);
+        postRef = mDB.collection("user_post").document(documentId);
         queryPaginationUtil.setCommentQuery(postRef, "timestamp");
     }
 
@@ -334,14 +328,15 @@ public class BoardReadFragment extends DialogFragment implements
         // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
         // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
         // the model from automatically invoking the method, initially set the value to false;
+
+        // NOT WORKING. INSTEAD USE FragmentResultListener
         sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), confirmed -> {
             if(confirmed) {
-                log.i("bug here");
-                sharedModel.getRemovedPosting().setValue(position);
+                dismiss();
                 /*
                 postRef.delete().addOnSuccessListener(aVoid -> {
-                    if (uriStringList != null && uriStringList.size() > 0) {
-                        for (String url : uriStringList) firebaseStorage.getReferenceFromUrl(url).delete();
+                    if(uriStringList != null && uriStringList.size() > 0) {
+                        for (String url : uriStringList) storage.getReferenceFromUrl(url).delete();
                     }
                     sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
@@ -350,6 +345,7 @@ public class BoardReadFragment extends DialogFragment implements
                  */
             }
         });
+
     }
 
     @Override
@@ -498,8 +494,8 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyUploadReplyDone(int position, boolean isDone) {
-        log.i("upload reply: %s, %s", position, isDone);
+    public void notifyUploadReplyDone(int pos, boolean isDone) {
+        //log.i("upload reply: %s, %s", pos, isDone);
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
         String msg = (isDone)?"uploading reply done" : "uploading reply failed";
@@ -721,9 +717,8 @@ public class BoardReadFragment extends DialogFragment implements
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
             comment.put("user_id", commentId);
-
-            final DocumentReference docref = firestore.collection("users").document(commentId);
-            firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+            final DocumentReference docref = mDB.collection("users").document(commentId);
+            mDB.runTransaction((Transaction.Function<Void>) transaction -> {
                 DocumentSnapshot doc = transaction.get(docref);
                 comment.put("user_name", doc.getString("user_name"));
                 comment.put("user_pic", doc.getString("user_pic"));
@@ -796,7 +791,7 @@ public class BoardReadFragment extends DialogFragment implements
     private void createEditOptionsMenu() {
         binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
         binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_board_edit) {
+            if(item.getItemId() == R.id.action_board_edit) {
                 BoardEditFragment editFragment = new BoardEditFragment();
                 Bundle editBundle = new Bundle();
                 editBundle.putString("documentId", documentId);
@@ -813,15 +808,31 @@ public class BoardReadFragment extends DialogFragment implements
                         .addToBackStack(null)
                         .add(android.R.id.content, editFragment)
                         .commit();
-
                 dismiss();
                 //return true;
 
-            } else if (item.getItemId() == R.id.action_board_delete) {
+            } else if(item.getItemId() == R.id.action_board_delete) {
+                /*
+                postRef.delete().addOnSuccessListener(aVoid -> {
+                    sharedModel.getRemovedPosting().setValue(position);
+                    dismiss();
+                }).addOnFailureListener(Throwable::printStackTrace);
+                */
                 String title = getString(R.string.board_alert_delete);
                 String msg = getString(R.string.board_alert_msg);
-                AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
-                        .show(getChildFragmentManager(), null);
+
+                DialogFragment fragment = AlertDialogFragment.newInstance(title, msg, Constants.BOARD);
+                FragmentManager fragmentManager = getChildFragmentManager();
+
+                // Should do research on FragmentResultListener;
+                fragmentManager.setFragmentResultListener("confirmed", this, (req, result) -> {
+                    postRef.delete().addOnSuccessListener(aVoid -> {
+                        sharedModel.getRemovedPosting().setValue(true);
+                        dismiss();
+                    }).addOnFailureListener(Throwable::printStackTrace);
+                });
+
+                fragment.show(fragmentManager, "alert");
                 //return true;
             }
             return false;

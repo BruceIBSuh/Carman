@@ -64,7 +64,7 @@ public class BoardEditFragment extends DialogFragment implements
     // Objects
     private FragmentBoardEditBinding binding;
 
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private FirebaseStorage storage;
     private UploadBitmapTask bitmapTask;
 
@@ -102,7 +102,9 @@ public class BoardEditFragment extends DialogFragment implements
             uriStringList = getArguments().getStringArrayList("uriImgList");
         }
 
-        firestore = FirebaseFirestore.getInstance();
+        log.i("post position: %s", position);
+
+        mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
 
         //imgUtil = new ApplyImageResourceUtil(getContext());
@@ -231,25 +233,25 @@ public class BoardEditFragment extends DialogFragment implements
     // Implement BoardImageAdapter.OnBoardAttachImageListener when clicking the deletion button
     // in the recyclerview thumbnail
     @Override
-    public void removeImage(int position) {
-        spanHandler.removeImageSpan(position);
+    public void removeImage(int pos) {
+        spanHandler.removeImageSpan(pos);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener which notifies that an new ImageSpan
     // has been added or removed. The position param is fetched from the markup using the regular
     // expression.
     @Override
-    public void notifyAddImageSpan(ImageSpan imgSpan, int position) {
+    public void notifyAddImageSpan(ImageSpan imgSpan, int pos) {
         log.i("added image uri: %s", mImageUri);
-        imgAdapter.notifyItemChanged(position);
-        if(mImageUri != null) uriEditList.add(position, mImageUri);
+        imgAdapter.notifyItemChanged(pos);
+        if(mImageUri != null) uriEditList.add(pos, mImageUri);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
-    public void notifyRemovedImageSpan(int position) {
-        imgAdapter.notifyItemRemoved(position);
-        if(uriEditList.get(position) != null) uriEditList.remove(position);
+    public void notifyRemovedImageSpan(int pos) {
+        imgAdapter.notifyItemRemoved(pos);
+        if(uriEditList.get(pos) != null) uriEditList.remove(pos);
     }
 
     private void createEditMenu() {
@@ -346,8 +348,8 @@ public class BoardEditFragment extends DialogFragment implements
         //get removed images
         List<String> tempList = new ArrayList<>();
         for(Uri uri : uriEditList) tempList.add(uri.toString());
-        uriStringList.removeAll(tempList);
         if(uriStringList != null && uriStringList.size() > 0) {
+            uriStringList.removeAll(tempList);
             for(String url : uriStringList) {
                 storage.getReferenceFromUrl(url).delete();//.addOnSuccessListener(aVoid -> {});
             }
@@ -372,7 +374,7 @@ public class BoardEditFragment extends DialogFragment implements
         binding.tvPbMessage.setText("Post is uploading...");
 
         //final DocumentReference docref = firestore.collection("board_general").document(docId);
-        final DocumentReference docref = firestore.collection("user_post").document(documentId);
+        final DocumentReference docref = mDB.collection("user_post").document(documentId);
         Map<String, Object> updatePost = new HashMap<>();
         updatePost.put("post_title", binding.etBoardEditTitle.getText().toString());
         updatePost.put("post_content", binding.etEditContent.getText().toString());
@@ -388,7 +390,7 @@ public class BoardEditFragment extends DialogFragment implements
 
         docref.update(updatePost).addOnSuccessListener(aVoid -> {
             binding.pbContainer.setVisibility(View.GONE);
-            sharedModel.getEditedPosting().setValue(position);
+            sharedModel.getEditedPosting().setValue(docref);
             dismiss();
         }).addOnFailureListener(Exception::printStackTrace);
     }

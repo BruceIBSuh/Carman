@@ -27,7 +27,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
@@ -57,6 +61,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
 
+    private FirebaseFirestore mDB;
     private FragmentBoardWriteTempBinding binding;
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
@@ -103,6 +108,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             userName = getArguments().getString("userName");
             page = getArguments().getInt("page");
         }
+
+        mDB = FirebaseFirestore.getInstance();
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
         cbAutoFilter = new ArrayList<>();
@@ -357,10 +364,27 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         } else post.put("post_general", true);
 
 
+        final DocumentReference docRef = mDB.collection("users").document(userId);
+        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
+            DocumentSnapshot doc = transaction.get(docRef);
+            if(doc.exists()) {
+                post.put("user_name", doc.getString("user_name"));
+                post.put("user_pic", doc.getString("user_pic"));
+
+                mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
+                    fragmentModel.getNewPosting().setValue(postRef);
+                    dismiss();
+                }).addOnFailureListener(Throwable::printStackTrace);
+            }
+
+            return null;
+        });
+
+
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
-        postTask = ThreadManager2.uploadPostTask(getContext(), post, fragmentModel);
-        dismiss();
+        //postTask = ThreadManager2.uploadPostTask(getContext(), post, fragmentModel);
+        //dismiss();
     }
 
     private boolean doEmptyCheck() {

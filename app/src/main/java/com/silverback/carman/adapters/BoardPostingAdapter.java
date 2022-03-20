@@ -190,7 +190,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
         //holder.setIsRecyclable(false);
-        log.i("partial");
+        log.i("partial: %s", payloads);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             log.i("partial binding in the posting adapter");

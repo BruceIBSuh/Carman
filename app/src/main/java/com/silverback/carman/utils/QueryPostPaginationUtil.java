@@ -19,6 +19,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -29,6 +30,7 @@ public class QueryPostPaginationUtil {
     private static final LoggingHelper log = LoggingHelperFactory.create(QueryPostPaginationUtil.class);
 
     // Objects
+    private FirebaseFirestore mDB;
     private final OnQueryPaginationCallback mCallback;
     private final FirebaseFirestore firestore;
     private CollectionReference colRef;
@@ -37,6 +39,7 @@ public class QueryPostPaginationUtil {
 
     // Fields
     private int category;
+    private boolean isViewOrder;
     private String field;
 
     // Interface
@@ -56,24 +59,24 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public void setPostQuery(int category, boolean isViewOrder) {
+    public void setPostQuery(Source source, int category) {//, boolean isViewOrder) {
         this.category = category;
         //colRef = firestore.collection("board_general");
         colRef = firestore.collection("user_post");
         switch(category){
             case RECENT:
                 this.field = "timestamp";
-                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef/*.whereEqualTo("post_general", true)*/.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case POPULAR:
                 this.field = "cnt_view";
-                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef/*.whereEqualTo("post_general", true)*/.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = colRef.whereEqualTo("post_autoclub", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef./*whereEqualTo("post_autoclub", true).*/orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case NOTIFICATION:
@@ -102,7 +105,7 @@ public class QueryPostPaginationUtil {
         });
          */
 
-        query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
+        query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
@@ -110,13 +113,11 @@ public class QueryPostPaginationUtil {
         /*
         query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;
-
             for(DocumentSnapshot doc : querySnapshot) {
                 String source = doc != null && doc.getMetadata().hasPendingWrites()?"LOCAL":"SERVER";
                 if(source.matches("LOCAL")) log.i("cached data");
                 else log.i("server data");
             }
-
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
@@ -155,7 +156,7 @@ public class QueryPostPaginationUtil {
         //if(category == Constants.BOARD_POPULAR) query = colRef.whereEqualTo("post_general", true);
         switch(category) {
             case RECENT: case POPULAR:
-                query = colRef.whereEqualTo("post_general", true).orderBy(field, Query.Direction.DESCENDING);
+                query = colRef/*.whereEqualTo("post_general", true)*/.orderBy(field, Query.Direction.DESCENDING);
                 break;
             case AUTOCLUB:
                 query = colRef.orderBy(field, Query.Direction.DESCENDING);
@@ -168,11 +169,8 @@ public class QueryPostPaginationUtil {
         query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(
                 nextSnapshot -> {
                     this.querySnapshot = nextSnapshot;
-                    if(nextSnapshot.size() >= PAGINATION) {
-                        mCallback.getNextQueryResult(nextSnapshot);
-                    } else {
-                        mCallback.getLastQueryResult(nextSnapshot);
-                    }
+                    if(nextSnapshot.size() >= PAGINATION) mCallback.getNextQueryResult(nextSnapshot);
+                    else mCallback.getLastQueryResult(nextSnapshot);
                 }).addOnFailureListener(mCallback::getQueryErrorResult);
     }
 
@@ -183,6 +181,10 @@ public class QueryPostPaginationUtil {
             if(comments.size() >= PAGING_COMMENT) mCallback.getNextQueryResult(querySnapshot);
             else mCallback.getLastQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
+    }
+
+    public void setAutoclubOrder(boolean b) {
+        this.isViewOrder = b;
     }
 
 
