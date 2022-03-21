@@ -318,7 +318,7 @@ public class BoardActivity extends BaseActivity implements
                     binding.getRoot(), getString(R.string.board_msg_username), Snackbar.LENGTH_LONG);
             snackbar.setAction(R.string.board_msg_action_setting, v -> {
                 Intent intent = new Intent(this, SettingActivity.class);
-                intent.putExtra("postingboard", Constants.REQUEST_BOARD_SETTING_USERNAME);
+                intent.putExtra("caller", Constants.REQUEST_BOARD_SETTING_USERNAME);
                 activityResultLauncher.launch(intent);
             }).show();
             return;
@@ -329,6 +329,7 @@ public class BoardActivity extends BaseActivity implements
 
         // With the user name set, call the dialogfragmt for writing a post.
         writePostFragment = new BoardWriteDlgFragment();
+        log.i("user profile: %s, %s", userId, userName);
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
         args.putString("userName", userName);

@@ -62,6 +62,7 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
+            log.i("partial binding when the gastype changed:%s", payloads.get(0));
             if(position == 0) districtFragment.reload(0, (String)payloads.get(0));
             else if(position == 1) favStationFragment.reload(1, (String)payloads.get(0));
         }

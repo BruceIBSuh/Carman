@@ -31,6 +31,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -337,6 +338,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     private void uploadPostToFirestore() {
         //binding.tvPbMessage.setText("Image Uploading...");
+        log.i("upload post");
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
         post.put("user_name", userName);
@@ -369,9 +371,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             DocumentSnapshot doc = transaction.get(docRef);
             log.i("user shot: %s, %s", userId, doc.getString("user_name"));
             if(doc.exists()) {
-                post.put("user_name", doc.getString("user_name"));
+                //post.put("user_name", doc.getString("user_name"));
                 post.put("user_pic", doc.getString("user_pic"));
-
                 mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
                     fragmentModel.getNewPosting().setValue(postRef);
                     dismiss();
@@ -406,6 +407,22 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         } else return true;
     }
 
+    private static class UserNames {
+        @PropertyName("user_names")
+        private List<String> userNames;
 
+        public UserNames () {}
+        public UserNames(List<String> userNames) {
+            this.userNames = userNames;
+        }
+        @PropertyName("user_names")
+        public List<String> getUserNames() {
+            return userNames;
+        }
+        @PropertyName("usre_names")
+        public void setUserNames(List<String> userNames) {
+            this.userNames = userNames;
+        }
+    }
 
 }

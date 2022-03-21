@@ -9,6 +9,7 @@ import android.view.View;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityIntroBinding;
@@ -25,8 +26,10 @@ import org.json.JSONArray;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -109,21 +112,21 @@ public class IntroActivity extends BaseActivity  {
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 if(mAuth.getUid() == null || TextUtils.isEmpty(mAuth.getUid())) return;
+
+                List<String> names = new ArrayList<>();
                 Map<String, Object> userData = new HashMap<>();
-                //userData.put("user_id", mAuth.getUid());
-                userData.put("user_name", null);
+                userData.put("user_name", names);
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
+                userData.put("cnt_warning", null);
+                userData.put("reg_date", FieldValue.serverTimestamp());
+                Map<String, FieldValue> renameDate = new HashMap<>();
+                userData.put("rename_date", renameDate);
 
-                firestore.collection("users").add(userData).addOnSuccessListener(docref -> {
-                    final String userId = docref.getId();
-                    if(!TextUtils.isEmpty(userId)) {
-                        try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
-                            fos.write(userId.getBytes());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
+                    try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
+                        fos.write(mAuth.getUid().getBytes());
+                    } catch (IOException e) { e.printStackTrace();}
                 }).addOnFailureListener(Exception::printStackTrace);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,

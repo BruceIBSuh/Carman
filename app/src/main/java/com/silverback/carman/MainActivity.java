@@ -212,6 +212,7 @@ public class MainActivity extends BaseActivity implements
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         // Turn the near station recyclerview off.
         if(item.getItemId() == R.id.action_garage) {
+            // Result back to MainExpensePagerFragment to update the expense in the feed.
             Intent expenseIntent = new Intent(this, ExpenseActivity.class);
             expenseIntent.putExtra("caller", Constants.REQUEST_MAIN_EXPENSE_TOTAL);
             activityResultLauncher.launch(expenseIntent);
@@ -220,10 +221,12 @@ public class MainActivity extends BaseActivity implements
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
         } else if(item.getItemId() == R.id.action_setting) {
+            // Results back to MainActivity to update the user settings
             Intent settingIntent = new Intent(this, SettingActivity.class);
             settingIntent.putExtra("caller", Constants.REQUEST_MAIN_SETTING_GENERAL);
             activityResultLauncher.launch(settingIntent);
         }
+
         return true;
     }
 
@@ -535,10 +538,8 @@ public class MainActivity extends BaseActivity implements
 
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void getActivityResult(ActivityResult result) {
-        log.i("activity result: %s", result);
         // If the station reyelcerview is in the visible state, it should be gone
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        log.i("isStnView in callActivityResult:%s",isStnViewOn);
         if(isStnViewOn) {
             binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
@@ -550,18 +551,12 @@ public class MainActivity extends BaseActivity implements
         if(resultIntent == null) return;
 
         switch(result.getResultCode()) {
-            case Activity.RESULT_OK: // SettingActivity result
-                log.i("activity result ok?");
-                updateSettingResult(result);
-                break;
-
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 int total = resultIntent.getIntExtra("expense", 0);
                 mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, total);
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:
-                log.i("ActivityResult from Setting");
                 updateSettingResult(result);
                 break;
         }
@@ -642,7 +637,6 @@ public class MainActivity extends BaseActivity implements
             });
         }
 
-        /*
         if(!TextUtils.isEmpty(gasType)) {
             isGasTypeChanged = true;
             setGasSpinnerSelection(gasType);
@@ -652,8 +646,9 @@ public class MainActivity extends BaseActivity implements
 
         // Update the price in the viewpager, which depends upon whether either district or gas type
         // or both changes.
+        /*
         if(district != null && gasType != null) {
-            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district);
+            gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 if(isDone) {
                     mainPricePagerAdapter.notifyItemChanged(0, gasType);
@@ -663,7 +658,7 @@ public class MainActivity extends BaseActivity implements
             });
 
         } else if (district != null) {
-            gasPriceTask = sThreadManager.startGasPriceTask(this, opinetModel, district);
+            gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 if(isDone) {
                     log.i("GasPriceTask successfully done: %s", gasCode);
@@ -678,7 +673,8 @@ public class MainActivity extends BaseActivity implements
             defaultParams[0] = gasType;
             mainPricePagerAdapter.notifyItemChanged(0, gasType);
         }
-        */
+         */
+
         // Reset the searching radius for near gas stations.
         if(!TextUtils.isEmpty(searchRadius)) {
             isRadiusChanged = true;

@@ -39,7 +39,7 @@ public class NameDialogPreference extends DialogPreference implements Preference
 
 
     private void getAttributes(Context context, AttributeSet attrs) {
-        setDialogLayoutResource(R.layout.dialog_setting_edit_name);
+        setDialogLayoutResource(R.layout.dialog_setting_name);
         setOnPreferenceChangeListener(this);
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.NameDialogPreference);
         try {

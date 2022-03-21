@@ -118,17 +118,17 @@ public class SettingActivity extends BaseActivity implements
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // get Intent data, if any.
+        if(getIntent() != null) {
+            requestCode = getIntent().getIntExtra("caller", -1);
+            log.i("request code: %s", requestCode);
+        }
+
         // UI's
         frameLayout = binding.frameSetting;
         setSupportActionBar(binding.settingToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setTitle(getString(R.string.setting_toolbar_title));
-
-        // get Intent data, if any.
-        if(getIntent() != null) {
-            requestCode = getIntent().getIntExtra("postingboard", -1);
-            log.i("request code: %s", requestCode);
-        }
 
         // Instantiate objects
         resultIntent = new Intent();
@@ -157,7 +157,6 @@ public class SettingActivity extends BaseActivity implements
         settingFragment.setArguments(bundle);
 
         addPreferenceFragment(getSupportFragmentManager(), settingFragment);
-
         // Sync issue may occur.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
         if(!TextUtils.isEmpty(imageUri)) {
@@ -233,6 +232,8 @@ public class SettingActivity extends BaseActivity implements
             Fragment childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
             //childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral"); seems not working
             if(childFragment instanceof SettingPreferenceFragment) {
+                setResult(requestCode, resultIntent);
+                /*
                 switch(requestCode) {
                     case Constants.REQUEST_MAIN_SETTING_GENERAL:
                         setResult(requestCode, resultIntent);
@@ -250,12 +251,12 @@ public class SettingActivity extends BaseActivity implements
                         setResult(requestCode, userIntent);
                         break;
                 }
-
+                 */
                 finish();
                 return true;
 
             } else {
-                log.i("Back to SettingPreference");
+                log.i("Back to SettingPreferenceFragment");
                 getSupportFragmentManager().popBackStack();
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
@@ -309,12 +310,13 @@ public class SettingActivity extends BaseActivity implements
         switch(key) {
             case Constants.USER_NAME:
                 userName = mSettings.getString(key, null);
+                log.i("set username: %s", userName);
                 // Check first if the user id file exists. If so, set the user data or update the
                 // data, otherwise.
                 //if(userName != null) {
                 // TextUtils.isEmpty(str) indicates str == null || str.length = 0;
                 if(!TextUtils.isEmpty(userName)) {
-                    uploadData.put("user_name", userName);
+                    //uploadData.put("user_name", userName);
                     resultIntent.putExtra("userName", userName);
                 }
                 break;
@@ -327,7 +329,7 @@ public class SettingActivity extends BaseActivity implements
                     //Map<String, Object> autoData = new HashMap<>();
                     //autoData.put("auto_data", jsonAutoData);
                     //uploadUserDataToFirebase(autoData);
-                    uploadData.put("user_club", jsonAutoData);
+                    //uploadData.put("user_club", jsonAutoData);
 
                     // send the result bact to BoardActivity for startActivityForResult()
                     log.i("JSON AutoData: %s", jsonAutoData);
@@ -414,6 +416,7 @@ public class SettingActivity extends BaseActivity implements
         uploadUserImageToFirebase(croppedImageUri);
     }
 
+    // Add the setting fragmnet and regster the fragment lifecycle listener.
     private void addPreferenceFragment(FragmentManager fm, PreferenceFragmentCompat fragment) {
         fm.beginTransaction().replace(R.id.frame_setting, fragment, "settingGeneral")
                 .addToBackStack(null)
@@ -447,13 +450,11 @@ public class SettingActivity extends BaseActivity implements
         switch(caller) {
             case Constants.REQUEST_BOARD_SETTING_USERNAME:
                 Preference namePref = fragment.findPreference(Constants.USER_NAME);
-                    log.i("namePref: %s", namePref);
                 Objects.requireNonNull(namePref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
                 Preference autoPref = fragment.findPreference(Constants.AUTO_DATA);
-                log.i("auto pref: %s", autoPref);
                 Objects.requireNonNull(autoPref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 
