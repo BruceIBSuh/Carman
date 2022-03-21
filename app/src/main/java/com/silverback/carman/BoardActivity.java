@@ -25,12 +25,14 @@ import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.util.TypedValue;
 import android.view.Menu;
@@ -126,6 +128,7 @@ public class BoardActivity extends BaseActivity implements
     private BoardPagerAdapter pagerAdapter;
     private BoardWriteDlgFragment writePostFragment;
     private MenuItem menuItem;
+    private TextView tvMessage;
 
     // Fields
     private List<CheckBox> chkboxList;
@@ -465,8 +468,9 @@ public class BoardActivity extends BaseActivity implements
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
     // the viewpager has the auto club page.
     public SpannableStringBuilder createAutoClubTitle() {
+        log.i("chkboxList: %s", chkboxList.size());
         SpannableStringBuilder ssb = new SpannableStringBuilder();
-        if(chkboxList.get(1).isChecked()) {
+        if(chkboxList.get(1) != null && chkboxList.get(1).isChecked()) {
             ssb.append(chkboxList.get(1).getText()).append(" ").append(chkboxList.get(0).getText());
             for(int i = 2; i < chkboxList.size(); i++) {
                 if(chkboxList.get(i).isChecked()) ssb.append(" ").append(chkboxList.get(i).getText());
@@ -484,9 +488,8 @@ public class BoardActivity extends BaseActivity implements
     // In case that any auto filter that is initially saved as a json string is not set, show the
     // text which contains a clickable span to initiate SettingPrefActivity to set the auto filter.
     private void setNoAutoFilterText() {
-        TextView tvMessage = new TextView(this);
-        String msg = getString(R.string.board_autoclub_set);
-        SpannableString ss = new SpannableString(msg);
+        tvMessage = new TextView(this);
+        SpannableString ss = new SpannableString(getString(R.string.board_autoclub_set));
         ClickableSpan clickableSpan = new ClickableSpan(){
             @Override
             public void onClick(@NonNull View textView) {
@@ -498,12 +501,13 @@ public class BoardActivity extends BaseActivity implements
             }
         };
 
-        ss.setSpan(clickableSpan, 7, 9, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(clickableSpan, 0, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ss.setSpan(new ForegroundColorSpan(Color.RED), 0, 2, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         tvMessage.setText(ss);
         // Required to make ClickableSpan workable.
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMarginStart(10);
+        params.setMarginStart(24);
         tvMessage.setMovementMethod(LinkMovementMethod.getInstance());
         binding.autofilter.addView(tvMessage, params);
     }
@@ -528,10 +532,12 @@ public class BoardActivity extends BaseActivity implements
      */
     private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
         // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
+        /*
         if(v.getChildCount() > 2) {
             v.removeAllViews();
             chkboxList.clear();
         }
+         */
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -649,8 +655,8 @@ public class BoardActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
+                binding.autofilter.removeView(tvMessage);
                 jsonAutoFilter = result.getData().getStringExtra("autodata");
-                log.i("json auto result: %s", jsonAutoFilter);
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
                 catch(NullPointerException e) { setNoAutoFilterText();}

@@ -10,21 +10,15 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.preference.PreferenceDialogFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.ServerTimestamp;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogSettingNameBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -36,7 +30,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
@@ -44,20 +37,10 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
 
-    // Objects
-    private SharedPreferences mSettings;
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private NameDialogPreference namePreference;
-
-    // UIs
     private DialogSettingNameBinding binding;
-    //private ConstraintLayout rootView;
-    //private EditText etName;
-    //private Button btnVerify;
-
-    // Fields
     private String currentName, newName;
-    private String documentId;
 
     // Default constructor
     private SettingNameDlgFragment() {
@@ -67,7 +50,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     // Method for singleton instance
     static SettingNameDlgFragment newInstance(String key, String summary) {
         SettingNameDlgFragment fm = new SettingNameDlgFragment();
-        Bundle args = new Bundle(2);
+        Bundle args = new Bundle();
         args.putString("key", key); // ARG_KEY internally defined in onBindDialogView()
         args.putString("username", summary);
         fm.setArguments(args);
@@ -79,19 +62,18 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        firestore = FirebaseFirestore.getInstance();
-        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        currentName = requireArguments().getString("username");
+        mDB = FirebaseFirestore.getInstance();
+        assert getArguments() != null;
+        currentName = getArguments().getString("username");
     }
 
-    @SuppressWarnings("ConstantConditions")
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         super.onCreateDialog(savedInstanceState);
         binding = DialogSettingNameBinding.inflate(LayoutInflater.from(getContext()));
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setView(binding.getRoot())
                 //.setTitle(R.string.pref_title_username)
                 .setPositiveButton("Confirm", this)
@@ -102,9 +84,13 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
         // Initial state of the buttons.
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-
         namePreference = (NameDialogPreference)getPreference();
+
         binding.etUserName.setText(currentName);
+        binding.etUserName.setOnFocusChangeListener((v, hasFocus) -> {
+            if(hasFocus) binding.etUserName.setText("");
+            else binding.etUserName.setHint(R.string.pref_hint_username);
+        });
         binding.etUserName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after){}
@@ -112,9 +98,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
             @Override
             public void afterTextChanged(Editable s) {
-                // Activate the verification button when inputting any character.
                 binding.btnVerify.setEnabled(true);
-                //dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
             }
         });
 
@@ -122,7 +106,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             newName = binding.etUserName.getText().toString().trim();
             // Query the name to check if there exists the same name in Firestore
             //final Query queryName = mDB.collection("users").whereEqualTo("user_name", newName);
-            Query queryName = firestore.collection("users").whereArrayContains("user_name", newName).limit(1);
+            Query queryName = mDB.collection("users").whereArrayContains("user_name", newName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
                     dialog.getButton(BUTTON_POSITIVE).setEnabled(false);
@@ -146,18 +130,18 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             // is set. This allows the client to ignore the user value.
             //mSettings.edit().putString(Constants.USER_NAME, binding.etUserName.getText().toString()).apply();
             namePreference.callChangeListener(newName);
+
             // When a new username has replaced the current name, update the new name in Firestore.
             try (FileInputStream fis = requireActivity().openFileInput("userId");
                  BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
                 String userId = br.readLine();
-
-                final DocumentReference docref = firestore.collection("users").document(userId);
+                final DocumentReference docref = mDB.collection("users").document(userId);
                 Map<String, FieldValue> map = new HashMap<>();
                 map.put(newName, FieldValue.serverTimestamp());
-                docref.update("user_name", FieldValue.arrayUnion(newName), "modified_date", map)
+                docref.update("user_name", FieldValue.arrayUnion(newName), "rename_date", map)
                         .addOnSuccessListener(aVoid -> log.i("update done"))
                         .addOnFailureListener(Throwable::printStackTrace);
-            } catch(IOException | NullPointerException e) { e.printStackTrace(); }
+            }catch(IOException | NullPointerException e) { e.printStackTrace(); }
         }
     }
 

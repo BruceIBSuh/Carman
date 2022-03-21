@@ -62,7 +62,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteDlgFragment.class);
 
-    private FirebaseFirestore mDB;
+    private FirebaseFirestore firestore;
     private FragmentBoardWriteTempBinding binding;
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
@@ -110,7 +110,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             page = getArguments().getInt("page");
         }
 
-        mDB = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
         cbAutoFilter = new ArrayList<>();
@@ -208,8 +208,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         else cbAutoFilter.remove(chkbox.getText().toString());
     }
 
-
-
     private void createPostWriteMenu() {
         binding.toolbarBoardWrite.inflateMenu(R.menu.options_board_write);
         binding.toolbarBoardWrite.setOnMenuItemClickListener(item -> {
@@ -236,7 +234,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private void setAutoFilter(String json) throws JSONException {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMarginStart(5);
+        params.setMarginStart(10);
 
         JSONArray jsonAuto = new JSONArray(json);
         if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) {
@@ -260,7 +258,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             cbType.setOnCheckedChangeListener(this);
             cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             //cb.setTextColor(Color.WHITE);
-            if(jsonAuto.optString(i).equals("null")) {
+            if(jsonAuto.optString(i).equals("null")) { // conditions should be reconsidered.
                 switch(i) {
                     case 1: cbType.setText(R.string.pref_auto_model);break;
                     case 2: cbType.setText(R.string.pref_engine_type);break;
@@ -268,8 +266,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 }
                 cbType.setEnabled(false);
             } else {
-                // The automaker is required to be checked as far as jsonAuto has been set not to be
-                // null. Other autofilter values depends on whether it is the locked mode
+                // The automaker is required to be checked as far as the jsonAuto has been set not
+                // to be null. Other autofilter values depends on whether it is the locked mode,
                 // which retrieves its value from SharedPreferences.
                 cbType.setText(jsonAuto.optString(i));
                 if(i == 0) {
@@ -278,7 +276,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                     cbType.setEnabled(false);
                 }
             }
-
             binding.layoutAutofilter.addView(cbType, params);
         }
     }
@@ -338,7 +335,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     private void uploadPostToFirestore() {
         //binding.tvPbMessage.setText("Image Uploading...");
-        log.i("upload post");
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
         post.put("user_name", userName);
@@ -365,22 +361,18 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             post.put("post_general", isGeneralPost);
         } else post.put("post_general", true);
 
-
-        final DocumentReference docRef = mDB.collection("users").document(userId);
-        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
+        DocumentReference docRef = firestore.collection("users").document(userId);
+        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docRef);
-            log.i("user shot: %s, %s", userId, doc.getString("user_name"));
             if(doc.exists()) {
-                //post.put("user_name", doc.getString("user_name"));
                 post.put("user_pic", doc.getString("user_pic"));
-                mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
+                firestore.collection("user_post").add(post).addOnSuccessListener(postRef -> {
                     fragmentModel.getNewPosting().setValue(postRef);
                     dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
             }
-
             return null;
-        });
+        }).addOnFailureListener(e -> {log.e("transaction failed: %s", e);});
 
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes

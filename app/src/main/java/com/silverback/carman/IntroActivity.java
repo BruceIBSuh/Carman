@@ -112,16 +112,14 @@ public class IntroActivity extends BaseActivity  {
         mAuth.signInAnonymously().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 if(mAuth.getUid() == null || TextUtils.isEmpty(mAuth.getUid())) return;
-
-                List<String> names = new ArrayList<>();
+                // Refactor: field names should be renamed.
                 Map<String, Object> userData = new HashMap<>();
-                userData.put("user_name", names);
+                userData.put("user_name", new ArrayList<String>());
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
                 userData.put("cnt_warning", null);
                 userData.put("reg_date", FieldValue.serverTimestamp());
-                Map<String, FieldValue> renameDate = new HashMap<>();
-                userData.put("rename_date", renameDate);
+                userData.put("rename_date", new HashMap<String, FieldValue>());
 
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
                     try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
