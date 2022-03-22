@@ -339,7 +339,7 @@ public class BoardActivity extends BaseActivity implements
 
         writePostFragment.setArguments(args);
         getSupportFragmentManager().beginTransaction()
-                .add(android.R.id.content, writePostFragment)
+                .replace(android.R.id.content, writePostFragment)
                 .addToBackStack(null)
                 .commit();
     }
@@ -543,6 +543,8 @@ public class BoardActivity extends BaseActivity implements
         } catch (JSONException e) {e.printStackTrace();}
 
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
+        switchAutofilterLock(isLocked);
+
         jsonAutoArray.remove(2);//Exclude the auto type.
         for(int i = 0; i < jsonAutoArray.length(); i++) {
             CheckBox cb = new CheckBox(v.getContext());
@@ -576,23 +578,27 @@ public class BoardActivity extends BaseActivity implements
             v.addView(cb, params);
         }
 
-        //Event hander for the lock button
         binding.imgbtnLock.setOnClickListener(imgview -> {
             isLocked = !isLocked;
-            int res = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
-            binding.imgbtnLock.setImageResource(res);
-            //Persist each checkbox value in the setting
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
+            switchAutofilterLock(isLocked);
+            //Persist each checkbox value in the setting
             for(int i = 1; i < chkboxList.size(); i++) {
                 if(isLocked) {
                     chkboxList.get(i).setEnabled(false);
                     String key = Constants.AUTOFILTER + i;
                     mSettings.edit().putBoolean(key, chkboxList.get(i).isChecked()).apply();
-                } else if(!jsonAutoArray.optString(i).equals("null")) {
-                    chkboxList.get(i).setEnabled(true);
+                    //} else if(!jsonAutoArray.optString(i).equals("null")) {
+                } else {
+                    if(!TextUtils.isEmpty(jsonAutoArray.optString(i))) chkboxList.get(i).setEnabled(true);
                 }
             }
         });
+    }
+
+    private void switchAutofilterLock(boolean isLocked) {
+        int res = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
+        binding.imgbtnLock.setImageResource(res);
     }
 
     // Referenced either in BoardWriteFragmnet or in BoardEditFragment and notified of which media

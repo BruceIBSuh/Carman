@@ -49,6 +49,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.CustomPostingObject;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -321,8 +322,6 @@ public class BoardPagerFragment extends Fragment implements
         return false;
     }
 
-
-
     /*
     @Override
     public void notifyDialogDismissed(int position) {
@@ -493,6 +492,11 @@ public class BoardPagerFragment extends Fragment implements
         log.i("reset position: %s", position);
         this.position = position;
         BoardReadFragment readPostFragment = new BoardReadFragment();
+        log.i("BoardReadFragment: %s", readPostFragment.hashCode());
+
+        CustomPostingObject toObject = snapshot.toObject(CustomPostingObject.class);
+        assert toObject != null;
+
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
         bundle.putInt("position", position);// TEST CODING FOR UPDATING THE COMMENT NUMBER
@@ -511,6 +515,9 @@ public class BoardPagerFragment extends Fragment implements
             bundle.putStringArrayList("urlImgList", Objects.requireNonNull(objImages).getPostImages());
         }
 
+        if(toObject.getAutofilter().size() > 0) {
+            bundle.putStringArrayList("autofilter", new ArrayList<>(toObject.getAutofilter()));
+        }
 
 
         readPostFragment.setArguments(bundle);

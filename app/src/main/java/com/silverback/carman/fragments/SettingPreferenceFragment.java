@@ -221,6 +221,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonAutoDataArray -> {
             mSettings.edit().putString(Constants.AUTO_DATA, jsonAutoDataArray.toString()).apply();
+            mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, false).apply();
             //makerName = parseAutoData(jsonString).get(0);
             //modelName = parseAutoData(jsonString).get(1);
             makerName = (jsonAutoDataArray.isNull(0))? null : jsonAutoDataArray.optString(0);

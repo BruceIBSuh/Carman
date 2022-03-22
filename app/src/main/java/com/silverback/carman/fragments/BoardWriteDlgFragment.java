@@ -166,21 +166,23 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         });
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
-            log.i("Storage download url:%s,  %s", sparseArray.keyAt(0), sparseArray.valueAt(0));
             sparseUriArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
             if(uriImageList.size() == sparseUriArray.size()) uploadPostToFirestore();
         });
     }
 
-
     @Override
-    public void onDismiss(@NonNull DialogInterface dialog) {
-        super.onDismiss(dialog);
-        log.i("onDismiss");
+    public void onPause() {
+        super.onPause();
         if(bitmapTask != null) bitmapTask = null;
-        if(postTask != null) postTask = null;
     }
 
+    @Override
+    public void onDestroyView() {
+        log.i("onDestroyView");
+        requireActivity().getViewModelStore().clear();
+        super.onDestroyView();
+    }
 
     //Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
@@ -257,9 +259,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             cbType.setOnCheckedChangeListener(this);
             cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             cbType.setTextColor(Color.WHITE);
-            if(jsonAutoArray.isNull(i)) log.i("no filter item");
-
-            if(jsonAutoArray.optString(i).equals("null")) { // conditions should be reconsidered.
+            //if(jsonAutoArray.optString(i).equals("null")) { // conditions should be reconsidered.
+            if(jsonAutoArray.isNull(i)) {
                 switch(i) {
                     case 1: cbType.setText(R.string.pref_auto_model);break;
                     case 2: cbType.setText(R.string.pref_engine_type);break;
@@ -330,7 +331,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             }
         }
     }
-
     private void uploadPostToFirestore() {
         //binding.tvPbMessage.setText("Image Uploading...");
         Map<String, Object> post = new HashMap<>();
@@ -356,7 +356,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             List<String> filterList = new ArrayList<>(cbAutoFilter);
             post.put("auto_filter", filterList);
             post.put("isGeneral", isGeneral);
-        } else post.put("post_general", true);
+        } else post.put("isGeneral", true);
 
         DocumentReference docRef = firestore.collection("users").document(userId);
         firestore.runTransaction((Transaction.Function<Void>) transaction -> {

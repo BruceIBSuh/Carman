@@ -133,7 +133,7 @@ public class BoardReadFragment extends DialogFragment implements
     private BoardCommentAdapter commentAdapter;
     private String documentId, postTitle, postContent, postOwnerId, postOwnerName, postOwnerPic;
     private String viewerId;
-    private ArrayList<String> uriStringList;
+    private ArrayList<String> uriStringList, autofilter;
     private List<DocumentSnapshot> commentShotList;
     private InputMethodManager imm;
     //private ListenerRegistration commentListener;
@@ -185,6 +185,8 @@ public class BoardReadFragment extends DialogFragment implements
             postOwnerPic = getArguments().getString("userPic");
             postOwnerId = getArguments().getString("userId");
             uriStringList = getArguments().getStringArrayList("urlImgList");
+            autofilter = getArguments().getStringArrayList("autofilter");
+
             cntComment = (int)getArguments().getLong("cntComment");
             cntCompathy = (int)getArguments().getLong("cntCompathy");
         }
@@ -803,10 +805,14 @@ public class BoardReadFragment extends DialogFragment implements
                     editBundle.putStringArrayList("uriImgList", uriStringList);
                 }
 
+                if(autofilter != null && autofilter.size() > 0){
+                    editBundle.putStringArrayList("autofilter", autofilter);
+                }
+
                 editFragment.setArguments(editBundle);
                 requireActivity().getSupportFragmentManager().beginTransaction()
                         .addToBackStack(null)
-                        .add(android.R.id.content, editFragment)
+                        .replace(android.R.id.content, editFragment)
                         .commit();
                 dismiss();
                 //return true;

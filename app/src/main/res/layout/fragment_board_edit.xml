@@ -64,7 +64,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
         <TextView
             android:id="@+id/tv_label_title"
             android:layout_width="wrap_content"
@@ -75,7 +74,6 @@
             app:layout_constraintBottom_toBottomOf="@+id/view_edit_header"
             app:layout_constraintStart_toStartOf="@+id/view_edit_header"
             app:layout_constraintTop_toTopOf="@+id/view_edit_header" />
-
         <EditText
             android:id="@+id/et_board_edit_title"
             android:layout_width="0dp"
@@ -91,7 +89,6 @@
             app:layout_constraintStart_toEndOf="@+id/tv_label_title"
             app:layout_constraintTop_toTopOf="@+id/tv_label_title"
             tools:ignore="autofill" />
-
         <Button
             android:id="@+id/btn_attach_image"
             android:layout_width="30dp"
@@ -103,8 +100,6 @@
             app:layout_constraintBottom_toBottomOf="@+id/et_board_edit_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@+id/et_board_edit_title" />
-
-
         <EditText
             android:id="@+id/et_edit_content"
             android:layout_width="0dp"
@@ -129,7 +124,6 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
             app:layout_constraintStart_toStartOf="parent" />
-
         <LinearLayout
             android:id="@+id/pb_container"
             android:visibility="gone"
@@ -162,7 +156,5 @@
                 app:layout_constraintTop_toTopOf="@id/pb_board_edit"/>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

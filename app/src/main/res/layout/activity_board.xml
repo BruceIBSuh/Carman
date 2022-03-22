@@ -17,7 +17,6 @@
         android:fitsSystemWindows="true"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
         app:elevation="0dp" ><!-- app:elevation="0" to remove the shadow -->
-
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
@@ -79,7 +78,6 @@
                         android:id="@+id/imgbtn_lock"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:src="@drawable/ic_autofilter_lock"
                         android:contentDescription="@null" />
                 </LinearLayout>
             </HorizontalScrollView>

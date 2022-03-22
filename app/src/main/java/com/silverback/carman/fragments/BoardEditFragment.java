@@ -26,6 +26,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -37,6 +38,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -77,6 +79,7 @@ public class BoardEditFragment extends DialogFragment implements
 
     private FirebaseFirestore mDB;
     private FirebaseStorage storage;
+    private DocumentReference docRef;
     private SharedPreferences mSettings;
     private UploadBitmapTask bitmapTask;
 
@@ -89,9 +92,10 @@ public class BoardEditFragment extends DialogFragment implements
 
     private Uri mImageUri;
     private ArrayList<String> editedFilterList;
-    private ArrayList<String> uriStringList;
+    private ArrayList<String> uriStringList, autofilter;
     private ArrayList<Uri> uriEditList;
     private JSONArray jsonAutoArray;
+    private Observer<Integer> chooserObserver;
 
     // Fields
     private String documentId;
@@ -115,19 +119,19 @@ public class BoardEditFragment extends DialogFragment implements
             title = getArguments().getString("postTitle");
             content = getArguments().getString("postContent");
             uriStringList = getArguments().getStringArrayList("uriImgList");
+            autofilter = getArguments().getStringArrayList("autofilter");
         }
 
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
         mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        docRef = mDB.collection("user_post").document(documentId);
         //imgUtil = new ApplyImageResourceUtil(getContext());
-        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         sparseSpanArray = new SparseArray<>();
         //sparseImageArray = new SparseArray<>();
         uriEditList = new ArrayList<>();
-        editedFilterList = new ArrayList<>();
+        editedFilterList = new ArrayList<>(autofilter);
 
         // If the post contains any image, the http url should be typecast to uri.
         if(uriStringList != null && uriStringList.size() > 0) {
@@ -136,31 +140,25 @@ public class BoardEditFragment extends DialogFragment implements
 
         // Show the autoclub filter if the post belongs to the autoclub and set, at least,
         // the maker filter
-        mDB.collection("user_post").document(documentId).get().addOnSuccessListener(doc -> {
+        docRef.get().addOnSuccessListener(doc -> {
             if(doc != null && doc.exists()) {
-                CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
+                final CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 assert toObject != null;
                 isAutoclub = toObject.isPostAutoclub();
-                isGeneral = toObject.isGeneral();
-                List<String> filterList = toObject.getAutofilter();
-
                 if(isAutoclub) {
+                    isGeneral = toObject.isGeneral();
                     binding.scrollviewAutofilter.setVisibility(View.VISIBLE);
                     String json = mSettings.getString(Constants.AUTO_DATA, null);
-                    setEditCheckbox(json, filterList);
+                    setEditCheckbox(json, toObject.getAutofilter());
                 }
             }
         });
     }
 
-
-
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardEditBinding.inflate(inflater);
-
         binding.toolbarBoardEdit.setTitle("POST EDITING");
         binding.toolbarBoardEdit.setNavigationOnClickListener(view -> dismiss());
         binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
@@ -247,16 +245,21 @@ public class BoardEditFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         // Notified of which media(camera or gallery) to select in ImageChooserFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            log.i("image chooser bug: %s", chooser);
             ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
+
         });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,
         // the result is notified as SparseArray which indicates the position and uriString of image.
         imgModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
+            if(sparseArray.size() == 0) return;
             uriEditList.set(sparseArray.keyAt(0), sparseArray.valueAt(0));
             numImgAdded--;
             if(numImgAdded == 0) updatePost();
@@ -268,6 +271,14 @@ public class BoardEditFragment extends DialogFragment implements
         super.onPause();
         if(bitmapTask != null) bitmapTask = null;
     }
+
+    @Override
+    public void onDestroyView() {
+        log.i("onDestroyView of BoardEditFragment");
+        requireActivity().getViewModelStore().clear();
+        super.onDestroyView();
+    }
+
 
     // Implement BoardImageAdapter.OnBoardAttachImageListener when clicking the deletion button
     // in the recyclerview thumbnail
@@ -320,8 +331,8 @@ public class BoardEditFragment extends DialogFragment implements
         cbGeneral.setChecked(isGeneral);
         cbGeneral.setOnCheckedChangeListener(this);
         binding.layoutAutofilter.addView(cbGeneral, params);
-
         jsonAutoArray.remove(2);//Exclude the auto type.
+
         for(int i = 0; i < filterList.size(); i++) {
             CheckBox cb = new CheckBox(getContext());
             cb.setTag(i);
@@ -463,33 +474,40 @@ public class BoardEditFragment extends DialogFragment implements
 
     private void updatePost() {
         if (documentId == null || TextUtils.isEmpty(documentId)) return;
-
         binding.tvPbMessage.setText("Post is uploading...");
-
         //final DocumentReference docref = firestore.collection("board_general").document(docId);
-        final DocumentReference docref = mDB.collection("user_post").document(documentId);
-        Map<String, Object> updatePost = new HashMap<>();
-        updatePost.put("post_title", binding.etBoardEditTitle.getText().toString());
-        updatePost.put("post_content", binding.etEditContent.getText().toString());
-        updatePost.put("timestamp", FieldValue.serverTimestamp());
+        //final DocumentReference docref = mDB.collection("user_post").document(documentId);
+        Map<String, Object> editedPost = new HashMap<>();
+        editedPost.put("post_title", binding.etBoardEditTitle.getText().toString());
+        editedPost.put("post_content", binding.etEditContent.getText().toString());
+        editedPost.put("timestamp", FieldValue.serverTimestamp());
         if(isAutoclub) {
-            updatePost.put("isGeneral", isGeneral);
-            updatePost.put("auto_filter", editedFilterList);
+            editedPost.put("isGeneral", isGeneral);
+            editedPost.put("auto_filter", editedFilterList); // BUG
         }
 
         // Update the post_image field, if any.
         List<String> postImages = new ArrayList<>();
         if (uriEditList.size() > 0) {
-            docref.update("post_images", FieldValue.delete());
+            docRef.update("post_images", FieldValue.delete());
             for (Uri uri : uriEditList) postImages.add(uri.toString());
-            updatePost.put("post_images", postImages);
+            editedPost.put("post_images", postImages);
         }
 
-        docref.update(updatePost).addOnSuccessListener(aVoid -> {
+        docRef.set(editedPost, SetOptions.merge()).addOnSuccessListener(aVoid -> {
+            binding.pbContainer.setVisibility(View.GONE);
+            sharedModel.getEditedPosting().setValue(docRef);
+            dismiss();
+        }).addOnFailureListener(Throwable::printStackTrace);
+
+        /*
+        docref.update(editedPost).addOnSuccessListener(aVoid -> {
             binding.pbContainer.setVisibility(View.GONE);
             sharedModel.getEditedPosting().setValue(docref);
             dismiss();
         }).addOnFailureListener(Exception::printStackTrace);
+
+         */
     }
 
     private boolean doEmptyCheck() {
