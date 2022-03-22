@@ -28,17 +28,16 @@
         android:layout_height="48dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="8dp"
         android:layout_marginBottom="16dp"
+        android:ems="10"
         android:hint="@null"
         android:inputType="text"
-        android:ems="10"
         android:textSize="@dimen/largeText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btn_verify"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_header_username"
-        tools:ignore="AutoFill"/>
+        tools:ignore="AutoFill" />
 
     <Button
         android:id="@+id/btn_verify"

@@ -6,6 +6,7 @@ import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -75,12 +76,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private List<Uri> uriImageList;
     private SparseArray<Uri> sparseUriArray;
     private List<String> cbAutoFilter;
-
+    private JSONArray jsonAutoArray;
     private Uri imageUri;
     private String userId;
     private String userName;
+    private String autofilter;
     private int page;
-    private boolean isGeneralPost;
+    private boolean isGeneral;
 
     public BoardWriteDlgFragment() {
         //empty constructor which might be referenced by FragmentFactory
@@ -108,6 +110,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             userId = getArguments().getString("userId");
             userName = getArguments().getString("userName");
             page = getArguments().getInt("page");
+            if(page == AUTOCLUB) autofilter = getArguments().getString("autofilter");
         }
 
         firestore = FirebaseFirestore.getInstance();
@@ -138,9 +141,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         //Create the autofilter
         if(page == AUTOCLUB) {
             animAutoFilter();
-            String jsonAutoFilter = requireArguments().getString("autofilter");
-            try {setAutoFilter(jsonAutoFilter); }
-            catch (JSONException e) {e.printStackTrace();}
+            setWriteAutofilter(autofilter);
         } //else binding.scrollviewAutofilter.setVisibility(View.GONE);
 
         return binding.getRoot();
@@ -231,34 +232,34 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     }
 
     //Create the autofilter checkbox
-    private void setAutoFilter(String json) throws JSONException {
+    private void setWriteAutofilter(String json) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginStart(10);
 
-        JSONArray jsonAuto = new JSONArray(json);
-        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) {
-            throw new NullPointerException("no auto data");
-        }
+        try { jsonAutoArray = new JSONArray(json);}
+        catch(JSONException e) {e.printStackTrace();}
+        if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) return;
 
         CheckBox cbGeneral = new CheckBox(getContext());
         cbGeneral.setTag(0);
         cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
         cbGeneral.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-        //cbAutoOnly.setTextColor(Color.WHITE);
-        cbGeneral.setChecked(true);
-        isGeneralPost = true;
-        cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneralPost = isChecked);
+        cbGeneral.setTextColor(Color.WHITE);
+        cbGeneral.setChecked(false);
+        cbGeneral.setOnCheckedChangeListener((chkbox, isChecked) -> isGeneral = isChecked);
         binding.layoutAutofilter.addView(cbGeneral, params);
 
-        jsonAuto.remove(2); //exclue the auto type
-        for(int i = 0; i < jsonAuto.length(); i++) { // Exclude the auto type.
+        jsonAutoArray.remove(2); //exclue the auto type
+        for(int i = 0; i < jsonAutoArray.length(); i++) { // Exclude the auto type.
             CheckBox cbType = new CheckBox(getContext());
             cbType.setTag(i);
             cbType.setOnCheckedChangeListener(this);
             cbType.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
-            //cb.setTextColor(Color.WHITE);
-            if(jsonAuto.optString(i).equals("null")) { // conditions should be reconsidered.
+            cbType.setTextColor(Color.WHITE);
+            if(jsonAutoArray.isNull(i)) log.i("no filter item");
+
+            if(jsonAutoArray.optString(i).equals("null")) { // conditions should be reconsidered.
                 switch(i) {
                     case 1: cbType.setText(R.string.pref_auto_model);break;
                     case 2: cbType.setText(R.string.pref_engine_type);break;
@@ -266,16 +267,13 @@ public class BoardWriteDlgFragment extends DialogFragment implements
                 }
                 cbType.setEnabled(false);
             } else {
-                // The automaker is required to be checked as far as the jsonAuto has been set not
-                // to be null. Other autofilter values depends on whether it is the locked mode,
-                // which retrieves its value from SharedPreferences.
-                cbType.setText(jsonAuto.optString(i));
+                cbType.setText(jsonAutoArray.optString(i));
                 if(i == 0) {
-                    cbType.setChecked(true);
-                    cbAutoFilter.add(jsonAuto.optString(0));
+                    cbType.setChecked(true); // automatically invoke the listener.
                     cbType.setEnabled(false);
                 }
             }
+
             binding.layoutAutofilter.addView(cbType, params);
         }
     }
@@ -340,7 +338,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         post.put("user_name", userName);
         post.put("post_title", binding.etPostTitle.getText().toString());
         post.put("timestamp", FieldValue.serverTimestamp());
-        //post.put("timestamp", System.currentTimeMillis());
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
@@ -348,17 +345,17 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         // If the post has any images attached.
         if(sparseUriArray.size() > 0) {
             List<String> images = new ArrayList<>(sparseUriArray.size());
-            for(int i = 0; i < sparseUriArray.size(); i++)
+            for(int i = 0; i < sparseUriArray.size(); i++) {
                 images.add(sparseUriArray.keyAt(i), sparseUriArray.valueAt(i).toString());
+            }
             post.put("post_images",  images);
         }
 
-        post.put("post_autoclub", page == AUTOCLUB);
+        post.put("isAutoclub", page == AUTOCLUB);
         if(page == AUTOCLUB) {
-            Map<String, Boolean> filters = new HashMap<>();
-            for(String field : cbAutoFilter) filters.put(field, true);
-            post.put("auto_filter", filters);
-            post.put("post_general", isGeneralPost);
+            List<String> filterList = new ArrayList<>(cbAutoFilter);
+            post.put("auto_filter", filterList);
+            post.put("isGeneral", isGeneral);
         } else post.put("post_general", true);
 
         DocumentReference docRef = firestore.collection("users").document(userId);
@@ -373,7 +370,6 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             }
             return null;
         }).addOnFailureListener(e -> {log.e("transaction failed: %s", e);});
-
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.

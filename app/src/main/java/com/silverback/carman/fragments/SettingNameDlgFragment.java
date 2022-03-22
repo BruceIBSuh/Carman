@@ -102,6 +102,8 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             }
         });
 
+        // Check if the same username exists. Keep it in mind that this query is case sensitive and
+        // the user name policy should be researched.
         binding.btnVerify.setOnClickListener(v -> {
             newName = binding.etUserName.getText().toString().trim();
             // Query the name to check if there exists the same name in Firestore

@@ -49,7 +49,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
@@ -131,6 +130,7 @@ public class BoardActivity extends BaseActivity implements
     private TextView tvMessage;
 
     // Fields
+    private JSONArray jsonAutoArray;
     private List<CheckBox> chkboxList;
     private ArrayList<String> cbAutoFilter;//having checkbox values for working as autofilter.
     //private boolean isGeneral; //check if a post should be uploaded to the general or just auto.
@@ -179,9 +179,7 @@ public class BoardActivity extends BaseActivity implements
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
         jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
-        try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
-        catch(NullPointerException e) {setNoAutoFilterText();}
-        catch(JSONException e) {e.printStackTrace();}
+        createAutofilter(jsonAutoFilter, binding.autofilter);
 
         // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle(), cbAutoFilter);
@@ -530,46 +528,38 @@ public class BoardActivity extends BaseActivity implements
      * @param v parent container
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
-    private void createAutoFilterCheckBox(Context context, String json, ViewGroup v) throws JSONException {
-        // Remove the filter to switch the format b/w BoardPagerFragment and BoardWriteFragment.
-        /*
-        if(v.getChildCount() > 2) {
-            v.removeAllViews();
-            chkboxList.clear();
-        }
-         */
-
+    public void createAutofilter(String json, ViewGroup v) {
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         params.setMarginEnd(10);
-
         // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
         // It is appropriate that JSONArray.isNull(int) be applied.
-        JSONArray jsonAuto = new JSONArray(json);
-        if(TextUtils.isEmpty(json) || jsonAuto.isNull(0)) throw new NullPointerException("no auto data");
+        try {
+            jsonAutoArray = new JSONArray(json);
+            if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) throw new NullPointerException("");
+        } catch (NullPointerException e) {
+            setNoAutoFilterText();
+            return;
+        } catch (JSONException e) {e.printStackTrace();}
 
-        // Dynamically create the checkboxes. The automaker checkbox should be checked and disabled
-        // as default values.
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        jsonAuto.remove(2);//Exclude the auto type.
-        for(int i = 0; i < jsonAuto.length(); i++) {
-            CheckBox cb = new CheckBox(context);
+        jsonAutoArray.remove(2);//Exclude the auto type.
+        for(int i = 0; i < jsonAutoArray.length(); i++) {
+            CheckBox cb = new CheckBox(v.getContext());
             cb.setTag(i);
             cb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             cb.setTextColor(Color.WHITE);
             chkboxList.add(i, cb);
-
-            if(jsonAuto.optString(i).equals("null")) {
-                log.i("autodata item:%s", jsonAuto.optString(i));
+            if(jsonAutoArray.optString(i).equals("null")) {
+                log.i("autodata item:%s", jsonAutoArray.optString(i));
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
                     case 2: cb.setText(R.string.pref_engine_type);break;
                     case 3: cb.setText(R.string.board_filter_year);break;
                 }
                 cb.setEnabled(false);
-
             } else {
-                cb.setText(jsonAuto.optString(i));
+                cb.setText(jsonAutoArray.optString(i));
                 if(i == 0) {
                     cb.setChecked(true);
                     cb.setEnabled(false);
@@ -583,7 +573,6 @@ public class BoardActivity extends BaseActivity implements
                 if(cb.isChecked()) cbAutoFilter.add(cb.getText().toString());
                 cb.setOnCheckedChangeListener(this);
             }
-
             v.addView(cb, params);
         }
 
@@ -592,7 +581,6 @@ public class BoardActivity extends BaseActivity implements
             isLocked = !isLocked;
             int res = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
             binding.imgbtnLock.setImageResource(res);
-
             //Persist each checkbox value in the setting
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
             for(int i = 1; i < chkboxList.size(); i++) {
@@ -600,7 +588,7 @@ public class BoardActivity extends BaseActivity implements
                     chkboxList.get(i).setEnabled(false);
                     String key = Constants.AUTOFILTER + i;
                     mSettings.edit().putBoolean(key, chkboxList.get(i).isChecked()).apply();
-                } else if(!jsonAuto.optString(i).equals("null")) {
+                } else if(!jsonAutoArray.optString(i).equals("null")) {
                     chkboxList.get(i).setEnabled(true);
                 }
             }
@@ -658,9 +646,7 @@ public class BoardActivity extends BaseActivity implements
                 binding.autofilter.removeView(tvMessage);
                 jsonAutoFilter = result.getData().getStringExtra("autodata");
                 // Create the autofilter checkboxes and set inital values to the checkboxes
-                try { createAutoFilterCheckBox(this, jsonAutoFilter, binding.autofilter);}
-                catch(NullPointerException e) { setNoAutoFilterText();}
-                catch(JSONException e) {e.printStackTrace();}
+                createAutofilter(jsonAutoFilter, binding.autofilter);
 
                 // Update the pagerAdapter
                 //pagerAdapter.setAutoFilterValues(cbAutoFilter);
@@ -721,4 +707,5 @@ public class BoardActivity extends BaseActivity implements
             this.postImageList = postImageList;
         }
     }
+
 }

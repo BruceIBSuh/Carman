@@ -291,7 +291,8 @@ public class BoardReadFragment extends DialogFragment implements
         */
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(postOwnerPic))?Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
+        String userImage = (TextUtils.isEmpty(postOwnerPic))?
+                Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
 
@@ -799,7 +800,6 @@ public class BoardReadFragment extends DialogFragment implements
                 editBundle.putString("postContent", postContent);
                 editBundle.putInt("position", position);
                 if (uriStringList != null && uriStringList.size() > 0) {
-                    log.i("uriStringList: %s", uriStringList.size());
                     editBundle.putStringArrayList("uriImgList", uriStringList);
                 }
 

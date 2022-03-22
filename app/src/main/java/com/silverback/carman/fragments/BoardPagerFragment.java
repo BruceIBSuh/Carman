@@ -496,32 +496,22 @@ public class BoardPagerFragment extends Fragment implements
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
         bundle.putInt("position", position);// TEST CODING FOR UPDATING THE COMMENT NUMBER
-
         bundle.putString("documentId", snapshot.getId());
         bundle.putString("postTitle", snapshot.getString("post_title"));
         bundle.putString("userId", snapshot.getString("user_id"));
         bundle.putString("userName", snapshot.getString("user_name"));
         bundle.putString("userPic", snapshot.getString("user_pic"));
-
-        /*
-        if(currentPage == NOTIFICATION) {
-            bundle.putString("userId", "0000");
-            bundle.putString("userName", "Admin");
-            bundle.putString("userPic", null);
-        } else {
-            bundle.putString("userId", snapshot.getString("user_id"));
-            bundle.putString("userName", snapshot.getString("user_name"));
-            bundle.putString("userPic", snapshot.getString("user_pic"));
-        }
-         */
         bundle.putLong("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")));
         bundle.putLong("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")));
         bundle.putString("postContent", snapshot.getString("post_content"));
         bundle.putString("timestamp", sdf.format(Objects.requireNonNull(snapshot.getDate("timestamp"))));
+
         if(snapshot.get("post_images") != null) {
             BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
             bundle.putStringArrayList("urlImgList", Objects.requireNonNull(objImages).getPostImages());
         }
+
+
 
         readPostFragment.setArguments(bundle);
         requireActivity().getSupportFragmentManager().beginTransaction()

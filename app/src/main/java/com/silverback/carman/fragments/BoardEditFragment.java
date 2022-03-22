@@ -3,7 +3,9 @@ package com.silverback.carman.fragments;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
 import android.app.Dialog;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -11,16 +13,21 @@ import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.bumptech.glide.Glide;
@@ -42,8 +49,12 @@ import com.silverback.carman.threads.UploadBitmapTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.BoardImageSpanHandler;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.CustomPostingObject;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +66,7 @@ import java.util.regex.Pattern;
 
 
 public class BoardEditFragment extends DialogFragment implements
-        BoardImageSpanHandler.OnImageSpanListener,
+        BoardImageSpanHandler.OnImageSpanListener, CompoundButton.OnCheckedChangeListener,
         BoardImageAdapter.OnBoardAttachImageListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardEditFragment.class);
@@ -66,6 +77,7 @@ public class BoardEditFragment extends DialogFragment implements
 
     private FirebaseFirestore mDB;
     private FirebaseStorage storage;
+    private SharedPreferences mSettings;
     private UploadBitmapTask bitmapTask;
 
     private BoardImageAdapter imgAdapter;
@@ -76,12 +88,15 @@ public class BoardEditFragment extends DialogFragment implements
     private ImageViewModel imgModel;
 
     private Uri mImageUri;
+    private ArrayList<String> editedFilterList;
     private ArrayList<String> uriStringList;
     private ArrayList<Uri> uriEditList;
+    private JSONArray jsonAutoArray;
 
     // Fields
     private String documentId;
     private String title, content;
+    private boolean isGeneral, isAutoclub;
     private int position;
     private int numImgAdded;
 
@@ -102,11 +117,9 @@ public class BoardEditFragment extends DialogFragment implements
             uriStringList = getArguments().getStringArrayList("uriImgList");
         }
 
-        log.i("post position: %s", position);
-
         mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
-
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
         //imgUtil = new ApplyImageResourceUtil(getContext());
         imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
         sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
@@ -114,21 +127,47 @@ public class BoardEditFragment extends DialogFragment implements
         sparseSpanArray = new SparseArray<>();
         //sparseImageArray = new SparseArray<>();
         uriEditList = new ArrayList<>();
-
+        editedFilterList = new ArrayList<>();
 
         // If the post contains any image, the http url should be typecast to uri.
         if(uriStringList != null && uriStringList.size() > 0) {
             for(String uriString : uriStringList) uriEditList.add(Uri.parse(uriString));
         }
+
+        // Show the autoclub filter if the post belongs to the autoclub and set, at least,
+        // the maker filter
+        mDB.collection("user_post").document(documentId).get().addOnSuccessListener(doc -> {
+            if(doc != null && doc.exists()) {
+                CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
+                assert toObject != null;
+                isAutoclub = toObject.isPostAutoclub();
+                isGeneral = toObject.isGeneral();
+                List<String> filterList = toObject.getAutofilter();
+
+                if(isAutoclub) {
+                    binding.scrollviewAutofilter.setVisibility(View.VISIBLE);
+                    String json = mSettings.getString(Constants.AUTO_DATA, null);
+                    setEditCheckbox(json, filterList);
+                }
+            }
+        });
     }
+
+
+
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardEditBinding.inflate(inflater);
+
         binding.toolbarBoardEdit.setTitle("POST EDITING");
         binding.toolbarBoardEdit.setNavigationOnClickListener(view -> dismiss());
-        createEditMenu();
+        binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
+        binding.toolbarBoardEdit.setOnMenuItemClickListener(item -> {
+            updateImageToStorage();
+            return true;
+        });
 
         binding.etBoardEditTitle.setText(title);
         binding.btnAttachImage.setOnClickListener(button -> selectImageMedia());
@@ -254,13 +293,67 @@ public class BoardEditFragment extends DialogFragment implements
         if(uriEditList.get(pos) != null) uriEditList.remove(pos);
     }
 
-    private void createEditMenu() {
-        binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
-        binding.toolbarBoardEdit.setOnMenuItemClickListener(item -> {
-            updateImageToStorage();
-            return true;
-        });
+    @Override
+    public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
+        final int index = (int)chkbox.getTag();
+        log.i("checkbox index: %s", index);
+        if(index == 9) isGeneral = isChecked;
+        else {
+            if (isChecked) editedFilterList.add(chkbox.getText().toString());
+            else editedFilterList.remove(chkbox.getText().toString());
+        }
     }
+
+    private void setEditCheckbox(String json, List<String> filterList) {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMarginEnd(10);
+        try {jsonAutoArray = new JSONArray(json);}
+        catch (JSONException e) {e.printStackTrace();}
+        if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) return;
+
+        CheckBox cbGeneral = new CheckBox(getContext());
+        cbGeneral.setTag(9);
+        cbGeneral.setText(getString(R.string.board_filter_chkbox_general));
+        cbGeneral.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        cbGeneral.setTextColor(Color.WHITE);
+        cbGeneral.setChecked(isGeneral);
+        cbGeneral.setOnCheckedChangeListener(this);
+        binding.layoutAutofilter.addView(cbGeneral, params);
+
+        jsonAutoArray.remove(2);//Exclude the auto type.
+        for(int i = 0; i < filterList.size(); i++) {
+            CheckBox cb = new CheckBox(getContext());
+            cb.setTag(i);
+            cb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            cb.setTextColor(Color.WHITE);
+            cb.setText(filterList.get(i));
+            cb.setChecked(true);
+            cb.setOnCheckedChangeListener(this);
+            binding.layoutAutofilter.addView(cb, params);
+        }
+
+        for(int j = filterList.size(); j < jsonAutoArray.length(); j++) {
+            CheckBox cb = new CheckBox(getContext());
+            cb.setTag(j);
+            cb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+            cb.setTextColor(Color.WHITE);
+            if(jsonAutoArray.isNull(j)) {
+                switch(j) {
+                    case 1: cb.setText(R.string.pref_auto_model);break;
+                    case 2: cb.setText(R.string.pref_engine_type);break;
+                    case 3: cb.setText(R.string.board_filter_year);break;
+                }
+                cb.setEnabled(false);
+            } else {
+                cb.setText(jsonAutoArray.optString(j));
+                cb.setOnCheckedChangeListener(this);
+            }
+
+            binding.layoutAutofilter.addView(cb, params);
+        }
+    }
+
 
     // Initially, insert thumbnail images in the content with the urlImgList transferred from
     // BoardReadFragment
@@ -379,6 +472,10 @@ public class BoardEditFragment extends DialogFragment implements
         updatePost.put("post_title", binding.etBoardEditTitle.getText().toString());
         updatePost.put("post_content", binding.etEditContent.getText().toString());
         updatePost.put("timestamp", FieldValue.serverTimestamp());
+        if(isAutoclub) {
+            updatePost.put("isGeneral", isGeneral);
+            updatePost.put("auto_filter", editedFilterList);
+        }
 
         // Update the post_image field, if any.
         List<String> postImages = new ArrayList<>();
@@ -403,7 +500,8 @@ public class BoardEditFragment extends DialogFragment implements
             Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
             return false;
         } else return true;
-
     }
+
+
 }
 
