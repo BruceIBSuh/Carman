@@ -144,7 +144,7 @@ public class BoardEditFragment extends DialogFragment implements
             if(doc != null && doc.exists()) {
                 final CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 assert toObject != null;
-                isAutoclub = toObject.isPostAutoclub();
+                isAutoclub = toObject.isAutoclub();
                 if(isAutoclub) {
                     isGeneral = toObject.isGeneral();
                     binding.scrollviewAutofilter.setVisibility(View.VISIBLE);

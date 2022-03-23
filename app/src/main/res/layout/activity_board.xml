@@ -52,6 +52,7 @@
                 app:tabTextAppearance="@style/CustomTabText"
                 app:tabTextColor="@android:color/white"
                 app:layout_collapseMode="parallax" />
+
             <HorizontalScrollView
                 android:id="@+id/post_scroll_horizontal"
                 android:layout_width="match_parent"
@@ -66,21 +67,25 @@
                     android:layout_gravity="center_vertical"
                     android:gravity="center"
                     android:layout_marginStart="3dp"
-                    android:orientation="horizontal" >
+                    android:orientation="horizontal"
+                    tools:ignore="UseCompoundDrawables">
                     <TextView
+                        android:id="@+id/tv_label_autofilter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/board_filter_title"
                         android:textSize="@dimen/smallText"
                         android:textStyle="bold"
                         android:textColor="@android:color/white" />
-                    <ImageView
+                    <ImageButton
                         android:id="@+id/imgbtn_lock"
-                        android:layout_width="wrap_content"
+                        android:layout_width="30dp"
                         android:layout_height="wrap_content"
+                        android:backgroundTint="@android:color/transparent"
                         android:contentDescription="@null" />
                 </LinearLayout>
             </HorizontalScrollView>
+
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 

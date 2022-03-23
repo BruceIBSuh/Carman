@@ -109,9 +109,7 @@ public class BoardActivity extends BaseActivity implements
         View.OnClickListener,
         CheckBox.OnCheckedChangeListener,
         AppBarLayout.OnOffsetChangedListener {
-        //BoardReadFragment.OnEditModeListener {
 
-    // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardActivity.class);
 
     public static final int PAGINATION = 10;
@@ -228,8 +226,6 @@ public class BoardActivity extends BaseActivity implements
         super.onPause();
     }
 
-
-
     @Override
     public void onStop() {
         //activityResultLauncher.unregister();
@@ -310,7 +306,7 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onOffsetChanged(AppBarLayout appBarLayout, int i){}
 
-    // Floating Action Button event handler to write a post. User name is required.
+    // FAB event handler to write a post. Unless the user name is provided, go to SettingActivity
     @Override
     public void onClick(View view) {
         String userName = mSettings.getString(Constants.USER_NAME, null);
@@ -330,7 +326,6 @@ public class BoardActivity extends BaseActivity implements
 
         // With the user name set, call the dialogfragmt for writing a post.
         writePostFragment = new BoardWriteDlgFragment();
-        log.i("user profile: %s, %s", userId, userName);
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
         args.putString("userName", userName);
@@ -381,7 +376,7 @@ public class BoardActivity extends BaseActivity implements
         // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to
         // POST_NONE in getItemPosition() of BoardPagerAdapter, which destroys not only the autoclub
         // fragment but also the tab titles. Thus, recreate the title here.
-        addTabIconAndTitle(this, binding.tabBoard);
+        //addTabIconAndTitle(this, binding.tabBoard);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
     }
 
@@ -395,9 +390,9 @@ public class BoardActivity extends BaseActivity implements
         if(context instanceof ExpenseActivity) {
             tabTitleList = Arrays.asList(getResources().getStringArray(R.array.tab_carman_title));
             Drawable[] icons = {
-                    AppCompatResources.getDrawable(this, R.drawable.ic_gas),
-                    AppCompatResources.getDrawable(this, R.drawable.ic_service),
-                    AppCompatResources.getDrawable(this, R.drawable.ic_stats)};
+                    ContextCompat.getDrawable(this, R.drawable.ic_gas),
+                    ContextCompat.getDrawable(this, R.drawable.ic_service),
+                    ContextCompat.getDrawable(this, R.drawable.ic_stats)};
             tabIconList = Arrays.asList(icons);
 
         } else if(context instanceof BoardActivity) {
@@ -534,16 +529,16 @@ public class BoardActivity extends BaseActivity implements
         params.setMarginEnd(10);
         // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
         // It is appropriate that JSONArray.isNull(int) be applied.
-        try {
-            jsonAutoArray = new JSONArray(json);
-            if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) throw new NullPointerException("");
-        } catch (NullPointerException e) {
+        try { jsonAutoArray = new JSONArray(json); }
+        catch (JSONException e) {e.printStackTrace();}
+
+        if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) {
             setNoAutoFilterText();
             return;
-        } catch (JSONException e) {e.printStackTrace();}
+        }
 
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
-        switchAutofilterLock(isLocked);
+        switchFilterLock(isLocked);
 
         jsonAutoArray.remove(2);//Exclude the auto type.
         for(int i = 0; i < jsonAutoArray.length(); i++) {
@@ -552,7 +547,8 @@ public class BoardActivity extends BaseActivity implements
             cb.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
             cb.setTextColor(Color.WHITE);
             chkboxList.add(i, cb);
-            if(jsonAutoArray.optString(i).equals("null")) {
+            //if(jsonAutoArray.optString(i).equals("null")) {
+            if(jsonAutoArray.isNull(i)) {
                 log.i("autodata item:%s", jsonAutoArray.optString(i));
                 switch(i) {
                     case 1: cb.setText(R.string.pref_auto_model);break;
@@ -581,7 +577,7 @@ public class BoardActivity extends BaseActivity implements
         binding.imgbtnLock.setOnClickListener(imgview -> {
             isLocked = !isLocked;
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, isLocked).apply();
-            switchAutofilterLock(isLocked);
+            switchFilterLock(isLocked);
             //Persist each checkbox value in the setting
             for(int i = 1; i < chkboxList.size(); i++) {
                 if(isLocked) {
@@ -596,7 +592,7 @@ public class BoardActivity extends BaseActivity implements
         });
     }
 
-    private void switchAutofilterLock(boolean isLocked) {
+    private void switchFilterLock(boolean isLocked) {
         int res = (isLocked)? R.drawable.ic_autofilter_lock : R.drawable.ic_autofilter_unlock;
         binding.imgbtnLock.setImageResource(res);
     }
@@ -649,8 +645,11 @@ public class BoardActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                binding.autofilter.removeView(tvMessage);
+                log.i("result code : %s", result.getData().getStringExtra("autodata"));
+                if(TextUtils.isEmpty(result.getData().getStringExtra("autodata"))) return;
+
                 jsonAutoFilter = result.getData().getStringExtra("autodata");
+                binding.autofilter.removeView(tvMessage);
                 // Create the autofilter checkboxes and set inital values to the checkboxes
                 createAutofilter(jsonAutoFilter, binding.autofilter);
 

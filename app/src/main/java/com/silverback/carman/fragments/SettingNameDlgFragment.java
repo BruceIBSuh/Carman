@@ -6,6 +6,7 @@ import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 
@@ -16,8 +17,10 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.Query;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogSettingNameBinding;
@@ -30,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
@@ -37,7 +41,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
 
-    private FirebaseFirestore mDB;
+    private FirebaseFirestore firestore;
     private NameDialogPreference namePreference;
     private DialogSettingNameBinding binding;
     private String currentName, newName;
@@ -62,7 +66,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDB = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         assert getArguments() != null;
         currentName = getArguments().getString("username");
     }
@@ -106,9 +110,14 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
         // the user name policy should be researched.
         binding.btnVerify.setOnClickListener(v -> {
             newName = binding.etUserName.getText().toString().trim();
+            if(TextUtils.isEmpty(newName)) {
+                final String msg = getString(R.string.pref_hint_username);
+                Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+                return;
+            }
             // Query the name to check if there exists the same name in Firestore
-            //final Query queryName = mDB.collection("users").whereEqualTo("user_name", newName);
-            Query queryName = mDB.collection("users").whereArrayContains("user_name", newName).limit(1);
+            //final Query queryName = firestore.collection("users").whereEqualTo("user_name", newName);
+            Query queryName = firestore.collection("users").whereArrayContains("user_name", newName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
                     dialog.getButton(BUTTON_POSITIVE).setEnabled(false);
@@ -136,36 +145,50 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             // When a new username has replaced the current name, update the new name in Firestore.
             try (FileInputStream fis = requireActivity().openFileInput("userId");
                  BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-                String userId = br.readLine();
-                final DocumentReference docref = mDB.collection("users").document(userId);
+                final String userId = br.readLine();
+                DocumentReference docref = firestore.collection("users").document(userId);
+                firestore.runTransaction(transaction -> {
+                    log.i("Transaction ends");
+                    DocumentSnapshot snapshot = transaction.get(docref);
+                    UserObject obj = snapshot.toObject(UserObject.class);
+                    assert obj != null;
+                    log.i("rename: %s", obj.getRenameDate());
+
+                    return null;
+                });
+                /*
                 Map<String, FieldValue> map = new HashMap<>();
                 map.put(newName, FieldValue.serverTimestamp());
                 docref.update("user_name", FieldValue.arrayUnion(newName), "rename_date", map)
                         .addOnSuccessListener(aVoid -> log.i("update done"))
                         .addOnFailureListener(Throwable::printStackTrace);
+
+                 */
             }catch(IOException | NullPointerException e) { e.printStackTrace(); }
         }
     }
 
-    /*
-    private static class UserNames {
+    private static class UserObject {
+        @PropertyName("rename_date")
+        private Map<String, FieldValue> renameDate;
         @PropertyName("user_names")
         private List<String> userNames;
 
-        public UserNames () {}
-        public UserNames(List<String> userNames) {
+        public UserObject () {}
+        public UserObject(Map<String, FieldValue> renameDate, List<String> userNames) {
+            this.renameDate = renameDate;
             this.userNames = userNames;
         }
+
         @PropertyName("user_names")
         public List<String> getUserNames() {
             return userNames;
         }
-        @PropertyName("usre_names")
-        public void setUserNames(List<String> userNames) {
-            this.userNames = userNames;
+
+        @PropertyName("rename_date")
+        public Map<String, FieldValue> getRenameDate() {
+            return renameDate;
         }
     }
-
-     */
 
 }

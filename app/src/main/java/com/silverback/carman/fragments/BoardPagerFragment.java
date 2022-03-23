@@ -24,6 +24,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -37,10 +38,13 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.Source;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPostingAdapter;
@@ -96,7 +100,7 @@ public class BoardPagerFragment extends Fragment implements
     //private List<MultiTypeItem> multiTypeItemList;
     private List<DocumentSnapshot> postingList;
 
-    private FirebaseFirestore mDB;
+    private FirebaseFirestore firestore;
     private ListenerRegistration regListener;
     private Source source;
     //private PostingBoardViewModel postingModel;
@@ -159,13 +163,13 @@ public class BoardPagerFragment extends Fragment implements
         // Instantiate objects.
         //multiTypeItemList = new ArrayList<>();
         postingList = new ArrayList<>();
-        mDB = FirebaseFirestore.getInstance();
+        firestore = FirebaseFirestore.getInstance();
         // Instantiate the query and pagination util class and create the RecyclerView adapter to
         // show the posting list.
         postingAdapter = new BoardPostingAdapter(postingList, this);
         //postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
-        queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
-        final CollectionReference colRef = mDB.collection("user_post");
+        queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
+        final CollectionReference colRef = firestore.collection("user_post");
 
         source = Source.SERVER;
         /*
@@ -496,29 +500,10 @@ public class BoardPagerFragment extends Fragment implements
 
         CustomPostingObject toObject = snapshot.toObject(CustomPostingObject.class);
         assert toObject != null;
-
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
-        bundle.putInt("position", position);// TEST CODING FOR UPDATING THE COMMENT NUMBER
         bundle.putString("documentId", snapshot.getId());
-        bundle.putString("postTitle", snapshot.getString("post_title"));
-        bundle.putString("userId", snapshot.getString("user_id"));
-        bundle.putString("userName", snapshot.getString("user_name"));
-        bundle.putString("userPic", snapshot.getString("user_pic"));
-        bundle.putLong("cntComment", Objects.requireNonNull(snapshot.getLong("cnt_comment")));
-        bundle.putLong("cntCompathy", Objects.requireNonNull(snapshot.getLong("cnt_compathy")));
-        bundle.putString("postContent", snapshot.getString("post_content"));
-        bundle.putString("timestamp", sdf.format(Objects.requireNonNull(snapshot.getDate("timestamp"))));
-
-        if(snapshot.get("post_images") != null) {
-            BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
-            bundle.putStringArrayList("urlImgList", Objects.requireNonNull(objImages).getPostImages());
-        }
-
-        if(toObject.getAutofilter().size() > 0) {
-            bundle.putStringArrayList("autofilter", new ArrayList<>(toObject.getAutofilter()));
-        }
-
+        bundle.putParcelable("postingObj", toObject);
 
         readPostFragment.setArguments(bundle);
         requireActivity().getSupportFragmentManager().beginTransaction()
@@ -526,8 +511,8 @@ public class BoardPagerFragment extends Fragment implements
                 .addToBackStack(null)
                 .commit();
         // Update the field of "cnt_view" increasing the number.
-        DocumentReference docref = snapshot.getReference();
-        addViewCount(docref, position);
+        //DocumentReference docref = snapshot.getReference();
+        addViewCount(snapshot.getReference(), position);
     }
 
     //Invoked from the parent activity to pass checkbox changes made by OnCheckedChange() to make
@@ -536,7 +521,6 @@ public class BoardPagerFragment extends Fragment implements
         this.autoFilter = autofilter;
         for(String filter : autofilter) log.i("autofilter changed: %s", filter);
     }
-
 
     // This method sorts out the autoclub posts based on the autofilter by removing a document out of
     // the list if it has no autofilter field or its nested filter which can be accessed w/ the dot
@@ -615,7 +599,25 @@ public class BoardPagerFragment extends Fragment implements
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
             final String viewerId = br.readLine();
 
-            CollectionReference subCollection = docref.collection("viewers");
+            //CollectionReference subCollection = docref.collection("viewers");
+            DocumentReference viewerRef = docref.collection("viewers").document(viewerId);
+            firestore.runTransaction(transaction -> {
+                DocumentSnapshot viewershot = transaction.get(viewerRef);
+                if(!viewershot.exists()) {
+                    docref.update("cnt_view", FieldValue.increment(1));
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("timestamp", FieldValue.serverTimestamp());
+                    data.put("viewer_ip", "192.0.0.255"); // code for getting the viewer id required.
+                    docref.collection("viewers").document(viewerId).set(data, SetOptions.merge())
+                            .addOnSuccessListener(aVoid -> {
+                                docref.get().addOnSuccessListener(doc ->
+                                    postingAdapter.notifyItemChanged(pos, doc.getLong("cnt_view"))
+                                );
+                            }).addOnFailureListener(Throwable::printStackTrace);
+                }
+                return null;
+            });
+            /*
             subCollection.document(viewerId).get().addOnSuccessListener(snapshot -> {
                 // In case the user has not read the post before and adoes not exists in the "viewers"
                 // collection
@@ -623,10 +625,7 @@ public class BoardPagerFragment extends Fragment implements
                   docref.update("cnt_view", FieldValue.increment(1));
                   // Set timestamp and the user ip with the user id used as the document id.
                   Map<String, Object> viewerData = new HashMap<>();
-                  /*
-                  Calendar calendar = Calendar.getInstance(TimeZone.getDefault(), Locale.getDefault());
-                  Date date = calendar.getTime();
-                   */
+
                   viewerData.put("timestamp", FieldValue.serverTimestamp());
                   viewerData.put("viewer_ip", "");
 
@@ -642,6 +641,7 @@ public class BoardPagerFragment extends Fragment implements
                   });
                 }
             });
+            */
 
         } catch(IOException e) {
             e.printStackTrace();
@@ -654,7 +654,7 @@ public class BoardPagerFragment extends Fragment implements
     private void setAutoMakerEmblem(ProgressBar pb, ImageView imgview) {
         // Make the progressbar visible until getting the emblem from Firetore
         pb.setVisibility(View.VISIBLE);
-        mDB.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
+        firestore.collection("autodata").document(automaker).get().addOnSuccessListener(doc -> {
             String emblem = doc.getString("auto_emblem");
             if(TextUtils.isEmpty(emblem)) return;
             else {

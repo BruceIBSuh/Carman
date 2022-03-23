@@ -80,6 +80,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.CustomPostingObject;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -115,6 +116,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private CustomPostingObject obj;
     //private PostingBoardRepository postRepo;
     //private PostingBoardViewModel postingModel;
     //private PostingClubRepository pagingUtil;
@@ -131,7 +133,7 @@ public class BoardReadFragment extends DialogFragment implements
     private ImageViewModel imgViewModel;
     private FragmentSharedModel sharedModel;
     private BoardCommentAdapter commentAdapter;
-    private String documentId, postTitle, postContent, postOwnerId, postOwnerName, postOwnerPic;
+    private String documentId;
     private String viewerId;
     private ArrayList<String> uriStringList, autofilter;
     private List<DocumentSnapshot> commentShotList;
@@ -144,8 +146,9 @@ public class BoardReadFragment extends DialogFragment implements
     // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
+    private String userPic;
     private int tabPage;
-    private int position; // item poistion in the recyclerview.
+    //private int position; // item poistion in the recyclerview.
     private int checkedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
@@ -176,19 +179,14 @@ public class BoardReadFragment extends DialogFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if(getArguments() != null) {
+            obj = getArguments().getParcelable("postingObj");
+            assert obj != null;
             tabPage = getArguments().getInt("tabPage");
-            position = getArguments().getInt("position");
             documentId = getArguments().getString("documentId");
-            postTitle = getArguments().getString("postTitle");
-            postContent = getArguments().getString("postContent");
-            postOwnerName = getArguments().getString("userName");
-            postOwnerPic = getArguments().getString("userPic");
-            postOwnerId = getArguments().getString("userId");
-            uriStringList = getArguments().getStringArrayList("urlImgList");
-            autofilter = getArguments().getStringArrayList("autofilter");
-
-            cntComment = (int)getArguments().getLong("cntComment");
-            cntCompathy = (int)getArguments().getLong("cntCompathy");
+            cntComment = obj.getCntComment();
+            cntCompathy = obj.getCntCompahty();
+            if(obj.getPostImages() != null) uriStringList = new ArrayList<>(obj.getPostImages());
+            if(obj.getAutofilter() != null) autofilter = new ArrayList<>(obj.getAutofilter());
         }
 
         // Get the viewer id for checking whether the post owner is the viewer
@@ -234,13 +232,13 @@ public class BoardReadFragment extends DialogFragment implements
         // If the user is the owner of a post, display the edit menu in the toolbar, which should
         // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
         // in DialogFragment
-        if(postOwnerId != null && postOwnerId.equals(viewerId)) {
+        if(obj.getUserId() != null && obj.getUserId().equals(viewerId)) {
             createEditOptionsMenu();
         }
 
 
-        binding.tvPostTitle.setText(postTitle);
-        binding.tvUsername.setText(postOwnerName);
+        binding.tvPostTitle.setText(obj.getPostTitle());
+        binding.tvUsername.setText(obj.getUserName());
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
@@ -293,13 +291,12 @@ public class BoardReadFragment extends DialogFragment implements
         */
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        String userImage = (TextUtils.isEmpty(postOwnerPic))?
-                Constants.imgPath + "ic_user_blank_gray": postOwnerPic;
+        userPic = (TextUtils.isEmpty(obj.getUserPic()))? Constants.imgPath + "ic_user_blank_gray": obj.getUserPic();
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
-        imgUtil.applyGlideToImageView(Uri.parse(userImage), binding.imgUserpic, size, size, true);
+        imgUtil.applyGlideToImageView(Uri.parse(userPic), binding.imgUserpic, size, size, true);
 
         // Rearrange the text by paragraphs
-        readContentView(postContent);
+        readContentView(obj.getPostContent());
 
         return binding.getRoot();
     }
@@ -682,17 +679,17 @@ public class BoardReadFragment extends DialogFragment implements
     // Set the toolbar Icon and title as the appbarlayout is scrolling, which is notified by
     // AppBarStateChangeListener.
     private void setToolbarTitleIcon(int state) {
-        SpannableString spannable = new SpannableString(postTitle);
+        SpannableString spannable = new SpannableString(obj.getPostTitle());
         int size = Math.abs(appbarOffset) / 6;
         spannable.setSpan(new AbsoluteSizeSpan(size), 0, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         binding.toolbarBoardRead.setTitle(spannable);
         switch(state) {
             case STATE_COLLAPSED:
-                postOwnerPic = (TextUtils.isEmpty(postOwnerPic)) ? Constants.imgPath + "ic_user_blank_gray" : postOwnerPic;
+                //String userPic = (TextUtils.isEmpty(obj.getUserPic()))? Constants.imgPath + "ic_user_blank_gray" : obj.getUserPic();
                 binding.toolbarBoardRead.setNavigationIcon(null);
                 binding.toolbarBoardRead.setTitle(spannable);
-                binding.toolbarBoardRead.setSubtitle(postOwnerName);
-                imgUtil.applyGlideToDrawable(postOwnerPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
+                binding.toolbarBoardRead.setSubtitle(obj.getUserName());
+                imgUtil.applyGlideToDrawable(userPic, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgViewModel);
                 binding.toolbarBoardRead.setOnClickListener(view -> dismiss());
                 break;
 
@@ -798,9 +795,9 @@ public class BoardReadFragment extends DialogFragment implements
                 BoardEditFragment editFragment = new BoardEditFragment();
                 Bundle editBundle = new Bundle();
                 editBundle.putString("documentId", documentId);
-                editBundle.putString("postTitle", postTitle);
-                editBundle.putString("postContent", postContent);
-                editBundle.putInt("position", position);
+                editBundle.putString("postTitle", obj.getPostTitle());
+                editBundle.putString("postContent", obj.getPostContent());
+                //editBundle.putInt("position", position);
                 if (uriStringList != null && uriStringList.size() > 0) {
                     editBundle.putStringArrayList("uriImgList", uriStringList);
                 }
@@ -831,12 +828,11 @@ public class BoardReadFragment extends DialogFragment implements
                 FragmentManager fragmentManager = getChildFragmentManager();
 
                 // Should do research on FragmentResultListener;
-                fragmentManager.setFragmentResultListener("confirmed", this, (req, result) -> {
-                    postRef.delete().addOnSuccessListener(aVoid -> {
-                        sharedModel.getRemovedPosting().setValue(true);
-                        dismiss();
-                    }).addOnFailureListener(Throwable::printStackTrace);
-                });
+                fragmentManager.setFragmentResultListener("confirmed", this, (req, result) ->
+                        postRef.delete().addOnSuccessListener(aVoid -> {
+                            sharedModel.getRemovedPosting().setValue(true);
+                            dismiss();
+                        }).addOnFailureListener(Throwable::printStackTrace));
 
                 fragment.show(fragmentManager, "alert");
                 //return true;
