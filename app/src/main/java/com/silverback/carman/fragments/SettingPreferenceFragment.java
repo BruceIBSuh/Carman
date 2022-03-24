@@ -296,7 +296,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
         }
     }
 
-    @SuppressWarnings("deprecation")
+    //@SuppressWarnings("deprecation")
     @Override
     public boolean onPreferenceDisplayDialog(@NonNull PreferenceFragmentCompat caller, @NonNull Preference pref) {
         final DialogFragment dialogFragment;

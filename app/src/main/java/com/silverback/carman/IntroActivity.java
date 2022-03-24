@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -119,7 +120,7 @@ public class IntroActivity extends BaseActivity  {
                 userData.put("auto_data", null);
                 userData.put("cnt_warning", null);
                 userData.put("install_date", FieldValue.serverTimestamp());
-                userData.put("reg_date", new ArrayList<FieldValue>());
+                userData.put("reg_date", new ArrayList<Date>());
 
 
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {

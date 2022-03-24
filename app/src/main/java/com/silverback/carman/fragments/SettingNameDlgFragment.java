@@ -18,13 +18,16 @@ import androidx.preference.PreferenceDialogFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogSettingNameBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -42,7 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat implements FragmentResultListener {
+public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
@@ -122,7 +125,8 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
                 return;
             }
             // Query the name to check if there exists the same name in Firestore
-            //final Query queryName = firestore.collection("users").whereEqualTo("user_name", newName);
+            // Firestore does not provide case insensitive query. To do so, make the full text search
+            // using a dedicated thrid party service such as Elastic, Algolia, or Typesense.
             Query queryName = firestore.collection("users").whereArrayContains("user_name", newName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
@@ -149,66 +153,21 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat imple
             // is set. This allows the client to ignore the user value.
             //mSettings.edit().putString(Constants.USER_NAME, binding.etUserName.getText().toString()).apply();
             namePreference.callChangeListener(newName);
-
             // When a new username has replaced the current name, update the new name in Firestore.
             try (FileInputStream fis = requireActivity().openFileInput("userId");
                  BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
                 final String userId = br.readLine();
-                DocumentReference docref = firestore.collection("users").document(userId);
-                firestore.runTransaction(transaction -> {
-                    DocumentSnapshot snapshot = transaction.get(docref);
-                    snapshot.getReference().update(
-                            "user_name", FieldValue.arrayUnion(newName),
-                            "reg_date", FieldValue.arrayUnion(FieldValue.serverTimestamp()))
+                DocumentReference docRef = firestore.collection("users").document(userId);
 
-                            .addOnSuccessListener(aVoid -> log.i("update done'"))
-                            .addOnFailureListener(Throwable::printStackTrace);
-
-                    return null;
+                WriteBatch batch = firestore.batch();
+                Date regDate = Timestamp.now().toDate();
+                batch.update(docRef, "user_name", FieldValue.arrayUnion(newName));
+                batch.update(docRef, "reg_date", FieldValue.arrayUnion(regDate));
+                batch.commit().addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) log.i("update done");
+                    else log.e("update failed");
                 });
-                /*
-                Map<String, FieldValue> map = new HashMap<>();
-                map.put(newName, FieldValue.serverTimestamp());
-                docref.update("user_name", FieldValue.arrayUnion(newName), "rename_date", map)
-                        .addOnSuccessListener(aVoid -> log.i("update done"))
-                        .addOnFailureListener(Throwable::printStackTrace);
-
-                 */
             }catch(IOException | NullPointerException e) { e.printStackTrace(); }
         }
     }
-
-    @Override
-    public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
-
-    }
-
-
-    private static class UserObject {
-        @PropertyName("rename_date")
-        private Object renameDate;
-        @PropertyName("user_names")
-        private List<String> userNames;
-
-        public UserObject () {}
-        public UserObject(Object renameDate, List<String> userNames) {
-            this.renameDate = renameDate;
-            this.userNames = userNames;
-        }
-
-        @PropertyName("user_names")
-        public List<String> getUserNames() {
-            return userNames;
-        }
-
-
-        @PropertyName("rename_date")
-        public Object getRenameDate() {
-            return renameDate;
-        }
-
-    }
-
-
 }
