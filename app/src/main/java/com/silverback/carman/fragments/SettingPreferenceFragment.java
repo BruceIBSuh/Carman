@@ -11,10 +11,12 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
+import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -45,7 +47,8 @@ import java.util.Objects;
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing params
  * to the singleton constructor.
  */
-public class SettingPreferenceFragment extends SettingBaseFragment  {
+public class SettingPreferenceFragment extends SettingBaseFragment implements
+        PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
@@ -54,7 +57,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
     private SharedPreferences mSettings;
     private FragmentSharedModel fragmentModel;
     private Preference userImagePref;
-    private String nickname;
+    //private String nickname;
+    private String userName;
 
     // Custom preferences defined in views package
     private ProgressBarPreference autoPref; // custom preference to show the progressbar.
@@ -91,11 +95,12 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         // Custom preference which calls for DialogFragment, not PreferenceDialogFragmentCompat,
         // in order to receive a user name which shouold be verified to a new one by querying.
         NameDialogPreference namePref = findPreference(Constants.USER_NAME);
-        String userName = mSettings.getString(Constants.USER_NAME, null);
-        Objects.requireNonNull(namePref).setSummary(userName);
+        userName = mSettings.getString(Constants.USER_NAME, null);
+        String name = (TextUtils.isEmpty(userName))?getString(R.string.pref_entry_void):userName;
+        Objects.requireNonNull(namePref).setSummary(name);
 
-        if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
-        if(userName != null) nickname = Objects.requireNonNull(namePref.getSummary()).toString();
+        //if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
+        //if(userName != null) nickname = Objects.requireNonNull(namePref.getSummary()).toString();
 
         // Call SettingAutoFragment which contains preferences to have car related data which are
         // used as filters for querying the posting board. On clicking the UP button, the preference
@@ -291,37 +296,55 @@ public class SettingPreferenceFragment extends SettingBaseFragment  {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean onPreferenceDisplayDialog(@NonNull PreferenceFragmentCompat caller, @NonNull Preference pref) {
+        final DialogFragment dialogFragment;
+        final Bundle extras = pref.getExtras();
+        if (pref instanceof SpinnerDialogPreference) {
+            dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
+            dialogFragment.setTargetFragment(this, 0);
+        } else if(pref instanceof NameDialogPreference) {
+            dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
+            dialogFragment.setTargetFragment(this, 1);
+        } else throw new IllegalStateException("");
 
+        dialogFragment.show(getParentFragmentManager(), null);
+        //dialogFragment.getChildFragmentManager().setFragmentResult(pref.getKey(), extras);
+        //getChildFragmentManager() -> has not been attached yet error
+        //getParentFragmentManager() -> not associated with a fragment manager error.
+        return true;
+    }
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
     // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
-    //@SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("deprecated")
+    /*
     @Override
     public void onDisplayPreferenceDialog(@NonNull Preference pref) {
+        final DialogFragment dialogFragment;
+        final Bundle extras = pref.getExtras();
         if (pref instanceof SpinnerDialogPreference) {
-            DialogFragment spinnerFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
-            spinnerFragment.setTargetFragment(this, 0);
-            spinnerFragment.show(requireActivity().getSupportFragmentManager(), null);
+            dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
+            dialogFragment.setTargetFragment(this, 0);
+
 
         } else if(pref instanceof NameDialogPreference) {
-            DialogFragment nameFragment = SettingNameDlgFragment.newInstance(pref.getKey(), nickname);
-            nameFragment.setTargetFragment(this, 1);
-            nameFragment.show(requireActivity().getSupportFragmentManager(), null);
+            dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
+            dialogFragment.setTargetFragment(this, 1);
+            //dialogFragment.getChildFragmentManager().setFragmentResult(pref.getKey(), extras);
+        } else throw new IllegalStateException("");
 
-        } else {
-            super.onDisplayPreferenceDialog(pref);
-        }
-
+        dialogFragment.show(getParentFragmentManager(), null);
     }
 
-    // ActivityResult Callback to get the uri of an attached image
-    private void getAttachedImageUri() {
-
-    }
+     */
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon
     public Preference getUserImagePreference() {
         return userImagePref;
     }
+
+
 }

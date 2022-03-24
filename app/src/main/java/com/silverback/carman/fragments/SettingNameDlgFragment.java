@@ -12,6 +12,8 @@ import android.view.LayoutInflater;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentResultListener;
 import androidx.preference.PreferenceDialogFragmentCompat;
 import androidx.preference.PreferenceManager;
 
@@ -22,6 +24,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogSettingNameBinding;
 import com.silverback.carman.logs.LoggingHelper;
@@ -32,15 +35,17 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
+public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat implements FragmentResultListener {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
-
     private FirebaseFirestore firestore;
     private NameDialogPreference namePreference;
     private DialogSettingNameBinding binding;
@@ -52,17 +57,16 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     }
 
     // Method for singleton instance
-    static SettingNameDlgFragment newInstance(String key, String summary) {
+    static SettingNameDlgFragment newInstance(String key, String userName) {
         SettingNameDlgFragment fm = new SettingNameDlgFragment();
-        Bundle args = new Bundle();
-        args.putString("key", key); // ARG_KEY internally defined in onBindDialogView()
-        args.putString("username", summary);
+        Bundle args = new Bundle(1);
+        args.putString(ARG_KEY, key); // ARG_KEY internally defined in onBindDialogView()
+        args.putString("username", userName);
         fm.setArguments(args);
 
         return fm;
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,6 +99,8 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             if(hasFocus) binding.etUserName.setText("");
             else binding.etUserName.setHint(R.string.pref_hint_username);
         });
+
+        // Regular expression required to check if a user name should be valid.
         binding.etUserName.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after){}
@@ -133,6 +139,8 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
         return dialog;
     }
 
+
+
     //@SuppressWarnings("ConstantConditions")
     @Override
     public void onDialogClosed(boolean positiveResult) {
@@ -145,14 +153,17 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             // When a new username has replaced the current name, update the new name in Firestore.
             try (FileInputStream fis = requireActivity().openFileInput("userId");
                  BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
                 final String userId = br.readLine();
                 DocumentReference docref = firestore.collection("users").document(userId);
                 firestore.runTransaction(transaction -> {
-                    log.i("Transaction ends");
                     DocumentSnapshot snapshot = transaction.get(docref);
-                    UserObject obj = snapshot.toObject(UserObject.class);
-                    assert obj != null;
-                    log.i("rename: %s", obj.getRenameDate());
+                    snapshot.getReference().update(
+                            "user_name", FieldValue.arrayUnion(newName),
+                            "reg_date", FieldValue.arrayUnion(FieldValue.serverTimestamp()))
+
+                            .addOnSuccessListener(aVoid -> log.i("update done'"))
+                            .addOnFailureListener(Throwable::printStackTrace);
 
                     return null;
                 });
@@ -168,14 +179,20 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
         }
     }
 
+    @Override
+    public void onFragmentResult(@NonNull String requestKey, @NonNull Bundle result) {
+
+    }
+
+
     private static class UserObject {
         @PropertyName("rename_date")
-        private Map<String, FieldValue> renameDate;
+        private Object renameDate;
         @PropertyName("user_names")
         private List<String> userNames;
 
         public UserObject () {}
-        public UserObject(Map<String, FieldValue> renameDate, List<String> userNames) {
+        public UserObject(Object renameDate, List<String> userNames) {
             this.renameDate = renameDate;
             this.userNames = userNames;
         }
@@ -185,10 +202,13 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             return userNames;
         }
 
+
         @PropertyName("rename_date")
-        public Map<String, FieldValue> getRenameDate() {
+        public Object getRenameDate() {
             return renameDate;
         }
+
     }
+
 
 }

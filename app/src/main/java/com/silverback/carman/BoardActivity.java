@@ -524,19 +524,19 @@ public class BoardActivity extends BaseActivity implements
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
     public void createAutofilter(String json, ViewGroup v) {
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.setMarginEnd(10);
-        // TextUtils.isEmpty() does not properly work when it has JSONArray.optString(int) as params.
-        // It is appropriate that JSONArray.isNull(int) be applied.
         try { jsonAutoArray = new JSONArray(json); }
-        catch (JSONException e) {e.printStackTrace();}
+        catch (JSONException | NullPointerException e) { e.printStackTrace(); }
 
         if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) {
             setNoAutoFilterText();
+            binding.imgbtnLock.setVisibility(View.GONE);
             return;
-        }
+        } else binding.imgbtnLock.setVisibility(View.VISIBLE);
 
+
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        params.setMarginEnd(10);
         isLocked = mSettings.getBoolean(Constants.AUTOCLUB_LOCK, false);
         switchFilterLock(isLocked);
 

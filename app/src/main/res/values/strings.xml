@@ -186,7 +186,7 @@
     <string name="board_filter_model">모델명</string>
     <string name="board_filter_type">타입</string>
     <string name="board_filter_year">연식</string>
-    <string name="board_autoclub_set">설정에서 클럽정보를 입력해주세요</string>
+    <string name="board_autoclub_set">설정 에서 클럽정보를 입력해주세요</string>
     <string name="board_filter_club">클럽</string>
     <string name="board_filter_link">입력</string>
     <string name="board_autoclub_sort_time">최근포스트</string>

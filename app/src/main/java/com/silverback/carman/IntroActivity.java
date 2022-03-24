@@ -118,8 +118,9 @@ public class IntroActivity extends BaseActivity  {
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
                 userData.put("cnt_warning", null);
-                userData.put("reg_date", FieldValue.serverTimestamp());
-                userData.put("rename_date", new HashMap<String, FieldValue>());
+                userData.put("install_date", FieldValue.serverTimestamp());
+                userData.put("reg_date", new ArrayList<FieldValue>());
+
 
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
                     try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
