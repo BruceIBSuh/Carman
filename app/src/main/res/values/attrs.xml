@@ -56,12 +56,6 @@
         <attr name="graphLabelColor" format="color|reference" />
     </declare-styleable>
 
-    <declare-styleable name="SpinnerDialogPreference">
-        <attr name="siguncode" format="string" />
-        <attr name="sidoSpinner" format="reference" />
-        <attr name="sigunSpinner" format="reference" />
-    </declare-styleable>
-
     <declare-styleable name="ProgressImagePreference">
         <attr name="titleId" format="integer|reference" />
         <attr name="progbar" format="reference" />
@@ -73,6 +67,12 @@
         <attr name="btn2" format="string|reference" />
         <attr name="btn3" format="string|reference" />
         <attr name="btn4" format="string|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="SpinnerDialogPref">
+        <attr name="siguncode" format="string" />
+        <attr name="sidoSpinner" format="reference|color" />
+        <attr name="sigunSpinner" format="reference|color" />
     </declare-styleable>
 
     <declare-styleable name="NameDialogPreference">

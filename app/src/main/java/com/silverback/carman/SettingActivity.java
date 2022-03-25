@@ -69,6 +69,8 @@ public class SettingActivity extends BaseActivity implements
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
+    public static final String DIALOG_USERNAME_TAG = "carman_pref_nickname";
+    public static final String DIALOG_DISTRICT_TAG ="carman_pref_district";
 
 
     // Constants

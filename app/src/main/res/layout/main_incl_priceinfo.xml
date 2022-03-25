@@ -8,7 +8,6 @@
     android:layout_gravity="center_vertical"
     android:padding="3dp"
     tools:showIn="@layout/activity_main">
-
     <com.silverback.carman.views.OpinetAvgPriceView
         android:id="@+id/avgPriceView"
         android:layout_width="130dp"
@@ -66,6 +65,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/view_subtitle_spinner"
         app:layout_constraintTop_toBottomOf="@+id/view_subtitle_spinner" />
-
     <!--android:background="#C5E1A5" -->
 </androidx.constraintlayout.widget.ConstraintLayout>

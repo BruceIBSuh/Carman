@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
@@ -47,19 +46,19 @@ import java.util.Objects;
  * PreferenceManager.OnDisplayDialogPreferenceListener to pop up the dialog fragment, passing params
  * to the singleton constructor.
  */
-public class SettingPreferenceFragment extends SettingBaseFragment implements
-        PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback {
-
+public class SettingPreferenceFragment extends SettingBaseFragment {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingPreferenceFragment.class);
+
+    private static final String DIALOG_USERNAME_TAG = "carman_pref_nickname";
+    private static final String DIALOG_DISTRICT_TAG ="carman_pref_district";
+    private static final String DIALOG_USERIMG_TAG = "carman_pref_userpic";
 
     // Objects
     private SharedPreferences mSettings;
     private FragmentSharedModel fragmentModel;
     private Preference userImagePref;
-    //private String nickname;
     private String userName;
-
     // Custom preferences defined in views package
     private ProgressBarPreference autoPref; // custom preference to show the progressbar.
     private SpinnerDialogPreference spinnerPref;
@@ -83,7 +82,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
-
+        log.i("root key: %s", rootKey);
         String jsonString = requireArguments().getString("district");
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
@@ -149,10 +148,10 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
         // Custom preference to display the custom PreferenceDialogFragmentCompat which has dual
         // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
         // district name and code is saved as JSONString.
-        spinnerPref = findPreference(Constants.DISTRICT);
-        if(jsonDistrict != null) {
-            Objects.requireNonNull(spinnerPref).setSummaryProvider(preference ->
-                    String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
+        spinnerPref = findPreference(DIALOG_DISTRICT_TAG);
+        if(spinnerPref != null && jsonDistrict != null) {
+            spinnerPref.setSummaryProvider(preference -> String.format(
+                    "%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
             sigunCode = jsonDistrict.optString(2);
         }
 
@@ -197,7 +196,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
         // Image Editor which pops up the dialog to select which resource location to find an image.
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
-        userImagePref = findPreference(Constants.USER_IMAGE);
+        userImagePref = findPreference(DIALOG_USERIMG_TAG);
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -249,7 +248,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
             sigunCode = distList.get(2);
             spinnerPref.setSummaryProvider(preference -> String.format("%s %s", distList.get(0), distList.get(1)));
             JSONArray jsonArray = new JSONArray(distList);
-            mSettings.edit().putString(Constants.DISTRICT, jsonArray.toString()).apply();
+            mSettings.edit().putString(DIALOG_DISTRICT_TAG, jsonArray.toString()).apply();
         });
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), media -> {
@@ -296,49 +295,55 @@ public class SettingPreferenceFragment extends SettingBaseFragment implements
         }
     }
 
-    //@SuppressWarnings("deprecation")
+    /*
+    @SuppressWarnings("deprecation")
+    //Though setTargetFragemnt has been deprecated, PreferernceDialogFragmentCompat is not switched
+    //over to the new API, leaving the state deprecated.
+    //implement PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback
     @Override
     public boolean onPreferenceDisplayDialog(@NonNull PreferenceFragmentCompat caller, @NonNull Preference pref) {
         final DialogFragment dialogFragment;
-        final Bundle extras = pref.getExtras();
         if (pref instanceof SpinnerDialogPreference) {
+            if(getParentFragmentManager().findFragmentByTag(DIALOG_DISTRICT_TAG) != null) return false;
             dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             dialogFragment.setTargetFragment(this, 0);
+            dialogFragment.show(getParentFragmentManager(), DIALOG_DISTRICT_TAG);
         } else if(pref instanceof NameDialogPreference) {
+            if(getParentFragmentManager().findFragmentByTag(DIALOG_USERNAME_TAG) != null) return false;
             dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
             dialogFragment.setTargetFragment(this, 1);
+            dialogFragment.show(getParentFragmentManager(), DIALOG_USERNAME_TAG);
         } else throw new IllegalStateException("");
 
-        dialogFragment.show(getParentFragmentManager(), null);
         //dialogFragment.getChildFragmentManager().setFragmentResult(pref.getKey(), extras);
         //getChildFragmentManager() -> has not been attached yet error
         //getParentFragmentManager() -> not associated with a fragment manager error.
         return true;
     }
+     */
+
+
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
     // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
-    //@SuppressWarnings("deprecated")
-    /*
+    @SuppressWarnings("deprecation")
     @Override
     public void onDisplayPreferenceDialog(@NonNull Preference pref) {
         final DialogFragment dialogFragment;
-        final Bundle extras = pref.getExtras();
         if (pref instanceof SpinnerDialogPreference) {
+            //if(getParentFragmentManager().findFragmentByTag(DIALOG_DISTRICT_TAG) != null) return;
             dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
             dialogFragment.setTargetFragment(this, 0);
-
+            dialogFragment.show(getParentFragmentManager(), DIALOG_DISTRICT_TAG);
 
         } else if(pref instanceof NameDialogPreference) {
+            //if(getParentFragmentManager().findFragmentByTag(DIALOG_USERNAME_TAG) != null) return;
             dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
             dialogFragment.setTargetFragment(this, 1);
-            //dialogFragment.getChildFragmentManager().setFragmentResult(pref.getKey(), extras);
-        } else throw new IllegalStateException("");
-
-        dialogFragment.show(getParentFragmentManager(), null);
+            dialogFragment.show(getParentFragmentManager(), DIALOG_USERNAME_TAG);
+        } else super.onDisplayPreferenceDialog(pref);
     }
 
-     */
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

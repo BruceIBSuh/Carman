@@ -54,8 +54,8 @@
             app:title="@string/pref_dialog_district"
             app:key="carman_pref_district"
             app:dialogTitle="@string/pref_dialog_district_title"
-            app:positiveButtonText="Confirm"
-            app:negativeButtonText="Cancel" />
+            app:positiveButtonText="@string/dialog_btn_confirm"
+            app:negativeButtonText="@string/dialog_btn_cancel" />
         <ListPreference
             app:title="@string/pref_location_radius"
             app:key="carman_pref_searching_radius"
@@ -113,7 +113,7 @@
             app:summaryOn="@string/pref_app_geofnece_on"
             app:summaryOff= "@string/pref_app_geofence_off" />
         <Preference
-            app:key="carman_pref_user_image"
+            app:key="carman_pref_userpic"
             app:title="@string/pref_app_userImage" />
     </PreferenceCategory>
 

@@ -20,5 +20,7 @@
     <dimen name="boxlineWidth">1dp</dimen>
     <dimen name="underlineWidth">1dp</dimen>
 
+    <dimen name="spinner">16sp</dimen>
+
 
 </resources>
