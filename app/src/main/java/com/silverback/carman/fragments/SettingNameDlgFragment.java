@@ -9,6 +9,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -50,7 +51,6 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
     private FirebaseFirestore firestore;
-    private NameDialogPreference namePreference;
     private DialogSettingNameBinding binding;
     private String currentName, newName;
 
@@ -86,21 +86,17 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setView(binding.getRoot())
-                //.setTitle(R.string.pref_title_username)
-                .setPositiveButton("Confirm", this)
-                .setNegativeButton("Cancel", this);
-
+                .setTitle(R.string.pref_title_username)
+                .setPositiveButton(getString(R.string.dialog_btn_confirm), this)
+                .setNegativeButton(getString(R.string.dialog_btn_cancel), this);
         AlertDialog dialog = builder.create();
         dialog.show();
 
-        // Initial state of the buttons.
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
-        namePreference = (NameDialogPreference)getPreference();
-
-        binding.etUserName.setText(currentName);
+        if(TextUtils.isEmpty(currentName)) binding.etUserName.setHint(R.string.pref_hint_username);
+        else binding.etUserName.setText(currentName);
         binding.etUserName.setOnFocusChangeListener((v, hasFocus) -> {
             if(hasFocus) binding.etUserName.setText("");
-            else binding.etUserName.setHint(R.string.pref_hint_username);
         });
 
         // Regular expression required to check if a user name should be valid.
@@ -137,13 +133,17 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
                     dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
                     Snackbar.make(binding.getRoot(), getString(R.string.pref_username_msg_available), Snackbar.LENGTH_SHORT).show();
                 }
-            }).addOnFailureListener(e -> log.e("Query failed"));
+            }).addOnFailureListener(Throwable::printStackTrace);
         });
 
         return dialog;
     }
 
-
+    @Override
+    protected void onBindDialogView(@NonNull View view) {
+        super.onBindDialogView(view);
+        log.i("onBindDialogView");
+    }
 
     //@SuppressWarnings("ConstantConditions")
     @Override
@@ -152,7 +152,8 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
             // Call this method after the user changes the preference, but before the internal state
             // is set. This allows the client to ignore the user value.
             //mSettings.edit().putString(Constants.USER_NAME, binding.etUserName.getText().toString()).apply();
-            namePreference.callChangeListener(newName);
+            ((NameDialogPreference)getPreference()).callChangeListener(newName);
+
             // When a new username has replaced the current name, update the new name in Firestore.
             try (FileInputStream fis = requireActivity().openFileInput("userId");
                  BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
@@ -167,7 +168,7 @@ public class SettingNameDlgFragment extends PreferenceDialogFragmentCompat {
                     if(task.isSuccessful()) log.i("update done");
                     else log.e("update failed");
                 });
-            }catch(IOException | NullPointerException e) { e.printStackTrace(); }
+            } catch(IOException | NullPointerException e) { e.printStackTrace(); }
         }
     }
 }

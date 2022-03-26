@@ -60,7 +60,6 @@ public class IntroActivity extends BaseActivity  {
     private ActivityIntroBinding binding;
     private FirebaseAuth mAuth;
     private FirebaseFirestore firestore;
-    private CarmanDatabase mDB;
     private GasPriceTask gasPriceTask;
     private DistCodeDownloadTask distCodeTask;
     private OpinetViewModel opinetModel;
@@ -75,7 +74,7 @@ public class IntroActivity extends BaseActivity  {
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
-        mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
+        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Retrieve resources.
@@ -118,7 +117,7 @@ public class IntroActivity extends BaseActivity  {
                 userData.put("user_name", new ArrayList<String>());
                 userData.put("user_pic", null);
                 userData.put("auto_data", null);
-                userData.put("cnt_warning", null);
+                userData.put("cnt_warning", 0);
                 userData.put("install_date", FieldValue.serverTimestamp());
                 userData.put("reg_date", new ArrayList<Date>());
 

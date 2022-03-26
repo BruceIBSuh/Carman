@@ -16,6 +16,7 @@ import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -82,13 +83,14 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
-        log.i("root key: %s", rootKey);
+
         String jsonString = requireArguments().getString("district");
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        mSettings = ((BaseActivity) Objects.requireNonNull(requireActivity())).getSharedPreferernces();
+        //mSettings = ((BaseActivity) Objects.requireNonNull(requireActivity())).getSharedPreferernces();
+        mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         // Custom preference which calls for DialogFragment, not PreferenceDialogFragmentCompat,
@@ -239,6 +241,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
                 autoPref.setSummaryProvider(preference -> "Loading...");
                 queryAutoMaker(makerName);
                 autoPref.showProgressBar(true);
+
             } else autoPref.setSummaryProvider(pref -> getString(R.string.pref_entry_void));
         });
 

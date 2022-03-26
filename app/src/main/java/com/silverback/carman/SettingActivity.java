@@ -172,8 +172,12 @@ public class SettingActivity extends BaseActivity implements
         // which was invoked by shouldShowRequestPermissionRationale(), request permission again
         // if positive or show the message to tell the camera is disabled.
         fragmentModel.getPermission().observe(this, isPermitted -> {
-            if(isPermitted) ActivityCompat.requestPermissions(this, new String[]{permCamera}, REQUEST_PERM_CAMERA);
-            else Snackbar.make(binding.getRoot(), getString(R.string.perm_msg_camera), Snackbar.LENGTH_SHORT).show();
+            if(isPermitted) ActivityCompat.requestPermissions(
+                    this, new String[]{permCamera}, REQUEST_PERM_CAMERA);
+            else {
+                final String msg = getString(R.string.perm_msg_camera);
+                Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+            }
         });
     }
 
@@ -277,7 +281,6 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(@NonNull PreferenceFragmentCompat caller, Preference pref) {
-        log.i("onPreferenceStartFragment");
         final Bundle args = pref.getExtras();
         final Fragment fragment = getSupportFragmentManager()
                 .getFragmentFactory()
@@ -328,14 +331,9 @@ public class SettingActivity extends BaseActivity implements
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
-                    //Map<String, Object> autoData = new HashMap<>();
-                    //autoData.put("auto_data", jsonAutoData);
-                    //uploadUserDataToFirebase(autoData);
-                    //uploadData.put("user_club", jsonAutoData);
-
-                    // send the result bact to BoardActivity for startActivityForResult()
-                    log.i("JSON AutoData: %s", jsonAutoData);
                     resultIntent.putExtra("autodata", jsonAutoData);
+                    final DocumentReference docref = firestore.collection("users").document(userId);
+                    docref.update("auto_data", jsonAutoData).addOnFailureListener(Throwable::printStackTrace);
                 }
 
                 break;
