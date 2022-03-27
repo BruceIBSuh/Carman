@@ -6,13 +6,17 @@
         app:title="@string/pref_category_auto_info"
         app:key="carman_pref_basic_info"
         app:icon="@drawable/settings_category_info" >
-
+        <Preference
+            app:key="carman_pref_nickname"
+            app:title="@string/pref_title_username" />
+        <!--
         <com.silverback.carman.views.NameDialogPreference
             app:key="carman_pref_nickname"
             app:title="@string/pref_title_username"
             app:dialogTitle="@string/pref_title_username"
             app:positiveButtonText="Confirm"
             app:negativeButtonText="Cancel" />
+        -->
         <!--
         <Preference
             app:fragment="com.silverback.carman.fragments.SettingAutoFragment"
@@ -50,7 +54,8 @@
         app:title="@string/pref_category_location"
         app:key="pref_location"
         app:icon="@drawable/settings_category_location">
-        <com.silverback.carman.views.SpinnerDialogPreference
+        <!--<com.silverback.carman.views.SpinnerDialogPreference-->
+        <Preference
             app:title="@string/pref_dialog_district"
             app:key="carman_pref_district"
             app:dialogTitle="@string/pref_dialog_district_title"

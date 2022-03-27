@@ -58,8 +58,8 @@ public class FragmentSharedModel extends ViewModel {
     // DatePicker, TimePickerFragment
     private MutableLiveData<Calendar> customDateAndTime;
 
-    // AutoData used in SettingPreferenceActivity which is shared b/w SettingPrefereneFragment and
-    // SettingAutoFragment
+    // Settings
+    private MutableLiveData<String> userName;
     private MutableLiveData<JSONArray> jsonAutoDataArray;
     private MutableLiveData<Boolean> jsonAutoData;
 
@@ -224,6 +224,11 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<Boolean> getJsonAutoData() {
         if(jsonAutoData == null) jsonAutoData = new MutableLiveData<>();
         return jsonAutoData;
+    }
+
+    public MutableLiveData<String> getUserName() {
+        if(userName == null) userName = new MutableLiveData<>();
+        return userName;
     }
 
     public MutableLiveData<JSONArray> getAutoData() {

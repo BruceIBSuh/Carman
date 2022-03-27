@@ -15,13 +15,11 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.database.CarmanDatabase;
@@ -57,21 +55,25 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
 
     // Objects
     private SharedPreferences mSettings;
-    private FragmentSharedModel fragmentModel;
+    private Preference namePref;
     private Preference userImagePref;
     private String userName;
     // Custom preferences defined in views package
     private ProgressBarPreference autoPref; // custom preference to show the progressbar.
-    private SpinnerDialogPreference spinnerPref;
+    //private SpinnerDialogPreference spinnerPref;
+    private Preference spinnerPref;
     private Preference favorite;
 
     private View parentView;
     private JSONArray jsonDistrict;
-    private String sigunCode;
+    //private String sigunCode;
     private String regMakerNum;
 
-
-
+    /*
+     * To popup a custom dialogfragment, there should be options to create it.
+     * 1. General preference calls DialogFragment, the result of which is passed via ViewModel.
+     * 2. Create a custom preference, which invokes onDisplayPreferenceDialog() when it is called.
+     */
     @NonNull
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
@@ -89,16 +91,19 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         catch(JSONException e) {e.printStackTrace();}
 
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
-        //mSettings = ((BaseActivity) Objects.requireNonNull(requireActivity())).getSharedPreferernces();
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
-        // Custom preference which calls for DialogFragment, not PreferenceDialogFragmentCompat,
-        // in order to receive a user name which shouold be verified to a new one by querying.
-        NameDialogPreference namePref = findPreference(Constants.USER_NAME);
-        userName = mSettings.getString(Constants.USER_NAME, null);
-        String name = (TextUtils.isEmpty(userName))?getString(R.string.pref_entry_void):userName;
-        Objects.requireNonNull(namePref).setSummary(name);
+        namePref = findPreference(DIALOG_USERNAME_TAG);
+        userName = mSettings.getString(DIALOG_USERNAME_TAG, getString(R.string.pref_entry_void));
+        //String name = (TextUtils.isEmpty(userName)) ? getString(R.string.pref_entry_void) : userName;
+        if(namePref != null) {
+            namePref.setSummary(userName);
+            namePref.setOnPreferenceClickListener(v -> {
+                DialogFragment dialogFragment = new SettingNameFragment(namePref, userName);
+                dialogFragment.show(getChildFragmentManager(), "nameDlgFragment");
+                return true;
+            });
+        }
 
         //if(TextUtils.isEmpty(namePref.getSummary())) namePref.setSummary(getString(R.string.pref_entry_void));
         //if(userName != null) nickname = Objects.requireNonNull(namePref.getSummary()).toString();
@@ -109,7 +114,6 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         autoPref = findPreference(Constants.AUTO_DATA);
         makerName = mSettings.getString(Constants.AUTO_MAKER, null);
         modelName = mSettings.getString(Constants.AUTO_MODEL, null);
-
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
@@ -152,10 +156,19 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // district name and code is saved as JSONString.
         spinnerPref = findPreference(DIALOG_DISTRICT_TAG);
         if(spinnerPref != null && jsonDistrict != null) {
-            spinnerPref.setSummaryProvider(preference -> String.format(
-                    "%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1)));
-            sigunCode = jsonDistrict.optString(2);
+            spinnerPref.setSummaryProvider((Preference.SummaryProvider<Preference>) preference -> {
+                if(TextUtils.isEmpty(jsonDistrict.optString(0))) return getString(R.string.pref_entry_void);
+                else return String.format("%s %s", jsonDistrict.optString(0), jsonDistrict.optString(1));
+            });
+
+            spinnerPref.setOnPreferenceClickListener(v -> {
+                String distCode = jsonDistrict.optString(2);
+                DialogFragment spinnerFragment = new SettingSpinnerFragment(spinnerPref, distCode);
+                spinnerFragment.show(getChildFragmentManager(), "spinnerFragment");
+                return true;
+            });
         }
+
 
         // Set the searching radius within which near stations should be located.
         ListPreference searchingRadius = findPreference(Constants.SEARCHING_RADIUS);
@@ -200,7 +213,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(DIALOG_USERIMG_TAG);
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
-            if(TextUtils.isEmpty(mSettings.getString(Constants.USER_NAME, null))) {
+            if(TextUtils.isEmpty(mSettings.getString(DIALOG_USERNAME_TAG, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;
             }
@@ -224,6 +237,12 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
+        fragmentModel.getUserName().observe(getViewLifecycleOwner(), userName -> {
+            mSettings.edit().putString(DIALOG_USERNAME_TAG, userName).apply();
+            namePref.setSummary(userName);
+        });
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonAutoDataArray -> {
             mSettings.edit().putString(Constants.AUTO_DATA, jsonAutoDataArray.toString()).apply();
@@ -248,8 +267,8 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
         // Observe whether the district has changed in the custom spinner list view. If any change
         // has been made, set summary and save it as JSONArray string in SharedPreferences.
         fragmentModel.getDefaultDistrict().observe(getViewLifecycleOwner(), distList -> {
-            sigunCode = distList.get(2);
-            spinnerPref.setSummaryProvider(preference -> String.format("%s %s", distList.get(0), distList.get(1)));
+            //sigunCode = distList.get(2);
+            spinnerPref.setSummaryProvider(pref -> String.format("%s %s", distList.get(0), distList.get(1)));
             JSONArray jsonArray = new JSONArray(distList);
             mSettings.edit().putString(DIALOG_DISTRICT_TAG, jsonArray.toString()).apply();
         });
@@ -329,6 +348,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
     // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
     // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
     // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
+    /*
     @SuppressWarnings("deprecation")
     @Override
     public void onDisplayPreferenceDialog(@NonNull Preference pref) {
@@ -346,6 +366,7 @@ public class SettingPreferenceFragment extends SettingBaseFragment {
             dialogFragment.show(getParentFragmentManager(), DIALOG_USERNAME_TAG);
         } else super.onDisplayPreferenceDialog(pref);
     }
+    */
 
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove

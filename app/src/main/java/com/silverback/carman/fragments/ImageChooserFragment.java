@@ -1,16 +1,15 @@
 package com.silverback.carman.fragments;
 
 import android.app.Dialog;
-import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogImageChooserBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -43,17 +42,16 @@ public class ImageChooserFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         LayoutInflater inflater = getLayoutInflater();
         DialogImageChooserBinding binding = DialogImageChooserBinding.inflate(inflater);
+
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setView(binding.getRoot());
+        builder.setView(binding.getRoot())
+                .setTitle(getString(R.string.pref_userpic_title));
 
         binding.tvGallery.setOnClickListener(view -> {
-            log.i("Gallery selected");
             fragmentModel.getImageChooser().setValue(Constants.GALLERY);
             dismiss();
         });
         binding.tvCamera.setOnClickListener(view -> {
-            log.i("Camera selected");
-            //mListener.selectMedia(BoardWritingActivity.CAMERA);
             fragmentModel.getImageChooser().setValue(Constants.CAMERA);
             dismiss();
         });

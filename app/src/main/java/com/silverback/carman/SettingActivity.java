@@ -69,11 +69,10 @@ public class SettingActivity extends BaseActivity implements
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
+
     public static final String DIALOG_USERNAME_TAG = "carman_pref_nickname";
     public static final String DIALOG_DISTRICT_TAG ="carman_pref_district";
 
-
-    // Constants
     private static final int REQUEST_CODE_GALLERY = 10;
     private static final int REQUEST_CODE_CAMERA = 11;
     private static final int REQUEST_CODE_CROP = 12;
@@ -81,7 +80,7 @@ public class SettingActivity extends BaseActivity implements
 
     // Objects
     private Intent resultIntent; //back results to MainActivity
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgModel;
@@ -126,7 +125,6 @@ public class SettingActivity extends BaseActivity implements
             log.i("request code: %s", requestCode);
         }
 
-        // UI's
         frameLayout = binding.frameSetting;
         setSupportActionBar(binding.settingToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
@@ -134,7 +132,7 @@ public class SettingActivity extends BaseActivity implements
 
         // Instantiate objects
         resultIntent = new Intent();
-        firestore = FirebaseFirestore.getInstance();
+        mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
         uploadData = new HashMap<>();
@@ -142,17 +140,10 @@ public class SettingActivity extends BaseActivity implements
         // ViewModels
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-
-        // Get the user id which is saved in the internal storage
+        
         if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
-
-        // Passes District Code(Sigun Code) and vehicle nickname to SettingPreferenceFragment for
-        // setting the default spinner values in SpinnerDialogPrefernce and showing the summary
-        // of the vehicle name respectively.
         JSONArray jsonDistArray = getDistrictJSONArray();
-        //if(jsonDistArray == null) distCode = (getResources().getStringArray(R.array.default_district))[2];
-        //else distCode = jsonDistArray.optString(2);
-        // Attach SettingPreferencFragment in the FrameLayout
+
         settingFragment = new SettingPreferenceFragment();
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
@@ -332,7 +323,7 @@ public class SettingActivity extends BaseActivity implements
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     resultIntent.putExtra("autodata", jsonAutoData);
-                    final DocumentReference docref = firestore.collection("users").document(userId);
+                    final DocumentReference docref = mDB.collection("users").document(userId);
                     docref.update("auto_data", jsonAutoData).addOnFailureListener(Throwable::printStackTrace);
                 }
 
@@ -464,7 +455,7 @@ public class SettingActivity extends BaseActivity implements
     // Upload the data to Firestore.
     private void uploadUserDataToFirebase(Map<String, Object> data) {
         // Read the user id containing file which is saved in the internal storage.
-        final DocumentReference docRef = firestore.collection("users").document(userId);
+        final DocumentReference docRef = mDB.collection("users").document(userId);
         docRef.set(data, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> log.i("Successful"))
                 .addOnFailureListener(e -> log.e("Failed"));
@@ -494,7 +485,7 @@ public class SettingActivity extends BaseActivity implements
         if(uri == null) {
             userImgRef.delete().addOnSuccessListener(aVoid -> {
                 // Delete(update) the document with null value.
-                DocumentReference docref = firestore.collection("users").document(userId);
+                DocumentReference docref = mDB.collection("users").document(userId);
                 docref.update("user_pic", null).addOnSuccessListener(bVoid -> {
                     Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted),
                             Snackbar.LENGTH_SHORT).show();
@@ -529,7 +520,7 @@ public class SettingActivity extends BaseActivity implements
                 uriUserImage.put("user_pic", downloadUserImageUri.toString());
 
                 // Update the "user_pic" field of the document in the "users" collection
-                firestore.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
+                mDB.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
                         .addOnCompleteListener(userimgTask -> {
                             if(userimgTask.isSuccessful()) {
                                 log.i("user image update in Firestore");
@@ -548,7 +539,7 @@ public class SettingActivity extends BaseActivity implements
                 // Update the user image in the posting items wrtiiten by the user.
                 // Consider that all documents should be updated. Otherwise, limit condition would
                 // be added.
-                firestore.collection("user_post").whereEqualTo("user_id", userId).get()
+                mDB.collection("user_post").whereEqualTo("user_id", userId).get()
                         .addOnCompleteListener(postTask -> {
                             if(postTask.isSuccessful() && postTask.getResult() != null) {
                                 for(QueryDocumentSnapshot document : postTask.getResult()) {
@@ -557,8 +548,6 @@ public class SettingActivity extends BaseActivity implements
                                 }
                             }
                         });
-
-
             }
         });
     }
