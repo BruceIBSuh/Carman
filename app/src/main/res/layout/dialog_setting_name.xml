@@ -7,21 +7,6 @@
     android:layout_height="wrap_content"
     android:padding="16dp">
 
-    <!--
-    <TextView
-        android:id="@+id/tv_header_username"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:background="@android:color/holo_blue_light"
-        android:padding="8dp"
-        android:text="@string/pref_title_username"
-        android:textColor="@android:color/white"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-    -->
-
     <EditText
         android:id="@+id/et_user_name"
         android:layout_width="0dp"
@@ -38,7 +23,7 @@
         app:layout_constraintEnd_toStartOf="@+id/btn_verify"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:ignore="AutoFill,SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+        tools:ignore="AutoFill" />
 
     <Button
         android:id="@+id/btn_verify"
@@ -55,8 +40,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/et_user_name"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/et_user_name"
-        app:layout_constraintTop_toTopOf="@+id/et_user_name"
-        tools:ignore="TextContrastCheck,TouchTargetSizeCheck" />
-
+        app:layout_constraintTop_toTopOf="@+id/et_user_name" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -69,7 +69,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
 
     // Query an auto maker with a name selected by the automaker preference. The query result is
     // passed as param to queryAutoMakerSnapshot(), an abstract method which should be implemented
-    // either in SettingAutoFragment or SettingPreferenceFragment.
+    // either in SettingAutoFragment or SettingPrefFragment.
     void queryAutoMaker(String automaker) {
         autoRef.document(automaker).get().addOnSuccessListener(snapshot -> {
             if(snapshot.exists()) queryAutoMakerSnapshot(snapshot);
@@ -105,7 +105,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
     }
 
     // ObjectAutoData is saved in SharedPreferences as JSON String which should be parsed into List<String>
-    // Each names are inherited to the child views of SettingPreferenceFragment and SettiingAutoFragment.
+    // Each names are inherited to the child views of SettingPrefFragment and SettiingAutoFragment.
     List<String> parseAutoData(String jsonString) {
         List<String> autoDataList = new ArrayList<>();
         try {
@@ -127,7 +127,7 @@ public abstract class SettingBaseFragment extends PreferenceFragmentCompat {
         return autoDataList;
     }
 
-    // Abstract methods which should be implemented both in SettingPreferenceFragment and
+    // Abstract methods which should be implemented both in SettingPrefFragment and
     // SettingBaseFragment.
     protected abstract void queryAutoMakerSnapshot(DocumentSnapshot makershot);
     protected abstract void queryAutoModelSnapshot(DocumentSnapshot modelshot);

@@ -13,7 +13,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.Preference;
-import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
@@ -26,7 +25,6 @@ import com.silverback.carman.R;
 import com.silverback.carman.databinding.DialogSettingNameBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
 import java.io.BufferedReader;
@@ -64,13 +62,14 @@ public class SettingNameFragment extends DialogFragment {
         binding = DialogSettingNameBinding.inflate(getLayoutInflater());
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        AlertDialog dialog = builder.setView(binding.getRoot())
+        AlertDialog alertDialog = builder.setView(binding.getRoot())
                 .setTitle(R.string.pref_title_username)
-                .setPositiveButton(getString(R.string.dialog_btn_confirm), (v, which) -> updateUserProfile())
-                .setNegativeButton(getString(R.string.dialog_btn_cancel), (v, which) -> dismiss())
+                .setPositiveButton(getString(R.string.dialog_btn_confirm), (dialog, which) -> updateUserProfile())
+                .setNegativeButton(getString(R.string.dialog_btn_cancel), (dialog, which) -> dismiss())
                 .create();
-        dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
+
+        alertDialog.show();
+        alertDialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(false);
 
         binding.etUserName.setText(currentName);
         binding.etUserName.setOnFocusChangeListener((v, hasFocus) -> {
@@ -105,17 +104,17 @@ public class SettingNameFragment extends DialogFragment {
             Query queryName = firestore.collection("users").whereArrayContains("user_name", newName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
-                    dialog.getButton(BUTTON_POSITIVE).setEnabled(false);
+                    alertDialog.getButton(BUTTON_POSITIVE).setEnabled(false);
                     binding.btnVerify.setEnabled(false);
                     Snackbar.make(binding.getRoot(), getString(R.string.pref_username_msg_invalid), Snackbar.LENGTH_SHORT).show();
                 } else {
-                    dialog.getButton(BUTTON_POSITIVE).setEnabled(true);
+                    alertDialog.getButton(BUTTON_POSITIVE).setEnabled(true);
                     Snackbar.make(binding.getRoot(), getString(R.string.pref_username_msg_available), Snackbar.LENGTH_SHORT).show();
                 }
             }).addOnFailureListener(Throwable::printStackTrace);
         });
 
-        return dialog;
+        return alertDialog;
     }
 
     private void updateUserProfile() {

@@ -50,7 +50,7 @@ public interface FavoriteProviderDao {
     void deleteProvider(FavoriteProviderEntity provider);
 
     // class of the result subset which indicates what is the first set station and service in
-    // SettingPreferenceFragment
+    // SettingPrefFragment
     class FirstSetFavorite {
         @ColumnInfo(name = "favorite_name")
         public String favoriteName;

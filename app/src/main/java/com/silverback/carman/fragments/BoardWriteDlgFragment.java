@@ -3,6 +3,7 @@ package com.silverback.carman.fragments;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Dialog;
 import android.content.DialogInterface;
@@ -117,6 +118,8 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
         cbAutoFilter = new ArrayList<>();
+        imageAdapter = new BoardImageAdapter(getContext(), uriImageList, this);
+
     }
 
     @Override
@@ -127,16 +130,17 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         binding.toolbarBoardWrite.setNavigationOnClickListener(view -> dismiss());
         createPostWriteMenu();
 
-        //RecyclerView to display attached images
+        spanHandler = new BoardImageSpanHandler(binding.etPostContent, this);
+        // RecyclerView to display attached thumbnail images on the bottom
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.recyclerImages.setLayoutManager(linearLayout);
         //recyclerImageView.setHasFixedSize(true);
-        imageAdapter = new BoardImageAdapter(getContext(), uriImageList, this);
-        binding.recyclerImages.setAdapter(imageAdapter);
 
-        spanHandler = new BoardImageSpanHandler(binding.etPostContent, this);
-        binding.btnImage.setOnClickListener(view -> selectImageMedia());
+        binding.btnImage.setOnClickListener(view -> {
+            binding.recyclerImages.setAdapter(imageAdapter);
+            selectImageMedia();
+        });
 
         //Create the autofilter
         if(page == AUTOCLUB) {
@@ -228,9 +232,12 @@ public class BoardWriteDlgFragment extends DialogFragment implements
             height = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
         }
 
-        ObjectAnimator animTab = ObjectAnimator.ofFloat(binding.scrollviewAutofilter, "translationY", height);
-        animTab.setDuration(1000);
-        animTab.start();
+        ObjectAnimator filter = ObjectAnimator.ofFloat(binding.scrollviewAutofilter, "translationY", height);
+        filter.setDuration(1000);
+        filter.start();
+
+
+
     }
 
     //Create the autofilter checkbox

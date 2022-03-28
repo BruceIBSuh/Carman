@@ -36,7 +36,7 @@ import com.silverback.carman.databinding.ActivitySettingsBinding;
 import com.silverback.carman.fragments.SettingAutoFragment;
 import com.silverback.carman.fragments.SettingFavorGasFragment;
 import com.silverback.carman.fragments.SettingFavorSvcFragment;
-import com.silverback.carman.fragments.SettingPreferenceFragment;
+import com.silverback.carman.fragments.SettingPrefFragment;
 import com.silverback.carman.fragments.SettingSvcItemFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -70,11 +70,15 @@ public class SettingActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
-    public static final String DIALOG_USERNAME_TAG = "carman_pref_nickname";
-    public static final String DIALOG_DISTRICT_TAG ="carman_pref_district";
+    public static final String PREF_USERNAME_TAG = "carman_pref_nickname";
+    public static final String PREF_DISTRICT_TAG ="carman_pref_district";
+    public static final String PREF_AUTODATA_TAG = "carman_pref_autodata";
+    public static final String PREF_FUEL_TAG = "carman_pref_ls_fuel";
+    public static final String PREF_SEARCH_RADIOUS_TAG = "carman_pref_searching_radius";
+    public static final String PREF_USERIMG_TAG = "carman_pref_userpic";
 
-    private static final int REQUEST_CODE_GALLERY = 10;
-    private static final int REQUEST_CODE_CAMERA = 11;
+    //private static final int REQUEST_CODE_GALLERY = 10;
+    //private static final int REQUEST_CODE_CAMERA = 11;
     private static final int REQUEST_CODE_CROP = 12;
     private static final int REQUEST_PERM_CAMERA = 1000;
 
@@ -84,9 +88,8 @@ public class SettingActivity extends BaseActivity implements
     private FirebaseStorage storage;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgModel;
-    private SettingPreferenceFragment settingFragment;
+    private SettingPrefFragment settingFragment;
     private GasPriceTask gasPriceTask;
-    private Map<String, Object> uploadData;
 
 
     // UIs
@@ -96,8 +99,6 @@ public class SettingActivity extends BaseActivity implements
     // Fields
     private String userId;
     private String userImage;
-    private String userName;
-    private String jsonAutoData;
     private String permCamera;
     private Uri downloadUserImageUri;
     private int requestCode;
@@ -120,10 +121,7 @@ public class SettingActivity extends BaseActivity implements
         setContentView(binding.getRoot());
 
         // get Intent data, if any.
-        if(getIntent() != null) {
-            requestCode = getIntent().getIntExtra("caller", -1);
-            log.i("request code: %s", requestCode);
-        }
+        if(getIntent() != null) requestCode = getIntent().getIntExtra("caller", -1);
 
         frameLayout = binding.frameSetting;
         setSupportActionBar(binding.settingToolbar);
@@ -135,7 +133,6 @@ public class SettingActivity extends BaseActivity implements
         mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
-        uploadData = new HashMap<>();
 
         // ViewModels
         FragmentSharedModel fragmentModel = new ViewModelProvider(this).get(FragmentSharedModel.class);
@@ -144,7 +141,7 @@ public class SettingActivity extends BaseActivity implements
         if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
         JSONArray jsonDistArray = getDistrictJSONArray();
 
-        settingFragment = new SettingPreferenceFragment();
+        settingFragment = new SettingPrefFragment();
         Bundle bundle = new Bundle();
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
@@ -221,14 +218,14 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Check which fragment the parent activity contains, then if the fragment is SettingPreferenceFragment,
+        // Check which fragment the parent activity contains, then if the fragment is SettingPrefFragment,
         // send back to MainActivity an intent holding preference changes when clicking the Up button.
-        // Otherwise, if the parent activity contains any fragment other than SettingPreferenceFragment,
+        // Otherwise, if the parent activity contains any fragment other than SettingPrefFragment,
         // just pop the fragment off the back stack, which works like the Back command.
         if (item.getItemId() == android.R.id.home) {
             Fragment childFragment = getSupportFragmentManager().findFragmentById(R.id.frame_setting);
             //childFragment = getSupportFragmentManager().findFragmentByTag("settingGeneral"); seems not working
-            if(childFragment instanceof SettingPreferenceFragment) {
+            if(childFragment instanceof SettingPrefFragment) {
                 setResult(requestCode, resultIntent);
                 /*
                 switch(requestCode) {
@@ -253,7 +250,7 @@ public class SettingActivity extends BaseActivity implements
                 return true;
 
             } else {
-                log.i("Back to SettingPreferenceFragment");
+                log.i("Back to SettingPrefFragment");
                 getSupportFragmentManager().popBackStack();
                 Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.setting_toolbar_title));
                 return false;
@@ -278,9 +275,8 @@ public class SettingActivity extends BaseActivity implements
                 .instantiate(getClassLoader(), Objects.requireNonNull(pref.getFragment()));
         fragment.setArguments(args);
 
-        getSupportFragmentManager().setFragmentResultListener("autodata", this, (requestKey, result) -> {
-            log.i("FragmentResultListener: %s, %s", requestKey, result);
-        });
+        getSupportFragmentManager().setFragmentResultListener("autodata", this,
+                (requestKey, result) -> {});
 
         // Chagne the toolbar title according to the fragment the parent activity contains. When
         // returning to the SettingPrefFragment, the title
@@ -304,21 +300,13 @@ public class SettingActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
-            case Constants.USER_NAME:
-                userName = mSettings.getString(key, null);
-                log.i("set username: %s", userName);
-                // Check first if the user id file exists. If so, set the user data or update the
-                // data, otherwise.
-                //if(userName != null) {
-                // TextUtils.isEmpty(str) indicates str == null || str.length = 0;
-                if(!TextUtils.isEmpty(userName)) {
-                    //uploadData.put("user_name", userName);
-                    resultIntent.putExtra("userName", userName);
-                }
+            case PREF_USERNAME_TAG:
+                String userName = mSettings.getString(key, null);
+                if(!TextUtils.isEmpty(userName)) resultIntent.putExtra("userName", userName);
                 break;
 
-            case Constants.AUTO_DATA:
-                jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
+            case PREF_AUTODATA_TAG:
+                String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
@@ -326,15 +314,14 @@ public class SettingActivity extends BaseActivity implements
                     final DocumentReference docref = mDB.collection("users").document(userId);
                     docref.update("auto_data", jsonAutoData).addOnFailureListener(Throwable::printStackTrace);
                 }
-
                 break;
 
-            case Constants.FUEL:
+            case PREF_FUEL_TAG:
                 String gasCode = mSettings.getString(key, null);
                 resultIntent.putExtra("gasCode", gasCode);
                 break;
 
-            case Constants.DISTRICT:
+            case PREF_DISTRICT_TAG:
                 try {
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
@@ -343,12 +330,12 @@ public class SettingActivity extends BaseActivity implements
                 } catch(JSONException e) {e.printStackTrace();}
                 break;
 
-            case Constants.SEARCHING_RADIUS:
+            case PREF_SEARCH_RADIOUS_TAG:
                 String radius = mSettings.getString(key, null);
                 resultIntent.putExtra("searchRadius", radius);
                 break;
 
-            case Constants.USER_IMAGE:
+            case PREF_USERIMG_TAG:
                 userImage = mSettings.getString(key, null);
                 break;
         }
@@ -427,7 +414,7 @@ public class SettingActivity extends BaseActivity implements
                 super.onFragmentViewCreated(fm, fragment, v, savedInstanceState);
                 // To prevent SettingAutoFragment from invoking the method, which leads to cause
                 // NullPointerException due to no autoRef reference.
-                if(fragment instanceof SettingPreferenceFragment){
+                if(fragment instanceof SettingPrefFragment){
                     if(requestCode != -1)
                         markupPreference((PreferenceFragmentCompat)fragment, requestCode);
                 }
@@ -451,16 +438,6 @@ public class SettingActivity extends BaseActivity implements
 
         }
     }
-
-    // Upload the data to Firestore.
-    private void uploadUserDataToFirebase(Map<String, Object> data) {
-        // Read the user id containing file which is saved in the internal storage.
-        final DocumentReference docRef = mDB.collection("users").document(userId);
-        docRef.set(data, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> log.i("Successful"))
-                .addOnFailureListener(e -> log.e("Failed"));
-    }
-
 
     // Upload the cropped user image, the uri of which is saved in the internal storage, to Firebase
     // storage, then move on to get the download url. The url, in turn, is uploaded to "user" collection

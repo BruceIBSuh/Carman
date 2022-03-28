@@ -211,7 +211,7 @@ public class SettingFavAdapter extends RecyclerView.Adapter<SettingFavAdapter.Vi
         snackbar.show();
     }
 
-    // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPreferenceFragment
+    // Retrieve the first row gas station, invoked by SettingFavor which is set to the Favorite in SettingPrefFragment
     // and its price information is to display in the main page,
     public List<FavoriteProviderEntity> getFavoriteList() {
         return favoriteList;

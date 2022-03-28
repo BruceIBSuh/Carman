@@ -21,9 +21,6 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 
-/**
- * A simple {@link Fragment} subclass.
- */
 public class AlertDialogFragment extends DialogFragment {
 
     // Logging
@@ -51,7 +48,6 @@ public class AlertDialogFragment extends DialogFragment {
         return alertFragment;
     }
 
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

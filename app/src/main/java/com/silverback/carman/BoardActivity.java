@@ -15,6 +15,8 @@
  */
 package com.silverback.carman;
 
+import static com.silverback.carman.SettingActivity.PREF_AUTODATA_TAG;
+
 import android.Manifest;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -164,19 +166,18 @@ public class BoardActivity extends BaseActivity implements
 
         // Change the progressbar color using the PorterDuff filter
         binding.progbarBoardLoading.getIndeterminateDrawable().setColorFilter(
-                ContextCompat.getColor(this, android.R.color.holo_blue_dark),
+                ContextCompat.getColor(this, android.R.color.holo_blue_light),
                 android.graphics.PorterDuff.Mode.SRC_IN);
 
-
         // chkboxList is created by whether the autodata is set. cbAutoFilter is created
-        // by wheteher each checkbox item is checked.
+        // by whether each checkbox item is checked.
         chkboxList = new ArrayList<>();
         cbAutoFilter = new ArrayList<>();
         category = RECENT;
 
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
-        jsonAutoFilter = mSettings.getString(Constants.AUTO_DATA, null);
+        jsonAutoFilter = mSettings.getString(PREF_AUTODATA_TAG, null);
         createAutofilter(jsonAutoFilter, binding.autofilter);
 
         // ViewPager2
