@@ -171,19 +171,19 @@ public class BoardPagerFragment extends Fragment implements
         queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
         final CollectionReference colRef = firestore.collection("user_post");
 
-        source = Source.SERVER;
-        /*
+        source = Source.CACHE;
         regListener = colRef.addSnapshotListener(MetadataChanges.INCLUDE, (q, e) -> {
             if(e != null) return;
-            source = (q != null && q.getMetadata().hasPendingWrites())?Source.CACHE:Source.SERVER;
+            source = (q != null && q.getMetadata().hasPendingWrites())? Source.CACHE : Source.SERVER;
+            log.i("snapshot: %s", source);
+            if(source == Source.SERVER) {
+                if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
+                queryPagingUtil.setPostQuery(source, currentPage);
+                isLoading = true;
+            }
         });
-        */
 
-        if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
-        queryPagingUtil.setPostQuery(source, currentPage);
-        isLoading = true;
         // Refactor required to resonse to realtime change.
-
         /*
         if(currentPage == AUTOCLUB) {
             //clubRepo = new QueryClubPostingUtil(firestore);
@@ -247,32 +247,36 @@ public class BoardPagerFragment extends Fragment implements
         // BoardWriteFragment
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
             postRef.get().addOnSuccessListener(postshot -> {
-                //postingList.add(0, postshot);
+                log.i("add in onViewCreated: %s", source);
+                postingList.add(0, postshot);
                 //postingAdapter.notifyItemInserted(0);
-                //postingAdapter.notifyItemChanged(0, PAGINATION);
-                source = Source.CACHE;
-                queryPagingUtil.setPostQuery(source, currentPage);
-                binding.recyclerBoardPostings.smoothScrollToPosition(View.FOCUS_UP);
+                postingAdapter.notifyItemChanged(0, PAGINATION);
+                //source = Source.CACHE;
+                //queryPagingUtil.setPostQuery(source, currentPage);
+                //binding.recyclerBoardPostings.smoothScrollToPosition(View.FOCUS_UP);
             }).addOnFailureListener(Throwable::printStackTrace);
         });
 
         // BoardEditFragment
         fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), postRef -> {
             postRef.get().addOnSuccessListener(postshot -> {
-                //postingList.set(position, postshot);
-                //postingAdapter.notifyItemChanged(position);
-                source = Source.CACHE;
-                queryPagingUtil.setPostQuery(source, currentPage);
+                log.i("edit in onViewCreated: %s", source);
+                postingList.set(position, postshot);
+                postingAdapter.notifyItemChanged(position);
+                //source = Source.CACHE;
+                //queryPagingUtil.setPostQuery(source, currentPage);
             });
         });
 
         // BoardReadFragment
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), isDone -> {
             if(isDone) {
+                log.i("remove in onViewCreated: %s", source);
                 if(postingList.size() > 0) postingList.remove(position); // Why?
                 postingAdapter.notifyItemRemoved(position);
-                source = Source.CACHE;
-                queryPagingUtil.setPostQuery(source, currentPage);
+                //postingAdapter.notifyItemChanged(position);
+                //source = Source.CACHE;
+                //queryPagingUtil.setPostQuery(source, currentPage);
             }
         });
     }
@@ -280,14 +284,15 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
-        log.i("source: %s", source);
+        log.i("onResume:%s", source);
+        source = Source.CACHE;
 
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        //regListener.remove();
+        regListener.remove();
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
@@ -352,7 +357,7 @@ public class BoardPagerFragment extends Fragment implements
      */
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        log.i("first query: %s, %s", postingList.size(), querySnapshot.size());
+        //log.i("first query: %s, %s", postingList.size(), querySnapshot.size());
         //index = 0;
         //multiTypeItemList.clear();
         postingList.clear();

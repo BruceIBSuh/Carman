@@ -20,7 +20,7 @@
             app:titleEnabled="false"
             app:toolbarId="@+id/toolbar_board_write">
             <HorizontalScrollView
-                android:id="@+id/scrollview_autofilter"
+                android:id="@+id/scroll_autofilter"
                 android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -50,111 +50,116 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/root_board_edit"
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/nestedScrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-        <View
-            android:id="@+id/view_edit_header"
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/root_board_edit"
             android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:background="@drawable/bg_colored_border"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-        <TextView
-            android:id="@+id/tv_label_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@string/board_write_label_title"
-            android:labelFor="@id/et_board_edit_title"
-            app:layout_constraintBottom_toBottomOf="@+id/view_edit_header"
-            app:layout_constraintStart_toStartOf="@+id/view_edit_header"
-            app:layout_constraintTop_toTopOf="@+id/view_edit_header" />
-        <EditText
-            android:id="@+id/et_board_edit_title"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="16dp"
-            android:background="@null"
-            android:ems="10"
-            android:inputType="textMultiLine"
-            android:textSize="@dimen/mediumText"
-            android:textColor="#0080FF"
-            app:layout_constraintBottom_toBottomOf="@+id/tv_label_title"
-            app:layout_constraintEnd_toStartOf="@+id/btn_attach_image"
-            app:layout_constraintStart_toEndOf="@+id/tv_label_title"
-            app:layout_constraintTop_toTopOf="@+id/tv_label_title"
-            tools:ignore="autofill" />
-        <Button
-            android:id="@+id/btn_attach_image"
-            android:layout_width="30dp"
-            android:layout_height="25dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/btn_attach_image"
-            android:textSize="@dimen/smallText"
-            android:textStyle="bold"
-            app:layout_constraintBottom_toBottomOf="@+id/et_board_edit_title"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/et_board_edit_title" />
-        <EditText
-            android:id="@+id/et_edit_content"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:padding="8dp"
-            android:gravity="start|top"
-            android:background="@null"
-            android:hint="@null"
-            android:inputType="textMultiLine"
-            android:textSize="@dimen/smallText"
-            android:textColor="#0080FF"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/view_edit_header"
-            app:layout_constraintBottom_toTopOf="@+id/edit_recycler_images"
-            tools:ignore="autofill" />
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/edit_recycler_images"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent" />
-        <LinearLayout
-            android:id="@+id/pb_container"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/view_edit_header"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/et_edit_content">
-            <ProgressBar
-                android:id="@+id/pb_board_edit"
-                style="?android:attr/progressBarStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="@+id/pb_container"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/pb_container" />
+            android:layout_height="match_parent">
             <TextView
-                android:id="@+id/tv_pb_message"
+                android:id="@+id/tv_label_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textSize="14sp"
+                android:layout_margin="8dp"
+                android:text="@string/board_write_post_title"
+                android:labelFor="@id/et_board_edit_title"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+            <Button
+                android:id="@+id/btn_attach_image"
+                android:layout_width="30dp"
+                android:layout_height="25dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/btn_attach_image"
+                android:textSize="@dimen/smallText"
                 android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/et_board_edit_title"
+                app:layout_constraintBottom_toBottomOf="@+id/et_board_edit_title" />
+            <EditText
+                android:id="@+id/et_board_edit_title"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="16dp"
+                android:background="@null"
+                android:ems="10"
+                android:inputType="textMultiLine"
+                android:textSize="@dimen/mediumText"
+                android:textColor="#0080FF"
+                app:layout_constraintEnd_toStartOf="@id/btn_attach_image"
+                app:layout_constraintStart_toEndOf="@id/tv_label_title"
+                app:layout_constraintTop_toTopOf="@id/tv_label_title"
+                app:layout_constraintBottom_toBottomOf="@id/tv_label_title"
+                tools:ignore="autofill" />
+            <View
+                android:id="@+id/underline"
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_margin="8dp"
+                android:background="@android:color/holo_blue_light"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="@id/pb_board_edit"/>
-        </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+                app:layout_constraintTop_toBottomOf="@id/tv_label_title" />
+
+            <EditText
+                android:id="@+id/et_edit_content"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:gravity="start|top"
+                android:background="@null"
+                android:hint="@null"
+                android:inputType="textMultiLine"
+                android:textSize="@dimen/smallText"
+                android:textColor="#0080FF"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/underline"
+                tools:ignore="autofill" />
+            <LinearLayout
+                android:id="@+id/pb_container"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/underline"
+                app:layout_constraintBottom_toBottomOf="@id/et_edit_content">
+                <ProgressBar
+                    android:id="@+id/pb_board_edit"
+                    style="?android:attr/progressBarStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="@+id/pb_container"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/pb_container" />
+                <TextView
+                    android:id="@+id/tv_pb_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="@id/pb_board_edit"/>
+            </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/edit_recycler_images"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_anchor="@id/nestedScrollview"
+        app:layout_anchorGravity="bottom"
+        app:layout_dodgeInsetEdges="top" />
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

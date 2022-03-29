@@ -196,8 +196,10 @@
     <string name="board_emptyview">첫번째 글의 주인공이 되어 주세요</string>
     <string name="board_msg_cancel_write">포스트 작성을 취소합니다</string>
     <string name="board_msg_cancel_edit">포스트 편집을 취소합니다</string>
-    <!--BoardActivity$BoardWriteFragment -->
-    <string name="board_write_label_title">제 목:</string>
+    <!--BoardActivity$BoardWriteFragment/$BoardEditFragment-->
+    <string name="board_write_toolbar_title">게시글 작성</string>
+    <string name="board_edit_toolbar_title">게시글 편집</string>
+    <string name="board_write_post_title">제 목:</string>
     <string name="board_write_hint_content">내 용:</string>
     <string name="board_msg_image">이미지 첨부는 최대 <b>%d</b>개까지 가능합니다</string>
     <string name="board_write_category">분 류</string>
@@ -224,6 +226,7 @@
     <string name="board_comment_popup_item1">삭 제</string>
     <string name="board_comment_popup_item2">공 유</string>
     <string name="board_comment_popup_item3">신 고</string>
+    <string name="board_posting_guide">불쾌감을 줄 수 있는 욕설, 비속어, 근거없는 비방, 허위 등을 포함하는 글은 사전 동의없이 삭제될 수 있으며 관련법에 의해 처벌될 수 있습니다.</string>
 
 
 

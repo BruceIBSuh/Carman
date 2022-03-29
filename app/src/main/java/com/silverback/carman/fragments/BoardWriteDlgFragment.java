@@ -10,17 +10,23 @@ import android.content.DialogInterface;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.text.TextUtils;
 import android.text.style.ImageSpan;
 import android.util.SparseArray;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
@@ -28,6 +34,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.appbar.CollapsingToolbarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -82,6 +89,7 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     private String userId;
     private String userName;
     private String autofilter;
+    private int marginPlus;
     private int page;
     private boolean isGeneral;
 
@@ -126,27 +134,22 @@ public class BoardWriteDlgFragment extends DialogFragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardWriteTempBinding.inflate(inflater);
-        binding.toolbarBoardWrite.setTitle("POST WRITING");
+        binding.toolbarBoardWrite.setTitle(getString(R.string.board_write_toolbar_title));
         binding.toolbarBoardWrite.setNavigationOnClickListener(view -> dismiss());
+        binding.tvWriteGuide.setText(getString(R.string.board_posting_guide));
         createPostWriteMenu();
 
-        spanHandler = new BoardImageSpanHandler(binding.etPostContent, this);
         // RecyclerView to display attached thumbnail images on the bottom
         LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
         linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
         binding.recyclerImages.setLayoutManager(linearLayout);
         //recyclerImageView.setHasFixedSize(true);
 
+        spanHandler = new BoardImageSpanHandler(binding.etPostContent, this);
         binding.btnImage.setOnClickListener(view -> {
             binding.recyclerImages.setAdapter(imageAdapter);
             selectImageMedia();
         });
-
-        //Create the autofilter
-        if(page == AUTOCLUB) {
-            animAutoFilter();
-            setWriteAutofilter(autofilter);
-        } //else binding.scrollviewAutofilter.setVisibility(View.GONE);
 
         return binding.getRoot();
     }
@@ -157,6 +160,28 @@ public class BoardWriteDlgFragment extends DialogFragment implements
         Dialog dialog = super.onCreateDialog(savedInstanceState);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         return dialog;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // The autoclub page needs extra space which is occupied by the autofilter, the height of
+        // which should be measured after the
+        if(page == AUTOCLUB) {
+            setWriteAutofilter(autofilter);
+            binding.scrollAutofilter.setVisibility(View.VISIBLE);
+            ViewTreeObserver vto = binding.scrollAutofilter.getViewTreeObserver();
+            vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    marginPlus = binding.scrollAutofilter.getMeasuredHeight();
+                    binding.scrollAutofilter.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    animAutoFilter();
+                }
+            });
+
+        } else binding.scrollAutofilter.setVisibility(View.GONE);
+
     }
 
     @Override
@@ -225,19 +250,33 @@ public class BoardWriteDlgFragment extends DialogFragment implements
 
     //Slide down the autofilter when it comes to AUTOCLUB
     private void animAutoFilter() {
-        binding.scrollviewAutofilter.setVisibility(View.VISIBLE);
         float height = 0;
         TypedValue tv = new TypedValue();
         if(requireActivity().getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)){
             height = TypedValue.complexToDimensionPixelSize(tv.data, getResources().getDisplayMetrics());
         }
 
-        ObjectAnimator filter = ObjectAnimator.ofFloat(binding.scrollviewAutofilter, "translationY", height);
+        ObjectAnimator filter = ObjectAnimator.ofFloat(binding.scrollAutofilter, "translationY", height);
         filter.setDuration(1000);
         filter.start();
 
+        CollapsingToolbarLayout.LayoutParams params = new CollapsingToolbarLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.topMargin = (int)height + marginPlus;
+        binding.tvWriteGuide.setLayoutParams(params);
 
+        /*
+        Animation animMargin = new Animation() {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                params.setMargins(0, (int) (newMargin * interpolatedTime), 0, 0);
+                binding.tvWriteGuide.setLayoutParams(params);
+            }
+        };
+        animMargin.setDuration(1000);
+        animMargin.start();
 
+         */
     }
 
     //Create the autofilter checkbox

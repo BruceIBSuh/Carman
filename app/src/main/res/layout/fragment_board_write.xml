@@ -23,7 +23,7 @@
         android:layout_marginTop="8dp"
         android:layout_marginStart="8dp"
         android:labelFor="@id/et_board_edit_title"
-        android:text="@string/board_write_label_title"
+        android:text="@string/board_write_post_title"
         android:textSize="@dimen/mediumText"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="@+id/view_header"

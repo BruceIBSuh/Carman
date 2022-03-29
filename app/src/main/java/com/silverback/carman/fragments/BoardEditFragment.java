@@ -131,7 +131,7 @@ public class BoardEditFragment extends DialogFragment implements
         sparseSpanArray = new SparseArray<>();
         //sparseImageArray = new SparseArray<>();
         uriEditList = new ArrayList<>();
-        editedFilterList = new ArrayList<>(autofilter);
+        if(autofilter != null) editedFilterList = new ArrayList<>(autofilter);
 
         // If the post contains any image, the http url should be typecast to uri.
         if(uriStringList != null && uriStringList.size() > 0) {
@@ -147,7 +147,7 @@ public class BoardEditFragment extends DialogFragment implements
                 isAutoclub = toObject.isAutoclub();
                 if(isAutoclub) {
                     isGeneral = toObject.isGeneral();
-                    binding.scrollviewAutofilter.setVisibility(View.VISIBLE);
+                    binding.scrollAutofilter.setVisibility(View.VISIBLE);
                     String json = mSettings.getString(Constants.AUTO_DATA, null);
                     setEditCheckbox(json, toObject.getAutofilter());
                 }
@@ -159,7 +159,7 @@ public class BoardEditFragment extends DialogFragment implements
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         binding = FragmentBoardEditBinding.inflate(inflater);
-        binding.toolbarBoardEdit.setTitle("POST EDITING");
+        binding.toolbarBoardEdit.setTitle(getString(R.string.board_edit_toolbar_title));
         binding.toolbarBoardEdit.setNavigationOnClickListener(view -> dismiss());
         binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
         binding.toolbarBoardEdit.setOnMenuItemClickListener(item -> {

@@ -19,7 +19,8 @@
             app:titleEnabled="false"
             app:toolbarId="@+id/toolbar_board_write">
             <HorizontalScrollView
-                android:id="@+id/scrollview_autofilter"
+                android:id="@+id/scroll_autofilter"
+                android:visibility="gone"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="?attr/actionBarSize"
@@ -35,6 +36,14 @@
                     android:textColor="@color/white">
                 </LinearLayout>
             </HorizontalScrollView>
+            <TextView
+                android:id="@+id/tv_write_guide"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:layout_marginTop="?attr/actionBarSize"
+                android:textSize="@dimen/smallText"
+                android:textColor="@android:color/darker_gray"/>
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar_board_write"
                 android:layout_width="match_parent"
@@ -54,36 +63,25 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_dodgeInsetEdges="top"
-
-        app:behavior_overlapTop="64dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/constraintLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <TextView
-                android:id="@+id/tv_write_guide"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="Writing Guide"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
-            <TextView
                 android:id="@+id/tv_post_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="8dp"
                 android:labelFor="@id/et_board_edit_title"
-                android:text="@string/board_write_label_title"
+                android:text="@string/board_write_post_title"
                 android:textSize="@dimen/mediumText"
                 android:textStyle="bold"
-                app:layout_constraintEnd_toStartOf="@+id/et_post_title"
+                app:layout_constraintEnd_toStartOf="@id/et_post_title"
                 app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tv_write_guide" />
+                app:layout_constraintTop_toTopOf="parent" />
             <EditText
                 android:id="@+id/et_post_title"
                 android:layout_width="0dp"
@@ -91,7 +89,6 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="16dp"
                 android:background="@null"
-                android:ems="10"
                 android:gravity="center_vertical"
                 android:hint="@null"
                 android:inputType="text"
@@ -116,20 +113,23 @@
                 app:layout_constraintTop_toTopOf="@+id/tv_post_title"
                 app:srcCompat="@drawable/btn_attach_image"
                 tools:ignore="SpeakableTextPresentCheck" />
+
             <View
                 android:id="@+id/underline"
                 android:layout_width="0dp"
                 android:layout_height="1dp"
-                android:layout_margin="3dp"
+                android:layout_margin="8dp"
                 android:background="@android:color/holo_blue_light"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/et_post_title" />
+
             <EditText
                 android:id="@+id/et_post_content"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:minHeight="300dp"
                 android:layout_marginTop="8dp"
                 android:background="@null"
                 android:gravity="start|top"
@@ -140,7 +140,6 @@
                 android:scrollbarStyle="insideInset"
                 android:scrollbars="vertical"
                 android:textSize="@dimen/mediumText"
-                app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintHorizontal_bias="0.0"
                 app:layout_constraintStart_toStartOf="parent"
