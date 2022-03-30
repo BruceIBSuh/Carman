@@ -194,16 +194,19 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
+        log.i("partial binding:%s", payloads);
         //holder.setIsRecyclable(false);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             for(Object payload : payloads) {
+                log.i("payload: %s", payload);
                 if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));
                 } else if(payload instanceof SparseLongArray) {
                     SparseLongArray sparseArray = (SparseLongArray)payload;
                     postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
                 } else if(payload instanceof String) {
+                    log.i("binding: %s, %s", position, holder.getBindingAdapterPosition() + 1);
                     String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
                     ((PostViewHolder) holder).tvNumber.setText(bindingPos);
                 }

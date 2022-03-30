@@ -19,6 +19,9 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QueryPostPaginationUtil {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(QueryPostPaginationUtil.class);
@@ -55,10 +58,11 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public ListenerRegistration setPostQuery(int category) {//, boolean isViewOrder) {
+    public ListenerRegistration setPostQuery(CollectionReference colRef, int category) {
         this.category = category;
+        this.colRef = colRef;
         //colRef = firestore.collection("board_general");
-        colRef = firestore.collection("user_post");
+        //colRef = firestore.collection("user_post");
         switch(category){
             case RECENT:
                 this.field = "timestamp";
@@ -82,34 +86,34 @@ public class QueryPostPaginationUtil {
 
         return query.limit(PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
             if(e != null || querySnapshot == null) return;
+            this.querySnapshot = querySnapshot;
+            mCallback.getFirstQueryResult(querySnapshot);
+
             for(DocumentChange dc : querySnapshot.getDocumentChanges()) {
                 switch(dc.getType()) {
                     case ADDED:
-                        log.i("ADDED: %s", dc.getDocument().getData());
-                        this.querySnapshot = querySnapshot;
-                        mCallback.getFirstQueryResult(querySnapshot);
+                        log.i("ADDED: %s, %s", category, dc.getDocument().getMetadata().hasPendingWrites());
+                        //this.querySnapshot = querySnapshot;
+                        //mCallback.getFirstQueryResult(querySnapshot);
                         break;
                     case MODIFIED:
-                        log.i("MODIFIED: %s", dc.getDocument().getData());
-                        mCallback.getModifiedQueryResult(dc.getDocument());
+                        log.i("MODIFIED: %s", category);
+                        //mCallback.getModifiedQueryResult(dc.getDocument());
                         break;
                     case REMOVED:
-                        log.i("REMOVED: %s", dc.getDocument().getData());
+                        log.i("REMOVED:%s", category);
                         mCallback.getRemovedQueryResult(dc.getDocument());
                         break;
                 }
             }
+
+
+
         });
 
         /*
-        query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
-            this.querySnapshot = querySnapshot;
-            mCallback.getFirstQueryResult(querySnapshot);
-        }).addOnFailureListener(mCallback::getQueryErrorResult);
-        */
-        /*
-        query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) return;
+        return query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
+            if(e != null || querySnapshot == null) return;
             for(DocumentSnapshot doc : querySnapshot) {
                 String source = doc != null && doc.getMetadata().hasPendingWrites()?"LOCAL":"SERVER";
                 if(source.matches("LOCAL")) log.i("cached data");
@@ -118,6 +122,7 @@ public class QueryPostPaginationUtil {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         });
+
          */
 
     }
