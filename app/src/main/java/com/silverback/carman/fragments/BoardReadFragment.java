@@ -15,7 +15,6 @@
  */
 package com.silverback.carman.fragments;
 
-import static android.app.Activity.RESULT_OK;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
@@ -33,6 +32,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -47,12 +47,12 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
-import androidx.fragment.app.FragmentResultListener;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -94,6 +94,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -102,7 +103,9 @@ import java.util.regex.Pattern;
  * BoardPagerFragment.
  */
 public class BoardReadFragment extends DialogFragment implements
-        View.OnClickListener, CompoundButton.OnCheckedChangeListener,
+        View.OnClickListener,
+        Toolbar.OnMenuItemClickListener,
+        CompoundButton.OnCheckedChangeListener,
         BoardCommentAdapter.CommentAdapterListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
         //QueryCommentPagingUtil.OnQueryPaginationCallback {
@@ -147,7 +150,7 @@ public class BoardReadFragment extends DialogFragment implements
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String userPic;
-    private int tabPage;
+    private int tabPage, position;
     //private int position; // item poistion in the recyclerview.
     private int checkedPos;
     private int appbarOffset;
@@ -182,6 +185,7 @@ public class BoardReadFragment extends DialogFragment implements
             obj = getArguments().getParcelable("postingObj");
             assert obj != null;
             tabPage = getArguments().getInt("tabPage");
+            position = getArguments().getInt("position");
             documentId = getArguments().getString("documentId");
             cntComment = obj.getCntComment();
             cntCompathy = obj.getCntCompahty();
@@ -233,7 +237,9 @@ public class BoardReadFragment extends DialogFragment implements
         // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
         // in DialogFragment
         if(obj.getUserId() != null && obj.getUserId().equals(viewerId)) {
-            createEditOptionsMenu();
+            //createEditOptionsMenu();
+            binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
+            binding.toolbarBoardRead.setOnMenuItemClickListener(this);
         }
 
 
@@ -328,24 +334,6 @@ public class BoardReadFragment extends DialogFragment implements
         // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
         // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
         // the model from automatically invoking the method, initially set the value to false;
-
-        // NOT WORKING. INSTEAD USE FragmentResultListener
-        sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), confirmed -> {
-            if(confirmed) {
-                dismiss();
-                /*
-                postRef.delete().addOnSuccessListener(aVoid -> {
-                    if(uriStringList != null && uriStringList.size() > 0) {
-                        for (String url : uriStringList) storage.getReferenceFromUrl(url).delete();
-                    }
-                    sharedModel.getRemovedPosting().setValue(position);
-                    dismiss();
-                }).addOnFailureListener(Throwable::printStackTrace);
-
-                 */
-            }
-        });
-
     }
 
     @Override
@@ -381,6 +369,57 @@ public class BoardReadFragment extends DialogFragment implements
         log.i("onDismiss");
         super.onDismiss(dialog);
     }
+
+    @Override
+    public boolean onMenuItemClick(MenuItem menuItem) {
+        log.i("MenuItem clicked: %s", menuItem);
+        if(menuItem.getItemId() == R.id.action_board_edit) {
+            BoardEditFragment editFragment = new BoardEditFragment();
+            Bundle editBundle = new Bundle();
+            editBundle.putString("documentId", documentId);
+            editBundle.putString("postTitle", obj.getPostTitle());
+            editBundle.putString("postContent", obj.getPostContent());
+            editBundle.putInt("position", position);
+            if (uriStringList != null && uriStringList.size() > 0) {
+                editBundle.putStringArrayList("uriImgList", uriStringList);
+            }
+
+            if(autofilter != null && autofilter.size() > 0){
+                editBundle.putStringArrayList("autofilter", autofilter);
+            }
+
+            editFragment.setArguments(editBundle);
+            requireActivity().getSupportFragmentManager().beginTransaction()
+                    .addToBackStack(null)
+                    .replace(android.R.id.content, editFragment)
+                    .commit();
+            dismiss();
+            return true;
+
+        } else if(menuItem.getItemId() == R.id.action_board_delete) {
+            String title = getString(R.string.board_alert_delete);
+            String msg = getString(R.string.board_alert_msg);
+
+            DialogFragment fragment = CustomDialogFragment.newInstance(title, msg, Constants.BOARD);
+            FragmentManager fragmentManager = getChildFragmentManager();
+
+            fragmentManager.setFragmentResultListener("confirmDelete", fragment, (req, res) -> {
+                if(req.matches("confirmDelete") && (res.getBoolean("confirmed"))) {
+                    postRef.delete().addOnSuccessListener(aVoid -> {
+                        log.i("confirmed to delete");
+                        sharedModel.getRemovedPosting().setValue(position);
+                        dismiss();
+                    }).addOnFailureListener(Throwable::printStackTrace);
+                }
+            });
+
+            fragment.show(fragmentManager, "alert");
+            return true;
+        }
+
+        return false;
+    }
+
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
@@ -457,6 +496,16 @@ public class BoardReadFragment extends DialogFragment implements
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
         commentAdapter.notifyItemRangeChanged(start, lastShots.size());
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+    }
+
+    @Override
+    public void getRemovedQueryResult(DocumentSnapshot removedDoc) {
+
+    }
+
+    @Override
+    public void getModifiedQueryResult(DocumentSnapshot doc) {
+
     }
 
     @Override
@@ -604,7 +653,6 @@ public class BoardReadFragment extends DialogFragment implements
         // and the following recyclerview which shows any comment
         // Simple text w/o any image
         if(start == 0) {
-            log.i("simple text");
             TextView simpleText = new TextView(context);
             simpleText.setId(View.generateViewId());
             simpleText.setText(content);
@@ -647,6 +695,9 @@ public class BoardReadFragment extends DialogFragment implements
         }
 
     }
+
+
+
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
@@ -785,108 +836,6 @@ public class BoardReadFragment extends DialogFragment implements
     // As long as a post belongs to the user, show the menu in the toolbar which enables the user
     // to edits or delete the post.
 
-    // The userId means the id of the post item owner whereas the viewId means that of who reads
-    // item.  The edit buttons turn visible only when both ids are equal, which means the reader
-    // is the post owner.
-    private void createEditOptionsMenu() {
-        binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
-        binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
-            if(item.getItemId() == R.id.action_board_edit) {
-                BoardEditFragment editFragment = new BoardEditFragment();
-                Bundle editBundle = new Bundle();
-                editBundle.putString("documentId", documentId);
-                editBundle.putString("postTitle", obj.getPostTitle());
-                editBundle.putString("postContent", obj.getPostContent());
-                //editBundle.putInt("position", position);
-                if (uriStringList != null && uriStringList.size() > 0) {
-                    editBundle.putStringArrayList("uriImgList", uriStringList);
-                }
-
-                if(autofilter != null && autofilter.size() > 0){
-                    editBundle.putStringArrayList("autofilter", autofilter);
-                }
-
-                editFragment.setArguments(editBundle);
-                requireActivity().getSupportFragmentManager().beginTransaction()
-                        .addToBackStack(null)
-                        .replace(android.R.id.content, editFragment)
-                        .commit();
-                dismiss();
-                //return true;
-
-            } else if(item.getItemId() == R.id.action_board_delete) {
-                /*
-                postRef.delete().addOnSuccessListener(aVoid -> {
-                    sharedModel.getRemovedPosting().setValue(position);
-                    dismiss();
-                }).addOnFailureListener(Throwable::printStackTrace);
-                */
-                String title = getString(R.string.board_alert_delete);
-                String msg = getString(R.string.board_alert_msg);
-
-                DialogFragment fragment = AlertDialogFragment.newInstance(title, msg, Constants.BOARD);
-                FragmentManager fragmentManager = getChildFragmentManager();
-
-                // Should do research on FragmentResultListener;
-                fragmentManager.setFragmentResultListener("confirmed", this, (req, result) ->
-                        postRef.delete().addOnSuccessListener(aVoid -> {
-                            sharedModel.getRemovedPosting().setValue(true);
-                            dismiss();
-                        }).addOnFailureListener(Throwable::printStackTrace));
-
-                fragment.show(fragmentManager, "alert");
-                //return true;
-            }
-            return false;
-        });
-
-        /*
-        try (FileInputStream fis = requireActivity().openFileInput("userId");
-             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
-            String viewerId = br.readLine();
-            if(postOwnerId != null && postOwnerId.equals(viewerId)) {
-                binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
-                binding.toolbarBoardRead.setOnMenuItemClickListener(item -> {
-                    if(item.getItemId() == R.id.action_board_edit) {
-                        //mListener.onEditClicked(getArguments());
-                        //((BoardActivity)requireActivity()).addEditFragment(getArguments());
-                        BoardEditFragment editFragment = new BoardEditFragment();
-                        Bundle editBundle = new Bundle();
-                        editBundle.putString("documentId", documentId);
-                        editBundle.putString("postTitle", postTitle);
-                        editBundle.putString("postContent", postContent);
-                        editBundle.putInt("position", position);
-                        if(uriStringList != null && uriStringList.size() > 0){
-                            log.i("uriStringList: %s", uriStringList.size());
-                            editBundle.putStringArrayList("uriImgList", uriStringList);
-                        }
-                        editFragment.setArguments(editBundle);
-                        requireActivity().getSupportFragmentManager().beginTransaction()
-                                .addToBackStack(null)
-                                .add(android.R.id.content, editFragment)
-                                .commit();
-
-                        dismiss();
-                        return true;
-
-                    } else if(item.getItemId() == R.id.action_board_delete) {
-                        String title = getString(R.string.board_alert_delete);
-                        String msg = getString(R.string.board_alert_msg);
-                        AlertDialogFragment.newInstance(title, msg, Constants.BOARD)
-                                .show(requireActivity().getSupportFragmentManager(), null);
-
-                        return true;
-                    }
-                    return false;
-                });
-            }
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-
-         */
-    }
 
     // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
     /*

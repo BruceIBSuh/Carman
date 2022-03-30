@@ -4,26 +4,20 @@ import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
-import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 import static com.silverback.carman.BoardActivity.POPULAR;
 import static com.silverback.carman.BoardActivity.RECENT;
-
-import androidx.annotation.Nullable;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-
-import java.util.ArrayList;
 
 public class QueryPostPaginationUtil {
 
@@ -47,6 +41,8 @@ public class QueryPostPaginationUtil {
         void getFirstQueryResult(QuerySnapshot postShots);
         void getNextQueryResult(QuerySnapshot nextShots);
         void getLastQueryResult(QuerySnapshot lastShots);
+        void getRemovedQueryResult(DocumentSnapshot doc);
+        void getModifiedQueryResult(DocumentSnapshot doc);
         void getQueryErrorResult(Exception e);
     }
 
@@ -59,57 +55,58 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public void setPostQuery(Source source, int category) {//, boolean isViewOrder) {
+    public ListenerRegistration setPostQuery(int category) {//, boolean isViewOrder) {
         this.category = category;
         //colRef = firestore.collection("board_general");
         colRef = firestore.collection("user_post");
         switch(category){
             case RECENT:
                 this.field = "timestamp";
-                query = colRef/*.whereEqualTo("post_general", true)*/.orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case POPULAR:
                 this.field = "cnt_view";
-                query = colRef/*.whereEqualTo("post_general", true)*/.orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case AUTOCLUB:
                 this.field = (isViewOrder)? "cnt_view" : "timestamp";
-                query = colRef./*whereEqualTo("post_autoclub", true).*/orderBy(field, Query.Direction.DESCENDING);
+                query = colRef.orderBy(field, Query.Direction.DESCENDING);
                 break;
 
             case NOTIFICATION:
                 query = firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING);
                 break;
         }
-        /*
-        query.limit(PAGINATION).addSnapshotListener(new EventListener<QuerySnapshot>() {
-            @Override
-            public void onEvent(QuerySnapshot querySanpshot, FirebaseFirestoreException e) {
-                if(e != null) return;
-                for(DocumentChange dc : querySanpshot.getDocumentChanges()) {
-                    switch(dc.getType()) {
-                        case ADDED:
-                            log.i("ADDED: %s", dc.getDocument().getData());
-                            break;
-                        case MODIFIED:
-                            log.i("MODIFIED: %s", dc.getDocument().getData());
-                            break;
-                        case REMOVED:
-                            log.i("REMOVED: %s", dc.getDocument().getData());
-                            break;
-                    }
+
+        return query.limit(PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
+            if(e != null || querySnapshot == null) return;
+            for(DocumentChange dc : querySnapshot.getDocumentChanges()) {
+                switch(dc.getType()) {
+                    case ADDED:
+                        log.i("ADDED: %s", dc.getDocument().getData());
+                        this.querySnapshot = querySnapshot;
+                        mCallback.getFirstQueryResult(querySnapshot);
+                        break;
+                    case MODIFIED:
+                        log.i("MODIFIED: %s", dc.getDocument().getData());
+                        mCallback.getModifiedQueryResult(dc.getDocument());
+                        break;
+                    case REMOVED:
+                        log.i("REMOVED: %s", dc.getDocument().getData());
+                        mCallback.getRemovedQueryResult(dc.getDocument());
+                        break;
                 }
             }
         });
-         */
 
+        /*
         query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(mCallback::getQueryErrorResult);
-
+        */
         /*
         query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null) return;

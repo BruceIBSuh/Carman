@@ -255,7 +255,7 @@ public class SettingSvcItemFragment extends Fragment implements
         String title = "ALERT";
         String msg = "Remove the Service Item";
         removedPos = position;
-        AlertDialogFragment alert = AlertDialogFragment.newInstance(title, msg, 3);
+        CustomDialogFragment alert = CustomDialogFragment.newInstance(title, msg, 3);
         if(getFragmentManager() != null) alert.show(getFragmentManager(), null);
     }
     */
