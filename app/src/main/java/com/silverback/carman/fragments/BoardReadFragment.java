@@ -148,7 +148,7 @@ public class BoardReadFragment extends DialogFragment implements
     private String tabTitle;
     private String userPic;
     private int tabPage;
-    //private int position; // item poistion in the recyclerview.
+    private int position; // item poistion in the recyclerview.
     private int checkedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
@@ -183,6 +183,7 @@ public class BoardReadFragment extends DialogFragment implements
             assert obj != null;
             tabPage = getArguments().getInt("tabPage");
             documentId = getArguments().getString("documentId");
+            position = getArguments().getInt("position");
             cntComment = obj.getCntComment();
             cntCompathy = obj.getCntCompahty();
             if(obj.getPostImages() != null) uriStringList = new ArrayList<>(obj.getPostImages());
@@ -207,6 +208,9 @@ public class BoardReadFragment extends DialogFragment implements
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+
         // Get the current document reference which should be shared in the fragment.
         // Initially, attach SnapshotListener to have the comment collection updated, then remove
         // the listener to prevent connecting to the server. Instead`, update the collection using
@@ -228,15 +232,12 @@ public class BoardReadFragment extends DialogFragment implements
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         autoTitle = ((BoardActivity)requireActivity()).getAutoClubTitle();
 
+        if(obj.getUserId() != null && obj.getUserId().equals(viewerId)) createEditOptionsMenu();
+
         //setHasOptionsMenu(true);
         // If the user is the owner of a post, display the edit menu in the toolbar, which should
         // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
         // in DialogFragment
-        if(obj.getUserId() != null && obj.getUserId().equals(viewerId)) {
-            createEditOptionsMenu();
-        }
-
-
         binding.tvPostTitle.setText(obj.getPostTitle());
         binding.tvUsername.setText(obj.getUserName());
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
@@ -312,8 +313,6 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         // SET THE USER IMAGE ICON
         // ImageViewModel receives a drawable as LiveData from ApplyImageResourceUtil.applyGlideToDrawable()
@@ -330,10 +329,10 @@ public class BoardReadFragment extends DialogFragment implements
         // the model from automatically invoking the method, initially set the value to false;
 
         // NOT WORKING. INSTEAD USE FragmentResultListener
+        /*
         sharedModel.getAlertPostResult().observe(getViewLifecycleOwner(), confirmed -> {
             if(confirmed) {
-                dismiss();
-                /*
+                //dismiss();
                 postRef.delete().addOnSuccessListener(aVoid -> {
                     if(uriStringList != null && uriStringList.size() > 0) {
                         for (String url : uriStringList) storage.getReferenceFromUrl(url).delete();
@@ -341,10 +340,10 @@ public class BoardReadFragment extends DialogFragment implements
                     sharedModel.getRemovedPosting().setValue(position);
                     dismiss();
                 }).addOnFailureListener(Throwable::printStackTrace);
-
-                 */
             }
         });
+
+         */
 
     }
 
@@ -411,14 +410,12 @@ public class BoardReadFragment extends DialogFragment implements
                 //int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
-
                 if(!isCommentVisible) {
                     binding.etComment.requestFocus();
                     commentAdapter.notifyItemChanged(checkedPos, true);
                 }
                 isCommentVisible = !isCommentVisible;
             }
-
         } else if(v.getId() == R.id.imgbtn_send_comment) {
             if(TextUtils.isEmpty(binding.etComment.getText())) {
                 Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_comment), Snackbar.LENGTH_SHORT).show();
@@ -478,6 +475,7 @@ public class BoardReadFragment extends DialogFragment implements
             binding.headerCommentCnt.setText(String.valueOf(cntComment));
         }).addOnFailureListener(Throwable::printStackTrace);
     }
+
     @Override
     public void deleteCommentReply(BoardReplyAdapter replyAdapter, DocumentReference commentRef) {
         log.i("post deletion handling");
@@ -708,6 +706,7 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Method for uploading the comment to Firestore
     private void uploadComment() {
+        log.i("uploadComment");
         Map<String, Object> comment = new HashMap<>();
         comment.put("cnt_reply", 0);
         comment.put("comment", binding.etComment.getText().toString());
@@ -715,10 +714,12 @@ public class BoardReadFragment extends DialogFragment implements
         // Fetch the comment user id saved in the storage
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
-            String commentId =  br.readLine();
-            comment.put("user_id", commentId);
-            final DocumentReference docref = mDB.collection("users").document(commentId);
+            String userId =  br.readLine();
+            comment.put("user_id", userId);
+
+            final DocumentReference docref = mDB.collection("users").document(userId);
             mDB.runTransaction((Transaction.Function<Void>) transaction -> {
+                log.i("transaction:%s", userId);
                 DocumentSnapshot doc = transaction.get(docref);
                 comment.put("user_name", doc.getString("user_name"));
                 comment.put("user_pic", doc.getString("user_pic"));
@@ -815,12 +816,6 @@ public class BoardReadFragment extends DialogFragment implements
                 //return true;
 
             } else if(item.getItemId() == R.id.action_board_delete) {
-                /*
-                postRef.delete().addOnSuccessListener(aVoid -> {
-                    sharedModel.getRemovedPosting().setValue(position);
-                    dismiss();
-                }).addOnFailureListener(Throwable::printStackTrace);
-                */
                 String title = getString(R.string.board_alert_delete);
                 String msg = getString(R.string.board_alert_msg);
 
@@ -830,12 +825,14 @@ public class BoardReadFragment extends DialogFragment implements
                 // Should do research on FragmentResultListener;
                 fragmentManager.setFragmentResultListener("confirmed", this, (req, result) ->
                         postRef.delete().addOnSuccessListener(aVoid -> {
-                            sharedModel.getRemovedPosting().setValue(true);
+                            log.i("delete done: %s", sharedModel);
+                            sharedModel.getRemovedPosting().setValue(position);
                             dismiss();
                         }).addOnFailureListener(Throwable::printStackTrace));
 
                 fragment.show(fragmentManager, "alert");
-                //return true;
+
+                return true;
             }
             return false;
         });

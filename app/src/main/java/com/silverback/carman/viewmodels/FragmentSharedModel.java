@@ -37,7 +37,7 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<DocumentReference> newPosting;
-    private MutableLiveData<Boolean> removedPosting;
+    private MutableLiveData<Integer> removedPosting;
     private MutableLiveData<DocumentReference> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
 
@@ -175,7 +175,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
-    public MutableLiveData<Boolean> getRemovedPosting() {
+    public MutableLiveData<Integer> getRemovedPosting() {
         if(removedPosting == null) removedPosting = new MutableLiveData<>();
         return removedPosting;
     }
