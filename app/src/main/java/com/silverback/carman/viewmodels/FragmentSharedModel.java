@@ -174,7 +174,7 @@ public class FragmentSharedModel extends ViewModel {
         return newPosting;
     }
 
-    // Communicate b/w AlertDialogFragment and fragment calling the dialog fragment
+    // Communicate b/w CustomDialogFragment and fragment calling the dialog fragment
     public MutableLiveData<Integer> getRemovedPosting() {
         if(removedPosting == null) removedPosting = new MutableLiveData<>();
         return removedPosting;

@@ -24,7 +24,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -38,13 +37,11 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.firestore.Source;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPostingAdapter;
@@ -171,24 +168,26 @@ public class BoardPagerFragment extends Fragment implements
         queryPagingUtil = new QueryPostPaginationUtil(firestore, this);
         final CollectionReference colRef = firestore.collection("user_post");
 
-        if(source == null) source = Source.SERVER;
+        //source = (source == null) ? Source.SERVER : Source.CACHE;
+        if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
+        regListener = queryPagingUtil.setPostQuery(currentPage);
+        isLoading = true;
+
+        /*
         regListener = colRef.addSnapshotListener(MetadataChanges.INCLUDE, (q, e) -> {
             if(e != null) return;
             source = (q != null && q.getMetadata().hasPendingWrites())? Source.CACHE : Source.SERVER;
             log.i("snapshot: %s", source);
-
             if(source == Source.SERVER) {
                 if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
-                queryPagingUtil.setPostQuery(source, currentPage);
+                queryPagingUtil.setPostQuery(currentPage);
                 isLoading = true;
             }
-
         });
 
+         */
 
-        if(currentPage == AUTOCLUB) queryPagingUtil.setAutoclubOrder(isViewOrder);
-        queryPagingUtil.setPostQuery(source, currentPage);
-        isLoading = true;
+
 
         // Refactor required to resonse to realtime change.
         /*
@@ -248,56 +247,54 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        FragmentSharedModel fragmentModel = new ViewModelProvider(
-                requireActivity()).get(FragmentSharedModel.class);
+        FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        /*
         // BoardWriteFragment
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
             postRef.get().addOnSuccessListener(postshot -> {
-                log.i("add in onViewCreated: %s, %s", source, currentPage);
+                log.i("add in onViewCreated");
                 //postingList.add(0, postshot);
-                postingAdapter.notifyItemInserted(0);
-                //postingAdapter.notifyItemChanged(0, PAGINATION);
+                //postingAdapter.notifyItemInserted(0);
+                //postingAdapter.notifyItemRangeChanged(0, postingList.size(), "ADD");
                 //source = Source.CACHE;
                 queryPagingUtil.setPostQuery(source, currentPage);
                 binding.recyclerBoardPostings.smoothScrollToPosition(View.FOCUS_UP);
-
             }).addOnFailureListener(Throwable::printStackTrace);
         });
 
         // BoardEditFragment
         fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), postRef -> {
             postRef.get().addOnSuccessListener(postshot -> {
-                log.i("edit in onViewCreated: %s, %s", source, currentPage);
-                //source = Source.CACHE;
-                //postingList.set(position, postshot);
+                log.i("edit in onViewCreated: %s", this.position);
+                postingList.set(position, postshot);
                 postingAdapter.notifyItemChanged(position);
-                queryPagingUtil.setPostQuery(source, currentPage);
+                //source = Source.CACHE;
+                //queryPagingUtil.setPostQuery(source, currentPage);
             });
         });
 
         // BoardReadFragment
-        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), position -> {
-            if(position >= 0) {
-                log.i("remove in onViewCreated: %s, %s, %s", source, currentPage, position);
-                //if(postingList.size() > 0) postingList.remove(position); // Why?
-                postingAdapter.notifyItemRemoved(position);
-                //postingAdapter.notifyItemChanged(position - 1, postingList.size() - 1);
-                queryPagingUtil.setPostQuery(source, currentPage);
-            }
+        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
+            log.i("remove in onViewCreated:%s", pos);
+            //postingList.remove(postingList.get(pos)); // Why?
+            postingAdapter.notifyItemRemoved(position);
+            //postingAdapter.notifyItemRangeChanged(position, postingList.size(), "DELETE");
+            //source = Source.CACHE;
+            queryPagingUtil.setPostQuery(source, currentPage);
         });
+
+         */
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        log.i("onResume:%s", source);
-        //source = Source.CACHE;
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        regListener.remove();
+        if(regListener != null) regListener.remove();
     }
 
     // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
@@ -362,11 +359,10 @@ public class BoardPagerFragment extends Fragment implements
      */
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        log.i("first query: %s, %s", postingList.size(), querySnapshot.size());
+        //log.i("first query: %s, %s", postingList.size(), querySnapshot.size());
         //index = 0;
         //multiTypeItemList.clear();
         postingList.clear();
-
         if(querySnapshot.size() == 0) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
@@ -376,7 +372,6 @@ public class BoardPagerFragment extends Fragment implements
             binding.recyclerBoardPostings.setVisibility(View.VISIBLE);
             binding.tvEmptyView.setVisibility(View.GONE);
         }
-
 
         // In case that no post exists or the automaker filter is emepty in the autoclub page,
         // display the empty view in the custom RecyclerView.
@@ -393,6 +388,7 @@ public class BoardPagerFragment extends Fragment implements
             return;
         }
          */
+
         // Add DocumentSnapshot to List<DocumentSnapshot> which is paassed to RecyclerView.Adapter.
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
@@ -486,6 +482,24 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
+    public void getRemovedQueryResult(DocumentSnapshot doc) {
+        log.i("Remmoved Post: %s", postingList.size());
+        int position = postingList.indexOf(doc);
+        postingList.remove(doc);
+        log.i("new posting list: %s", postingList.size());
+        postingAdapter.notifyItemRemoved(position);
+        postingAdapter.notifyItemRangeChanged(position, postingList.size(), "REMOVED");
+    }
+
+    @Override
+    public void getModifiedQueryResult(DocumentSnapshot doc) {
+        log.i("added or edited");
+        postingList.add(0, doc);
+        postingAdapter.notifyItemInserted(0);
+        postingAdapter.notifyItemRangeChanged(0, postingList.size(), "MODIFIED");
+    }
+
+    @Override
     public void getQueryErrorResult(Exception e) {
         progbar.setVisibility(View.GONE);
         e.printStackTrace();
@@ -518,6 +532,7 @@ public class BoardPagerFragment extends Fragment implements
                 .add(android.R.id.content, readPostFragment)
                 .addToBackStack(null)
                 .commit();
+
         // Update the field of "cnt_view" increasing the number.
         //DocumentReference docref = snapshot.getReference();
         addViewCount(snapshot.getReference(), position);
