@@ -87,12 +87,12 @@ public class QueryPostPaginationUtil {
         return query.limit(PAGINATION).addSnapshotListener(MetadataChanges.INCLUDE, (querySnapshot, e) -> {
             if(e != null || querySnapshot == null) return;
             this.querySnapshot = querySnapshot;
-            mCallback.getFirstQueryResult(querySnapshot);
+            //mCallback.getFirstQueryResult(querySnapshot);
 
             for(DocumentChange dc : querySnapshot.getDocumentChanges()) {
                 switch(dc.getType()) {
                     case ADDED:
-                        log.i("ADDED: %s, %s", category, dc.getDocument().getMetadata().hasPendingWrites());
+                        log.i("ADDED");
                         //this.querySnapshot = querySnapshot;
                         //mCallback.getFirstQueryResult(querySnapshot);
                         break;
@@ -107,8 +107,7 @@ public class QueryPostPaginationUtil {
                 }
             }
 
-
-
+            mCallback.getFirstQueryResult(querySnapshot);
         });
 
         /*

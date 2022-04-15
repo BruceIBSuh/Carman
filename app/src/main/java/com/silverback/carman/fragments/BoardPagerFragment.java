@@ -370,7 +370,6 @@ public class BoardPagerFragment extends Fragment implements
         //index = 0;
         //multiTypeItemList.clear();
         postingList.clear();
-        log.i("initial postingList: %s", postingList.size());
         if(querySnapshot.size() == 0) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
@@ -385,9 +384,14 @@ public class BoardPagerFragment extends Fragment implements
         // The autoclub page should separately handle query and pagination to sorts out the document
         // snapshot with given filters.
         for(DocumentSnapshot document : querySnapshot) {
+            Object obj = document.get("isGeneral");
+            boolean isGeneral = obj instanceof Boolean && (boolean) obj;
+
+            //CustomPostingObject toObject = document.toObject(CustomPostingObject.class);
+            //if(toObject == null) return;
             if (currentPage == AUTOCLUB) sortClubPost(document);
             else {
-                postingList.add(document);
+                if(isGeneral) postingList.add(document);
                 //multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
             //index++;
@@ -396,19 +400,22 @@ public class BoardPagerFragment extends Fragment implements
         // Test Code: for pre-occupying the banner slot.
         //addDummySlotForAds();
         //multiTypeItemList.add(new MultiTypeItem(1));
-        postingAdapter.notifyItemRangeChanged(0, querySnapshot.size());
+        //postingAdapter.notifyItemRangeChanged(0, querySnapshot.size());
+        postingAdapter.notifyItemRangeChanged(0, postingList.size());
         progbar.setVisibility(View.GONE);
         isLoading = false;
+        log.i("first postingList: %s, %s", currentPage, postingList.size());
 
         // If the sorted posts are less than the pagination number, keep querying until it's up to
         // the number. Manually update the adapter each time posts amount to the pagination number.
-        if(currentPage == AUTOCLUB) {
+        //if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
             if(postingList.size() < PAGINATION) {
-                isLoading = true;
-                queryPagingUtil.setNextPostQuery();
+                log.i("go to the next query");
+                //queryPagingUtil.setNextPostQuery();
+                //isLoading = true;
             }
-        }
+        //}
     }
 
     @Override
@@ -416,9 +423,12 @@ public class BoardPagerFragment extends Fragment implements
         //final int start = multiTypeItemList.size();
         final int start = postingList.size();
         for(DocumentSnapshot document : nextShots) {
+            Object obj = document.get("isGeneral");
+            boolean isGeneral = obj instanceof Boolean && (boolean) obj;
+
             if (currentPage == AUTOCLUB) sortClubPost(document);
             else {
-                postingList.add(document);
+                if(isGeneral) postingList.add(document);
                 //multiTypeItemList.add(new MultiTypeItem(0, index, document));
             }
             //index++;
@@ -426,16 +436,17 @@ public class BoardPagerFragment extends Fragment implements
 
         // ADD THE AD BANNER: refactor required for the convenience's sake.
         //multiTypeItemList.add(new MultiTypeItem(1));
-        postingAdapter.notifyItemRangeChanged(start, nextShots.size());
+        //postingAdapter.notifyItemRangeChanged(start, nextShots.size());
+        postingAdapter.notifyItemRangeChanged(start, postingList.size());
         //binding.progbarBoardPaging.setVisibility(View.INVISIBLE);
-
+        log.i("next posting list: %s", postingList.size());
         // Keep querying if sorted posts are less than the pagination number. When it reaches the
         // number, update the apdater.
         if(currentPage == AUTOCLUB) {
             //if(multiTypeItemList.size() < PAGINATION) {
             if(postingList.size() < PAGINATION) {
-                isLoading = true;
-                queryPagingUtil.setNextPostQuery();
+                //isLoading = true;
+                //queryPagingUtil.setNextPostQuery();
             }//else postingAdapter.notifyDataSetChanged();
         }
         isLoading = false;
@@ -475,7 +486,6 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getRemovedQueryResult(DocumentSnapshot doc) {
-        log.i("position: %s", this.position);
         postingList.remove(doc);
         postingAdapter.notifyItemRemoved(position);
         postingAdapter.notifyItemRangeChanged(position, postingList.size(), "REMOVED");
@@ -572,17 +582,20 @@ public class BoardPagerFragment extends Fragment implements
                 int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
                 int visiblePostCount = layout.getChildCount();
                 int totalPostCount = layout.getItemCount();
-                //log.i("totalPostCount: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
+                log.i("scroll state: %s, %s, %s", firstVisibleProductPosition, visiblePostCount, totalPostCount);
 
                 if (!isLoading && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
                     //isScrolling = false;
-                    isLoading = true;
+                    //isLoading = true;
                     //if(currentPage != AUTOCLUB) pbPaging.setVisibility(View.VISIBLE);
                     // If the totalPostCount is less than PAGINATION, setNextQuery will
                     // return null value, which results in an error as in Notification board. Accrodingly,
                     // a condition has to be added to prevent setNextQuery().
-                    if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
+
+                    //if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
+                    if(totalPostCount >= postingList.size()) {
                         //binding.progbarBoardPaging.setVisibility(View.VISIBLE);
+                        isLoading = true;
                         queryPagingUtil.setNextPostQuery();
                     }
 
