@@ -1,5 +1,8 @@
 package com.silverback.carman.adapters;
 
+import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.NUM_PAGES;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -24,41 +27,56 @@ import java.util.List;
 public class BoardPagerAdapter extends FragmentStateAdapter {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerAdapter.class);
-    private static final int NUM_PAGES = 4;
 
     // Objects
-    private BoardPagerFragment mFragment;
     private final ArrayList<String> autofilter;
-    //private int position;
-    //private boolean isAutoClub;
+    private final List<BoardPagerFragment> fragmentList;
 
     public BoardPagerAdapter(
             @NonNull FragmentManager fm, @NonNull Lifecycle lifecycle, ArrayList<String> autofilter) {
         super(fm, lifecycle);
         this.autofilter = autofilter;
+        fragmentList = new ArrayList<>();
     }
 
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        //if(position == AUTOCLUB)  isAutoClub = true;
-        mFragment = BoardPagerFragment.newInstance(position, autofilter);
-        return mFragment;
+        BoardPagerFragment fragment = BoardPagerFragment.newInstance(position, autofilter);
+        fragmentList.add(fragment);
+        return fragmentList.get(position);
     }
 
     @Override
     public void onBindViewHolder(
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
-        else log.i("update postpager:%s", payloads);
+        else {
+            for(Object payload : payloads) {
+                if(payload instanceof ArrayList<?>) {
+                    ArrayList<?> tempList = (ArrayList<?>)payload;
+                    ArrayList<String> autofilter = new ArrayList<>();
+                    for(Object obj : tempList) autofilter.add((String)obj);
+                    //autoFragment.updateAutoFilter(autofilter);
+                    fragmentList.get(AUTOCLUB).resetAutoFilter(autofilter);
+                    break;
+                }
+            }
+        }
     }
 
     @Override
     public int getItemCount() {
         return NUM_PAGES;
     }
-    // Referenced from onCheckedChanged() in BoardActivity to get the current fragment.
-    public BoardPagerFragment getPagerFragment() {
-        return mFragment;
+
+    @Override
+    public long getItemId(int position){
+        return position;
+    }
+
+    @Override
+    public boolean containsItem(long itemId) {
+        return false;
     }
 }

@@ -121,6 +121,7 @@ public class BoardActivity extends BaseActivity implements
     public static final int POPULAR = 1;
     public static final int AUTOCLUB = 2;
     public static final int NOTIFICATION = 3;
+    public static final int NUM_PAGES = 4;
 
     // Objects
     private ActivityBoardBinding binding;
@@ -371,7 +372,7 @@ public class BoardActivity extends BaseActivity implements
         // Referenced in BoardPagerFragment for purpose of requerying posts with new
         // conditions
         //mListener.onCheckBoxValueChange(cbAutoFilter);
-        pagerAdapter.getPagerFragment().setCheckBoxValueChange(cbAutoFilter);
+        //pagerAdapter.getPagerFragment().setCheckBoxValueChange(cbAutoFilter);
 
 
         // To enable the autoclub enabled when clicking the autofilter, the viewpager is set to
@@ -379,6 +380,7 @@ public class BoardActivity extends BaseActivity implements
         // fragment but also the tab titles. Thus, recreate the title here.
         //addTabIconAndTitle(this, binding.tabBoard);
         //if(!menu.getItem(1).isVisible()) menu.getItem(1).setVisible(true);
+        pagerAdapter.notifyItemChanged(AUTOCLUB, cbAutoFilter);
     }
 
     protected void addTabIconAndTitle(Context context, TabLayout tabLayout) {
