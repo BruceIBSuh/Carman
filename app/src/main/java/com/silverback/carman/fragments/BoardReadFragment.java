@@ -70,6 +70,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
 import com.google.firebase.storage.FirebaseStorage;
+import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
@@ -98,17 +99,12 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * This dialogfragment reads a post content in the full size when clicking  an item recycled in
- * BoardPagerFragment.
- */
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener,
         Toolbar.OnMenuItemClickListener,
         CompoundButton.OnCheckedChangeListener,
         BoardCommentAdapter.CommentAdapterListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
-        //QueryCommentPagingUtil.OnQueryPaginationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadFragment.class);
 
@@ -119,18 +115,12 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Objects
     private Context context;
+    private FirebaseFirestore mDB;
     private CustomPostingObject obj;
-    //private PostingBoardRepository postRepo;
-    //private PostingBoardViewModel postingModel;
-    //private PostingClubRepository pagingUtil;
-    //private OnDialogDismissListener dialogDismissListener;
     private ListenerRegistration regListener;
-    //private QueryCommentPagingUtil queryCommentPagingUtil;
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
-    //private OnEditModeListener mListener;
-    private FirebaseFirestore mDB;
-    private FirebaseStorage storage;
+
     private DocumentReference postRef;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
@@ -141,35 +131,18 @@ public class BoardReadFragment extends DialogFragment implements
     private ArrayList<String> uriStringList, autofilter;
     private List<DocumentSnapshot> commentShotList;
     private InputMethodManager imm;
-    //private ListenerRegistration commentListener;
-    //private List<CharSequence> autoclub;
 
-    // UIs
     private FragmentBoardReadBinding binding;
-    // Fields
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String userPic;
     private int tabPage, position;
-    //private int position; // item poistion in the recyclerview.
     private int checkedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
     private boolean hasCompathy;
-    //private boolean isLoading;
 
-    // Interface for notifying BoardActivity of pressing the edit menu in the toolbar which is visible
-    // only when a user reads his/her own post
-    /*
-    public interface OnEditModeListener {
-        void onEditClicked(Bundle bundle);
-    }
-    // Interface for listening to BoardActivity at the lifecycle of onAttachFragment.
-    public void setEditModeListener(OnEditModeListener listener) {
-        mListener = listener;
-    }
-     */
     // Constructor default.
     public BoardReadFragment() {
         // Required empty public constructor
@@ -184,11 +157,13 @@ public class BoardReadFragment extends DialogFragment implements
         if(getArguments() != null) {
             obj = getArguments().getParcelable("postingObj");
             assert obj != null;
+
             tabPage = getArguments().getInt("tabPage");
             position = getArguments().getInt("position");
             documentId = getArguments().getString("documentId");
             cntComment = obj.getCntComment();
             cntCompathy = obj.getCntCompahty();
+
             if(obj.getPostImages() != null) uriStringList = new ArrayList<>(obj.getPostImages());
             if(obj.getAutofilter() != null) autofilter = new ArrayList<>(obj.getAutofilter());
         }
@@ -201,20 +176,14 @@ public class BoardReadFragment extends DialogFragment implements
 
         this.context = requireContext();
         mDB = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
         imgUtil = new ApplyImageResourceUtil(context);
         imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
 
-        //queryCommentPagingUtil = new QueryCommentPagingUtil(firestore, this);
         queryPaginationUtil = new QueryPostPaginationUtil(mDB, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
-        // Get the current document reference which should be shared in the fragment.
-        // Initially, attach SnapshotListener to have the comment collection updated, then remove
-        // the listener to prevent connecting to the server. Instead`, update the collection using
-        // Source.Cache.
         postRef = mDB.collection("user_post").document(documentId);
         queryPaginationUtil.setCommentQuery(postRef, "timestamp");
     }
@@ -241,7 +210,6 @@ public class BoardReadFragment extends DialogFragment implements
             binding.toolbarBoardRead.inflateMenu(R.menu.options_board_read);
             binding.toolbarBoardRead.setOnMenuItemClickListener(this);
         }
-
 
         binding.tvPostTitle.setText(obj.getPostTitle());
         binding.tvUsername.setText(obj.getUserName());
@@ -339,40 +307,20 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onResume() {
         super.onResume();
-        /*
-        // Realtime update of the comment count and compathy count using SnapshotListener.
-        // MetadataChanges.hasPendingWrite metadata.hasPendingWrites property that indicates
-        // whether the document has local changes that haven't been written to the backend yet.
-        // This property may determine the source of events
-        regListener = postRef.addSnapshotListener(MetadataChanges.INCLUDE, (snapshot, e) -> {
-            if(e != null) return;
-            if(snapshot != null && snapshot.exists()) {
-                long cntComment = Objects.requireNonNull(snapshot.getLong("cnt_comment"));
-                long cntCompathy = Objects.requireNonNull(snapshot.getLong("cnt_compathy"));
-                //binding.tvCntComment.setText(String.valueOf(cntComment));
-                //binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
-                //binding.headerCommentCnt.setText(String.valueOf(cntComment));
-            }
-        });
-
-         */
     }
 
     @Override
     public void onPause() {
-        log.i("onPause");
         super.onPause();
     }
 
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
-        log.i("onDismiss");
         super.onDismiss(dialog);
     }
 
     @Override
     public boolean onMenuItemClick(MenuItem menuItem) {
-        log.i("MenuItem clicked: %s", menuItem);
         if(menuItem.getItemId() == R.id.action_board_edit) {
             BoardEditFragment editFragment = new BoardEditFragment();
             Bundle editBundle = new Bundle();
@@ -415,29 +363,17 @@ public class BoardReadFragment extends DialogFragment implements
 
             fragment.show(fragmentManager, "alert");
             return true;
-        }
 
-        return false;
+        } else return false;
     }
-
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
         if(isChecked) {
-            //queryPaginationUtil.setCommentQuery(postRef);
-            log.i("comment list:%s", commentShotList.size());
             binding.recyclerComments.setVisibility(View.VISIBLE);
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             binding.imgbtnLoadComment.setVisibility(visible);
-            //if(cntComment > PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.VISIBLE);
-            //else binding.imgbtnLoadComment.setVisibility(View.GONE);
-
-        } else {
-            //commentAdapter.notifyItemRangeRemoved(0, commentShotList.size());
-            //commentShotList.clear();
-            binding.recyclerComments.setVisibility(View.GONE);
-            //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_UP));
-        }
+        } else binding.recyclerComments.setVisibility(View.GONE);
     }
 
     @Override
@@ -455,6 +391,7 @@ public class BoardReadFragment extends DialogFragment implements
                     binding.etComment.requestFocus();
                     commentAdapter.notifyItemChanged(checkedPos, true);
                 }
+
                 isCommentVisible = !isCommentVisible;
             }
 
@@ -464,7 +401,6 @@ public class BoardReadFragment extends DialogFragment implements
             } else uploadComment();
 
         } else if(v.getId() == R.id.imgbtn_load_comment) {
-            log.i("add more comments");
             if(cntComment > commentAdapter.getItemCount()) queryPaginationUtil.setNextCommentQuery();
             else notifyNoData();
         }
@@ -750,29 +686,36 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Method for uploading the comment to Firestore
     private void uploadComment() {
+        log.i("uploadComment");
         Map<String, Object> comment = new HashMap<>();
         comment.put("cnt_reply", 0);
         comment.put("comment", binding.etComment.getText().toString());
         comment.put("timestamp", FieldValue.serverTimestamp());
+
         // Fetch the comment user id saved in the storage
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             String commentId =  br.readLine();
             comment.put("user_id", commentId);
-            final DocumentReference docref = mDB.collection("users").document(commentId);
+
+            final DocumentReference userRef = mDB.collection("users").document(commentId);
             mDB.runTransaction((Transaction.Function<Void>) transaction -> {
-                DocumentSnapshot doc = transaction.get(docref);
-                comment.put("user_name", doc.getString("user_name"));
-                comment.put("user_pic", doc.getString("user_pic"));
+                DocumentSnapshot doc = transaction.get(userRef);
+                //comment.put("user_names", doc.getString("user_name"));
+                //comment.put("user_pic", doc.getString("user_pic"));
+                List<?> nameList = (List<?>)doc.get("user_names");
+                assert nameList != null;
+                List<String> tempList = new ArrayList<>();
+                for(Object obj : nameList) tempList.add((String)obj);
 
                 postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
                     //queryPaginationUtil.setCommentQuery(postRef, "timestamp");
                     commentRef.get().addOnSuccessListener(snapshot -> {
                         commentShotList.add(0, snapshot);
-                        commentAdapter.notifyItemInserted(0);
+                        commentAdapter.notifyItemChanged(0, tempList);
                     });
 
-                    postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(aVoid->{
+                    postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
                         cntComment++;
                         binding.tvCntComment.setText(String.valueOf(cntComment));
                         binding.headerCommentCnt.setText(String.valueOf(cntComment));
@@ -783,7 +726,6 @@ public class BoardReadFragment extends DialogFragment implements
                 }).addOnFailureListener(Throwable::printStackTrace);
 
                 imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-                // Make the comment view invisible and reset the flag.
                 binding.constraintComment.setVisibility(View.GONE);
                 isCommentVisible = !isCommentVisible;
                 return null;
@@ -831,7 +773,7 @@ public class BoardReadFragment extends DialogFragment implements
     // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
     /*
     private void showUserAutoClub(final TextView autoInfo) {
-        firestore.collection("users").document(postOwnerId).get().addOnCompleteListener(task -> {
+        mDB.collection("users").document(postOwnerId).get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 DocumentSnapshot document = task.getResult();
                 if(document != null && document.exists()) {
@@ -854,9 +796,7 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
     }
-
-     */
-
+    */
     /*
     private void queryCommentSnapshot(DocumentReference docref) {
         postRepo.setCommentQuery(docref);

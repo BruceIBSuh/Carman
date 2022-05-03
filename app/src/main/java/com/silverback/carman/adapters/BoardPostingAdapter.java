@@ -44,19 +44,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final int AD_VIEW_TYPE = 1;
 
     // Objects
-    //private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
-
     private Context context;
     private final OnRecyclerAdapterListener recyclerListener;
     private final AsyncListDiffer<DocumentSnapshot> mDiffer;
-    //private final AsyncListDiffer<BoardMultiPostingItem> mDiffer;
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
     private final List<DocumentSnapshot> snapshotList;
     private int category;
 
-    // Interface to notify BoardPagerFragment of pressing a recyclerview item.
     public interface OnRecyclerAdapterListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
         void onRecyclerUpdateDone();
@@ -64,14 +60,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Constructor
     public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerAdapterListener listener) {
-        //public BoardPostingAdapter(List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
         super();
         this.recyclerListener = listener;
         snapshotList = snapshots;
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
-        //this.multiTypeItemList = multiTypeItemList;
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        //setHasStableIds(true); // remove recyclerview blinking issue
+    }
+
+    // Update the adapter using AsyncListDiffer.ItemCallback<T>
+    public void submitPostList(List<DocumentSnapshot> snapshotList) {
+        mDiffer.submitList(Lists.newArrayList(snapshotList), recyclerListener::onRecyclerUpdateDone);
     }
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
@@ -103,8 +101,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             imgAttached = binding.imgAttached;
             userImage = binding.imgUser;
         }
-
-        TextView getTvNumber() { return postBinding.tvNumber; }
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
@@ -114,11 +110,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
 
-
-    public void submitPostList(List<DocumentSnapshot> snapshotList) {
-        mDiffer.submitList(Lists.newArrayList(snapshotList), recyclerListener::onRecyclerUpdateDone);
-
-    }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
     // the other is to display the plug-in content which will be used for

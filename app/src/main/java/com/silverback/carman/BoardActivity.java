@@ -694,6 +694,7 @@ public class BoardActivity extends BaseActivity implements
         return binding.progbarBoardLoading;
     }
 
+
     // Refactor required!!:
     // Custom class to typecast Firestore array field of post_images to ArrayList<String> used
     // in both BoardPostingAdapter and BoardPagerFragment.
