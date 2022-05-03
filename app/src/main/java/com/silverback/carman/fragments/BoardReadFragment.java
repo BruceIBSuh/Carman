@@ -498,15 +498,6 @@ public class BoardReadFragment extends DialogFragment implements
         binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
-    @Override
-    public void getRemovedQueryResult(DocumentSnapshot removedDoc) {
-
-    }
-
-    @Override
-    public void getModifiedQueryResult(DocumentSnapshot doc) {
-
-    }
 
     @Override
     public void getQueryErrorResult(Exception e) {

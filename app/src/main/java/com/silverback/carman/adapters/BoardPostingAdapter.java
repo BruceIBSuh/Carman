@@ -12,9 +12,12 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
+import androidx.recyclerview.widget.AsyncListDiffer;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
@@ -44,7 +47,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     //private final List<BoardPagerFragment.MultiTypeItem> multiTypeItemList;
 
     private Context context;
-    private final OnRecyclerItemClickListener mItemClickListener;
+    private final OnRecyclerAdapterListener recyclerListener;
+    private final AsyncListDiffer<DocumentSnapshot> mDiffer;
+    //private final AsyncListDiffer<BoardMultiPostingItem> mDiffer;
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
@@ -52,8 +57,21 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private int category;
 
     // Interface to notify BoardPagerFragment of pressing a recyclerview item.
-    public interface OnRecyclerItemClickListener {
-        void onPostClicked(DocumentSnapshot snapshot, int position);
+    public interface OnRecyclerAdapterListener {
+        void onPostItemClicked(DocumentSnapshot snapshot, int position);
+        void onRecyclerUpdateDone();
+    }
+
+    // Constructor
+    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerAdapterListener listener) {
+        //public BoardPostingAdapter(List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
+        super();
+        this.recyclerListener = listener;
+        snapshotList = snapshots;
+        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
+        //this.multiTypeItemList = multiTypeItemList;
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        //setHasStableIds(true); // remove recyclerview blinking issue
     }
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
@@ -95,15 +113,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-    // Constructor
-    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerItemClickListener listener) {
-    //public BoardPostingAdapter(List<BoardPagerFragment.MultiTypeItem> multiTypeItemList, OnRecyclerItemClickListener listener) {
-        super();
-        mItemClickListener = listener;
-        snapshotList = snapshots;
-        //this.multiTypeItemList = multiTypeItemList;
-        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        //setHasStableIds(true); // remove recyclerview blinking issue
+
+
+    public void submitPostList(List<DocumentSnapshot> snapshotList) {
+        mDiffer.submitList(Lists.newArrayList(snapshotList), recyclerListener::onRecyclerUpdateDone);
+
     }
 
     // Create 2 difference viewholders, one of which is to display the general post content and
@@ -131,12 +145,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        log.i("onBindingViewHolder");
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 PostViewHolder postHolder = (PostViewHolder)holder;
-                DocumentSnapshot snapshot = snapshotList.get(position);
+                //DocumentSnapshot snapshot = snapshotList.get(position);
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
+                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(holder.getBindingAdapterPosition());
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
@@ -179,7 +193,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
                 // Set the listener for clicking the item with position
                 holder.itemView.setOnClickListener(view ->
-                    mItemClickListener.onPostClicked(snapshot, holder.getBindingAdapterPosition())
+                        recyclerListener.onPostItemClicked(snapshot, holder.getBindingAdapterPosition())
                 );
 
                 break;
@@ -194,7 +208,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
-        log.i("partial binding:%s", payloads);
         //holder.setIsRecyclable(false);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
@@ -206,7 +219,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     SparseLongArray sparseArray = (SparseLongArray)payload;
                     postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
                 } else if(payload instanceof String) {
-                    log.i("binding: %s, %s", position, holder.getBindingAdapterPosition() + 1);
                     String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
                     ((PostViewHolder) holder).tvNumber.setText(bindingPos);
                 }
@@ -216,8 +228,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public long getItemId(int position) {
-        return position;
+        //return position;
         //return snapshotList.get(position).hashCode();
+        return mDiffer.getCurrentList().get(position).hashCode();
     }
 
     /*
@@ -235,8 +248,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public int getItemCount() {
-        return snapshotList.size();
+        //return snapshotList.size();
         //return multiTypeItemList.size();
+        return mDiffer.getCurrentList().size();
     }
 
 
@@ -262,4 +276,63 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         snapshotList.remove(position);
         notifyItemRemoved(position);
     }
+
+    private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_POST =
+            new DiffUtil.ItemCallback<DocumentSnapshot>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                    return oldItem.getId().equals(newItem.getId());
+                }
+                @Override
+                public boolean areContentsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                    return oldItem.equals(newItem);
+                }
+                public Object getChangePayload(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                    return super.getChangePayload(oldItem, newItem);
+                }
+            };
+
+    /*
+    private static class BoardDiffUtilCallback extends DiffUtil.Callback{
+        List<DocumentSnapshot> oldList, newList;
+        public BoardDiffUtilCallback(List<DocumentSnapshot> oldList, List<DocumentSnapshot> newList) {
+            this.oldList = oldList;
+            this.newList = newList;
+        }
+        @Override
+        public int getOldListSize() {
+            return oldList.size();
+        }
+        @Override
+        public int getNewListSize() {
+            return newList.size();
+        }
+        @Override
+        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition).getId().equals(newList.get(newItemPosition).getId());
+        }
+        @Override
+        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
+            return oldList.get(oldItemPosition) == newList.get(newItemPosition);
+        }
+        @Override
+        public Object getChangePayload(int oldItemPosition, int newItemPosition) {
+            return super.getChangePayload(oldItemPosition, newItemPosition);
+        }
+    }
+    private static final DiffUtil.ItemCallback<BoardMultiPostingItem> DIFF_CALLBACK_POST =
+            new DiffUtil.ItemCallback<BoardMultiPostingItem>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
+            return oldItem.getId() == newItem.getId();
+        }
+        @Override
+        public boolean areContentsTheSame(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
+            return oldItem.equals(newItem);
+        }
+        public Object getChangePayload(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
+            return super.getChangePayload(oldItem, newItem);
+        }
+    };
+     */
 }
