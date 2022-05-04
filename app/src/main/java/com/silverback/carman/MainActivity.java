@@ -82,7 +82,6 @@ public class MainActivity extends BaseActivity implements
 
     private LocationTask locationTask;
     private StationListTask stationListTask;
-    private GasPriceTask gasPriceTask;
 
     private MainContentAdapter mainContentAdapter;
     private StationListAdapter stnListAdapter;
@@ -100,7 +99,6 @@ public class MainActivity extends BaseActivity implements
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
-
 
     // The manual says that registerForActivityResult() is safe to call before a fragment or activity
     // is created
@@ -619,7 +617,7 @@ public class MainActivity extends BaseActivity implements
 
         if(!TextUtils.isEmpty(district)) {
             log.i("district: %s", district);
-            gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
+            GasPriceTask gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 log.i("viewmodel");
                 if(isDone) {
