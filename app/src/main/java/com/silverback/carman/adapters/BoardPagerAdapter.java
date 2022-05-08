@@ -29,12 +29,15 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerAdapter.class);
 
     // Objects
+    private final String userId;
     private final ArrayList<String> autofilter;
     private final List<BoardPagerFragment> fragmentList;
 
     public BoardPagerAdapter(
-            @NonNull FragmentManager fm, @NonNull Lifecycle lifecycle, ArrayList<String> autofilter) {
+            @NonNull FragmentManager fm, @NonNull Lifecycle lifecycle,
+            String userId, ArrayList<String> autofilter) {
         super(fm, lifecycle);
+        this.userId = userId;
         this.autofilter = autofilter;
         fragmentList = new ArrayList<>();
     }
@@ -42,7 +45,7 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        BoardPagerFragment fragment = BoardPagerFragment.newInstance(position, autofilter);
+        BoardPagerFragment fragment = BoardPagerFragment.newInstance(position, userId, autofilter);
         fragmentList.add(fragment);
         return fragmentList.get(position);
     }

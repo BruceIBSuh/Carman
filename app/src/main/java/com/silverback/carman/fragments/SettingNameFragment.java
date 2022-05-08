@@ -35,7 +35,7 @@ import java.util.Date;
 
 public class SettingNameFragment extends DialogFragment {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameDlgFragment.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(SettingNameFragment.class);
     private FirebaseFirestore firestore;
     private DialogSettingNameBinding binding;
     private FragmentSharedModel fragmentModel;
@@ -101,7 +101,7 @@ public class SettingNameFragment extends DialogFragment {
             // Query the name to check if there exists the same name in Firestore
             // Firestore does not provide case insensitive query. To do so, make the full text search
             // using a dedicated thrid party service such as Elastic, Algolia, or Typesense.
-            Query queryName = firestore.collection("users").whereArrayContains("user_name", newName).limit(1);
+            Query queryName = firestore.collection("users").whereArrayContains("user_names", newName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
                     alertDialog.getButton(BUTTON_POSITIVE).setEnabled(false);
@@ -120,14 +120,15 @@ public class SettingNameFragment extends DialogFragment {
     private void updateUserProfile() {
         // When a new username has replaced the current name, update the new name in Firestore.
         //preference.callChangeListener(newName); //seems not working
-        try (FileInputStream fis = requireActivity().openFileInput("userId");
-             BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+        try(FileInputStream fis = requireActivity().openFileInput("userId");
+            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
+
             final String userId = br.readLine();
             DocumentReference docRef = firestore.collection("users").document(userId);
 
             WriteBatch batch = firestore.batch();
             Date regDate = Timestamp.now().toDate();
-            batch.update(docRef, "user_name", FieldValue.arrayUnion(newName));
+            batch.update(docRef, "user_names", FieldValue.arrayUnion(newName));
             batch.update(docRef, "reg_date", FieldValue.arrayUnion(regDate));
             batch.commit().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) fragmentModel.getUserName().setValue(newName);

@@ -31,7 +31,6 @@ public class RecyclerDividerUtil extends RecyclerView.ItemDecoration{
     public void getItemOffsets(
             @NonNull Rect outrect, @NonNull View view,
             @NonNull RecyclerView parent, @NonNull RecyclerView.State state) {
-
     }
 
     @Override

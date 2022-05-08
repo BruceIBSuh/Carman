@@ -69,14 +69,15 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
-import com.google.firebase.storage.FirebaseStorage;
-import com.silverback.carman.BaseActivity;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
+import com.silverback.carman.adapters.BoardReadFeedAdapter;
 import com.silverback.carman.adapters.BoardReplyAdapter;
-import com.silverback.carman.databinding.FragmentBoardReadBinding;
+import com.silverback.carman.databinding.BoardFragmentReadBinding;
+import com.silverback.carman.databinding.BoardReadHeaderBinding;
+import com.silverback.carman.databinding.BoardReadPostBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -95,18 +96,22 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener,
         Toolbar.OnMenuItemClickListener,
-        CompoundButton.OnCheckedChangeListener,
+        //CompoundButton.OnCheckedChangeListener,
+        BoardReadFeedAdapter.ReadFeedAdapterListener,
         BoardCommentAdapter.CommentAdapterListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadFragment.class);
+
+    public static final int POST_CONTENT = 0;
+    public static final int COMMENT_HEADER = 1;
+    public static final int COMMENT_LIST = 2;
 
     // Constants
     private static final int STATE_COLLAPSED = 0;
@@ -121,6 +126,8 @@ public class BoardReadFragment extends DialogFragment implements
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
 
+    private BoardReadFeedAdapter boardReadFeedAdapter;
+
     private DocumentReference postRef;
     private ApplyImageResourceUtil imgUtil;
     private ImageViewModel imgViewModel;
@@ -132,7 +139,10 @@ public class BoardReadFragment extends DialogFragment implements
     private List<DocumentSnapshot> commentShotList;
     private InputMethodManager imm;
 
-    private FragmentBoardReadBinding binding;
+    //private FragmentBoardReadBinding binding;
+    private BoardFragmentReadBinding binding;
+    private BoardReadHeaderBinding headerBinding;
+
     private SpannableStringBuilder autoTitle;
     private String tabTitle;
     private String userPic;
@@ -157,9 +167,9 @@ public class BoardReadFragment extends DialogFragment implements
         if(getArguments() != null) {
             obj = getArguments().getParcelable("postingObj");
             assert obj != null;
-
             tabPage = getArguments().getInt("tabPage");
             position = getArguments().getInt("position");
+            viewerId = getArguments().getString("viewerId");
             documentId = getArguments().getString("documentId");
             cntComment = obj.getCntComment();
             cntCompathy = obj.getCntCompahty();
@@ -168,12 +178,15 @@ public class BoardReadFragment extends DialogFragment implements
             if(obj.getAutofilter() != null) autofilter = new ArrayList<>(obj.getAutofilter());
         }
 
+        log.i("viewerId : %s", viewerId);
+
         // Get the viewer id for checking whether the post owner is the viewer
+        /*
         try(FileInputStream fis = requireActivity().openFileInput("userId");
             BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
             viewerId = br.readLine();
         } catch(IOException e) {e.printStackTrace();}
-
+        */
         this.context = requireContext();
         mDB = FirebaseFirestore.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -184,15 +197,20 @@ public class BoardReadFragment extends DialogFragment implements
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
+        boardReadFeedAdapter = new BoardReadFeedAdapter(obj, commentAdapter, this);
+
         postRef = mDB.collection("user_post").document(documentId);
         queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        binding = FragmentBoardReadBinding.inflate(inflater);
+        //binding = FragmentBoardReadBinding.inflate(inflater);
+        binding = BoardFragmentReadBinding.inflate(inflater, container, false);
+        headerBinding = BoardReadHeaderBinding.inflate(inflater, container, false);
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
         // cases, but you do not set the toolbar to act as the action bar. In standalone mode, you
         // need to manually populate the toolbar with content and actions as follows. Also, the
@@ -201,7 +219,7 @@ public class BoardReadFragment extends DialogFragment implements
         tabTitle = getResources().getStringArray(R.array.board_tab_title)[tabPage];
         autoTitle = ((BoardActivity)requireActivity()).getAutoClubTitle();
 
-        //setHasOptionsMenu(true);
+        setHasOptionsMenu(true);
         // If the user is the owner of a post, display the edit menu in the toolbar, which should
         // use MenuInflater and create menu dynimically. It seems onCreateOptionsMenu does not work
         // in DialogFragment
@@ -217,24 +235,20 @@ public class BoardReadFragment extends DialogFragment implements
         binding.tvCntComment.setText(String.valueOf(cntComment));
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
+        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
+        binding.recyclerRead.setHasFixedSize(false);
+        binding.recyclerRead.setLayoutManager(layout);
+        //binding.recyclerRead.addItemDecoration(divider);
+        binding.recyclerRead.setItemAnimator(new DefaultItemAnimator());
+        binding.recyclerRead.setAdapter(boardReadFeedAdapter);
+
         // Retreive the auto data from the server and set it to the view
         // UPADTE THE FIRESTORE FIELD NAMES REQUIRED !!
         //showUserAutoClub(binding.tvAutoinfo);
 
-        // RecyclerView for showing comments
-        LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
-                0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
-        binding.recyclerComments.setHasFixedSize(false); //due to banner plugin
-        binding.recyclerComments.setLayoutManager(layout);
-        binding.recyclerComments.addItemDecoration(divider);
-        binding.recyclerComments.setItemAnimator(new DefaultItemAnimator());
-        binding.recyclerComments.setAdapter(commentAdapter);
-        //setRecyclerViewScrollListener();
-        //binding.recyclerComments.addOnScrollListener(pagingUtil);
-
         // Event handler for buttons
-        binding.switchComment.setOnCheckedChangeListener(this);
         binding.imgbtnComment.setOnClickListener(this);
         binding.imgbtnLoadComment.setOnClickListener(this);
         binding.imgbtnCompathy.setOnClickListener(view -> setCompathyCount());
@@ -270,7 +284,7 @@ public class BoardReadFragment extends DialogFragment implements
         imgUtil.applyGlideToImageView(Uri.parse(userPic), binding.imgUserpic, size, size, true);
 
         // Rearrange the text by paragraphs
-        readContentView(obj.getPostContent());
+        //readContentView(obj.getPostContent());
 
         return binding.getRoot();
     }
@@ -366,15 +380,17 @@ public class BoardReadFragment extends DialogFragment implements
 
         } else return false;
     }
-
+    /*
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+        log.i("onCheckedChanged:%s", isChecked);
         if(isChecked) {
-            binding.recyclerComments.setVisibility(View.VISIBLE);
+            //binding.recyclerComments.setVisibility(View.VISIBLE);
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             binding.imgbtnLoadComment.setVisibility(visible);
-        } else binding.recyclerComments.setVisibility(View.GONE);
+        } //else binding.recyclerComments.setVisibility(View.GONE);
     }
+     */
 
     @Override
     public void onClick(View v) {
@@ -392,7 +408,7 @@ public class BoardReadFragment extends DialogFragment implements
                     commentAdapter.notifyItemChanged(checkedPos, true);
                 }
 
-                isCommentVisible = !isCommentVisible;
+                //isCommentVisible = !isCommentVisible;
             }
 
         } else if(v.getId() == R.id.imgbtn_send_comment) {
@@ -412,26 +428,29 @@ public class BoardReadFragment extends DialogFragment implements
     public void getFirstQueryResult(QuerySnapshot commentShots) {
         commentShotList.clear();
         for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
-        commentAdapter.notifyItemRangeChanged(0, commentShots.size());
+        //commentAdapter.notifyItemRangeChanged(0, commentShots.size());
+        commentAdapter.submitCommentList(commentShotList);
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        int scrollY = binding.nestedScrollview.getHeight();
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
+        //int scrollY = binding.nestedScrollview.getHeight();
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
-        commentAdapter.notifyItemRangeChanged(start, nextShots.size());
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        //commentAdapter.notifyItemRangeChanged(start, nextShots.size());
+        commentAdapter.submitCommentList(commentShotList);
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
-        commentAdapter.notifyItemRangeChanged(start, lastShots.size());
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
+        //commentAdapter.notifyItemRangeChanged(start, lastShots.size());
+        commentAdapter.submitCommentList(commentShotList);
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
 
@@ -451,7 +470,7 @@ public class BoardReadFragment extends DialogFragment implements
             cntComment --;
             if(cntComment <= PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.GONE);
             binding.tvCntComment.setText(String.valueOf(cntComment));
-            binding.headerCommentCnt.setText(String.valueOf(cntComment));
+            //binding.headerCommentCnt.setText(String.valueOf(cntComment));
         }).addOnFailureListener(Throwable::printStackTrace);
     }
     @Override
@@ -497,134 +516,21 @@ public class BoardReadFragment extends DialogFragment implements
         if(checkedPos != bindingPos) commentAdapter.notifyItemChanged(checkedPos, true);
 
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        int scrollY = binding.nestedScrollview.getHeight();
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
+        //int scrollY = binding.nestedScrollview.getHeight();
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
     }
 
     @Override
     public void notifyEditTextFocused(View view) {
         log.i("content edit text focused");
         if(!checkUserName()) view.clearFocus();
-        binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
+        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
     private void getActivityResultCallback(ActivityResult result) {
         log.i("activity result: %s", result.getData());
         if(result.getData() != null) log.i("user name:");
     }
-
-    // Make up the text-based content and any image attached in ConstraintLayout which is dynamically
-    // created by ConstraintSet. Images should be managed by Glide.
-    // The regular expression makes text and images split with the markup which was inserted when images
-    // were created. While looping the content, split parts of text and image are conntected by
-    // ConstraintSets which are applied to the parent ConstraintLayout.
-    // The recyclerview which displays comments at the bottom should be coordinated according to
-    // whether the content has images or not.
-    private void readContentView(String content) {
-        // When an image is attached as the post writes, the line separator is supposed to put in at
-        // before and after the image. That's why the regex contains the line separator in order to
-        // get the right end position.
-        final String REGEX_MARKUP = "\\[image_\\d]";
-        final Matcher m = Pattern.compile(REGEX_MARKUP).matcher(content);
-        final ConstraintLayout parent = binding.constraintPosting;
-
-        int index = 0;
-        int start = 0;
-        int target;
-        int prevImageId = 0;
-
-        // Create LayoutParams using LinearLayout(RelativeLayout).LayoutParams, not using Constraint
-        // Layout.LayoutParams. WHY?
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-
-        // If the content contains images, which means any markup(s) exists in the content, the content
-        // is split into parts of texts and images and respectively connected to ConstraintSet.
-        while(m.find()) {
-            // Check whether the content starts w/ text or image, which depends on the value of start.
-            String paragraph = content.substring(start, m.start());
-            TextView tv = new TextView(context);
-            tv.setId(View.generateViewId());
-            tv.setText(paragraph);
-            parent.addView(tv, params);
-            target = (start == 0) ? binding.guideline.getId() : prevImageId;
-
-            ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(parent);
-            tvSet.connect(tv.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(tv.getId(), ConstraintSet.TOP, target, ConstraintSet.BOTTOM, 16);
-            tvSet.applyTo(parent);
-
-            ImageView imgView = new ImageView(context);
-            imgView.setId(View.generateViewId());
-            prevImageId = imgView.getId();
-            parent.addView(imgView, params);
-
-            ConstraintSet imgSet = new ConstraintSet();
-            imgSet.clone(parent);
-            imgSet.connect(imgView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
-            imgSet.connect(imgView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            imgSet.connect(imgView.getId(), ConstraintSet.TOP, tv.getId(), ConstraintSet.BOTTOM, 0);
-            imgSet.applyTo(parent);
-
-            // Consider to apply Glide thumbnail() method.
-            Glide.with(context).asBitmap().load(uriStringList.get(index))
-                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).fitCenter().into(imgView);
-
-            start = m.end();
-            index++;
-        }
-
-        // Coordinate the position b/w the last part, no matter what is imageview or textview in the content,
-        // and the following recyclerview which shows any comment
-        // Simple text w/o any image
-        if(start == 0) {
-            TextView simpleText = new TextView(context);
-            simpleText.setId(View.generateViewId());
-            simpleText.setText(content);
-            parent.addView(simpleText, params);
-
-            ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(parent);
-            tvSet.connect(simpleText.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
-            tvSet.connect(simpleText.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(simpleText.getId(), ConstraintSet.TOP, binding.guideline.getId(), ConstraintSet.BOTTOM, 16);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 64);
-            //tvSet.connect(binding.recyclerComments.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 16);
-            //tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, simpleText.getId(), ConstraintSet.BOTTOM, 0);
-            tvSet.applyTo(parent);
-
-        // Text after an image
-        } else if(start < content.length()) {
-            String lastParagraph = content.substring(start);
-            log.i("text after an image: %s", lastParagraph.length());
-            TextView lastView = new TextView(context);
-            lastView.setId(View.generateViewId());
-            lastView.setText(lastParagraph);
-            parent.addView(lastView, params);
-
-            ConstraintSet tvSet = new ConstraintSet();
-            tvSet.clone(parent);
-            tvSet.connect(lastView.getId(), ConstraintSet.START, parent.getId(), ConstraintSet.START, 16);
-            tvSet.connect(lastView.getId(), ConstraintSet.END, parent.getId(), ConstraintSet.END, 16);
-            tvSet.connect(lastView.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            tvSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, lastView.getId(), ConstraintSet.BOTTOM, 64);
-            tvSet.applyTo(parent);
-
-        // No text after the last image
-        } else if(start == content.length()) {
-            log.i("image positioned at the last");
-            ConstraintSet imageSet = new ConstraintSet();
-            imageSet.clone(parent);
-            imageSet.connect(binding.headerComment.getId(), ConstraintSet.TOP, prevImageId, ConstraintSet.BOTTOM, 0);
-            imageSet.applyTo(parent);
-        }
-
-    }
-
-
-
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
@@ -691,48 +597,41 @@ public class BoardReadFragment extends DialogFragment implements
         comment.put("cnt_reply", 0);
         comment.put("comment", binding.etComment.getText().toString());
         comment.put("timestamp", FieldValue.serverTimestamp());
+        comment.put("user_id", viewerId);
 
-        // Fetch the comment user id saved in the storage
-        try(FileInputStream fis = requireActivity().openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
-            String commentId =  br.readLine();
-            comment.put("user_id", commentId);
+        DocumentReference userRef = mDB.collection("users").document(viewerId);
+        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
+            DocumentSnapshot doc = transaction.get(userRef);
+            log.i("user doc: %s", doc);
 
-            final DocumentReference userRef = mDB.collection("users").document(commentId);
-            mDB.runTransaction((Transaction.Function<Void>) transaction -> {
-                DocumentSnapshot doc = transaction.get(userRef);
-                //comment.put("user_names", doc.getString("user_name"));
-                //comment.put("user_pic", doc.getString("user_pic"));
-                List<?> nameList = (List<?>)doc.get("user_names");
-                assert nameList != null;
-                List<String> tempList = new ArrayList<>();
-                for(Object obj : nameList) tempList.add((String)obj);
+            List<?> nameList = (List<?>)doc.get("user_names");
+            assert nameList != null;
+            List<String> tempList = new ArrayList<>();
+            for(Object obj : nameList) tempList.add((String)obj);
 
-                postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
-                    //queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                    commentRef.get().addOnSuccessListener(snapshot -> {
-                        commentShotList.add(0, snapshot);
-                        commentAdapter.notifyItemChanged(0, tempList);
-                    });
+            comment.put("user_name", tempList.get(tempList.size() - 1));
+            comment.put("user_pic", doc.getString("user_pic"));
 
-                    postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
-                        cntComment++;
-                        binding.tvCntComment.setText(String.valueOf(cntComment));
-                        binding.headerCommentCnt.setText(String.valueOf(cntComment));
-                    });
-
-                    binding.nestedScrollview.fullScroll(View.FOCUS_UP);
-
-                }).addOnFailureListener(Throwable::printStackTrace);
-
-                imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-                binding.constraintComment.setVisibility(View.GONE);
-                isCommentVisible = !isCommentVisible;
-                return null;
-            });
-
-        } catch(IOException | NullPointerException e) {e.printStackTrace();}
-
+            postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
+                queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+                commentRef.get().addOnSuccessListener(snapshot -> {
+                    /*
+                    commentShotList.add(0, snapshot);
+                    commentAdapter.notifyItemChanged(0);
+                     */
+                });
+                postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
+                    cntComment++;
+                    binding.tvCntComment.setText(String.valueOf(cntComment));
+                    //binding.headerCommentCnt.setText(String.valueOf(cntComment));
+                    boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
+                });
+            }).addOnFailureListener(Throwable::printStackTrace);
+            imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+            binding.constraintComment.setVisibility(View.GONE);
+            isCommentVisible = !isCommentVisible;
+            return null;
+        });
     }
 
     // Check if the user has already picked a post as favorite doing queries the compathy collection,

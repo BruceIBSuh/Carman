@@ -72,6 +72,14 @@ public class MainActivity extends BaseActivity implements
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
 
+    public static final int NOTIFICATION = 0;
+    public static final int BANNER_AD_1 = 1;
+    public static final int VIEWPAGER_EXPENSE = 2;
+    public static final int CARLIFE = 3;
+    public static final int BANNER_AD_2 = 4;
+    public static final int COMPANY_INFO = 5;
+
+
     // Objects
     private ActivityMainBinding binding;
 
@@ -174,10 +182,8 @@ public class MainActivity extends BaseActivity implements
         imgModel.getGlideDrawableTarget().observe(this, userImage -> {
             if(getSupportActionBar() != null) getSupportActionBar().setIcon(userImage);
         });
-
         // Return the fuel price pager to the first page.
         binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-
     }
 
     @Override
@@ -365,7 +371,7 @@ public class MainActivity extends BaseActivity implements
 
             // Return the viewpagers to the initial page.
             binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-            mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, 0);
+            mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
         }
     }
 
@@ -551,7 +557,7 @@ public class MainActivity extends BaseActivity implements
         switch(result.getResultCode()) {
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 int total = resultIntent.getIntExtra("expense", 0);
-                mainContentAdapter.notifyItemChanged(Constants.VIEWPAGER_EXPENSE, total);
+                mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, total);
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:

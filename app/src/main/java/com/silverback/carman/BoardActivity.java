@@ -182,7 +182,9 @@ public class BoardActivity extends BaseActivity implements
         createAutofilter(jsonAutoFilter, binding.autofilter);
 
         // ViewPager2
-        pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle(), cbAutoFilter);
+        log.i("userId: %s", userId);
+        pagerAdapter = new BoardPagerAdapter(
+                getSupportFragmentManager(), getLifecycle(), userId, cbAutoFilter);
         //pagerAdapter.setAutoFilterValues(cbAutoFilter);
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.setVisibility(View.GONE);//show progressbar unitl the query completes.
@@ -672,19 +674,19 @@ public class BoardActivity extends BaseActivity implements
     }
 
 
+
+
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value
     // of whehter a post should be uploaded in the general board is referenced in the same fragments
     // to query or upload posts.
     public ArrayList<String> getAutoFilterValues() {
         return cbAutoFilter;
     }
-
-
     // Referenced in BoardPagerFragment for its vision control as the recyclerview scrolls.
     public FloatingActionButton getFAB() {
         return binding.fabBoardWrite;
     }
-
+    // Get the post title in the AutoClub.
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
     }

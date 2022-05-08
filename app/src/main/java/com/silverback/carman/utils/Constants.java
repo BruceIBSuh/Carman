@@ -24,12 +24,12 @@ public class Constants {
     public static final int CAMERA = 2;
 
     // MainActivity Content Feed Placeholder
-    public static final int NOTIFICATION = 0;
-    public static final int BANNER_AD_1 = 1;
-    public static final int VIEWPAGER_EXPENSE = 2;
-    public static final int CARLIFE = 3;
-    public static final int BANNER_AD_2 = 4;
-    public static final int COMPANY_INFO = 5;
+    //public static final int NOTIFICATION = 0;
+    //public static final int BANNER_AD_1 = 1;
+    //public static final int VIEWPAGER_EXPENSE = 2;
+    //public static final int CARLIFE = 3;
+    //public static final int BANNER_AD_2 = 4;
+    //public static final int COMPANY_INFO = 5;
 
     public static final long OPINET_UPDATE_INTERVAL = 1000 * 60 * 60;//Interval for downloading gas prices from Opinet (3 hrs)
     public static final float UPDATE_DISTANCE = 50; //Distance difference to update near stations

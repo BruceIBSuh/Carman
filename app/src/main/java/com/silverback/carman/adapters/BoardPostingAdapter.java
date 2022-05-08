@@ -269,19 +269,19 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_POST =
-            new DiffUtil.ItemCallback<DocumentSnapshot>() {
-                @Override
-                public boolean areItemsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
-                    return oldItem.getId().equals(newItem.getId());
-                }
-                @Override
-                public boolean areContentsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
-                    return oldItem.equals(newItem);
-                }
-                public Object getChangePayload(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
-                    return super.getChangePayload(oldItem, newItem);
-                }
-            };
+        new DiffUtil.ItemCallback<DocumentSnapshot>() {
+            @Override
+            public boolean areItemsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                return oldItem.getId().equals(newItem.getId());
+            }
+            @Override
+            public boolean areContentsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                return oldItem.equals(newItem);
+            }
+            public Object getChangePayload(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+                return super.getChangePayload(oldItem, newItem);
+            }
+        };
 
     /*
     private static class BoardDiffUtilCallback extends DiffUtil.Callback{

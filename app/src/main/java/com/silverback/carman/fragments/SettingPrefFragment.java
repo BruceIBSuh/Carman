@@ -96,7 +96,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
 
         namePref = findPreference(PREF_USERNAME_TAG);
         String userName = mSettings.getString(PREF_USERNAME_TAG, getString(R.string.pref_entry_void));
-        if(namePref != null) {
+        //if(namePref != null) {
             namePref.setSummary(userName);
             namePref.setOnPreferenceClickListener(v -> {
                 if(namePref.getSummary() != null) {
@@ -106,7 +106,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
                 }
                 return true;
             });
-        }
+        //}
 
         // Call SettingAutoFragment which contains preferences to have car related data which are
         // used as filters for querying the posting board. On clicking the UP button, the preference
@@ -314,58 +314,6 @@ public class SettingPrefFragment extends SettingBaseFragment {
             autoPref.showProgressBar(false);
         }
     }
-
-    /*
-    @SuppressWarnings("deprecation")
-    //Though setTargetFragemnt has been deprecated, PreferernceDialogFragmentCompat is not switched
-    //over to the new API, leaving the state deprecated.
-    //implement PreferenceFragmentCompat.OnPreferenceDisplayDialogCallback
-    @Override
-    public boolean onPreferenceDisplayDialog(@NonNull PreferenceFragmentCompat caller, @NonNull Preference pref) {
-        final DialogFragment dialogFragment;
-        if (pref instanceof SpinnerDialogPreference) {
-            if(getParentFragmentManager().findFragmentByTag(DIALOG_DISTRICT_TAG) != null) return false;
-            dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
-            dialogFragment.setTargetFragment(this, 0);
-            dialogFragment.show(getParentFragmentManager(), DIALOG_DISTRICT_TAG);
-        } else if(pref instanceof NameDialogPreference) {
-            if(getParentFragmentManager().findFragmentByTag(DIALOG_USERNAME_TAG) != null) return false;
-            dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
-            dialogFragment.setTargetFragment(this, 1);
-            dialogFragment.show(getParentFragmentManager(), DIALOG_USERNAME_TAG);
-        } else throw new IllegalStateException("");
-
-        //dialogFragment.getChildFragmentManager().setFragmentResult(pref.getKey(), extras);
-        //getChildFragmentManager() -> has not been attached yet error
-        //getParentFragmentManager() -> not associated with a fragment manager error.
-        return true;
-    }
-     */
-
-
-    // Implement the callback of Preferrence.OnDisplayPreferenceDialogListener, which defines an
-    // action to pop up an CUSTOM PreferenceDialogFragmnetCompat when a preferenece clicks.
-    // getFragmentManager() is deprecated as of API 28 and up. Instead, use FragmentActivity.
-    /*
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onDisplayPreferenceDialog(@NonNull Preference pref) {
-        final DialogFragment dialogFragment;
-        if (pref instanceof SpinnerDialogPreference) {
-            //if(getParentFragmentManager().findFragmentByTag(DIALOG_DISTRICT_TAG) != null) return;
-            dialogFragment = SettingSpinnerDlgFragment.newInstance(pref.getKey(), sigunCode);
-            dialogFragment.setTargetFragment(this, 0);
-            dialogFragment.show(getParentFragmentManager(), DIALOG_DISTRICT_TAG);
-
-        } else if(pref instanceof NameDialogPreference) {
-            //if(getParentFragmentManager().findFragmentByTag(DIALOG_USERNAME_TAG) != null) return;
-            dialogFragment = SettingNameDlgFragment.newInstance(pref.getKey(), userName);
-            dialogFragment.setTargetFragment(this, 1);
-            dialogFragment.show(getParentFragmentManager(), DIALOG_USERNAME_TAG);
-        } else super.onDisplayPreferenceDialog(pref);
-    }
-    */
-
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

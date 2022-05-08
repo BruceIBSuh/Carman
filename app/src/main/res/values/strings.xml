@@ -307,7 +307,7 @@
     <string name="pref_spinner_sido_ulsan">울산시</string>
     <string name="pref_spinner_sido_sejong">세종시</string>
     <string name="setting_null">지정안함</string>
-    <!--SettingPreferenceActivity$SettingNameDlgFragment-->
+    <!--SettingPreferenceActivity$SettingNameFragment-->
     <string name="pref_username_msg_invalid">이미 사용중입니다</string>
     <string name="pref_username_msg_available">사용 가능합니다</string>
     <!--SettingPreferenceActivity$SettingAutoFragment-->
@@ -323,7 +323,7 @@
     <string name="pref_userpic_gallery">갤러리</string>
     <string name="pref_userpic_camera">카메라</string>
     <string name="pref_no_userpic">설정하지 않음</string>
-    <!--SettingPreferenceActivity$SettingNameDlgFragment -->
+    <!--SettingPreferenceActivity$SettingNameFragment -->
     <string name="pref_hint_username">사용자/자동차 이름을 넣어주세요</string>
 
     <!-- Threads -->

@@ -12,11 +12,14 @@ import android.widget.PopupWindow;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
@@ -47,7 +50,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     private final CommentAdapterListener commentListener;
     private final FirebaseFirestore firestore;
-
+    private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private final List<DocumentSnapshot> commentList;
     private final ApplyImageResourceUtil imageUtil;
     private final PopupDropdownUtil popupDropdownUtil;
@@ -79,6 +82,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         this.viewerId = viewerId;
         this.commentListener = listener;
 
+        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_COMMENT);
         //styleWrapper = new ContextThemeWrapper(context, R.style.CarmanPopupMenu);
         firestore = FirebaseFirestore.getInstance();
         imageUtil = new ApplyImageResourceUtil(context);
@@ -91,6 +95,11 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         replyAdapter.initReplyAdapter(popupDropdownUtil, imageUtil, viewerId);
         replyAdapter.setReplyAdapterListener(listener);
 
+    }
+
+    // Update the adapter using AsyncListDiffer.ItemCallback<T>
+    public void submitCommentList(List<DocumentSnapshot> snapshotList) {
+        mDiffer.submitList(Lists.newArrayList(snapshotList));//, recyclerListener::onRecyclerUpdateDone);
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
@@ -110,7 +119,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         ImageView getSendReplyView() { return commentBinding.imgbtnSendReply; }
         RecyclerView getRecyclerReplyView() { return commentBinding.recyclerviewReply; }
         Button getLoadReplyButton() { return commentBinding.btnLoadReplies; }
-
 
         void setCommentProfile(DocumentSnapshot doc) {
             commentBinding.tvCommentUser.setText(doc.getString("user_name"));
@@ -299,6 +307,20 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             dropdown.dismiss();
         });
     }
+
+    private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_COMMENT = new DiffUtil.ItemCallback<DocumentSnapshot>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return oldItem.getId().equals(newItem.getId());
+        }
+        @Override
+        public boolean areContentsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return oldItem.equals(newItem);
+        }
+        public Object getChangePayload(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return super.getChangePayload(oldItem, newItem);
+        }
+    };
 
     // RecyclerView Adapter for the comment reply.
     /*

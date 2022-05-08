@@ -112,6 +112,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         if(mSettings == null) mSettings = PreferenceManager.getDefaultSharedPreferences(this);
         //jsonDistrict = mSettings.getString(Constants.DISTRICT, null);
         userId = getUserIdFromStorage(this);
+        log.i("userId in BaseActivity: %s", userId);
 
         // Checkk if the network connectivitis ok.
         isNetworkConnected = notifyNetworkConnected(this);

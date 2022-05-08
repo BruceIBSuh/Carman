@@ -80,6 +80,7 @@ public class BoardPagerFragment extends Fragment implements
     private List<DocumentSnapshot> postingList;
     private ArrayList<String> autofilter;
     private String automaker;
+    private String userId;
     private int currentPage;
     private boolean isViewOrder;
     private boolean isQuerying; // to block recyclerview from scrolling while loading posts.
@@ -89,9 +90,10 @@ public class BoardPagerFragment extends Fragment implements
         // Required empty public constructor
     }
 
-    public static BoardPagerFragment newInstance(int page, ArrayList<String> values){
+    public static BoardPagerFragment newInstance(int page, String userId, ArrayList<String> values){
         BoardPagerFragment fragment = new BoardPagerFragment();
         Bundle args = new Bundle();
+        args.putString("userId", userId);
         args.putInt("currentPage", page);
         args.putStringArrayList("autofilter", values);
         fragment.setArguments(args);
@@ -104,6 +106,7 @@ public class BoardPagerFragment extends Fragment implements
         setHasOptionsMenu(true);
 
         if(getArguments() != null) {
+            userId = getArguments().getString("userId");
             currentPage = getArguments().getInt("currentPage");
             autofilter = getArguments().getStringArrayList("autoFilter");
             if(autofilter != null && autofilter.size() > 0) automaker = autofilter.get(0);
@@ -210,6 +213,7 @@ public class BoardPagerFragment extends Fragment implements
         Bundle bundle = new Bundle();
         bundle.putInt("tabPage", currentPage);
         bundle.putInt("position", position);
+        bundle.putString("viewerId", userId);
         bundle.putString("documentId", snapshot.getId());
         bundle.putParcelable("postingObj", toObject);
 
