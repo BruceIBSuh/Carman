@@ -61,7 +61,8 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    public ListenerRegistration setPostQuery(CollectionReference colRef, int category) {
+    public void setPostQuery(CollectionReference colRef, int category) {
+    //public ListenerRegistration setPostQuery(CollectionReference colRef, int category) {
         this.querySnapshot = null;
         this.category = category;
         this.colRef = colRef;
@@ -84,10 +85,9 @@ public class QueryPostPaginationUtil {
                 query = firestore.collection("admin_post").orderBy(field, Query.Direction.DESCENDING);
                 break;
         }
-
+        /*
         return query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null || querySnapshot == null) return;
-            log.i("snapshot listener: %s, %s", category, querySnapshot.size());
             this.querySnapshot = querySnapshot;
             // firebase.firestore.FieldValue.serverTimestamp() gives a document a timestamp, then
             // onSnaphot will fire twice. This seem to be because when you add a new document to
@@ -98,8 +98,12 @@ public class QueryPostPaginationUtil {
             if(!querySnapshot.getMetadata().hasPendingWrites()) {
                 mCallback.getFirstQueryResult(querySnapshot);
             }
-
         });
+        */
+        query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
+            this.querySnapshot = querySnapshot;
+            mCallback.getFirstQueryResult(querySnapshot);
+        }).addOnFailureListener(Throwable::printStackTrace);
     }
 
     public void setAutofilterQuery(String field) {

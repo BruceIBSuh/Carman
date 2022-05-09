@@ -343,7 +343,6 @@ public class BoardReadFragment extends DialogFragment implements
 
             DialogFragment fragment = CustomDialogFragment.newInstance(title, msg, Constants.BOARD);
             FragmentManager fragmentManager = getChildFragmentManager();
-
             fragmentManager.setFragmentResultListener("confirmDelete", fragment, (req, res) -> {
                 if(req.matches("confirmDelete") && (res.getBoolean("confirmed"))) {
                     postRef.delete().addOnSuccessListener(aVoid -> {
@@ -443,7 +442,7 @@ public class BoardReadFragment extends DialogFragment implements
             cntComment --;
             if(cntComment <= PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.GONE);
             binding.tvCntComment.setText(String.valueOf(cntComment));
-            //binding.headerCommentCnt.setText(String.valueOf(cntComment));
+            boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
         }).addOnFailureListener(Throwable::printStackTrace);
     }
     @Override
@@ -595,6 +594,7 @@ public class BoardReadFragment extends DialogFragment implements
                     boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
                 });
             }).addOnFailureListener(Throwable::printStackTrace);
+
             imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
             binding.constraintComment.setVisibility(View.GONE);
             isCommentVisible = !isCommentVisible;

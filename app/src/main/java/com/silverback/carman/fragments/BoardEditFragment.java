@@ -496,7 +496,7 @@ public class BoardEditFragment extends DialogFragment implements
 
         docRef.set(editedPost, SetOptions.merge()).addOnSuccessListener(aVoid -> {
             binding.pbContainer.setVisibility(View.GONE);
-            sharedModel.getEditedPosting().setValue(docRef);
+            sharedModel.getEditedPosting().setValue(position);
             dismiss();
         }).addOnFailureListener(Throwable::printStackTrace);
 

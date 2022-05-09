@@ -290,7 +290,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             binding.tvPopup1.setOnClickListener(v -> {
                 doc.getReference().delete().addOnSuccessListener(aVoid -> {
                     commentList.remove(holder.getBindingAdapterPosition());
-                    notifyItemRemoved(holder.getBindingAdapterPosition());
+                    submitCommentList(commentList);
                     commentListener.deleteComment(doc);
                 });
 

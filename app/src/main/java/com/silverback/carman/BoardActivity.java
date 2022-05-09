@@ -65,7 +65,7 @@ import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
-import com.silverback.carman.fragments.BoardWriteDlgFragment;
+import com.silverback.carman.fragments.BoardWriteFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -126,7 +126,7 @@ public class BoardActivity extends BaseActivity implements
     // Objects
     private ActivityBoardBinding binding;
     private BoardPagerAdapter pagerAdapter;
-    private BoardWriteDlgFragment writePostFragment;
+    private BoardWriteFragment writePostFragment;
     private MenuItem menuItem;
     private TextView tvMessage;
 
@@ -282,7 +282,7 @@ public class BoardActivity extends BaseActivity implements
         public void onPageSelected(int position) {
             super.onPageSelected(position);
             category = position;
-            menuItem.setVisible(false);
+            if(menuItem != null) menuItem.setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
 
             switch(position) {
@@ -336,7 +336,7 @@ public class BoardActivity extends BaseActivity implements
         //tabHeight = binding.tabBoard.getMeasuredHeight();
 
         // With the user name set, call the dialogfragmt for writing a post.
-        writePostFragment = new BoardWriteDlgFragment();
+        writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
         args.putString("userName", userName);
@@ -633,7 +633,7 @@ public class BoardActivity extends BaseActivity implements
     // ActivityResultCallback for ActivityResultContracts.GetContent()
     public void getAttachedImageUri(Uri uri) {
         Fragment fragment = getSupportFragmentManager().findFragmentById(android.R.id.content);
-        if(fragment instanceof BoardWriteDlgFragment) writePostFragment.addImageThumbnail(uri);
+        if(fragment instanceof BoardWriteFragment) writePostFragment.addImageThumbnail(uri);
         else if(fragment instanceof BoardEditFragment) ((BoardEditFragment)fragment).addImageThumbnail(uri);
     }
 
