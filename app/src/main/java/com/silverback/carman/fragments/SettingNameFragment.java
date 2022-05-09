@@ -41,11 +41,14 @@ public class SettingNameFragment extends DialogFragment {
     private FragmentSharedModel fragmentModel;
     private final Preference preference;
     private final String currentName;
-    private String newName;
+    private String userName;
+    private String userId;
 
-    public SettingNameFragment(Preference preference, String userName) {
+
+    public SettingNameFragment(Preference preference, String userName, String userId) {
         this.preference = preference;
         this.currentName = userName;
+        this.userId = userId;
     }
 
     @Override
@@ -92,8 +95,8 @@ public class SettingNameFragment extends DialogFragment {
         // Check if the same username exists. Keep it in mind that this query is case sensitive and
         // the user name policy should be researched.
         binding.btnVerify.setOnClickListener(v -> {
-            newName = binding.etUserName.getText().toString().trim();
-            if(TextUtils.isEmpty(newName) || newName.matches(currentName)) {
+            userName = binding.etUserName.getText().toString().trim();
+            if(TextUtils.isEmpty(userName) || userName.matches(currentName)) {
                 final String msg = getString(R.string.pref_hint_username);
                 Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
                 return;
@@ -101,7 +104,7 @@ public class SettingNameFragment extends DialogFragment {
             // Query the name to check if there exists the same name in Firestore
             // Firestore does not provide case insensitive query. To do so, make the full text search
             // using a dedicated thrid party service such as Elastic, Algolia, or Typesense.
-            Query queryName = firestore.collection("users").whereArrayContains("user_names", newName).limit(1);
+            Query queryName = firestore.collection("users").whereArrayContains("user_names", userName).limit(1);
             queryName.get().addOnSuccessListener(querySnapshot -> {
                 if(querySnapshot.size() > 0) {
                     alertDialog.getButton(BUTTON_POSITIVE).setEnabled(false);
@@ -119,22 +122,15 @@ public class SettingNameFragment extends DialogFragment {
 
     private void updateUserProfile() {
         // When a new username has replaced the current name, update the new name in Firestore.
-        //preference.callChangeListener(newName); //seems not working
-        try(FileInputStream fis = requireActivity().openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))) {
-
-            final String userId = br.readLine();
-            DocumentReference docRef = firestore.collection("users").document(userId);
-
-            WriteBatch batch = firestore.batch();
-            Date regDate = Timestamp.now().toDate();
-            batch.update(docRef, "user_names", FieldValue.arrayUnion(newName));
-            batch.update(docRef, "reg_date", FieldValue.arrayUnion(regDate));
-            batch.commit().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) fragmentModel.getUserName().setValue(newName);
-                else Snackbar.make(binding.getRoot(), "failed to update", Snackbar.LENGTH_SHORT).show();
-                dismiss();
-            });
-        } catch(IOException | NullPointerException e) { e.printStackTrace(); }
+        DocumentReference docRef = firestore.collection("users").document(userId);
+        WriteBatch batch = firestore.batch();
+        Date regDate = Timestamp.now().toDate();
+        batch.update(docRef, "user_names", FieldValue.arrayUnion(userName));
+        batch.update(docRef, "reg_dates", FieldValue.arrayUnion(regDate));
+        batch.commit().addOnCompleteListener(task -> {
+            if(task.isSuccessful()) fragmentModel.getUserName().setValue(userName);
+            else Snackbar.make(binding.getRoot(), "failed to update", Snackbar.LENGTH_SHORT).show();
+            dismiss();
+        });
     }
 }

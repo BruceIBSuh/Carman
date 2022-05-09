@@ -112,6 +112,7 @@ public class BoardReadFragment extends DialogFragment implements
     public static final int POST_CONTENT = 0;
     public static final int COMMENT_HEADER = 1;
     public static final int COMMENT_LIST = 2;
+    public static final int EMPTY_VIEW = 3;
 
     // Constants
     private static final int STATE_COLLAPSED = 0;
@@ -263,28 +264,11 @@ public class BoardReadFragment extends DialogFragment implements
             }
         });
 
-        // RecyclerView.OnScrollListener() does not work if it is inside (Nested)ScrollView. To make
-        // it listen to scrolling, use the parent scollview listener.
-        /*
-        binding.nestedScrollview.setOnScrollChangeListener((NestedScrollView.OnScrollChangeListener)
-                (v, scrollX, scrollY, oldScrollX, oldScrollY) -> {
-                    if((scrollY >= (binding.recyclerComments.getMeasuredHeight() - v.getMeasuredHeight())
-                            && scrollY > oldScrollY)) {
-                        if(!isLoading) {
-                            isLoading = true;
-                            queryPaginationUtil.setNextPostQuery();
-                        }
-                    }
-                });
-        */
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
         userPic = (TextUtils.isEmpty(obj.getUserPic()))? Constants.imgPath + "ic_user_blank_gray": obj.getUserPic();
         int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
         imgUtil.applyGlideToImageView(Uri.parse(userPic), binding.imgUserpic, size, size, true);
-
-        // Rearrange the text by paragraphs
-        //readContentView(obj.getPostContent());
 
         return binding.getRoot();
     }
@@ -311,11 +295,6 @@ public class BoardReadFragment extends DialogFragment implements
             binding.toolbarBoardRead.setLogo(drawable);
             binding.toolbarBoardRead.setContentInsetStartWithNavigation(0);
         });
-
-        // If a post is the user's own one, the delete button appears on the toolbar. When tapping the
-        // button and picking the confirm button, FragmentSharedModel.getPostRemoved() notifies
-        // BoardPagerFragment that the user has deleted the post w/ the item position. To prevent
-        // the model from automatically invoking the method, initially set the value to false;
     }
 
     @Override
@@ -380,17 +359,13 @@ public class BoardReadFragment extends DialogFragment implements
 
         } else return false;
     }
-    /*
+
+    // Implement BoardReadFeedAdapter.ReadFeedAdapterListener to handle the visibiillity of the button
+    // which loads more comments to load if the number of comments are more than the comment pagination.
     @Override
-    public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-        log.i("onCheckedChanged:%s", isChecked);
-        if(isChecked) {
-            //binding.recyclerComments.setVisibility(View.VISIBLE);
-            int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
-            binding.imgbtnLoadComment.setVisibility(visible);
-        } //else binding.recyclerComments.setVisibility(View.GONE);
+    public void showCommentLoadButton(int isVisible) {
+        binding.imgbtnLoadComment.setVisibility(isVisible);
     }
-     */
 
     @Override
     public void onClick(View v) {
@@ -408,7 +383,7 @@ public class BoardReadFragment extends DialogFragment implements
                     commentAdapter.notifyItemChanged(checkedPos, true);
                 }
 
-                //isCommentVisible = !isCommentVisible;
+                isCommentVisible = !isCommentVisible;
             }
 
         } else if(v.getId() == R.id.imgbtn_send_comment) {
@@ -428,7 +403,6 @@ public class BoardReadFragment extends DialogFragment implements
     public void getFirstQueryResult(QuerySnapshot commentShots) {
         commentShotList.clear();
         for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
-        //commentAdapter.notifyItemRangeChanged(0, commentShots.size());
         commentAdapter.submitCommentList(commentShotList);
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         //int scrollY = binding.nestedScrollview.getHeight();
@@ -439,7 +413,6 @@ public class BoardReadFragment extends DialogFragment implements
     public void getNextQueryResult(QuerySnapshot nextShots) {
         final int start = commentShotList.size();
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
-        //commentAdapter.notifyItemRangeChanged(start, nextShots.size());
         commentAdapter.submitCommentList(commentShotList);
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
@@ -532,6 +505,8 @@ public class BoardReadFragment extends DialogFragment implements
         if(result.getData() != null) log.i("user name:");
     }
 
+
+
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
     // scrolling changes which keep the view being invalidated. The abstract class may, in turn,
@@ -614,16 +589,9 @@ public class BoardReadFragment extends DialogFragment implements
 
             postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
                 queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                commentRef.get().addOnSuccessListener(snapshot -> {
-                    /*
-                    commentShotList.add(0, snapshot);
-                    commentAdapter.notifyItemChanged(0);
-                     */
-                });
                 postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
                     cntComment++;
                     binding.tvCntComment.setText(String.valueOf(cntComment));
-                    //binding.headerCommentCnt.setText(String.valueOf(cntComment));
                     boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
                 });
             }).addOnFailureListener(Throwable::printStackTrace);

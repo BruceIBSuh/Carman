@@ -1,6 +1,8 @@
 package com.silverback.carman.utils;
 
 import android.graphics.drawable.Drawable;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,10 +44,14 @@ public class PopupDropdownUtil extends PopupWindow {
         PopupWindow dropdown = new PopupWindow(weakViewRef.get(),
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
 
+        final DisplayMetrics metrics = weakViewRef.get().getContext().getResources().getDisplayMetrics();
+        int offsetX = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 50, metrics);
+        int offsetY = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 25, metrics);
+
         Drawable background = ContextCompat.getDrawable(
                 weakViewRef.get().getContext(), android.R.drawable.editbox_background);
         dropdown.setBackgroundDrawable(background);
-        dropdown.showAsDropDown(weakAnchorRef.get(), -120, -20);
+        dropdown.showAsDropDown(weakAnchorRef.get(), -offsetX, -offsetY);
         dropdown.setOverlapAnchor(true);
         dropdown.setOutsideTouchable(true);
         dropdown.update();

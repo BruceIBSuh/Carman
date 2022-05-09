@@ -75,6 +75,7 @@ public class BoardPagerFragment extends Fragment implements
     private FragmentBoardPagerBinding binding;
     private ProgressBar progbar;
     private FloatingActionButton fabWrite;
+    private Menu menu;
 
     //private List<MultiTypeItem> multiTypeItemList;
     private List<DocumentSnapshot> postingList;
@@ -84,6 +85,9 @@ public class BoardPagerFragment extends Fragment implements
     private int currentPage;
     private boolean isViewOrder;
     private boolean isQuerying; // to block recyclerview from scrolling while loading posts.
+
+    private ImageView imgEmblem;
+    private ProgressBar pbEmblem;
 
     // Constructor
     private BoardPagerFragment() {
@@ -108,7 +112,7 @@ public class BoardPagerFragment extends Fragment implements
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             currentPage = getArguments().getInt("currentPage");
-            autofilter = getArguments().getStringArrayList("autoFilter");
+            autofilter = getArguments().getStringArrayList("autofilter");
             if(autofilter != null && autofilter.size() > 0) automaker = autofilter.get(0);
         }
 
@@ -174,26 +178,33 @@ public class BoardPagerFragment extends Fragment implements
         binding.recyclerBoardPostings.removeOnScrollListener(scrollListener);
     }
 
-    // Create the toolbar menu of the auto club page in the fragment, not in the activity, which
+    // Create the toolbar menu of the autoclub page in the fragment, not in the activity, which
     // should be customized to have an imageview and textview underneath instead of setting icon
     // by setting actionLayout(app:actionLayout in xml).
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        this.menu = menu;
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public void onPrepareOptionsMenu(@NonNull Menu menu) {
+        log.i("onPrepareOptionsMenu");
         if(currentPage == AUTOCLUB) {
             View actionView = menu.getItem(0).getActionView();
-            ImageView imgEmblem = actionView.findViewById(R.id.img_action_emblem);
-            ProgressBar pbEmblem = actionView.findViewById(R.id.pb_emblem);
+            imgEmblem = actionView.findViewById(R.id.img_action_emblem);
+            pbEmblem = actionView.findViewById(R.id.pb_emblem);
 
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
+                actionView.setVisibility(View.GONE);
             } else {
                 menu.getItem(0).setVisible(true);
                 actionView.setVisibility(View.VISIBLE);
                 setAutoMakerEmblem(pbEmblem, imgEmblem);
                 actionView.setOnClickListener(view -> onOptionsItemSelected(menu.getItem(0)));
             }
-
-        } else super.onCreateOptionsMenu(menu, inflater);
+        }
     }
 
     @Override
@@ -270,13 +281,14 @@ public class BoardPagerFragment extends Fragment implements
 
         if(currentPage == AUTOCLUB) {
             if (!isLast && postingList.size() < PAGINATION) {
+                log.i("autoclub list: %s", postingList.size());
                 isQuerying = true;
                 queryPagingUtil.setNextPostQuery();
                 return;
             } else {
+                log.i("autoclub queried");
                 progbar.setVisibility(View.GONE);
                 postingAdapter.submitPostList(postingList);
-
             }
         } else {
             progbar.setVisibility(View.GONE);
@@ -305,6 +317,7 @@ public class BoardPagerFragment extends Fragment implements
 
 
     public void resetAutoFilter(ArrayList<String> autofilter) {
+        if(!menu.getItem(0).isVisible()) requireActivity().invalidateOptionsMenu();
         this.autofilter = autofilter;
         isQuerying = true;
         String field = (isViewOrder) ? "cnt_view" : "timestamp";

@@ -143,6 +143,7 @@ public class SettingActivity extends BaseActivity implements
 
         settingFragment = new SettingPrefFragment();
         Bundle bundle = new Bundle();
+        bundle.putString("userId", userId);
         bundle.putString("district", jsonDistArray.toString());
         settingFragment.setArguments(bundle);
 

@@ -82,9 +82,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         this.viewerId = viewerId;
         this.commentListener = listener;
 
-        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_COMMENT);
-        //styleWrapper = new ContextThemeWrapper(context, R.style.CarmanPopupMenu);
         firestore = FirebaseFirestore.getInstance();
+        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_COMMENT);
+
         imageUtil = new ApplyImageResourceUtil(context);
         popupDropdownUtil = PopupDropdownUtil.getInstance();
         divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,

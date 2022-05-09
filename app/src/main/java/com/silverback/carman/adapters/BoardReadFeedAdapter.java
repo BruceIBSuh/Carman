@@ -3,9 +3,13 @@ package com.silverback.carman.adapters;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_HEADER;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_LIST;
+import static com.silverback.carman.fragments.BoardReadFragment.EMPTY_VIEW;
 import static com.silverback.carman.fragments.BoardReadFragment.POST_CONTENT;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.util.DisplayMetrics;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -59,7 +63,7 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
     private final BoardCommentAdapter commentAdapter;
 
     public interface ReadFeedAdapterListener {
-
+        void showCommentLoadButton(int isVisible);
     }
 
     public BoardReadFeedAdapter(CustomPostingObject postingObj, BoardCommentAdapter commentAdapter,
@@ -89,13 +93,25 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public static class CommentListViewHolder extends RecyclerView.ViewHolder {
+        BoardReadCommentBinding binding;
         public CommentListViewHolder(View itemView) {
             super(itemView);
             RecyclerView.LayoutParams layout = (RecyclerView.LayoutParams)itemView.getLayoutParams();
             layout.setMargins(0, 15, 0, 15);
-            //ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
-            //params.setMargins(0, 0, 0, 100);
             itemView.setLayoutParams(layout);
+            this.binding = BoardReadCommentBinding.bind(itemView);
+        }
+
+        RecyclerView getCommentRecyclerView() {
+            return binding.recyclerComments;
+        }
+    }
+
+    public static class EmptyViewHolder extends RecyclerView.ViewHolder{
+        public EmptyViewHolder(View itemView) {
+            super(itemView);
+            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(0, 100);
+
         }
     }
 
@@ -125,7 +141,15 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
                 commentBinding.recyclerComments.addItemDecoration(divider);
                 commentBinding.recyclerComments.setItemAnimator(new DefaultItemAnimator());
                 commentBinding.recyclerComments.setAdapter(commentAdapter);
-            default: return new CommentListViewHolder(commentBinding.getRoot());
+                return new CommentListViewHolder(commentBinding.getRoot());
+
+            case EMPTY_VIEW:
+            default:
+                int px = (int)TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40,
+                        context.getResources().getDisplayMetrics());
+                View emptyView = new View(context);
+                emptyView.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, px));
+                return new EmptyViewHolder(emptyView);
         }
     }
 
@@ -140,8 +164,9 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
                 headerHolder.getCommentCountView().setText(String.valueOf(postingObj.getCntComment()));
                 break;
             case COMMENT_LIST:
+                final CommentListViewHolder commentHolder = (CommentListViewHolder)holder;
+                commentHolder.getCommentRecyclerView().setAdapter(commentAdapter);
                 break;
-
         }
     }
 
@@ -164,13 +189,14 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
             case 0: return POST_CONTENT;
             case 1: return COMMENT_HEADER;
             case 2: return COMMENT_LIST;
+            case 3: return EMPTY_VIEW;
             default: return -1;
         }
     }
 
     @Override
     public int getItemCount() {
-        return 3;
+        return 4;
     }
 
     @Override
@@ -178,8 +204,10 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
         log.i("onCheckedChanged: %s", isChecked);
         if(isChecked) {
             commentBinding.recyclerComments.setVisibility(View.VISIBLE);
-            //int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
-            //binding.imgbtnLoadComment.setVisibility(visible);
+            int cntComment = Integer.parseInt(headerBinding.headerCommentCnt.getText().toString());
+            int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
+            callback.showCommentLoadButton(visible);
+
         } else commentBinding.recyclerComments.setVisibility(View.GONE);
     }
 

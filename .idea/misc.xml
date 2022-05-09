@@ -24,13 +24,8 @@
         <entry key="app/src/main/res/layout/activity_settings.xml" value="0.10572916666666667" />
         <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/board_comment_overflow_dropdown.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/board_fragment_read.xml" value="0.33" />
-        <entry key="app/src/main/res/layout/board_fragment_read_content.xml" value="0.21388888888888888" />
-        <entry key="app/src/main/res/layout/board_fragment_read_header_comment.xml" value="0.21388888888888888" />
-        <entry key="app/src/main/res/layout/board_read_comment.xml" value="0.21388888888888888" />
-        <entry key="app/src/main/res/layout/board_read_content.xml" value="0.11927083333333334" />
-        <entry key="app/src/main/res/layout/board_read_header.xml" value="0.23385416666666667" />
-        <entry key="app/src/main/res/layout/board_read_post.xml" value="0.21388888888888888" />
+        <entry key="app/src/main/res/layout/board_fragment_read.xml" value="0.24427083333333333" />
+        <entry key="app/src/main/res/layout/board_read_comment.xml" value="0.23802083333333332" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
         <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.24427083333333333" />

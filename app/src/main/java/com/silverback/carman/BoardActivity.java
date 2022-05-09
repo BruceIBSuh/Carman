@@ -245,15 +245,20 @@ public class BoardActivity extends BaseActivity implements
      * items are able to be set in the child.
      */
 
+    // If your Activity's onOptionsItemSelected method returs true, the call is consumed in activity
+    // and Fragment's onOptionsItemSelected is not called. So, return false in your Activity
+    // onOptionsItemSelected method or parent class implementation via super.onOptionsItemSelected
+    // call (default implementation returns false).
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.options_board, menu);
         menuItem = menu.getItem(0);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
+        menuItem = menu.getItem(0);
         return super.onPrepareOptionsMenu(menu);
     }
 
@@ -277,7 +282,9 @@ public class BoardActivity extends BaseActivity implements
         public void onPageSelected(int position) {
             super.onPageSelected(position);
             category = position;
+            menuItem.setVisible(false);
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
+
             switch(position) {
                 case RECENT | POPULAR:
                     animAutoFilter(false);
@@ -349,7 +356,6 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
         final int index = (int)chkbox.getTag();
-        log.i("checkbox index:%s", index);
         if(isChecked) {
             cbAutoFilter.add(chkbox.getText().toString());
             //chkboxList.add(index, (CheckBox)chkbox);
@@ -466,7 +472,6 @@ public class BoardActivity extends BaseActivity implements
     // Create the toolbar title which depends on which checkbox is checked and is applied only when
     // the viewpager has the auto club page.
     public SpannableStringBuilder createAutoClubTitle() {
-        log.i("chkboxList: %s", chkboxList.size());
         SpannableStringBuilder ssb = new SpannableStringBuilder();
         if(chkboxList.get(1) != null && chkboxList.get(1).isChecked()) {
             ssb.append(chkboxList.get(1).getText()).append(" ").append(chkboxList.get(0).getText());
@@ -660,7 +665,7 @@ public class BoardActivity extends BaseActivity implements
 
                 // Update the pagerAdapter
                 //pagerAdapter.setAutoFilterValues(cbAutoFilter);
-                pagerAdapter.notifyItemChanged(AUTOCLUB);
+                pagerAdapter.notifyItemChanged(AUTOCLUB, cbAutoFilter);
                 binding.boardPager.setCurrentItem(AUTOCLUB, true);
 
                 clubTitle = createAutoClubTitle();

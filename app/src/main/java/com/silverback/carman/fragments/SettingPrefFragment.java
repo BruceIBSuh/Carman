@@ -95,13 +95,15 @@ public class SettingPrefFragment extends SettingBaseFragment {
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         namePref = findPreference(PREF_USERNAME_TAG);
+
         String userName = mSettings.getString(PREF_USERNAME_TAG, getString(R.string.pref_entry_void));
         //if(namePref != null) {
             namePref.setSummary(userName);
             namePref.setOnPreferenceClickListener(v -> {
                 if(namePref.getSummary() != null) {
-                    String newName = namePref.getSummary().toString();
-                    DialogFragment dialogFragment = new SettingNameFragment(namePref, newName);
+                    String name = namePref.getSummary().toString();
+                    String userId = requireArguments().getString("userId");
+                    DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
                     dialogFragment.show(getChildFragmentManager(), "NameFragment");
                 }
                 return true;
