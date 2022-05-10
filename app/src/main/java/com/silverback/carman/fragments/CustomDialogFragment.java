@@ -79,8 +79,7 @@ public class CustomDialogFragment extends DialogFragment {
                     //fragmentModel.getAlertPostResult().setValue(true);
                     Bundle result = new Bundle();
                     result.putBoolean("confirmed", true);
-                    getParentFragmentManager().setFragmentResult("confirmDelete", result);
-
+                    getParentFragmentManager().setFragmentResult("confirmToRemove", result);
                     break;
             }
 

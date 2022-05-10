@@ -343,10 +343,10 @@ public class BoardReadFragment extends DialogFragment implements
 
             DialogFragment fragment = CustomDialogFragment.newInstance(title, msg, Constants.BOARD);
             FragmentManager fragmentManager = getChildFragmentManager();
-            fragmentManager.setFragmentResultListener("confirmDelete", fragment, (req, res) -> {
-                if(req.matches("confirmDelete") && (res.getBoolean("confirmed"))) {
+            fragmentManager.setFragmentResultListener("confirmToRemove", fragment, (req, res) -> {
+                if(req.matches("confirmToRemove") && (res.getBoolean("confirmed"))) {
                     postRef.delete().addOnSuccessListener(aVoid -> {
-                        log.i("confirmed to delete");
+                        log.i("confirmed to delete: %s", position);
                         sharedModel.getRemovedPosting().setValue(position);
                         dismiss();
                     }).addOnFailureListener(Throwable::printStackTrace);

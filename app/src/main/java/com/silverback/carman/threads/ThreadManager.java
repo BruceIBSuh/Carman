@@ -456,17 +456,6 @@ public class ThreadManager {
     }
     */
 
-    public static UploadPostTask startUploadPostTask(
-            Context context, Map<String, Object> post, FragmentSharedModel viewModel) {
-
-        ThreadTask postTask = sInstance.mTaskWorkQueue.poll();
-        if(postTask == null) postTask = new UploadPostTask(context);
-        ((UploadPostTask)postTask).initPostTask(post, viewModel);
-
-        sInstance.mDownloadThreadPool.execute(((UploadPostTask)postTask).getUploadPostRunnable());
-
-        return (UploadPostTask)postTask;
-    }
 
 
     private void recycleTask(ThreadTask task) {

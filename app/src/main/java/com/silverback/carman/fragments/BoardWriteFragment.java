@@ -43,7 +43,6 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.threads.UploadBitmapTask;
-import com.silverback.carman.threads.UploadPostTask;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.BoardImageSpanHandler;
 import com.silverback.carman.utils.Constants;
@@ -69,7 +68,6 @@ public class BoardWriteFragment extends DialogFragment implements
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
     private UploadBitmapTask bitmapTask;
-    private UploadPostTask postTask;
 
     private FragmentSharedModel fragmentModel;
     private ImageViewModel imgViewModel;
@@ -403,8 +401,11 @@ public class BoardWriteFragment extends DialogFragment implements
             if(doc.exists()) {
                 post.put("user_pic", doc.getString("user_pic"));
                 firestore.collection("user_post").add(post).addOnSuccessListener(postRef -> {
-                    fragmentModel.getNewPosting().setValue(postRef);
-                    dismiss();
+                    postRef.get().addOnSuccessListener(snapshot -> {
+                        fragmentModel.getNewPosting().setValue(snapshot);
+                        dismiss();
+                    });
+
                 }).addOnFailureListener(Throwable::printStackTrace);
             }
             return null;

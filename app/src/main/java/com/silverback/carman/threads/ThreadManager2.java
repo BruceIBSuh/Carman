@@ -68,7 +68,6 @@ public class ThreadManager2 {
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
-    private final BlockingQueue<UploadPostTask> mUploadPostTaskQueue;
     
 
     private final BlockingQueue<UpdatePostTask> mUploadPostTaskQueue2;
@@ -97,7 +96,6 @@ public class ThreadManager2 {
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
-        mUploadPostTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
 
         mUploadPostTaskQueue2 = new LinkedBlockingQueue<>();
@@ -116,9 +114,6 @@ public class ThreadManager2 {
                 ThreadTask task = (ThreadTask) msg.obj;
                 if(task instanceof UploadBitmapTask) {
                     log.i("upload compressed bitmap done");
-                    recycleTask(task);
-                } else if(task instanceof UploadPostTask) {
-                    log.i("upload post done");
                     recycleTask(task);
                 } else recycleTask(task);
 
@@ -301,16 +296,7 @@ public class ThreadManager2 {
         return uploadBitmapTask;
     }
 
-    public static UploadPostTask uploadPostTask (
-            Context context, Map<String, Object> post, FragmentSharedModel viewModel) {
 
-        UploadPostTask uploadPostTask = InnerClazz.sInstance.mUploadPostTaskQueue.poll();
-        if(uploadPostTask == null) uploadPostTask = new UploadPostTask(context);
-        uploadPostTask.initPostTask(post, viewModel);
-        InnerClazz.sInstance.threadPoolExecutor.execute(uploadPostTask.getUploadPostRunnable());
-
-        return uploadPostTask;
-    }
 
     public static UpdatePostTask updatePostTask(
             Context context, Map<String, Object> post, List<String> removedImages, List<Uri> newImages) {
@@ -338,11 +324,7 @@ public class ThreadManager2 {
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
-        } else if(task instanceof UploadPostTask) {
-            task.recycle();
-            mUploadPostTaskQueue.offer((UploadPostTask)task);
         }
-
     }
 
 

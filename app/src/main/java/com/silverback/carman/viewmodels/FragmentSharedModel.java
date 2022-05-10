@@ -11,6 +11,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.database.FavoriteProviderEntity;
 
 import org.json.JSONArray;
@@ -36,7 +37,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<JSONObject> jsonServiceItemObj;
 
     private MutableLiveData<Boolean> alertPostResult;
-    private MutableLiveData<DocumentReference> newPosting;
+    private MutableLiveData<DocumentSnapshot> newPosting;
     private MutableLiveData<Integer> removedPosting;
     private MutableLiveData<Integer> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
@@ -169,7 +170,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
-    public MutableLiveData<DocumentReference> getNewPosting() {
+    public MutableLiveData<DocumentSnapshot> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }

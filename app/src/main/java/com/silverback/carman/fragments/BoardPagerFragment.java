@@ -3,6 +3,7 @@ package com.silverback.carman.fragments;
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.PAGINATION;
+import static com.silverback.carman.BoardActivity.POPULAR;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -167,26 +168,23 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         // BoardWriteFragment
-        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
-            //postRef.get().addOnSuccessListener(postshot -> {
-                queryPagingUtil.setPostQuery(colRef, currentPage);
-                binding.recyclerBoardPostings.smoothScrollToPosition(0);
-            //}).addOnFailureListener(Throwable::printStackTrace);
-        });
-
-        // BoardEditFragment
-        fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), pos -> {
-            postingAdapter.notifyItemChanged(pos);
-            postingAdapter.submitPostList(postingList);
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
+            queryPagingUtil.setPostQuery(colRef, currentPage);
         });
 
         // BoardReadFragment
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
-            log.i("remove in onViewCreated:%s", pos);
-            postingList.remove(postingList.get(pos)); // Why?
-            postingAdapter.submitPostList(postingList);
-            //queryPagingUtil.setPostQuery(colRef, currentPage);
+            log.i("remove a post: %s, %s", postingList.size(), pos);
+            queryPagingUtil.setPostQuery(colRef, currentPage);
+            //postingAdapter.submitPostList(postingList);
         });
+
+        // BoardEditFragment
+        fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), pos -> {
+            queryPagingUtil.setPostQuery(colRef, currentPage);
+        });
+
+
     }
 
     @Override
