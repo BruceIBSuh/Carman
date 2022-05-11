@@ -182,12 +182,13 @@ public class BoardActivity extends BaseActivity implements
         createAutofilter(jsonAutoFilter, binding.autofilter);
 
         // ViewPager2
-        log.i("userId: %s", userId);
-        pagerAdapter = new BoardPagerAdapter(
-                getSupportFragmentManager(), getLifecycle(), userId, cbAutoFilter);
-        //pagerAdapter.setAutoFilterValues(cbAutoFilter);
+        pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle(), userId, cbAutoFilter);
+        // Set the default DEFAULT_OFFSCREEN_PAGES = 0 for this class to prevent preloading.
+        binding.boardPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
+        //binding.boardPager.setOffscreenPageLimit(1);
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.setVisibility(View.GONE);//show progressbar unitl the query completes.
+        binding.boardPager.registerOnPageChangeCallback(pagerCallback);
 
         // TabLayoutMediator which interconnects TabLayout and ViewPager2
         List<String> titles = Arrays.asList(getResources().getStringArray(R.array.board_tab_title));
@@ -199,19 +200,6 @@ public class BoardActivity extends BaseActivity implements
         binding.fabBoardWrite.setSize(FloatingActionButton.SIZE_AUTO);
         binding.fabBoardWrite.setOnClickListener(this);
 
-        // onAttachFragment(childFragment) is deprecated in API 28. Instead, use this defined in
-        // JetPack androidx.
-        /*
-        getSupportFragmentManager().addFragmentOnAttachListener((fm, fragment) -> {
-            //if(fragment instanceof BoardReadFragment) {
-                log.i("BoardReadFragment added");
-                //BoardReadFragment readFragment = (BoardReadFragment)fragment;
-                //readFragment.setEditModeListener(this);
-            //}
-        });
-         */
-
-
         // Add the listeners to the viewpager and AppbarLayout
         //binding.appBar.addOnOffsetChangedListener((appbar, offset) -> {});
         animTabLayout();
@@ -222,11 +210,11 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onResume() {
         super.onResume();
-        binding.boardPager.registerOnPageChangeCallback(pagerCallback);
+
     }
     @Override
     public void onPause() {
-        binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
+        //binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
         super.onPause();
     }
 
@@ -234,6 +222,7 @@ public class BoardActivity extends BaseActivity implements
     public void onStop() {
         //activityResultLauncher.unregister();
         super.onStop();
+        binding.boardPager.unregisterOnPageChangeCallback(pagerCallback);
     }
 
     /*
@@ -281,12 +270,13 @@ public class BoardActivity extends BaseActivity implements
         @Override
         public void onPageSelected(int position) {
             super.onPageSelected(position);
-            category = position;
             if(menuItem != null) menuItem.setVisible(false);
+            category = position;
             binding.fabBoardWrite.setVisibility(View.VISIBLE);
 
             switch(position) {
                 case RECENT | POPULAR:
+                    menuItem.setVisible(false);
                     animAutoFilter(false);
                     final String general = getString(R.string.board_general_title);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(general);
@@ -300,16 +290,20 @@ public class BoardActivity extends BaseActivity implements
                     } else {
                         final String autoclub = getString(R.string.board_tab_title_autoclub);
                         Objects.requireNonNull(getSupportActionBar()).setTitle(autoclub);
+                        menuItem.setVisible(false);
                     }
                     break;
 
                 case NOTIFICATION:
+                    menuItem.setVisible(false);
                     animAutoFilter(false);
                     binding.fabBoardWrite.setVisibility(View.INVISIBLE);
                     final String noti = getString(R.string.board_tab_title_notification);
                     Objects.requireNonNull(getSupportActionBar()).setTitle(noti);
                     break;
             }
+
+
         }
     };
 
@@ -336,6 +330,7 @@ public class BoardActivity extends BaseActivity implements
         //tabHeight = binding.tabBoard.getMeasuredHeight();
 
         // With the user name set, call the dialogfragmt for writing a post.
+        binding.boardPager.setCurrentItem(RECENT);
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
@@ -348,6 +343,8 @@ public class BoardActivity extends BaseActivity implements
                 .replace(android.R.id.content, writePostFragment)
                 .addToBackStack(null)
                 .commit();
+
+
     }
 
     // Inplement CheckBox.OnCheckedChangedListener to notify that a checkbox chagnes its value.
@@ -705,6 +702,7 @@ public class BoardActivity extends BaseActivity implements
     // Refactor required!!:
     // Custom class to typecast Firestore array field of post_images to ArrayList<String> used
     // in both BoardPostingAdapter and BoardPagerFragment.
+    /*
     public static class PostImages {
         @PropertyName("post_images")
         private ArrayList<String> postImageList;
@@ -723,5 +721,7 @@ public class BoardActivity extends BaseActivity implements
             this.postImageList = postImageList;
         }
     }
+
+     */
 
 }

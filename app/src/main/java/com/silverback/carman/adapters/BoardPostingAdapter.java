@@ -28,6 +28,7 @@ import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -45,7 +46,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Objects
     private Context context;
-    private final OnRecyclerAdapterListener recyclerListener;
+    private final OnPostingAdapterListener postingAdapterListener;
     private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private final SimpleDateFormat sdf;
     private ApplyImageResourceUtil imgUtil;
@@ -53,15 +54,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final List<DocumentSnapshot> snapshotList;
     private int category;
 
-    public interface OnRecyclerAdapterListener {
+    public interface OnPostingAdapterListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
-        void onRecyclerUpdateDone();
+        void onSubmitListDone();
     }
 
     // Constructor
-    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnRecyclerAdapterListener listener) {
+    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnPostingAdapterListener listener) {
         super();
-        this.recyclerListener = listener;
+        this.postingAdapterListener = listener;
         snapshotList = snapshots;
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -69,7 +70,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Update the adapter using AsyncListDiffer.ItemCallback<T>
     public void submitPostList(List<DocumentSnapshot> snapshotList) {
-        mDiffer.submitList(Lists.newArrayList(snapshotList), recyclerListener::onRecyclerUpdateDone);
+        mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitListDone);
     }
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
@@ -172,9 +173,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
                 // invoked and the imageview is made null to prevent images from having wrong positions.
                 if(snapshot.get("post_images") != null) {
-                    BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
-                    List<String> postImages = Objects.requireNonNull(objImages).getPostImages();
-                    String thumbnail = postImages.get(0);
+                    //BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
+                    //List<String> postImages = Objects.requireNonNull(objImages).getPostImages();
+                    List<?> postImageList = (List<?>)snapshot.get("post_images");
+                    assert postImageList != null;
+
+                    List<String> imgList = new ArrayList<>();
+                    for(Object imgurl : postImageList) imgList.add((String)imgurl);
+                    String thumbnail = imgList.get(0);
                     if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
 
                 } else {
@@ -183,9 +189,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 }
 
                 // Set the listener for clicking the item with position
-                holder.itemView.setOnClickListener(view ->
-                        recyclerListener.onPostItemClicked(snapshot, holder.getBindingAdapterPosition())
-                );
+                holder.itemView.setOnClickListener(view -> postingAdapterListener.onPostItemClicked (
+                        snapshot, holder.getBindingAdapterPosition()));
 
                 break;
 
@@ -197,8 +202,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Do a partial binding for updating either the view count or the comment count, which is passed
     // with payloads. No payload performs the full binding.
     @Override
-    public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads){
         //holder.setIsRecyclable(false);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {

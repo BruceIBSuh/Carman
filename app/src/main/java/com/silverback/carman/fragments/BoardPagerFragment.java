@@ -4,6 +4,7 @@ package com.silverback.carman.fragments;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 import static com.silverback.carman.BoardActivity.POPULAR;
+import static com.silverback.carman.BoardActivity.RECENT;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -65,7 +66,7 @@ import java.util.Objects;
 
 public class BoardPagerFragment extends Fragment implements
         QueryPostPaginationUtil.OnQueryPaginationCallback,
-        BoardPostingAdapter.OnRecyclerAdapterListener {
+        BoardPostingAdapter.OnPostingAdapterListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
@@ -87,6 +88,7 @@ public class BoardPagerFragment extends Fragment implements
     private ArrayList<String> autofilter;
     private String automaker;
     private String userId;
+    private int position;
     private int currentPage;
     private boolean isViewOrder;
     private boolean isQuerying; // to block recyclerview from scrolling while loading posts.
@@ -130,14 +132,14 @@ public class BoardPagerFragment extends Fragment implements
         //multiTypeItemList = new ArrayList<>();
         postingAdapter = new BoardPostingAdapter(postingList, this);
         //postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
-        postingAdapter.setHasStableIds(true);
+        //postingAdapter.setHasStableIds(true);
 
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
         colRef = mDB.collection("user_post");
         if(currentPage == AUTOCLUB) queryPagingUtil.setAutoClubOrder(isViewOrder);
-        //regListener = queryPagingUtil.setPostQuery(colRef, currentPage);
-        queryPagingUtil.setPostQuery(colRef, currentPage);
-        isQuerying = true;
+        regListener = queryPagingUtil.setPostQuery(colRef, currentPage);
+        //queryPagingUtil.setPostQuery(colRef, currentPage);
+        //isQuerying = true;
     }
 
     @Override
@@ -153,7 +155,7 @@ public class BoardPagerFragment extends Fragment implements
         binding.recyclerBoardPostings.addItemDecoration(divider);
         binding.recyclerBoardPostings.setItemAnimator(new DefaultItemAnimator());
         //SimpleItemAnimator itemAnimator = (SimpleItemAnimator)binding.recyclerBoardPostings.getItemAnimator();
-        //itemAnimator.setSupportsChangeAnimations(false);
+        //if(itemAnimator != null) itemAnimator.setSupportsChangeAnimations(false);
         binding.recyclerBoardPostings.setAdapter(postingAdapter);
         binding.recyclerBoardPostings.addOnScrollListener(scrollListener);
         fabWrite = ((BoardActivity)Objects.requireNonNull(requireActivity())).getFAB();
@@ -165,23 +167,24 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         // BoardWriteFragment
-        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
-            queryPagingUtil.setPostQuery(colRef, currentPage);
-        });
+//        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
+//
+//        });
 
         // BoardReadFragment
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
-            log.i("remove a post: %s, %s", postingList.size(), pos);
-            queryPagingUtil.setPostQuery(colRef, currentPage);
-            //postingAdapter.submitPostList(postingList);
+            log.i("current page: %s", currentPage);
+
         });
 
         // BoardEditFragment
         fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), pos -> {
-            queryPagingUtil.setPostQuery(colRef, currentPage);
+            //queryPagingUtil.setPostQuery(colRef, currentPage);
+            postingAdapter.notifyItemChanged(pos);
         });
 
 
@@ -190,6 +193,8 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onResume() {
         super.onResume();
+        //queryPagingUtil.setPostQuery(colRef, currentPage);
+        //isQuerying = true;
     }
 
     @Override
@@ -200,8 +205,14 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onStop() {
         super.onStop();
+
+    }
+
+    @Override
+    public void onDestroyView() {
         if(regListener != null) regListener.remove();
         binding.recyclerBoardPostings.removeOnScrollListener(scrollListener);
+        super.onDestroyView();
     }
 
     // Create the toolbar menu of the autoclub page in the fragment, not in the activity, which
@@ -242,8 +253,8 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
+        this.position = position;
         BoardReadFragment readPostFragment = new BoardReadFragment();
-
         CustomPostingObject toObject = snapshot.toObject(CustomPostingObject.class);
         assert toObject != null;
         Bundle bundle = new Bundle();
@@ -335,9 +346,10 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
-    public void onRecyclerUpdateDone() {
-        //binding.recyclerBoardPostings.smoothScrollToPosition(0);
-        postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
+    public void onSubmitListDone() {
+        log.i("current page of onSubmitListDone: %s", currentPage);
+        binding.recyclerBoardPostings.smoothScrollToPosition(0);
+        //postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
     }
 
 

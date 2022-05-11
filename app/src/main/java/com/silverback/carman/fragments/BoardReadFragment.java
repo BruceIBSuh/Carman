@@ -47,6 +47,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
@@ -66,6 +67,7 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Transaction;
@@ -284,7 +286,7 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         // SET THE USER IMAGE ICON
@@ -345,11 +347,23 @@ public class BoardReadFragment extends DialogFragment implements
             FragmentManager fragmentManager = getChildFragmentManager();
             fragmentManager.setFragmentResultListener("confirmToRemove", fragment, (req, res) -> {
                 if(req.matches("confirmToRemove") && (res.getBoolean("confirmed"))) {
+                    /*
+                    mDB.runTransaction((Transaction.Function<Void>) transaction -> {
+                        DocumentSnapshot snapshot = transaction.get(postRef);
+                        sharedModel.getRemovedPosting().postValue(snapshot);
+                        transaction.delete(postRef);
+
+                        return null;
+                    }).addOnSuccessListener(Void -> dismiss()).addOnFailureListener(Throwable::printStackTrace);
+
+                     */
                     postRef.delete().addOnSuccessListener(aVoid -> {
-                        log.i("confirmed to delete: %s", position);
+                        log.i("removed post");
+                        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
                         sharedModel.getRemovedPosting().setValue(position);
                         dismiss();
-                    }).addOnFailureListener(Throwable::printStackTrace);
+                    });
+
                 }
             });
 
@@ -576,8 +590,6 @@ public class BoardReadFragment extends DialogFragment implements
         DocumentReference userRef = mDB.collection("users").document(viewerId);
         mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(userRef);
-            log.i("user doc: %s", doc);
-
             List<?> nameList = (List<?>)doc.get("user_names");
             assert nameList != null;
             List<String> tempList = new ArrayList<>();
