@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
@@ -36,11 +37,14 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPostingAdapter;
@@ -88,7 +92,6 @@ public class BoardPagerFragment extends Fragment implements
     private ArrayList<String> autofilter;
     private String automaker;
     private String userId;
-    private int position;
     private int currentPage;
     private boolean isViewOrder;
     private boolean isQuerying; // to block recyclerview from scrolling while loading posts.
@@ -167,34 +170,13 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-
-        // BoardWriteFragment
-//        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
-//
-//        });
-
-        // BoardReadFragment
-        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), pos -> {
-            log.i("current page: %s", currentPage);
-
-        });
-
-        // BoardEditFragment
-        fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), pos -> {
-            //queryPagingUtil.setPostQuery(colRef, currentPage);
-            postingAdapter.notifyItemChanged(pos);
-        });
-
-
     }
 
     @Override
     public void onResume() {
+        log.i("onResume");
         super.onResume();
-        //queryPagingUtil.setPostQuery(colRef, currentPage);
-        //isQuerying = true;
+        queryPagingUtil.setPostQuery(colRef, currentPage);
     }
 
     @Override
@@ -253,7 +235,6 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
-        this.position = position;
         BoardReadFragment readPostFragment = new BoardReadFragment();
         CustomPostingObject toObject = snapshot.toObject(CustomPostingObject.class);
         assert toObject != null;
@@ -290,10 +271,10 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-        log.i("Last Query");
         addPostByCategory(lastShots, true);
         isQuerying = true;
     }
+
 
     @Override
     public void getQueryErrorResult(Exception e) {
@@ -317,12 +298,10 @@ public class BoardPagerFragment extends Fragment implements
 
         if(currentPage == AUTOCLUB) {
             if (!isLast && postingList.size() < PAGINATION) {
-                log.i("autoclub list: %s", postingList.size());
                 isQuerying = true;
                 queryPagingUtil.setNextPostQuery();
                 return;
             } else {
-                log.i("autoclub queried");
                 progbar.setVisibility(View.GONE);
                 postingAdapter.submitPostList(postingList);
             }
@@ -347,9 +326,8 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onSubmitListDone() {
-        log.i("current page of onSubmitListDone: %s", currentPage);
         binding.recyclerBoardPostings.smoothScrollToPosition(0);
-        //postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
+        postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
     }
 
 

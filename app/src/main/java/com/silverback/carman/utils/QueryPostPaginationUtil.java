@@ -17,6 +17,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.MetadataChanges;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
@@ -32,6 +33,7 @@ public class QueryPostPaginationUtil {
     private final FirebaseFirestore firestore;
     private CollectionReference colRef;
     private Query query;
+    private Source source;
     private QuerySnapshot querySnapshot;
 
     // Fields
@@ -86,7 +88,6 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-
         return query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null || querySnapshot == null) return;
             this.querySnapshot = querySnapshot;
@@ -100,10 +101,10 @@ public class QueryPostPaginationUtil {
                 mCallback.getFirstQueryResult(querySnapshot);
             }
         });
-
         /*
-        query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
+        query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
+            log.i("query: %s", querySnapshot.getMetadata().isFromCache());
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(Throwable::printStackTrace);
         */
@@ -138,8 +139,7 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-        query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(nextshots -> {
-            log.i("queryPostPaingUtil: %s", nextshots.size());
+        query.startAfter(lastVisible).limit(PAGINATION).get(source).addOnSuccessListener(nextshots -> {
             this.querySnapshot = nextshots;
             if(nextshots.size() >= PAGINATION) mCallback.getNextQueryResult(nextshots);
             else mCallback.getLastQueryResult(nextshots);
