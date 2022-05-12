@@ -28,6 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -140,7 +141,7 @@ public class BoardPagerFragment extends Fragment implements
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
         colRef = mDB.collection("user_post");
         if(currentPage == AUTOCLUB) queryPagingUtil.setAutoClubOrder(isViewOrder);
-        regListener = queryPagingUtil.setPostQuery(colRef, currentPage);
+        //regListener = queryPagingUtil.setPostQuery(colRef, currentPage);
         //queryPagingUtil.setPostQuery(colRef, currentPage);
         //isQuerying = true;
     }
@@ -170,6 +171,23 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
+            log.i("new posting");
+            //queryPagingUtil.setPostQuery(colRef, currentPage);
+            postingList.add(0, post);
+            postingAdapter.submitPostList(postingList);
+        });
+
+        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
+            log.i("posting removed: %s", currentPage);
+            postingList.remove(post);
+            postingAdapter.submitPostList(postingList);
+            //queryPagingUtil.setPostQuery(colRef, currentPage);
+
+
+        });
     }
 
     @Override
@@ -177,6 +195,7 @@ public class BoardPagerFragment extends Fragment implements
         log.i("onResume");
         super.onResume();
         queryPagingUtil.setPostQuery(colRef, currentPage);
+        isQuerying = true;
     }
 
     @Override

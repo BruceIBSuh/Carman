@@ -200,7 +200,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onDestroyView() {
         log.i("onDestroyView");
-        requireActivity().getViewModelStore().clear();
+        //requireActivity().getViewModelStore().clear();
         super.onDestroyView();
     }
 
@@ -402,6 +402,7 @@ public class BoardWriteFragment extends DialogFragment implements
                 post.put("user_pic", doc.getString("user_pic"));
                 firestore.collection("user_post").add(post).addOnSuccessListener(postRef -> {
                     postRef.get().addOnSuccessListener(snapshot -> {
+                        log.i("add a new post");
                         fragmentModel.getNewPosting().setValue(snapshot);
                         dismiss();
                     });

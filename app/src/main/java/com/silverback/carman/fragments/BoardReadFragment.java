@@ -350,20 +350,22 @@ public class BoardReadFragment extends DialogFragment implements
                     /*
                     mDB.runTransaction((Transaction.Function<Void>) transaction -> {
                         DocumentSnapshot snapshot = transaction.get(postRef);
-                        sharedModel.getRemovedPosting().postValue(snapshot);
-                        transaction.delete(postRef);
+                        if(snapshot.exists()) {
+                            sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+                            sharedModel.getRemovedPosting().postValue(snapshot);
+                            log.i("remove document");
+                            transaction.delete(postRef);
+                            fragment.dismiss();
+                        }
 
                         return null;
-                    }).addOnSuccessListener(Void -> dismiss()).addOnFailureListener(Throwable::printStackTrace);
-
-                     */
-                    postRef.delete().addOnSuccessListener(aVoid -> {
-                        log.i("removed post");
-                        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-                        sharedModel.getRemovedPosting().setValue(position);
-                        dismiss();
                     });
-
+                    */
+                    postRef.get().addOnSuccessListener(post -> {
+                        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+                        sharedModel.getRemovedPosting().setValue(post);
+                        postRef.delete().addOnSuccessListener(aVoid -> dismiss());
+                    });
                 }
             });
 

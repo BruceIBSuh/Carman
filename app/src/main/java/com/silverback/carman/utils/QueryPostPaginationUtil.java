@@ -63,8 +63,8 @@ public class QueryPostPaginationUtil {
     // Make an initial query for the posting board by category. Recent and popular board are made of
     // composite index in Firestore. Autoclub board once queries posts, then filters them with given
     // keyword in the client side.
-    //public void setPostQuery(CollectionReference colRef, int category) {
-    public ListenerRegistration setPostQuery(CollectionReference colRef, int category) {
+    public void setPostQuery(CollectionReference colRef, int category) {
+    //public ListenerRegistration setPostQuery(CollectionReference colRef, int category) {
         this.querySnapshot = null;
         this.category = category;
         this.colRef = colRef;
@@ -87,7 +87,7 @@ public class QueryPostPaginationUtil {
                 query = firestore.collection("admin_post").orderBy(field, Query.Direction.DESCENDING);
                 break;
         }
-
+        /*
         return query.limit(PAGINATION).addSnapshotListener((querySnapshot, e) -> {
             if(e != null || querySnapshot == null) return;
             this.querySnapshot = querySnapshot;
@@ -101,13 +101,12 @@ public class QueryPostPaginationUtil {
                 mCallback.getFirstQueryResult(querySnapshot);
             }
         });
-        /*
+        */
         query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             log.i("query: %s", querySnapshot.getMetadata().isFromCache());
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(Throwable::printStackTrace);
-        */
     }
 
     public void setAutofilterQuery(String field) {

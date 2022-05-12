@@ -82,4 +82,6 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     public boolean containsItem(long itemId) {
         return false;
     }
+
+    public BoardPagerAdapter getBoardPagerAdapter() {return this;}
 }
