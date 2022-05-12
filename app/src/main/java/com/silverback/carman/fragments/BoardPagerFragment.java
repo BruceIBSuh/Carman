@@ -174,19 +174,17 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
-            log.i("new posting");
-            //queryPagingUtil.setPostQuery(colRef, currentPage);
-            postingList.add(0, post);
-            postingAdapter.submitPostList(postingList);
+            log.i("new posting: %s", currentPage);
+            queryPagingUtil.setPostQuery(colRef, currentPage);
+            //postingList.add(0, post);
+            //postingAdapter.submitPostList(postingList);
         });
 
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
             log.i("posting removed: %s", currentPage);
             postingList.remove(post);
             postingAdapter.submitPostList(postingList);
-            //queryPagingUtil.setPostQuery(colRef, currentPage);
-
-
+            queryPagingUtil.setPostQuery(colRef, currentPage);
         });
     }
 
@@ -345,11 +343,9 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onSubmitListDone() {
-        binding.recyclerBoardPostings.smoothScrollToPosition(0);
+        //binding.recyclerBoardPostings.smoothScrollToPosition(0);
         postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
     }
-
-
 
     public void resetAutoFilter(ArrayList<String> autofilter) {
         if(!menu.getItem(0).isVisible()) requireActivity().invalidateOptionsMenu();
