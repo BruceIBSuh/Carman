@@ -319,6 +319,7 @@ public class ApplyImageResourceUtil {
         RequestOptions options = new RequestOptions().override(px_x, px_y).centerCrop();
         if(isCircle) options = options.circleCrop();
 
+        // Refactor required due to async lifecycle b/w DiffUtil and Glid in BoardPostingAdapter!
         Glide.with(mContext).load(uri)
                 .apply(options)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
@@ -326,7 +327,6 @@ public class ApplyImageResourceUtil {
                     @Override
                     public void onResourceReady(
                             @NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-
                         imageView.setImageDrawable(resource);
                     }
 

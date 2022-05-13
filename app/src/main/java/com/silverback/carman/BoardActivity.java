@@ -122,6 +122,8 @@ public class BoardActivity extends BaseActivity implements
     public static final int AUTOCLUB = 2;
     public static final int NOTIFICATION = 3;
     public static final int NUM_PAGES = 4;
+    public static final int GALLERY = 1;
+    public static final int CAMERA = 2;
 
     // Objects
     private ActivityBoardBinding binding;
@@ -330,7 +332,7 @@ public class BoardActivity extends BaseActivity implements
         //tabHeight = binding.tabBoard.getMeasuredHeight();
 
         // With the user name set, call the dialogfragmt for writing a post.
-        binding.boardPager.setCurrentItem(RECENT);
+        if(category != AUTOCLUB) binding.boardPager.setCurrentItem(RECENT);
         writePostFragment = new BoardWriteFragment();
         Bundle args = new Bundle();
         args.putString("userId", userId); // userId defined in BaseActivity
@@ -608,12 +610,12 @@ public class BoardActivity extends BaseActivity implements
     // (camera or gallery) to select in ImageChooserFragment. According to the selected media,
     // startActivityForResult() defined in the parent activity is invoked and the result is notified
     // to the activity and it is, in turn, sent back here by calling
-    public void selectImageMedia(int media, View rootView) {
+    public void chooseImageMedia(int media, View rootView) {
         switch(media) {
-            case Constants.GALLERY:
+            case GALLERY:
                 mGetContent.launch("image/*");
                 break;
-            case Constants.CAMERA:
+            case CAMERA:
                 String rationale = "permission required to use camera";
                 checkRuntimePermission(rootView, Manifest.permission.CAMERA, rationale, () -> {
                     File tmpFile = new File(getCacheDir(), new SimpleDateFormat(

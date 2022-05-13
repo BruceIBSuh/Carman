@@ -1,5 +1,8 @@
 package com.silverback.carman.fragments;
 
+import static com.silverback.carman.BoardActivity.CAMERA;
+import static com.silverback.carman.BoardActivity.GALLERY;
+
 import android.app.Dialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -48,11 +51,11 @@ public class ImageChooserFragment extends DialogFragment {
                 .setTitle(getString(R.string.pref_userpic_title));
 
         binding.tvGallery.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(Constants.GALLERY);
+            fragmentModel.getImageChooser().setValue(GALLERY);
             dismiss();
         });
         binding.tvCamera.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(Constants.CAMERA);
+            fragmentModel.getImageChooser().setValue(CAMERA);
             dismiss();
         });
 

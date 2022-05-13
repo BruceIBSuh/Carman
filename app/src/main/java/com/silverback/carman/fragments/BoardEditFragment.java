@@ -26,7 +26,6 @@ import android.widget.LinearLayout;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -43,7 +42,7 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
-import com.silverback.carman.databinding.FragmentBoardEditBinding;
+import com.silverback.carman.databinding.BoardFragmentEditBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
@@ -75,9 +74,8 @@ public class BoardEditFragment extends DialogFragment implements
     private static final String REGEX_MARKUP = "\\[image_\\d]\\n";
 
     // Objects
-    private FragmentBoardEditBinding binding;
+    private BoardFragmentEditBinding binding;
 
-    private FirebaseFirestore mDB;
     private FirebaseStorage storage;
     private DocumentReference docRef;
     private SharedPreferences mSettings;
@@ -95,7 +93,6 @@ public class BoardEditFragment extends DialogFragment implements
     private ArrayList<String> uriStringList, autofilter;
     private ArrayList<Uri> uriEditList;
     private JSONArray jsonAutoArray;
-    private Observer<Integer> chooserObserver;
 
     // Fields
     private String documentId;
@@ -123,9 +120,10 @@ public class BoardEditFragment extends DialogFragment implements
         }
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
-        mDB = FirebaseFirestore.getInstance();
+        FirebaseFirestore mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         docRef = mDB.collection("user_post").document(documentId);
+
         //imgUtil = new ApplyImageResourceUtil(getContext());
 
         sparseSpanArray = new SparseArray<>();
@@ -138,27 +136,13 @@ public class BoardEditFragment extends DialogFragment implements
             for(String uriString : uriStringList) uriEditList.add(Uri.parse(uriString));
         }
 
-        // Show the autoclub filter if the post belongs to the autoclub and set, at least,
-        // the maker filter
-        docRef.get().addOnSuccessListener(doc -> {
-            if(doc != null && doc.exists()) {
-                final CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
-                assert toObject != null;
-                isAutoclub = toObject.isAutoclub();
-                if(isAutoclub) {
-                    isGeneral = toObject.isGeneral();
-                    binding.scrollAutofilter.setVisibility(View.VISIBLE);
-                    String json = mSettings.getString(Constants.AUTO_DATA, null);
-                    setEditCheckbox(json, toObject.getAutofilter());
-                }
-            }
-        });
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        binding = FragmentBoardEditBinding.inflate(inflater);
+        binding = BoardFragmentEditBinding.inflate(inflater);
         binding.toolbarBoardEdit.setTitle(getString(R.string.board_edit_toolbar_title));
         binding.toolbarBoardEdit.setNavigationOnClickListener(view -> dismiss());
         binding.toolbarBoardEdit.inflateMenu(R.menu.options_board_write);
@@ -171,13 +155,14 @@ public class BoardEditFragment extends DialogFragment implements
         binding.btnAttachImage.setOnClickListener(button -> selectImageMedia());
 
         // Horizontal recycleview for displaying attached images
-        if(uriStringList != null && uriStringList.size() > 0) {
+        //if(uriStringList != null && uriStringList.size() > 0) {
             LinearLayoutManager linearLayout = new LinearLayoutManager(getContext());
             linearLayout.setOrientation(LinearLayoutManager.HORIZONTAL);
-            binding.editRecyclerImages.setLayoutManager(linearLayout);
             imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
+            binding.editRecyclerImages.setLayoutManager(linearLayout);
+            //imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
             binding.editRecyclerImages.setAdapter(imgAdapter);
-        }
+        //}
 
         SpannableStringBuilder ssb = new SpannableStringBuilder(content);
         binding.etEditContent.setText(ssb);
@@ -212,6 +197,22 @@ public class BoardEditFragment extends DialogFragment implements
             return false;
         });
          */
+
+        // Show the autoclub filter if the post belongs to the autoclub and set, at least,
+        // the maker filter
+        docRef.get().addOnSuccessListener(doc -> {
+            if(doc != null && doc.exists()) {
+                final CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
+                assert toObject != null;
+                isAutoclub = toObject.isAutoclub();
+                if(isAutoclub) {
+                    isGeneral = toObject.isGeneral();
+                    binding.scrollAutofilter.setVisibility(View.VISIBLE);
+                    String json = mSettings.getString(Constants.AUTO_DATA, null);
+                    setEditCheckbox(json, toObject.getAutofilter());
+                }
+            }
+        });
 
 
         return binding.getRoot();
@@ -251,8 +252,7 @@ public class BoardEditFragment extends DialogFragment implements
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            log.i("image chooser bug: %s", chooser);
-            ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
+            ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
 
         });
 
@@ -275,7 +275,7 @@ public class BoardEditFragment extends DialogFragment implements
     @Override
     public void onDestroyView() {
         log.i("onDestroyView of BoardEditFragment");
-        requireActivity().getViewModelStore().clear();
+        //requireActivity().getViewModelStore().clear();
         super.onDestroyView();
     }
 
@@ -293,21 +293,20 @@ public class BoardEditFragment extends DialogFragment implements
     @Override
     public void notifyAddImageSpan(ImageSpan imgSpan, int pos) {
         log.i("added image uri: %s", mImageUri);
-        imgAdapter.notifyItemChanged(pos);
         if(mImageUri != null) uriEditList.add(pos, mImageUri);
+        imgAdapter.notifyItemInserted(pos);
     }
 
     // Implement BoardImageSpanHandler.OnImageSpanListener
     @Override
     public void notifyRemovedImageSpan(int pos) {
-        imgAdapter.notifyItemRemoved(pos);
         if(uriEditList.get(pos) != null) uriEditList.remove(pos);
+        imgAdapter.notifyItemRemoved(pos);
     }
 
     @Override
     public void onCheckedChanged(CompoundButton chkbox, boolean isChecked) {
         final int index = (int)chkbox.getTag();
-        log.i("checkbox index: %s", index);
         if(index == 9) isGeneral = isChecked;
         else {
             if (isChecked) editedFilterList.add(chkbox.getText().toString());
@@ -406,6 +405,7 @@ public class BoardEditFragment extends DialogFragment implements
 
     // The attach button event handler to call the imge media chooser.
     private void selectImageMedia() {
+        //if(imgAdapter == null) imgAdapter = new BoardImageAdapter(getContext(), uriEditList, this);
         ((InputMethodManager)(requireActivity().getSystemService(INPUT_METHOD_SERVICE)))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         // Pop up the dialog as far as the num of attached pics are no more than the fixed size.
@@ -418,6 +418,7 @@ public class BoardEditFragment extends DialogFragment implements
         // of which passes the value to getImageChooser().
         DialogFragment dialog = new ImageChooserFragment();
         dialog.show(getChildFragmentManager(), "ImageMediaChooser");
+
         /*
          * This works for both, inserting a text at the current position and replacing
          * any text which is selected by the user. The Math.max() is necessary in the first
@@ -487,8 +488,8 @@ public class BoardEditFragment extends DialogFragment implements
         }
 
         // Update the post_image field, if any.
-        List<String> postImages = new ArrayList<>();
         if (uriEditList.size() > 0) {
+            List<String> postImages = new ArrayList<>();
             docRef.update("post_images", FieldValue.delete());
             for (Uri uri : uriEditList) postImages.add(uri.toString());
             editedPost.put("post_images", postImages);
@@ -496,7 +497,9 @@ public class BoardEditFragment extends DialogFragment implements
 
         docRef.set(editedPost, SetOptions.merge()).addOnSuccessListener(aVoid -> {
             binding.pbContainer.setVisibility(View.GONE);
-            sharedModel.getEditedPosting().setValue(position);
+            SparseArray<Object> sparseArray = new SparseArray<>();
+            sparseArray.put(position, docRef);
+            sharedModel.getEditedPosting().setValue(sparseArray);
             dismiss();
         }).addOnFailureListener(Throwable::printStackTrace);
 

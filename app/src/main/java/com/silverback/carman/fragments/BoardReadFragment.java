@@ -286,7 +286,7 @@ public class BoardReadFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         // SET THE USER IMAGE ICON
@@ -347,22 +347,7 @@ public class BoardReadFragment extends DialogFragment implements
             FragmentManager fragmentManager = getChildFragmentManager();
             fragmentManager.setFragmentResultListener("confirmToRemove", fragment, (req, res) -> {
                 if(req.matches("confirmToRemove") && (res.getBoolean("confirmed"))) {
-                    /*
-                    mDB.runTransaction((Transaction.Function<Void>) transaction -> {
-                        DocumentSnapshot snapshot = transaction.get(postRef);
-                        if(snapshot.exists()) {
-                            sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-                            sharedModel.getRemovedPosting().postValue(snapshot);
-                            log.i("remove document");
-                            transaction.delete(postRef);
-                            fragment.dismiss();
-                        }
-
-                        return null;
-                    });
-                    */
                     postRef.get().addOnSuccessListener(post -> {
-                        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
                         sharedModel.getRemovedPosting().setValue(post);
                         postRef.delete().addOnSuccessListener(aVoid -> dismiss());
                     });

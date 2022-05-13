@@ -3,8 +3,6 @@ package com.silverback.carman.fragments;
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.PAGINATION;
-import static com.silverback.carman.BoardActivity.POPULAR;
-import static com.silverback.carman.BoardActivity.RECENT;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -25,10 +23,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -38,14 +34,11 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
-import com.google.firebase.firestore.Source;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPostingAdapter;
@@ -95,7 +88,7 @@ public class BoardPagerFragment extends Fragment implements
     private String userId;
     private int currentPage;
     private boolean isViewOrder;
-    private boolean isQuerying; // to block recyclerview from scrolling while loading posts.
+    private boolean isScrollable; // to block recyclerview from scrolling while loading posts.
 
     private ImageView imgEmblem;
     private ProgressBar pbEmblem;
@@ -142,8 +135,8 @@ public class BoardPagerFragment extends Fragment implements
         colRef = mDB.collection("user_post");
         if(currentPage == AUTOCLUB) queryPagingUtil.setAutoClubOrder(isViewOrder);
         //regListener = queryPagingUtil.setPostQuery(colRef, currentPage);
-        //queryPagingUtil.setPostQuery(colRef, currentPage);
-        //isQuerying = true;
+        queryPagingUtil.setPostQuery(colRef, currentPage);
+        isScrollable = false;
     }
 
     @Override
@@ -173,11 +166,15 @@ public class BoardPagerFragment extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
-        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), post -> {
+        fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
             log.i("new posting: %s", currentPage);
-            queryPagingUtil.setPostQuery(colRef, currentPage);
-            //postingList.add(0, post);
-            //postingAdapter.submitPostList(postingList);
+            postRef.get().addOnCompleteListener(task -> {
+                if(task.isSuccessful()) {
+                    DocumentSnapshot snapshot = task.getResult();
+                    log.i("post images: %s", snapshot.get("post_images"));
+                    queryPagingUtil.setPostQuery(colRef, currentPage);
+                }
+            });
         });
 
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
@@ -186,14 +183,20 @@ public class BoardPagerFragment extends Fragment implements
             postingAdapter.submitPostList(postingList);
             queryPagingUtil.setPostQuery(colRef, currentPage);
         });
+
+        fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), sparseArray -> {
+            final int position = sparseArray.keyAt(0);
+            final DocumentReference docRef = (DocumentReference)sparseArray.valueAt(0);
+            docRef.get().addOnSuccessListener(doc -> {
+                postingList.set(position, doc);
+                queryPagingUtil.setPostQuery(colRef, currentPage);
+            });
+        });
     }
 
     @Override
     public void onResume() {
-        log.i("onResume");
         super.onResume();
-        queryPagingUtil.setPostQuery(colRef, currentPage);
-        isQuerying = true;
     }
 
     @Override
@@ -277,19 +280,19 @@ public class BoardPagerFragment extends Fragment implements
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         postingList.clear();
         addPostByCategory(querySnapshot, false);
-        isQuerying = false;
+        isScrollable = true;
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
         addPostByCategory(nextShots, false);
-        isQuerying = false;
+        isScrollable = true;
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
         addPostByCategory(lastShots, true);
-        isQuerying = true;
+        isScrollable = false;
     }
 
 
@@ -298,7 +301,7 @@ public class BoardPagerFragment extends Fragment implements
         progbar.setVisibility(View.GONE);
         e.printStackTrace();
         Toast.makeText(getActivity(), e.getMessage(), Toast.LENGTH_SHORT).show();
-        isQuerying = true;
+        isScrollable = false;
         binding.recyclerBoardPostings.removeOnScrollListener(scrollListener);
     }
 
@@ -306,17 +309,19 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot doc : querySnapshot) {
             if(currentPage == AUTOCLUB) {
                 if(autofilter == null || autofilter.size() == 0) break;
+
                 CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 if(toObject == null) return;
                 ArrayList<String> filters = new ArrayList<>(toObject.getAutofilter());
+
                 if(filters.containsAll(autofilter)) postingList.add(doc);
             } else postingList.add(doc);
         }
 
         if(currentPage == AUTOCLUB) {
             if (!isLast && postingList.size() < PAGINATION) {
-                isQuerying = true;
                 queryPagingUtil.setNextPostQuery();
+                isScrollable = false;
                 return;
             } else {
                 progbar.setVisibility(View.GONE);
@@ -336,7 +341,7 @@ public class BoardPagerFragment extends Fragment implements
         } else {
             binding.recyclerBoardPostings.setVisibility(View.VISIBLE);
             binding.tvEmptyView.setVisibility(View.GONE);
-            binding.recyclerBoardPostings.smoothScrollToPosition(0);
+            //binding.recyclerBoardPostings.smoothScrollToPosition(0);
         }
 
     }
@@ -350,7 +355,7 @@ public class BoardPagerFragment extends Fragment implements
     public void resetAutoFilter(ArrayList<String> autofilter) {
         if(!menu.getItem(0).isVisible()) requireActivity().invalidateOptionsMenu();
         this.autofilter = autofilter;
-        isQuerying = true;
+        isScrollable = false;
         String field = (isViewOrder) ? "cnt_view" : "timestamp";
         queryPagingUtil.setAutofilterQuery(field);
     }
@@ -401,8 +406,8 @@ public class BoardPagerFragment extends Fragment implements
                 int firstVisibleProductPosition = layout.findFirstVisibleItemPosition();
                 int visiblePostCount = layout.getChildCount();
                 int totalPostCount = layout.getItemCount();
-                if (!isQuerying && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
-                    isQuerying = true;
+                if (isScrollable && (firstVisibleProductPosition + visiblePostCount == totalPostCount)) {
+                    isScrollable = false;
                     if(currentPage != AUTOCLUB && totalPostCount >= PAGINATION) {
                         queryPagingUtil.setNextPostQuery();
                     }

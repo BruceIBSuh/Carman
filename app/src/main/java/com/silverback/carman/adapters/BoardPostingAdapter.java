@@ -83,7 +83,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         final TextView tvCountViews;
         final TextView tvCountComment;
         final ImageView userImage;
-        final ImageView imgAttached;
+        //final ImageView imgAttached;
 
         PostViewHolder(BoardRecyclerviewPostBinding binding) {
             super(binding.getRoot());
@@ -99,8 +99,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvPostingOwner = binding.tvPostOwner;
             tvCountViews = binding.tvCountViews;
             tvCountComment = binding.tvCountComment;
-            imgAttached = binding.imgAttached;
+            //imgAttached = binding.imgAttached;
             userImage = binding.imgUser;
+        }
+
+        ImageView getAttachedImageView() {
+            return postBinding.imgAttached;
         }
     }
 
@@ -142,7 +146,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 PostViewHolder postHolder = (PostViewHolder)holder;
                 //DocumentSnapshot snapshot = snapshotList.get(position);
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(holder.getBindingAdapterPosition());
+                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
@@ -184,8 +188,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
 
                 } else {
-                    Glide.with(context).clear(postHolder.imgAttached);
-                    postHolder.imgAttached.setImageDrawable(null);
+                    Glide.with(context).clear(postHolder.getAttachedImageView());
+                    postHolder.getAttachedImageView().setImageDrawable(null);
                 }
 
                 // Set the listener for clicking the item with position
@@ -255,6 +259,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     void bindAttachedImage(Uri uri) {
+        log.i("attached image: %s",uri);
         int x = postBinding.imgAttached.getWidth();
         int y = postBinding.imgAttached.getHeight();
         imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);

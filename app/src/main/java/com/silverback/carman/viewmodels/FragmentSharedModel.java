@@ -37,9 +37,9 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<JSONObject> jsonServiceItemObj;
 
     private MutableLiveData<Boolean> alertPostResult;
-    private MutableLiveData<DocumentSnapshot> newPosting;
+    private MutableLiveData<DocumentReference> newPosting;
     private MutableLiveData<DocumentSnapshot> removedPosting;
-    private MutableLiveData<Integer> editedPosting;
+    private MutableLiveData<SparseArray<Object>> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
@@ -170,7 +170,7 @@ public class FragmentSharedModel extends ViewModel {
 
     // Communicate b/w BoardWriteFragment and BoardPagerFragment both of which BoardActivity
     // cocntains.
-    public MutableLiveData<DocumentSnapshot> getNewPosting() {
+    public MutableLiveData<DocumentReference> getNewPosting() {
         if(newPosting == null) newPosting = new MutableLiveData<>();
         return newPosting;
     }
@@ -182,7 +182,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w BoardEditFragment and BoardPagerFragment
-    public MutableLiveData<Integer> getEditedPosting() {
+    public MutableLiveData<SparseArray<Object>> getEditedPosting() {
         if(editedPosting == null) editedPosting = new MutableLiveData<>();
         return editedPosting;
     }

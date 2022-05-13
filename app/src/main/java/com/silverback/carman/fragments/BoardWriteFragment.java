@@ -63,7 +63,7 @@ public class BoardWriteFragment extends DialogFragment implements
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private FragmentBoardWriteTempBinding binding;
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
@@ -113,7 +113,7 @@ public class BoardWriteFragment extends DialogFragment implements
             if(page == AUTOCLUB) autofilter = getArguments().getString("autofilter");
         }
 
-        firestore = FirebaseFirestore.getInstance();
+        mDB = FirebaseFirestore.getInstance();
         uriImageList = new ArrayList<>();
         sparseUriArray = new SparseArray<>();
         cbAutoFilter = new ArrayList<>();
@@ -182,7 +182,7 @@ public class BoardWriteFragment extends DialogFragment implements
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).selectImageMedia(chooser, binding.getRoot());
+            ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
         });
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
@@ -347,7 +347,6 @@ public class BoardWriteFragment extends DialogFragment implements
 
     // Invoked in the parent activity to set an image uri which has received from the image media.
     public void addImageThumbnail(Uri uri) {
-        log.i("attached Image Uri: %s", uri);
         this.imageUri = uri;
         ApplyImageResourceUtil.applyGlideToImageSpan(getContext(), imageUri, spanHandler);
     }
@@ -357,7 +356,6 @@ public class BoardWriteFragment extends DialogFragment implements
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
-
         if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
         else {
             //binding.pbWriteContainer.setVisibility(View.VISIBLE);
@@ -378,6 +376,7 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
+        post.put("isAutoclub", page == AUTOCLUB);
         post.put("post_content", binding.etPostContent.getText().toString());
         // If the post has any images attached.
         if(sparseUriArray.size() > 0) {
@@ -388,24 +387,29 @@ public class BoardWriteFragment extends DialogFragment implements
             post.put("post_images",  images);
         }
 
-        post.put("isAutoclub", page == AUTOCLUB);
         if(page == AUTOCLUB) {
             List<String> filterList = new ArrayList<>(cbAutoFilter);
             post.put("auto_filter", filterList);
             post.put("isGeneral", isGeneral);
         } else post.put("isGeneral", true);
 
-        DocumentReference docRef = firestore.collection("users").document(userId);
-        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+
+        DocumentReference docRef = mDB.collection("users").document(userId);
+        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docRef);
             if(doc.exists()) {
                 post.put("user_pic", doc.getString("user_pic"));
-                firestore.collection("user_post").add(post).addOnSuccessListener(postRef -> {
+                mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
+                    fragmentModel.getNewPosting().setValue(postRef);
+                    dismiss();
+                    /*
                     postRef.get().addOnSuccessListener(snapshot -> {
                         log.i("add a new post");
                         fragmentModel.getNewPosting().setValue(snapshot);
                         dismiss();
                     });
+
+                     */
 
                 }).addOnFailureListener(Throwable::printStackTrace);
             }

@@ -54,6 +54,7 @@
         android:id="@+id/nestedScrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
         app:layout_dodgeInsetEdges="top"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -158,8 +159,9 @@
         android:id="@+id/edit_recycler_images"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_anchor="@id/nestedScrollview"
-        app:layout_anchorGravity="bottom"
-        app:layout_dodgeInsetEdges="top" />
+        android:orientation="horizontal"
+        android:backgroundTint="@color/bgBoardTab"
+        android:layout_gravity="bottom" />
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
