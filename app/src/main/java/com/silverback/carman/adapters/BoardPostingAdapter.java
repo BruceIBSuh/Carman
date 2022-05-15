@@ -52,7 +52,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
     private final List<DocumentSnapshot> snapshotList;
-    private int category;
+    private int category = 0;
 
     public interface OnPostingAdapterListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
@@ -64,6 +64,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         super();
         this.postingAdapterListener = listener;
         snapshotList = snapshots;
+        //snapshotList = new ArrayList<>();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
@@ -71,6 +72,17 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Update the adapter using AsyncListDiffer.ItemCallback<T>
     public void submitPostList(List<DocumentSnapshot> snapshotList) {
         mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitListDone);
+    }
+
+
+    public void updatePostList(List<DocumentSnapshot> newPostList) {
+        final BoardDiffUtilCallback diffUtilCallback = new BoardDiffUtilCallback(snapshotList, newPostList);
+        final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffUtilCallback);
+        if(snapshotList.size() > 0) snapshotList.clear();
+        snapshotList.addAll(newPostList);
+        log.i("snapshotList: %s", this.snapshotList.size());
+
+        diffResult.dispatchUpdatesTo(this);
     }
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
@@ -83,7 +95,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         final TextView tvCountViews;
         final TextView tvCountComment;
         final ImageView userImage;
-        //final ImageView imgAttached;
+        final ImageView imgAttached;
 
         PostViewHolder(BoardRecyclerviewPostBinding binding) {
             super(binding.getRoot());
@@ -99,13 +111,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             tvPostingOwner = binding.tvPostOwner;
             tvCountViews = binding.tvCountViews;
             tvCountComment = binding.tvCountComment;
-            //imgAttached = binding.imgAttached;
+            imgAttached = binding.imgAttached;
             userImage = binding.imgUser;
         }
-
+        /*
         ImageView getAttachedImageView() {
             return postBinding.imgAttached;
         }
+
+         */
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
@@ -134,7 +148,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 CardView bannerView = (CardView)LayoutInflater.from(context)
                         .inflate(R.layout.cardview_board_banner, viewGroup, false);
                 return new AdViewHolder(bannerView);
-
         }
 
     }
@@ -146,7 +159,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 PostViewHolder postHolder = (PostViewHolder)holder;
                 //DocumentSnapshot snapshot = snapshotList.get(position);
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
+                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(postHolder.getBindingAdapterPosition());
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
@@ -167,6 +180,11 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
+                Uri userImage = (TextUtils.isEmpty(snapshot.getString("user_pic")))?
+                        Uri.parse(snapshot.getString("user_pic")):
+                        Uri.parse(Constants.imgPath + "ic_user_blank_white");
+                Glide.with(context).load(userImage).fitCenter().into(postHolder.userImage);
+
                 // Set the user image
                 if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
                     bindUserImage(Uri.parse(snapshot.getString("user_pic")));
@@ -182,15 +200,23 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     List<?> postImageList = (List<?>)snapshot.get("post_images");
                     assert postImageList != null;
 
-                    List<String> imgList = new ArrayList<>();
-                    for(Object imgurl : postImageList) imgList.add((String)imgurl);
-                    String thumbnail = imgList.get(0);
-                    if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
+                    String thumbnail = ((String)postImageList.get(0));
+                    int x = postBinding.imgAttached.getWidth();
+                    int y = postBinding.imgAttached.getHeight();
+                    final Uri uri = Uri.parse(thumbnail);
+                    //imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
+                    Glide.with(context).load(uri).fitCenter().into(postHolder.imgAttached);
+                    //bindAttachedImage(Uri.parse(thumbnail));
+                    //List<String> imgList = new ArrayList<>();
+                    //for(Object imgurl : postImageList) imgList.add((String)imgurl);
+                    //String thumbnail = imgList.get(0);
+                    //if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
 
                 } else {
-                    Glide.with(context).clear(postHolder.getAttachedImageView());
-                    postHolder.getAttachedImageView().setImageDrawable(null);
+                    Glide.with(context).clear(postHolder.imgAttached);
+                    postHolder.imgAttached.setImageDrawable(null);
                 }
+
 
                 // Set the listener for clicking the item with position
                 holder.itemView.setOnClickListener(view -> postingAdapterListener.onPostItemClicked (
@@ -211,16 +237,18 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             for(Object payload : payloads) {
-                log.i("payload: %s", payload);
                 if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));
+
                 } else if(payload instanceof SparseLongArray) {
                     SparseLongArray sparseArray = (SparseLongArray)payload;
                     postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
+
                 } else if(payload instanceof String) {
                     String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
                     ((PostViewHolder) holder).tvNumber.setText(bindingPos);
                 }
+
             }
         }
     }
@@ -235,7 +263,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     /*
     @Override
     public int getItemViewType(int position) {
-        switch(multiTypeItemList.get(position).getViewType()){
+        switch(snapshotList.get(position).getViewType()){
             case 0: return CONTENT_VIEW_TYPE;
             case 1: return AD_VIEW_TYPE;
             default: return -1;
@@ -243,13 +271,15 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         //category = multiTypeItemList.get(position).getViewType();
         return position;
     }
-    */
+
+     */
 
     @Override
     public int getItemCount() {
         //return snapshotList.size();
-        //return multiTypeItemList.size();
         return mDiffer.getCurrentList().size();
+        //return multiTypeItemList.size();
+
     }
 
 
@@ -292,8 +322,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             }
         };
 
-    /*
-    private static class BoardDiffUtilCallback extends DiffUtil.Callback{
+
+    private static class BoardDiffUtilCallback extends DiffUtil.Callback {
         List<DocumentSnapshot> oldList, newList;
         public BoardDiffUtilCallback(List<DocumentSnapshot> oldList, List<DocumentSnapshot> newList) {
             this.oldList = oldList;
@@ -320,6 +350,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             return super.getChangePayload(oldItemPosition, newItemPosition);
         }
     }
+
+    /*
     private static final DiffUtil.ItemCallback<BoardMultiPostingItem> DIFF_CALLBACK_POST =
             new DiffUtil.ItemCallback<BoardMultiPostingItem>() {
         @Override

@@ -181,6 +181,7 @@ public class BoardPagerFragment extends Fragment implements
             log.i("posting removed: %s", currentPage);
             postingList.remove(post);
             postingAdapter.submitPostList(postingList);
+            //postingAdapter.updatePostList(postingList);
             queryPagingUtil.setPostQuery(colRef, currentPage);
         });
 
@@ -309,11 +310,9 @@ public class BoardPagerFragment extends Fragment implements
         for(DocumentSnapshot doc : querySnapshot) {
             if(currentPage == AUTOCLUB) {
                 if(autofilter == null || autofilter.size() == 0) break;
-
                 CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 if(toObject == null) return;
                 ArrayList<String> filters = new ArrayList<>(toObject.getAutofilter());
-
                 if(filters.containsAll(autofilter)) postingList.add(doc);
             } else postingList.add(doc);
         }
@@ -326,10 +325,12 @@ public class BoardPagerFragment extends Fragment implements
             } else {
                 progbar.setVisibility(View.GONE);
                 postingAdapter.submitPostList(postingList);
+                //postingAdapter.updatePostList(postingList);
             }
         } else {
             progbar.setVisibility(View.GONE);
             postingAdapter.submitPostList(postingList);
+            //postingAdapter.updatePostList(postingList);
         }
 
 
@@ -348,8 +349,17 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onSubmitListDone() {
+        log.i("submit done:%s", postingList.size());
         //binding.recyclerBoardPostings.smoothScrollToPosition(0);
         postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
+        int index = 0;
+        for(DocumentSnapshot snapshot : postingList) {
+            if(snapshot.get("post_images") != null) {
+                postingAdapter.notifyItemChanged(index, "images");
+            }
+            index++;
+        }
+
     }
 
     public void resetAutoFilter(ArrayList<String> autofilter) {

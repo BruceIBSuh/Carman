@@ -182,6 +182,7 @@ public class BoardWriteFragment extends DialogFragment implements
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
+            log.i("getImageChooser in BoardWriteFragment");
             ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
         });
 
@@ -200,7 +201,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onDestroyView() {
         log.i("onDestroyView");
-        //requireActivity().getViewModelStore().clear();
+        fragmentModel.getImageChooser().removeObservers(this);
         super.onDestroyView();
     }
 

@@ -124,6 +124,11 @@ public class BoardEditFragment extends DialogFragment implements
         storage = FirebaseStorage.getInstance();
         docRef = mDB.collection("user_post").document(documentId);
 
+        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+
+        sharedModel.getImageChooser().setValue(-1);
+
         //imgUtil = new ApplyImageResourceUtil(getContext());
 
         sparseSpanArray = new SparseArray<>();
@@ -246,14 +251,15 @@ public class BoardEditFragment extends DialogFragment implements
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-        sharedModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+
         // Notified of which media(camera or gallery) to select in ImageChooserFragment, according
         // to which startActivityForResult() is invoked by the parent activity and the result will be
         // notified to the activity and it is, in turn, sent back here by calling
         sharedModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
-            ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
-
+            log.i("getImageChooser(): %s", chooser);
+            if(chooser > 0) {
+                ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
+            }
         });
 
         // As UploadBitmapTask has completed to optimize an attched image and upload it to Stroage,

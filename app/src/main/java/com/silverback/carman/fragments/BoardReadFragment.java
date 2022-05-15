@@ -310,6 +310,11 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+    }
+
+    @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
     }
