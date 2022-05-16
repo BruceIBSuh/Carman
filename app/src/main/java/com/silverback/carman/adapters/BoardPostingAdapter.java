@@ -160,6 +160,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 //DocumentSnapshot snapshot = snapshotList.get(position);
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
                 DocumentSnapshot snapshot = mDiffer.getCurrentList().get(postHolder.getBindingAdapterPosition());
+                log.i("snapshot image test: %s", snapshot.getString("user_pic"));
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
@@ -180,12 +181,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
-                Uri userImage = (TextUtils.isEmpty(snapshot.getString("user_pic")))?
-                        Uri.parse(snapshot.getString("user_pic")):
-                        Uri.parse(Constants.imgPath + "ic_user_blank_white");
-                Glide.with(context).load(userImage).fitCenter().into(postHolder.userImage);
-
-                // Set the user image
                 if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
                     bindUserImage(Uri.parse(snapshot.getString("user_pic")));
                 } else {
