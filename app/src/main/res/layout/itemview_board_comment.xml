@@ -76,7 +76,7 @@
             android:layout_alignParentBottom="true"
             android:layout_toEndOf="@id/tv_header_reply"
             android:layout_marginStart="8dp"
-            android:gravity="start|center_vertical"
+            android:gravity="start|center"
             android:text="@null"
             android:textColor="@android:color/holo_blue_light"
             android:textSize="@dimen/extraSmallText" />

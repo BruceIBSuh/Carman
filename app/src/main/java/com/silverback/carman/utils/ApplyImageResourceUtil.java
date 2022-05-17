@@ -316,13 +316,18 @@ public class ApplyImageResourceUtil {
 
         // Set options for size, scale, and crop. The crop option depends on whehter isCircle param
         // is true or not.
-        RequestOptions options = new RequestOptions().override(px_x, px_y).centerCrop();
-        if(isCircle) options = options.circleCrop();
+        RequestOptions options = new RequestOptions().override(px_x, px_y);//.centerCrop();
+        //if(isCircle) options = options.circleCrop();
+        options = (isCircle)?options.circleCrop():options.centerCrop();
 
         // Refactor required due to async lifecycle b/w DiffUtil and Glid in BoardPostingAdapter!
         Glide.with(mContext).load(uri)
                 .apply(options)
                 .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fallback(R.drawable.ic_user_blank_white)
+                .placeholder(R.drawable.ic_user_blank_white)
+                .into(imageView);
+                /*
                 .into(new CustomTarget<Drawable>() {
                     @Override
                     public void onResourceReady(
@@ -335,6 +340,8 @@ public class ApplyImageResourceUtil {
                         imageView.setImageDrawable(null);
                     }
                 });
+
+                 */
     }
 
 

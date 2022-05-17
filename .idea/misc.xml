@@ -27,6 +27,8 @@
         <entry key="app/src/main/res/layout/board_fragment_edit.xml" value="0.1" />
         <entry key="app/src/main/res/layout/board_fragment_read.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/board_read_comment.xml" value="0.23802083333333332" />
+        <entry key="app/src/main/res/layout/board_read_header.xml" value="0.23854166666666668" />
+        <entry key="app/src/main/res/layout/board_read_post.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
         <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.24427083333333333" />

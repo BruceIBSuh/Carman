@@ -2,6 +2,7 @@ package com.silverback.carman.adapters;
 
 import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 
+import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -9,15 +10,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.AsyncListDiffer;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
@@ -33,12 +39,16 @@ import java.util.List;
 public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.ViewHolder> {
     final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
 
+
     private BoardCommentAdapter.CommentAdapterListener commentListener;
+    private Context context;
+    private AsyncListDiffer<DocumentSnapshot> mDiffer;
     private Query query;
     private DocumentReference commentRef;
     private QuerySnapshot querySnapshot;
     private List<DocumentSnapshot> replyList;
     private ApplyImageResourceUtil imgutil;
+
     private PopupDropdownUtil popupDropdownUtil;
     private String viewerId;
 
@@ -57,6 +67,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         this.imgutil = imgutil;
         this.viewerId = viewerId;
 
+        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_REPLY);
         replyList = new ArrayList<>();
     }
 
@@ -64,21 +75,21 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         this.commentListener = commentListener;
     }
 
+    public void submitReplyList(List<DocumentSnapshot> replyList){
+        mDiffer.submitList(Lists.newArrayList(replyList));//, recyclerListener::onRecyclerUpdateDone);
+    }
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ItemviewBoardReplyBinding replyBinding;
+
         public ViewHolder(View replyView) {
             super(replyView);
-            replyBinding = ItemviewBoardReplyBinding.bind(replyView);
+            this.replyBinding = ItemviewBoardReplyBinding.bind(replyView);
         }
 
+        TextView getUserNameView() { return replyBinding.tvUserName; }
         ImageView getReplyUserImage() { return replyBinding.imgReplyUser; }
         ImageView getOverflowView() { return replyBinding.imgReplyOverflow; }
-
-        void setReplyProfile(DocumentSnapshot doc) {
-            replyBinding.tvUserName.setText(doc.getString("user_name"));
-            replyBinding.tvReplyTimestamp.setText(String.valueOf(doc.getDate("timestamp")));
-            replyBinding.tvReplyContent.setText(doc.getString("reply_content"));
-        }
     }
 
     @NonNull
@@ -86,28 +97,30 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View replyView = LayoutInflater.from(parent.getContext()).inflate(
                 R.layout.itemview_board_reply, parent, false);
+        this.context = parent.getContext();
         return new ViewHolder(replyView);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull BoardReplyAdapter.ViewHolder holder, int position) {
-        log.i("position: %s, %s", position, holder.getBindingAdapterPosition());
-        final DocumentSnapshot doc = replyList.get(position);
-        holder.setReplyProfile(doc);
-        setReplyUserPic(holder, doc);
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        //DocumentSnapshot doc = replyList.get(position);
+        DocumentSnapshot doc = mDiffer.getCurrentList().get(position);
+        String replyId = doc.getString("user_id");
+        assert replyId != null;
+        ((BoardActivity)context).setUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
         holder.getOverflowView().setOnClickListener(v -> showReplyPopupWindow(v, holder, doc, position));
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull BoardReplyAdapter.ViewHolder holder, int pos, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull ViewHolder holder, int pos, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
         else log.i("reply adapter payloads: %s", payloads.get(0));
     }
 
     @Override
     public int getItemCount() {
-        return replyList.size();
+        //return replyList.size();
+        return mDiffer.getCurrentList().size();
     }
 
     public void queryCommentReply(DocumentReference commentRef, String field) {
@@ -196,6 +209,20 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
             dropdown.dismiss();
         });
     }
+
+    private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_REPLY = new DiffUtil.ItemCallback<DocumentSnapshot>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return oldItem.getId().equals(newItem.getId());
+        }
+        @Override
+        public boolean areContentsTheSame(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return oldItem.equals(newItem);
+        }
+        public Object getChangePayload(@NonNull DocumentSnapshot oldItem, @NonNull DocumentSnapshot newItem) {
+            return super.getChangePayload(oldItem, newItem);
+        }
+    };
 
 
 }

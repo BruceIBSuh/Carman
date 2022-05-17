@@ -190,6 +190,7 @@ public class BoardReadFragment extends DialogFragment implements
             viewerId = br.readLine();
         } catch(IOException e) {e.printStackTrace();}
         */
+
         this.context = requireContext();
         mDB = FirebaseFirestore.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -232,8 +233,10 @@ public class BoardReadFragment extends DialogFragment implements
             binding.toolbarBoardRead.setOnMenuItemClickListener(this);
         }
 
+        // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
+        // is set.
+        ((BoardActivity)context).setUserProfile(obj.getUserId(), binding.tvUsername, binding.imgUserpic);
         binding.tvPostTitle.setText(obj.getPostTitle());
-        binding.tvUsername.setText(obj.getUserName());
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
@@ -265,12 +268,6 @@ public class BoardReadFragment extends DialogFragment implements
                 setToolbarTitleIcon(state);
             }
         });
-
-        // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
-        // is set.
-        userPic = (TextUtils.isEmpty(obj.getUserPic()))? Constants.imgPath + "ic_user_blank_gray": obj.getUserPic();
-        int size = Constants.ICON_SIZE_TOOLBAR_USERPIC;
-        imgUtil.applyGlideToImageView(Uri.parse(userPic), binding.imgUserpic, size, size, true);
 
         return binding.getRoot();
     }
@@ -409,26 +406,18 @@ public class BoardReadFragment extends DialogFragment implements
         commentShotList.clear();
         for(DocumentSnapshot comment : commentShots) commentShotList.add(comment);
         commentAdapter.submitCommentList(commentShotList);
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        //int scrollY = binding.nestedScrollview.getHeight();
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1000));
     }
 
     @Override
     public void getNextQueryResult(QuerySnapshot nextShots) {
-        final int start = commentShotList.size();
         for(DocumentSnapshot comment : nextShots) commentShotList.add(comment);
         commentAdapter.submitCommentList(commentShotList);
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
     @Override
     public void getLastQueryResult(QuerySnapshot lastShots) {
-        final int start = commentShotList.size();
         for(DocumentSnapshot comment : lastShots) commentShotList.add(comment);
-        //commentAdapter.notifyItemRangeChanged(start, lastShots.size());
         commentAdapter.submitCommentList(commentShotList);
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
     }
 
     @Override
@@ -450,6 +439,7 @@ public class BoardReadFragment extends DialogFragment implements
             boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
         }).addOnFailureListener(Throwable::printStackTrace);
     }
+
     @Override
     public void deleteCommentReply(BoardReplyAdapter replyAdapter, DocumentReference commentRef) {
         log.i("post deletion handling");
@@ -473,6 +463,7 @@ public class BoardReadFragment extends DialogFragment implements
         String msg = (isDone)?"uploading reply done" : "uploading reply failed";
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
         //commentAdapter.notifyItemChanged(position, false);
+        //queryPaginationUtil.setCommentReplyQuery();
     }
 
     @Override
@@ -481,7 +472,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifySwitchChecked(int checkedPos, int bindingPos) {
+    public void notifyReplySwitchChecked(int checkedPos, int bindingPos) {
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         // Hide the comment edittext if the reply switch turns on.
         if(binding.etComment.isFocused()) {
@@ -571,13 +562,26 @@ public class BoardReadFragment extends DialogFragment implements
 
     // Method for uploading the comment to Firestore
     private void uploadComment() {
-        log.i("uploadComment");
         Map<String, Object> comment = new HashMap<>();
         comment.put("cnt_reply", 0);
         comment.put("comment", binding.etComment.getText().toString());
         comment.put("timestamp", FieldValue.serverTimestamp());
         comment.put("user_id", viewerId);
 
+        postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
+            queryPaginationUtil.setCommentQuery(postRef, "timestamp");
+            postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
+                cntComment++;
+                binding.tvCntComment.setText(String.valueOf(cntComment));
+                boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
+            });
+        }).addOnFailureListener(Throwable::printStackTrace);
+
+        imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        binding.constraintComment.setVisibility(View.GONE);
+        isCommentVisible = !isCommentVisible;
+
+        /*
         DocumentReference userRef = mDB.collection("users").document(viewerId);
         mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(userRef);
@@ -603,6 +607,8 @@ public class BoardReadFragment extends DialogFragment implements
             isCommentVisible = !isCommentVisible;
             return null;
         });
+
+         */
     }
 
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
@@ -720,4 +726,6 @@ public class BoardReadFragment extends DialogFragment implements
             return false;
         } else return true;
     }
+
+
 }

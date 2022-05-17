@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
@@ -18,7 +19,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.common.collect.Lists;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardRecyclerviewPostBinding;
@@ -46,10 +51,10 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Objects
     private Context context;
+    private final FirebaseFirestore mDB;
     private final OnPostingAdapterListener postingAdapterListener;
     private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private final SimpleDateFormat sdf;
-    private ApplyImageResourceUtil imgUtil;
     private BoardRecyclerviewPostBinding postBinding;
     private final List<DocumentSnapshot> snapshotList;
     private int category = 0;
@@ -65,16 +70,17 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         this.postingAdapterListener = listener;
         snapshotList = snapshots;
         //snapshotList = new ArrayList<>();
+        mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
-    // Update the adapter using AsyncListDiffer.ItemCallback<T>
+    // Update the adapter using AsyncListDiffer.ItemCallback<T> which uses the background thread.
     public void submitPostList(List<DocumentSnapshot> snapshotList) {
         mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitListDone);
     }
 
-
+    // Upadte the adapter using DiffUtil.Callback which uses the main thread.
     public void updatePostList(List<DocumentSnapshot> newPostList) {
         final BoardDiffUtilCallback diffUtilCallback = new BoardDiffUtilCallback(snapshotList, newPostList);
         final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffUtilCallback);
@@ -114,12 +120,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             imgAttached = binding.imgAttached;
             userImage = binding.imgUser;
         }
-        /*
-        ImageView getAttachedImageView() {
-            return postBinding.imgAttached;
-        }
-
-         */
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
@@ -136,7 +136,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         this.context = viewGroup.getContext();
-        imgUtil = new ApplyImageResourceUtil(context);
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 postBinding = BoardRecyclerviewPostBinding.inflate(
@@ -159,58 +158,38 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 PostViewHolder postHolder = (PostViewHolder)holder;
                 //DocumentSnapshot snapshot = snapshotList.get(position);
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(postHolder.getBindingAdapterPosition());
-                log.i("snapshot image test: %s", snapshot.getString("user_pic"));
+                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
                 postHolder.tvTitle.setText(snapshot.getString("post_title"));
-                //postHolder.tvNumber.setText(String.valueOf(index + 1));
-                postHolder.tvNumber.setText(String.valueOf(holder.getBindingAdapterPosition() + 1));
+                postHolder.tvNumber.setText(String.valueOf(position + 1));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
-                //Timestamp timeStamp = (Timestamp)snapshot.get("timestamp");
-                //long postingTime = timeStamp.getSeconds() * 1000;
-                //log.i("timestamp: %s", postingTime);
                 if(snapshot.getDate("timestamp") != null) {
                     Date date = snapshot.getDate("timestamp");
                     postHolder.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
                 }
 
-                postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
+                //postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
                 postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
-                if(!TextUtils.isEmpty(snapshot.getString("user_pic"))) {
-                    bindUserImage(Uri.parse(snapshot.getString("user_pic")));
-                } else {
-                    bindUserImage(Uri.parse(Constants.imgPath + "ic_user_blank_white"));
-                }
+                // Set the user name and image which should be fetched from the user collection to enable
+                // it to be updated.
+                final String userId = snapshot.getString("user_id");
+                assert userId != null;
+                ((BoardActivity)context).setUserProfile(userId, postHolder.tvPostingOwner, postHolder.userImage);
 
-                // Set the thumbnail. When Glide applies, async issue occurs so that Glide.clear() should be
-                // invoked and the imageview is made null to prevent images from having wrong positions.
+                // Set the attached image in the post, if any.
                 if(snapshot.get("post_images") != null) {
-                    //BoardActivity.PostImages objImages = snapshot.toObject(BoardActivity.PostImages.class);
-                    //List<String> postImages = Objects.requireNonNull(objImages).getPostImages();
                     List<?> postImageList = (List<?>)snapshot.get("post_images");
                     assert postImageList != null;
-
                     String thumbnail = ((String)postImageList.get(0));
-                    int x = postBinding.imgAttached.getWidth();
-                    int y = postBinding.imgAttached.getHeight();
                     final Uri uri = Uri.parse(thumbnail);
-                    //imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
                     Glide.with(context).load(uri).fitCenter().into(postHolder.imgAttached);
-                    //bindAttachedImage(Uri.parse(thumbnail));
-                    //List<String> imgList = new ArrayList<>();
-                    //for(Object imgurl : postImageList) imgList.add((String)imgurl);
-                    //String thumbnail = imgList.get(0);
-                    //if(!TextUtils.isEmpty(thumbnail)) bindAttachedImage(Uri.parse(thumbnail));
 
-                } else {
-                    Glide.with(context).clear(postHolder.imgAttached);
-                    postHolder.imgAttached.setImageDrawable(null);
-                }
+                } else Glide.with(context).clear(postHolder.imgAttached);
 
 
                 // Set the listener for clicking the item with position
@@ -278,30 +257,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
 
-    void bindUserImage(Uri uri) {
-        int size = Constants.ICON_SIZE_POSTING_LIST;
-        imgUtil.applyGlideToImageView(uri, postBinding.imgUser, size, size, true);
-    }
-
-    void bindAttachedImage(Uri uri) {
-        log.i("attached image: %s",uri);
-        int x = postBinding.imgAttached.getWidth();
-        int y = postBinding.imgAttached.getHeight();
-        imgUtil.applyGlideToImageView(uri, postBinding.imgAttached, x, y, false);
-    }
-
-
-    public void addNewPost(DocumentSnapshot snapshot) {
-        category = CONTENT_VIEW_TYPE;
-        snapshotList.add(0, snapshot);
-        notifyItemInserted(0);
-    }
-
-    public void deletePost(int position) {
-        snapshotList.remove(position);
-        notifyItemRemoved(position);
-    }
-
+    // AsyncListDiffer which helps compute the dfference b/w two lists via DiffUtil on a background
+    // thread.
     private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_POST =
         new DiffUtil.ItemCallback<DocumentSnapshot>() {
             @Override
@@ -345,21 +302,4 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             return super.getChangePayload(oldItemPosition, newItemPosition);
         }
     }
-
-    /*
-    private static final DiffUtil.ItemCallback<BoardMultiPostingItem> DIFF_CALLBACK_POST =
-            new DiffUtil.ItemCallback<BoardMultiPostingItem>() {
-        @Override
-        public boolean areItemsTheSame(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
-            return oldItem.getId() == newItem.getId();
-        }
-        @Override
-        public boolean areContentsTheSame(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
-            return oldItem.equals(newItem);
-        }
-        public Object getChangePayload(@NonNull BoardMultiPostingItem oldItem, @NonNull BoardMultiPostingItem newItem) {
-            return super.getChangePayload(oldItem, newItem);
-        }
-    };
-     */
 }

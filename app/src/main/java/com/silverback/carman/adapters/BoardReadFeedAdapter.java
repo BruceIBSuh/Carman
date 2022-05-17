@@ -207,7 +207,6 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
             int cntComment = Integer.parseInt(headerBinding.headerCommentCnt.getText().toString());
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             callback.showCommentLoadButton(visible);
-
         } else commentBinding.recyclerComments.setVisibility(View.GONE);
     }
 

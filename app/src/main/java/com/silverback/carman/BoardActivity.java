@@ -43,6 +43,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -56,11 +57,13 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
 import com.silverback.carman.databinding.ActivityBoardBinding;
@@ -126,6 +129,7 @@ public class BoardActivity extends BaseActivity implements
     public static final int CAMERA = 2;
 
     // Objects
+    private FirebaseFirestore mDB;
     private ActivityBoardBinding binding;
     private BoardPagerAdapter pagerAdapter;
     private BoardWriteFragment writePostFragment;
@@ -166,6 +170,8 @@ public class BoardActivity extends BaseActivity implements
         setSupportActionBar(binding.boardToolbar);
         Objects.requireNonNull(getSupportActionBar()).setTitle(getString(R.string.board_general_title));
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        mDB = FirebaseFirestore.getInstance();
 
         // Change the progressbar color using the PorterDuff filter
         binding.progbarBoardLoading.getIndeterminateDrawable().setColorFilter(
@@ -677,7 +683,20 @@ public class BoardActivity extends BaseActivity implements
         }
     }
 
+    public void setUserProfile(String userId, TextView textView, ImageView imageView) {
+        mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
+            if(user.get("user_names") != null) {
+                List<?> names = (List<?>)user.get("user_names");
+                assert names != null;
+                textView.setText((String)names.get(names.size() - 1));
+            }
 
+            Uri userImage = null;
+            if(user.getString("user_pic") != null) userImage = Uri.parse(user.getString("user_pic"));
+            Glide.with(this).load(userImage).placeholder(R.drawable.ic_user_blank_white)
+                    .fitCenter().circleCrop().into(imageView);
+        });
+    }
 
 
     // Autofilter values referenced in BoardPagerFragment as well as BoardWriteFragment. The value

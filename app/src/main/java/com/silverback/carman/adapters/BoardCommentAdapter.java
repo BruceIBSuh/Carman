@@ -9,8 +9,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -18,6 +20,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentReference;
@@ -29,11 +32,13 @@ import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardCommentBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
+import com.silverback.carman.fragments.BoardReadFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.PopupDropdownUtil;
+import com.silverback.carman.utils.QueryPostPaginationUtil;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 
 import java.text.SimpleDateFormat;
@@ -49,12 +54,14 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
     private final CommentAdapterListener commentListener;
-    private final FirebaseFirestore firestore;
+    private final FirebaseFirestore mDB;
+    private QueryPostPaginationUtil pagingUtil;
     private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private final List<DocumentSnapshot> commentList;
     private final ApplyImageResourceUtil imageUtil;
     private final PopupDropdownUtil popupDropdownUtil;
     private final RecyclerDividerUtil divider;
+    private final SimpleDateFormat sdf;
 
     private final Context context;
     //private final Context styleWrapper; // for the PopupMenu
@@ -70,7 +77,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         void deleteCommentReply(BoardReplyAdapter adapter, DocumentReference commentRef);
         void notifyUploadReplyDone(int position, boolean isDone);
         void notifyNoData();
-        void notifySwitchChecked(int checkedPos, int bindingPos);
+        void notifyReplySwitchChecked(int checkedPos, int bindingPos);
         void notifyEditTextFocused(View view);
     }
 
@@ -82,13 +89,15 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         this.viewerId = viewerId;
         this.commentListener = listener;
 
-        firestore = FirebaseFirestore.getInstance();
+        mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_COMMENT);
 
         imageUtil = new ApplyImageResourceUtil(context);
         popupDropdownUtil = PopupDropdownUtil.getInstance();
         divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
                 0, ContextCompat.getColor(context, R.color.recyclerDivider));
+
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         // Intantiate BoardReplyAdapter
         replyAdapter = BoardReplyAdapter.getInstance();
@@ -104,33 +113,21 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ItemviewBoardCommentBinding commentBinding;
-        SimpleDateFormat sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-
-        //public ViewHolder(View itemView) {
         public ViewHolder(ItemviewBoardCommentBinding commentBinding) {
-            //super(itemView);
-            //commentBinding = ItemviewBoardCommentBinding.bind(itemView);
             super(commentBinding.getRoot());
             this.commentBinding = commentBinding;
         }
 
+        TextView getUserNameView() { return commentBinding.tvCommentUser; }
         ImageView getUserImageView() { return commentBinding.imgCommentUser; }
+        TextView getTimestampView() { return commentBinding.tvCommentTimestamp; }
+        TextView getReplyCountView() { return commentBinding.headerReplyCnt; }
+        TextView getCommentContentView() { return commentBinding.tvCommentContent; }
         ImageView getOverflowView() { return commentBinding.imgOverflow; }
         ImageView getSendReplyView() { return commentBinding.imgbtnSendReply; }
         RecyclerView getRecyclerReplyView() { return commentBinding.recyclerviewReply; }
+        SwitchCompat getReplySwitchView() { return commentBinding.switchReply; }
         Button getLoadReplyButton() { return commentBinding.btnLoadReplies; }
-
-        void setCommentProfile(DocumentSnapshot doc) {
-            commentBinding.tvCommentUser.setText(doc.getString("user_name"));
-            commentBinding.tvCommentContent.setText(doc.getString("comment"));
-            final Date date = doc.getDate("timestamp");
-            if(date != null) commentBinding.tvCommentTimestamp.setText(sdf.format(date));
-            // Try-catch should be temporarily put here.
-            try {
-                long count = Objects.requireNonNull(doc.getLong("cnt_reply"));
-                commentBinding.headerReplyCnt.setText(String.valueOf(count));
-            } catch (NullPointerException e) {e.printStackTrace();}
-        }
 
         String getReplyContent() {
             String content = commentBinding.etCommentReply.getText().toString();
@@ -158,32 +155,30 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        log.i("all binding: %s, %s", position, holder.getBindingAdapterPosition());
-        //if(position != holder.getBindingAdapterPosition()) position = holder.getBindingAdapterPosition();
-        DocumentSnapshot doc = commentList.get(position);
-        holder.setCommentProfile(doc);
-        setCommentUserPic(holder, doc);
+        //DocumentSnapshot doc = commentList.get(position);
+        DocumentSnapshot doc = mDiffer.getCurrentList().get(position);
+        // Set the user name and image which should be fetched from the user collection to be updated.
+        String commentId = doc.getString("user_id");
+        assert commentId != null;
+        ((BoardActivity)context).setUserProfile(commentId, holder.getUserNameView(), holder.getUserImageView());
+
+        // Set the posting date
+        final Date date = doc.getDate("timestamp");
+        if(date != null) holder.getTimestampView().setText(sdf.format(date));
+
+        // Try-catch should be temporarily put here.
+        try {
+            long count = Objects.requireNonNull(doc.getLong("cnt_reply"));
+            holder.getReplyCountView().setText(String.valueOf(count));
+        } catch (NullPointerException e) {e.printStackTrace();}
+
+        // Set the posting content
+        holder.getCommentContentView().setText(doc.getString("comment"));
 
         holder.getOverflowView().setOnClickListener(v -> showCommentPopupWindow(holder, doc));
         holder.getSendReplyView().setOnClickListener(v -> uploadReplyToComment(holder, doc));
         holder.getLoadReplyButton().setOnClickListener(v -> loadNextReplies(doc));
-
-        holder.commentBinding.switchReply.setOnCheckedChangeListener((compoundButton, isChecked) -> {
-            if(isChecked) {
-                holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
-                try {
-                    final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
-                    if(cntReply > 0) setRecyclerReplyView(doc, holder);
-                    int visible = (cntReply > BoardActivity.PAGING_REPLY) ? View.VISIBLE : View.GONE;
-                    holder.commentBinding.btnLoadReplies.setVisibility(visible);
-                } catch(NullPointerException e) { e.printStackTrace();}
-
-                if(checkedPos != holder.getBindingAdapterPosition()){
-                    commentListener.notifySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
-                }
-                checkedPos = holder.getBindingAdapterPosition();
-            } else holder.commentBinding.linearReply.setVisibility(View.GONE);
-        });
+        holder.getReplySwitchView().setOnCheckedChangeListener((v, isChecked) -> doReplySwitch(holder, doc, isChecked));
     }
 
     @Override
@@ -203,6 +198,25 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         return commentList.size();
     }
 
+    private void doReplySwitch(ViewHolder holder, DocumentSnapshot doc, boolean isChecked) {
+        if(isChecked) {
+            holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+            try {
+                final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
+                if(cntReply > 0) setRecyclerReplyView(doc, holder);
+                int visible = (cntReply > BoardActivity.PAGING_REPLY) ? View.VISIBLE : View.GONE;
+                holder.commentBinding.btnLoadReplies.setVisibility(visible);
+            } catch(NullPointerException e) { e.printStackTrace();}
+
+            // When having a different switch checked, the current switch should be closed.
+            if(checkedPos != holder.getBindingAdapterPosition()){
+                commentListener.notifyReplySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
+                checkedPos = holder.getBindingAdapterPosition();
+            }
+
+        } else holder.commentBinding.linearReply.setVisibility(View.GONE);
+    }
+
 
     private void setRecyclerReplyView(DocumentSnapshot doc, ViewHolder holder) {
         // Initialize the static reply adapter every time the parent comment feed changes.
@@ -212,14 +226,14 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             log.i("init replyadapter: %s, %s", doc.getString("comment"), replyAdapter.getItemCount());
         }
 
-
-        replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
         LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         holder.getRecyclerReplyView().setLayoutManager(layout);
         holder.getRecyclerReplyView().addItemDecoration(divider);
         holder.getRecyclerReplyView().setHasFixedSize(false);
         holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
         holder.getRecyclerReplyView().setAdapter(replyAdapter);
+
+        replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
     }
 
     private void loadNextReplies(DocumentSnapshot doc) {
@@ -231,6 +245,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         } catch (NullPointerException e) {e.printStackTrace();}
     }
 
+
+    /*
     private void setCommentUserPic(ViewHolder holder, DocumentSnapshot doc) {
         final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
                 doc.getString("user_pic") : Constants.imgPath + "ic_user_blank_gray";
@@ -238,6 +254,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         int y = holder.getUserImageView().getHeight();
         imageUtil.applyGlideToImageView(Uri.parse(imgurl), holder.getUserImageView(), x, y, true);
     }
+
+     */
 
     private void uploadReplyToComment(ViewHolder holder, DocumentSnapshot commentshot) {
         final String content = holder.getReplyContent();
@@ -248,11 +266,31 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         object.put("timestamp", FieldValue.serverTimestamp());
         object.put("reply_content", content);
 
-        final DocumentReference docref = firestore.collection("users").document(viewerId);
-        firestore.runTransaction((Transaction.Function<Void>) transaction -> {
+        commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
+            //replyAdapter.notifyItemInserted(0);
+            replyAdapter.queryCommentReply(commentshot.getReference(), "timestamp");
+            commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), true);
+
+            commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
+            holder.commentBinding.etCommentReply.clearFocus();
+            holder.commentBinding.etCommentReply.getText().clear();
+        });
+
+
+
+
+        /*
+        final DocumentReference docref = mDB.collection("users").document(viewerId);
+        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docref);
             object.put("user_name", doc.getString("user_name"));
             object.put("user_pic", doc.getString("user_pic"));
+
+            }).addOnFailureListener(e -> {
+                e.printStackTrace();
+                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), false);
+            });
+
 
             commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
                 //replyAdapter.notifyItemInserted(0);
@@ -269,8 +307,12 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
                 commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), false);
             });
 
+
+
             return null;
         });
+
+         */
 
         //commentListener.addCommentReply(replyAdapter, commentshot, content, position);
 
