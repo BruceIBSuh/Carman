@@ -23,6 +23,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.Source;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
@@ -33,47 +34,72 @@ import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.PopupDropdownUtil;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.ViewHolder> {
     final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
 
-
-    private BoardCommentAdapter.CommentAdapterListener commentListener;
-    private Context context;
-    private AsyncListDiffer<DocumentSnapshot> mDiffer;
+    //private BoardCommentAdapter.CommentAdapterListener commentListener;
+    private final Context context;
+    private ReplyAdapterListener replyAdapterListener;
+    private BoardCommentAdapter.ViewHolder commentViewHolder;
+    private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private Query query;
     private DocumentReference commentRef;
     private QuerySnapshot querySnapshot;
-    private List<DocumentSnapshot> replyList;
-    private ApplyImageResourceUtil imgutil;
+    private final List<DocumentSnapshot> replyList;
+    private final SimpleDateFormat sdf;
 
-    private PopupDropdownUtil popupDropdownUtil;
-    private String viewerId;
+    public interface ReplyAdapterListener {
+        void OnDeleteReply(BoardCommentAdapter.ViewHolder holder);
+    }
+
+    //private PopupDropdownUtil popupDropdownUtil;
+    private final String viewerId;
 
     // static instance using the lazy holder class.
-    private BoardReplyAdapter(){}
+    public BoardReplyAdapter(Context context, String viewerId, ReplyAdapterListener listener){
+        this.context = context;
+        this.viewerId = viewerId;
+        this.replyAdapterListener = listener;
 
+        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_REPLY);
+        replyList = new ArrayList<>();
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+    }
+
+    public void setCommentViewHolder(BoardCommentAdapter.ViewHolder holder) {
+        this.commentViewHolder = holder;
+    }
+
+    /*
     private static class InnerReplyAdapterClazz {
         private static final BoardReplyAdapter sInstance = new BoardReplyAdapter();
     }
+
     public static BoardReplyAdapter getInstance() {
         return InnerReplyAdapterClazz.sInstance;
     }
 
-    public void initReplyAdapter(PopupDropdownUtil dropdownUtil, ApplyImageResourceUtil imgutil, String viewerId) {
-        this.popupDropdownUtil = dropdownUtil;
-        this.imgutil = imgutil;
+    public void initReplyAdapter(String viewerId) {
         this.viewerId = viewerId;
-
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_REPLY);
         replyList = new ArrayList<>();
+        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
+     */
+
+    /*
     public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener commentListener) {
         this.commentListener = commentListener;
     }
+
+     */
 
     public void submitReplyList(List<DocumentSnapshot> replyList){
         mDiffer.submitList(Lists.newArrayList(replyList));//, recyclerListener::onRecyclerUpdateDone);
@@ -90,6 +116,8 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         TextView getUserNameView() { return replyBinding.tvUserName; }
         ImageView getReplyUserImage() { return replyBinding.imgReplyUser; }
         ImageView getOverflowView() { return replyBinding.imgReplyOverflow; }
+
+
     }
 
     @NonNull
@@ -97,18 +125,21 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View replyView = LayoutInflater.from(parent.getContext()).inflate(
                 R.layout.itemview_board_reply, parent, false);
-        this.context = parent.getContext();
         return new ViewHolder(replyView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        //DocumentSnapshot doc = replyList.get(position);
         DocumentSnapshot doc = mDiffer.getCurrentList().get(position);
         String replyId = doc.getString("user_id");
         assert replyId != null;
+
         ((BoardActivity)context).setUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
-        holder.getOverflowView().setOnClickListener(v -> showReplyPopupWindow(v, holder, doc, position));
+        holder.replyBinding.tvReplyContent.setText(doc.getString("reply_content"));
+        final Date date = doc.getDate("timestamp");
+        if(date != null) holder.replyBinding.tvReplyTimestamp.setText(sdf.format(date));
+
+        holder.getOverflowView().setOnClickListener(v -> showReplyPopupWindow(v, holder, doc));
     }
 
     @Override
@@ -119,36 +150,20 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
     @Override
     public int getItemCount() {
-        //return replyList.size();
         return mDiffer.getCurrentList().size();
     }
 
     public void queryCommentReply(DocumentReference commentRef, String field) {
-        log.i("init replyadapter: %s", getItemCount());
-        notifyItemRangeRemoved(0, getItemCount());
+        this.commentRef = commentRef;
+        this.querySnapshot = null;
         replyList.clear();
 
-        this.commentRef = commentRef;
-        querySnapshot = null;
         query = commentRef.collection("replies").orderBy(field, Query.Direction.DESCENDING);
-        /*
-        query.limit(PAGING_REPLY).addSnapshotListener((querySnapshot, e) -> {
-            if(e != null) return;
+        query.limit(PAGING_REPLY).get(Source.CACHE).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             if((querySnapshot != null)) {
                 for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-                notifyItemRangeInserted(0, querySnapshot.size());
-                //commentListener.notifyReplyLoaded();
-            }
-        });
-        */
-
-
-        query.limit(PAGING_REPLY).get().addOnSuccessListener(querySnapshot -> {
-            this.querySnapshot = querySnapshot;
-            if((querySnapshot != null)) {
-                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-                notifyItemRangeInserted(0, querySnapshot.size());
+                /*if(!querySnapshot.getMetadata().hasPendingWrites())*/ submitReplyList(replyList);
             }
         });
 
@@ -159,29 +174,18 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         DocumentSnapshot lastVisible = querySnapshot.getDocuments().get(querySnapshot.size() - 1);
         query.startAfter(lastVisible).limit(PAGING_REPLY).get().addOnSuccessListener(nextShots -> {
             this.querySnapshot = nextShots;
-            final int start = replyList.size();
-
             for(DocumentSnapshot comment : nextShots) replyList.add(comment);
-            notifyItemRangeInserted(start, nextShots.size());
+            submitReplyList(replyList);
 
         }).addOnFailureListener(Throwable::printStackTrace);
     }
 
 
-
-    private void setReplyUserPic(ViewHolder holder, DocumentSnapshot doc) {
-        final String imgurl = (!TextUtils.isEmpty(doc.getString("user_pic")))?
-                doc.getString("user_pic") : Constants.imgPath + "ic_user_blank_gray";
-        int x = holder.getReplyUserImage().getWidth();
-        int y = holder.getReplyUserImage().getHeight();
-        imgutil.applyGlideToImageView(Uri.parse(imgurl), holder.getReplyUserImage(), x, y, true);
-    }
-
-
-    public void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc, int pos) {
+    public void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc) {
         LayoutInflater inflater = LayoutInflater.from(view.getContext());
-        View contentView = inflater.inflate(
-                R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
+        View contentView = inflater.inflate(R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
+
+        PopupDropdownUtil popupDropdownUtil = PopupDropdownUtil.getInstance();
         popupDropdownUtil.setInitParams(contentView, holder.getOverflowView(), doc);
         PopupWindow dropdown = popupDropdownUtil.createPopupWindow();
 
@@ -189,13 +193,12 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         if(viewerId.equals(doc.getString("user_id"))) {
             popupBinding.tvPopup1.setVisibility(View.VISIBLE);
             popupBinding.tvPopup1.setOnClickListener(v -> {
-                commentRef.collection("replies").document(doc.getId()).delete()
-                        .addOnSuccessListener(aVoid -> {
-                            commentRef.update("cnt_reply", FieldValue.increment(-1));
-                            notifyItemRemoved(holder.getBindingAdapterPosition());
-                            commentListener.deleteCommentReply(this, commentRef);
-                        }).addOnFailureListener(Throwable::printStackTrace);
-
+                doc.getReference().delete().addOnSuccessListener(Void -> {
+                    commentRef.update("cnt_reply",FieldValue.increment(-1));
+                    replyList.remove(holder.getBindingAdapterPosition());
+                    submitReplyList(replyList);
+                    replyAdapterListener.OnDeleteReply(commentViewHolder);
+                });
                 dropdown.dismiss();
             });
         }

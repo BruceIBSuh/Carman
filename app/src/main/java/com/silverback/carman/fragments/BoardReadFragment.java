@@ -24,7 +24,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -37,20 +36,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.CompoundButton;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
@@ -59,27 +51,21 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.adapters.BoardCommentAdapter;
 import com.silverback.carman.adapters.BoardReadFeedAdapter;
-import com.silverback.carman.adapters.BoardReplyAdapter;
 import com.silverback.carman.databinding.BoardFragmentReadBinding;
 import com.silverback.carman.databinding.BoardReadHeaderBinding;
-import com.silverback.carman.databinding.BoardReadPostBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -90,16 +76,10 @@ import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener,
@@ -150,7 +130,7 @@ public class BoardReadFragment extends DialogFragment implements
     private String tabTitle;
     private String userPic;
     private int tabPage, position;
-    private int checkedPos;
+    private int replyCheckedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -382,7 +362,7 @@ public class BoardReadFragment extends DialogFragment implements
 
                 if(!isCommentVisible) {
                     binding.etComment.requestFocus();
-                    commentAdapter.notifyItemChanged(checkedPos, true);
+                    commentAdapter.notifyItemChanged(replyCheckedPos, true);
                 }
 
                 isCommentVisible = !isCommentVisible;
@@ -441,22 +421,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void deleteCommentReply(BoardReplyAdapter replyAdapter, DocumentReference commentRef) {
-        log.i("post deletion handling");
-        //final DocumentReference commentRef = postRef.collection("comments").document(commentId);
-        /*
-        commentRef.collection("replies").document(replyId).delete().addOnCompleteListener(task -> {
-            if(task.isSuccessful()) {
-                commentRef.update("cnt_reply", FieldValue.increment(-1));
-                replyAdapter.notifyItemRemoved(pos);
-            }
-        });
-
-         */
-    }
-
-    @Override
-    public void notifyUploadReplyDone(int pos, boolean isDone) {
+    public void OnUploadReplyDone(int pos, boolean isDone) {
         //log.i("upload reply: %s, %s", pos, isDone);
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
 
@@ -472,16 +437,18 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyReplySwitchChecked(int checkedPos, int bindingPos) {
+    public void OnReplySwitchChecked(int checkedPos, int bindingPos) {
+        log.i("notified by the comment adapter: %s, %s", checkedPos, bindingPos);
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+
         // Hide the comment edittext if the reply switch turns on.
         if(binding.etComment.isFocused()) {
             binding.constraintComment.setVisibility(View.GONE);
             isCommentVisible = false;
         }
-        // A new reply switch turns on and another switch should be off.
-        this.checkedPos = bindingPos;
+        // A new reply switch turns on and the previous reply switch should be off.
         if(checkedPos != bindingPos) commentAdapter.notifyItemChanged(checkedPos, true);
+        this.replyCheckedPos = bindingPos;
 
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
         //int scrollY = binding.nestedScrollview.getHeight();
@@ -489,7 +456,7 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     @Override
-    public void notifyEditTextFocused(View view) {
+    public void OnReplyContentFocused(View view) {
         log.i("content edit text focused");
         if(!checkUserName()) view.clearFocus();
         //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
