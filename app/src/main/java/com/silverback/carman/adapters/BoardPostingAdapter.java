@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
@@ -19,21 +18,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.common.collect.Lists;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.FirebaseFirestoreException;
-import com.google.firebase.firestore.Transaction;
-import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.databinding.BoardRecyclerviewPostBinding;
+import com.silverback.carman.databinding.BoardItemviewPostBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -55,13 +48,13 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final OnPostingAdapterListener postingAdapterListener;
     private final AsyncListDiffer<DocumentSnapshot> mDiffer;
     private final SimpleDateFormat sdf;
-    private BoardRecyclerviewPostBinding postBinding;
+    private BoardItemviewPostBinding postBinding;
     private final List<DocumentSnapshot> snapshotList;
-    private int category = 0;
+    private final int category = CONTENT_VIEW_TYPE;//Must be refactored when the multi-type list applies.
 
     public interface OnPostingAdapterListener {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
-        void onSubmitListDone();
+        void onSubmitPostingListDone();
     }
 
     // Constructor
@@ -69,7 +62,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         super();
         this.postingAdapterListener = listener;
         snapshotList = snapshots;
-        //snapshotList = new ArrayList<>();
+
         mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
@@ -77,23 +70,25 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // Update the adapter using AsyncListDiffer.ItemCallback<T> which uses the background thread.
     public void submitPostList(List<DocumentSnapshot> snapshotList) {
-        mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitListDone);
+        mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitPostingListDone);
     }
 
     // Upadte the adapter using DiffUtil.Callback which uses the main thread.
+    /*
     public void updatePostList(List<DocumentSnapshot> newPostList) {
         final BoardDiffUtilCallback diffUtilCallback = new BoardDiffUtilCallback(snapshotList, newPostList);
         final DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(diffUtilCallback);
         if(snapshotList.size() > 0) snapshotList.clear();
         snapshotList.addAll(newPostList);
-        log.i("snapshotList: %s", this.snapshotList.size());
 
         diffResult.dispatchUpdatesTo(this);
     }
 
+     */
+
     // Multi-type viewholder:PostViewHolder and AdViewHolder
     private static class PostViewHolder extends RecyclerView.ViewHolder {
-        final BoardRecyclerviewPostBinding postBinding;
+        final BoardItemviewPostBinding postBinding;
         final TextView tvTitle;
         final TextView tvNumber;
         final TextView tvPostingDate;
@@ -103,7 +98,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         final ImageView userImage;
         final ImageView imgAttached;
 
-        PostViewHolder(BoardRecyclerviewPostBinding binding) {
+        PostViewHolder(BoardItemviewPostBinding binding) {
             super(binding.getRoot());
             this.postBinding = binding;
 
@@ -138,8 +133,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         this.context = viewGroup.getContext();
         switch(category) {
             case CONTENT_VIEW_TYPE:
-                postBinding = BoardRecyclerviewPostBinding.inflate(
-                        LayoutInflater.from(context), viewGroup, false);
+                postBinding = BoardItemviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
                 return new PostViewHolder(postBinding);
 
             case AD_VIEW_TYPE:
@@ -155,10 +149,10 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         switch(category) {
             case CONTENT_VIEW_TYPE:
-                PostViewHolder postHolder = (PostViewHolder)holder;
-                //DocumentSnapshot snapshot = snapshotList.get(position);
+                final PostViewHolder postHolder = (PostViewHolder)holder;
+
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
+                final DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
@@ -171,15 +165,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     postHolder.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
                 }
 
-                //postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
                 postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
                 postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
-                // Set the user name and image which should be fetched from the user collection to enable
-                // it to be updated.
+                // Set the user name and image which should be fetched from the user collection to
+                // be updated. The notification page has no user id.
                 final String userId = snapshot.getString("user_id");
-                assert userId != null;
-                ((BoardActivity)context).setUserProfile(userId, postHolder.tvPostingOwner, postHolder.userImage);
+                if(TextUtils.isEmpty(userId)) {
+                    postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
+                    Glide.with(context).load(R.drawable.ic_user_blank_white).into(postHolder.userImage);
+                } else setPostUserProfile(userId, postHolder.tvPostingOwner, postHolder.userImage);
 
                 // Set the attached image in the post, if any.
                 if(snapshot.get("post_images") != null) {
@@ -188,7 +183,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     String thumbnail = ((String)postImageList.get(0));
                     final Uri uri = Uri.parse(thumbnail);
                     Glide.with(context).load(uri).fitCenter().into(postHolder.imgAttached);
-
                 } else Glide.with(context).clear(postHolder.imgAttached);
 
 
@@ -210,8 +204,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         //holder.setIsRecyclable(false);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
+            log.i("partial binding: %s", payloads.size());
             for(Object payload : payloads) {
-                if(payload instanceof Long) {
+               if(payload instanceof Long) {
                     postBinding.tvCountViews.setText(String.valueOf(payload));
 
                 } else if(payload instanceof SparseLongArray) {
@@ -253,7 +248,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         //return snapshotList.size();
         return mDiffer.getCurrentList().size();
         //return multiTypeItemList.size();
+    }
 
+    private void setPostUserProfile(String userId, TextView textView, ImageView imageView) {
+        if(TextUtils.isEmpty(userId)) return;
+        mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
+            List<?> names = (List<?>)user.get("user_names");
+            assert names != null;
+            textView.setText((String)names.get(names.size() - 1));
+
+            String image = user.getString("user_pic");
+            Uri uri = (!TextUtils.isEmpty(image))? Uri.parse(image) : null;
+            Glide.with(context).load(uri).placeholder(R.drawable.ic_user_blank_white).fitCenter()
+                    .circleCrop().into(imageView);
+        });
     }
 
 
@@ -274,7 +282,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             }
         };
 
-
+    /*
     private static class BoardDiffUtilCallback extends DiffUtil.Callback {
         List<DocumentSnapshot> oldList, newList;
         public BoardDiffUtilCallback(List<DocumentSnapshot> oldList, List<DocumentSnapshot> newList) {
@@ -302,4 +310,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             return super.getChangePayload(oldItemPosition, newItemPosition);
         }
     }
+
+     */
 }

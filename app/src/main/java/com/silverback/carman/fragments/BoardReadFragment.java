@@ -215,7 +215,7 @@ public class BoardReadFragment extends DialogFragment implements
 
         // Attach the user image in the header, if any, using Glide. Otherwise, the blank image
         // is set.
-        ((BoardActivity)context).setUserProfile(obj.getUserId(), binding.tvUsername, binding.imgUserpic);
+        ((BoardActivity)requireActivity()).setUserProfile(obj.getUserId(), binding.tvUsername, binding.imgUserpic);
         binding.tvPostTitle.setText(obj.getPostTitle());
         binding.tvPostingDate.setText(requireArguments().getString("timestamp"));
         binding.tvCntComment.setText(String.valueOf(cntComment));

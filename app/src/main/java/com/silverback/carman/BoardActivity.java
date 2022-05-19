@@ -540,15 +540,14 @@ public class BoardActivity extends BaseActivity implements
      * @throws JSONException may occur while converting JSONString to JSONArray
      */
     public void createAutofilter(String json, ViewGroup v) {
-        try { jsonAutoArray = new JSONArray(json); }
-        catch (JSONException | NullPointerException e) { e.printStackTrace(); }
-
-        if(TextUtils.isEmpty(json) || jsonAutoArray.isNull(0)) {
+        if(TextUtils.isEmpty(json)) {
             setNoAutoFilterText();
             binding.imgbtnLock.setVisibility(View.GONE);
             return;
-        } else binding.imgbtnLock.setVisibility(View.VISIBLE);
+        }
 
+        try { jsonAutoArray = new JSONArray(json); }
+        catch (JSONException | NullPointerException e) { e.printStackTrace(); }
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -686,12 +685,14 @@ public class BoardActivity extends BaseActivity implements
 
     public void setUserProfile(String userId, TextView textView, ImageView imageView) {
         mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
+            // Set the user name
             if(user.get("user_names") != null) {
                 List<?> names = (List<?>)user.get("user_names");
                 assert names != null;
                 textView.setText((String)names.get(names.size() - 1));
             }
 
+            // Set the user image
             Uri userImage = null;
             if(user.getString("user_pic") != null) userImage = Uri.parse(user.getString("user_pic"));
             Glide.with(this).load(userImage).placeholder(R.drawable.ic_user_blank_white)

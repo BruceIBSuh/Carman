@@ -93,6 +93,8 @@ public class BoardPagerFragment extends Fragment implements
     private ImageView imgEmblem;
     private ProgressBar pbEmblem;
 
+    private int postingStart = 0;
+
     // Constructor
     private BoardPagerFragment() {
         // Required empty public constructor
@@ -280,7 +282,11 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
         postingList.clear();
-        addPostByCategory(querySnapshot, false);
+        if(querySnapshot.size() == 0) {
+            progbar.setVisibility(View.GONE);
+            binding.recyclerBoardPostings.setVisibility(View.GONE);
+            binding.tvEmptyView.setVisibility(View.VISIBLE);
+        } else addPostByCategory(querySnapshot, false);
         isScrollable = true;
     }
 
@@ -348,18 +354,10 @@ public class BoardPagerFragment extends Fragment implements
     }
 
     @Override
-    public void onSubmitListDone() {
-        log.i("submit done:%s", postingList.size());
-        //binding.recyclerBoardPostings.smoothScrollToPosition(0);
+    public void onSubmitPostingListDone() {
+        log.i("onSubmitPostingListDone: %s, %s", postingStart, postingList.size());
+        Map<String, Object> objPost = new HashMap<>();
         postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
-        int index = 0;
-        for(DocumentSnapshot snapshot : postingList) {
-            if(snapshot.get("post_images") != null) {
-                postingAdapter.notifyItemChanged(index, "images");
-            }
-            index++;
-        }
-
     }
 
     public void resetAutoFilter(ArrayList<String> autofilter) {

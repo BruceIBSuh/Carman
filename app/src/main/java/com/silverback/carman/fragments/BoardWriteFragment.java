@@ -38,7 +38,7 @@ import com.google.firebase.firestore.Transaction;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardImageAdapter;
-import com.silverback.carman.databinding.FragmentBoardWriteTempBinding;
+import com.silverback.carman.databinding.BoardFragmentWriteBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.ThreadManager2;
@@ -64,7 +64,7 @@ public class BoardWriteFragment extends DialogFragment implements
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardWriteFragment.class);
 
     private FirebaseFirestore mDB;
-    private FragmentBoardWriteTempBinding binding;
+    private BoardFragmentWriteBinding binding;
     private BoardImageAdapter imageAdapter;
     private BoardImageSpanHandler spanHandler;
     private UploadBitmapTask bitmapTask;
@@ -91,7 +91,6 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onStart(){
         super.onStart();
-        //for rererernce only
         /*
         Dialog dialog = getDialog();
         if (dialog != null){
@@ -105,7 +104,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
+        setHasOptionsMenu(true);//required to show the option menu in the fragment.
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             userName = getArguments().getString("userName");
@@ -124,7 +123,7 @@ public class BoardWriteFragment extends DialogFragment implements
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        binding = FragmentBoardWriteTempBinding.inflate(inflater);
+        binding = BoardFragmentWriteBinding.inflate(inflater);
         binding.toolbarBoardWrite.setTitle(getString(R.string.board_write_toolbar_title));
         binding.toolbarBoardWrite.setNavigationOnClickListener(view -> dismiss());
         binding.tvWriteGuide.setText(getString(R.string.board_posting_guide));

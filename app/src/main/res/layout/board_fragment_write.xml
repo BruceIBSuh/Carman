@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:padding="8dp"
                 android:layout_marginTop="?attr/actionBarSize"
-                android:textSize="@dimen/smallText"
+                android:textSize="@dimen/extraSmallText"
                 android:textColor="@android:color/darker_gray"/>
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar_board_write"
