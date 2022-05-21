@@ -3,6 +3,7 @@ package com.silverback.carman.adapters;
 import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 
 import android.content.Context;
+import android.net.Uri;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentReference;
@@ -29,7 +31,7 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.databinding.ItemviewBoardCommentBinding;
+import com.silverback.carman.databinding.BoardItemviewCommentBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -65,7 +67,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     private final Context context;
     //private final Context styleWrapper; // for the PopupMenu
     //private final ArrayAdapter arrayCommentAdapter;
-    private final BoardReplyAdapter replyAdapter;
+    private BoardReplyAdapter replyAdapter;
     //private ListPopupWindow popupWindow;
     private final String viewerId;
     private long cntReply;
@@ -99,7 +101,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
 
         // Intantiate BoardReplyAdapter
-        replyAdapter = new BoardReplyAdapter(context, viewerId, this);
+        //replyAdapter = new BoardReplyAdapter(context, viewerId, this);
         //replyAdapter = BoardReplyAdapter.getInstance();
         //replyAdapter.initReplyAdapter(viewerId);
         //replyAdapter.setReplyAdapterListener(listener);
@@ -112,8 +114,8 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ItemviewBoardCommentBinding commentBinding;
-        public ViewHolder(ItemviewBoardCommentBinding commentBinding) {
+        BoardItemviewCommentBinding commentBinding;
+        public ViewHolder(BoardItemviewCommentBinding commentBinding) {
             super(commentBinding.getRoot());
             this.commentBinding = commentBinding;
         }
@@ -143,7 +145,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         //View itemView = LayoutInflater.from(context).inflate(R.layout.itemview_board_comment, parent, false);
-        ItemviewBoardCommentBinding commentBinding = ItemviewBoardCommentBinding.inflate(
+        BoardItemviewCommentBinding commentBinding = BoardItemviewCommentBinding.inflate(
                 LayoutInflater.from(context), parent, false);
         commentBinding.etCommentReply.setOnFocusChangeListener((v, isFocused) -> {
             if(isFocused) commentListener.OnReplyContentFocused(v);
@@ -155,9 +157,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        //DocumentSnapshot doc = commentList.get(position);
         DocumentSnapshot doc = mDiffer.getCurrentList().get(position);
-        // Set the user name and image which should be fetched from the user collection to be updated.
         String commentId = doc.getString("user_id");
         assert commentId != null;
         ((BoardActivity)context).setUserProfile(commentId, holder.getUserNameView(), holder.getUserImageView());
@@ -191,7 +191,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             if((boolean)payloads.get(0)) {
                 holder.commentBinding.linearReply.setVisibility(View.GONE);
                 holder.commentBinding.switchReply.setChecked(false);
-            } else log.i("reply switch stay open");
+            }
         }
     }
 
@@ -200,7 +200,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         return commentList.size();
     }
 
-    // Implement BoardReplyAdapter.ReplyAdaptperListener to notify that a reply deleted from the adapter.
     @Override
     public void OnDeleteReply(ViewHolder holder) {
         int count = Integer.parseInt(holder.commentBinding.headerReplyCnt.getText().toString());
@@ -208,9 +207,27 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         holder.commentBinding.headerReplyCnt.setText(String.valueOf(count));
     }
 
+    public void setCommentUserProfile(String userId, TextView textView, ImageView imageView) {
+        mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
+            // Set the user name
+            if(user.get("user_names") != null) {
+                List<?> names = (List<?>)user.get("user_names");
+                assert names != null;
+                textView.setText((String)names.get(names.size() - 1));
+            }
+
+            // Set the user image
+            Uri userImage = null;
+            if(user.getString("user_pic") != null) userImage = Uri.parse(user.getString("user_pic"));
+            Glide.with(context).load(userImage)
+                    .placeholder(R.drawable.ic_user_blank_white)
+                    .fitCenter().circleCrop().into(imageView);
+        });
+    }
+
     private void showCommentReply(ViewHolder holder, DocumentSnapshot doc, boolean isChecked) {
         if(isChecked) {
-            replyAdapter.setCommentViewHolder(holder);
+            //replyAdapter.setCommentViewHolder(holder);
             // When having a different switch checked, the current switch should be closed.
             if(checkedPos != holder.getBindingAdapterPosition()){
                 commentListener.OnReplySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
@@ -219,8 +236,10 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
             holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
             final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
-
             if(cntReply > 0) {
+                replyAdapter = BoardReplyAdapter.getInstance();
+                replyAdapter.initReplyAdapter(viewerId);
+                log.i("reply adapter: %s", replyAdapter.hashCode());
                 LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
                 holder.getRecyclerReplyView().setLayoutManager(layout);
                 holder.getRecyclerReplyView().addItemDecoration(divider);

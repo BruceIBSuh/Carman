@@ -171,13 +171,18 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             if(position == COMMENT_HEADER) {
+                CommentHeaderViewHolder commentHolder = (CommentHeaderViewHolder)holder;
                 final String cntComment = String.valueOf(payloads.get(0));
-                ((CommentHeaderViewHolder)holder).getCommentCountView().setText(cntComment);
+                //((CommentHeaderViewHolder)holder).getCommentCountView().setText(cntComment);
+                commentHolder.getCommentCountView().setText(cntComment);
+                if(!commentHolder.binding.switchComment.isChecked())
+                    commentHolder.binding.switchComment.setChecked(true);
+
+
             }
         }
 

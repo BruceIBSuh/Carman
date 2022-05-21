@@ -114,12 +114,12 @@ public class IntroActivity extends BaseActivity  {
                 if(mAuth.getUid() == null || TextUtils.isEmpty(mAuth.getUid())) return;
                 // Refactor: field names should be renamed.
                 Map<String, Object> userData = new HashMap<>();
-                userData.put("user_name", new ArrayList<String>());
-                userData.put("user_pic", null);
-                userData.put("auto_data", null);
-                userData.put("cnt_warning", 0);
                 userData.put("install_date", FieldValue.serverTimestamp());
-                userData.put("reg_date", new ArrayList<Date>());
+                //userData.put("user_name", new ArrayList<String>());
+                //userData.put("user_pic", null);
+                //userData.put("auto_data", null);
+                //userData.put("cnt_warning", 0);
+                //userData.put("reg_date", new ArrayList<Date>());
 
 
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {

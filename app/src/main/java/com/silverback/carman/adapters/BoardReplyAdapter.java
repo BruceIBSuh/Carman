@@ -17,10 +17,12 @@ import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.google.common.collect.Lists;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.Source;
@@ -34,6 +36,7 @@ import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.PopupDropdownUtil;
 
+import java.lang.ref.WeakReference;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -44,24 +47,26 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
 
     //private BoardCommentAdapter.CommentAdapterListener commentListener;
-    private final Context context;
+    private WeakReference<Context> weakContextRef;
+    private FirebaseFirestore mDB;
     private ReplyAdapterListener replyAdapterListener;
     private BoardCommentAdapter.ViewHolder commentViewHolder;
-    private final AsyncListDiffer<DocumentSnapshot> mDiffer;
+    private AsyncListDiffer<DocumentSnapshot> mDiffer;
     private Query query;
     private DocumentReference commentRef;
     private QuerySnapshot querySnapshot;
-    private final List<DocumentSnapshot> replyList;
-    private final SimpleDateFormat sdf;
+    private List<DocumentSnapshot> replyList;
+    private SimpleDateFormat sdf;
 
     public interface ReplyAdapterListener {
         void OnDeleteReply(BoardCommentAdapter.ViewHolder holder);
     }
 
     //private PopupDropdownUtil popupDropdownUtil;
-    private final String viewerId;
+    private String viewerId;
 
     // static instance using the lazy holder class.
+    /*
     public BoardReplyAdapter(Context context, String viewerId, ReplyAdapterListener listener){
         this.context = context;
         this.viewerId = viewerId;
@@ -72,11 +77,12 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
+     */
+
     public void setCommentViewHolder(BoardCommentAdapter.ViewHolder holder) {
         this.commentViewHolder = holder;
     }
 
-    /*
     private static class InnerReplyAdapterClazz {
         private static final BoardReplyAdapter sInstance = new BoardReplyAdapter();
     }
@@ -87,12 +93,13 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
 
     public void initReplyAdapter(String viewerId) {
         this.viewerId = viewerId;
+
+        mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_REPLY);
         replyList = new ArrayList<>();
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
-     */
 
     /*
     public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener commentListener) {
@@ -125,6 +132,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View replyView = LayoutInflater.from(parent.getContext()).inflate(
                 R.layout.itemview_board_reply, parent, false);
+        weakContextRef = new WeakReference<>(parent.getContext());
         return new ViewHolder(replyView);
     }
 
@@ -134,7 +142,8 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         String replyId = doc.getString("user_id");
         assert replyId != null;
 
-        ((BoardActivity)context).setUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
+        //((BoardActivity)context).setUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
+        setReplyUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
         holder.replyBinding.tvReplyContent.setText(doc.getString("reply_content"));
         final Date date = doc.getDate("timestamp");
         if(date != null) holder.replyBinding.tvReplyTimestamp.setText(sdf.format(date));
@@ -159,12 +168,13 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         replyList.clear();
 
         query = commentRef.collection("replies").orderBy(field, Query.Direction.DESCENDING);
-        query.limit(PAGING_REPLY).get(Source.CACHE).addOnSuccessListener(querySnapshot -> {
+        query.limit(PAGING_REPLY).get().addOnSuccessListener(querySnapshot -> {
+            if(querySnapshot.isEmpty()) return;
             this.querySnapshot = querySnapshot;
-            if((querySnapshot != null)) {
-                for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
-                /*if(!querySnapshot.getMetadata().hasPendingWrites())*/ submitReplyList(replyList);
-            }
+
+            log.i("queried replyshot: %s", querySnapshot.size());
+            for(DocumentSnapshot doc : querySnapshot) replyList.add(doc);
+            submitReplyList(replyList);
         });
 
 
@@ -178,6 +188,25 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
             submitReplyList(replyList);
 
         }).addOnFailureListener(Throwable::printStackTrace);
+    }
+
+    public void setReplyUserProfile(String userId, TextView textView, ImageView imageView) {
+        FirebaseFirestore.getInstance().collection("users").document(userId).get()
+                .addOnSuccessListener(user -> {
+            // Set the user name
+            if(user.get("user_names") != null) {
+                List<?> names = (List<?>)user.get("user_names");
+                assert names != null;
+                textView.setText((String)names.get(names.size() - 1));
+            }
+
+            // Set the user image
+            Uri userImage = null;
+            if(user.getString("user_pic") != null) userImage = Uri.parse(user.getString("user_pic"));
+            Glide.with(weakContextRef.get()).load(userImage)
+                    .placeholder(R.drawable.ic_user_blank_white)
+                    .fitCenter().circleCrop().into(imageView);
+        });
     }
 
 
