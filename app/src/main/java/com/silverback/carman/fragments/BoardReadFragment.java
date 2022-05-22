@@ -161,16 +161,6 @@ public class BoardReadFragment extends DialogFragment implements
             if(obj.getAutofilter() != null) autofilter = new ArrayList<>(obj.getAutofilter());
         }
 
-        log.i("viewerId : %s", viewerId);
-
-        // Get the viewer id for checking whether the post owner is the viewer
-        /*
-        try(FileInputStream fis = requireActivity().openFileInput("userId");
-            BufferedReader br = new BufferedReader(new InputStreamReader(fis))){
-            viewerId = br.readLine();
-        } catch(IOException e) {e.printStackTrace();}
-        */
-
         this.context = requireContext();
         mDB = FirebaseFirestore.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
@@ -346,7 +336,14 @@ public class BoardReadFragment extends DialogFragment implements
     // which loads more comments to load if the number of comments are more than the comment pagination.
     @Override
     public void showCommentLoadButton(int isVisible) {
+        log.i("showCommentLoadButton");
         binding.imgbtnLoadComment.setVisibility(isVisible);
+    }
+
+    @Override
+    public void onCommentSwitchChanged(boolean isChecked) {
+        log.i("onCommentSwitchChanged: %s", isChecked);
+
     }
 
     @Override

@@ -64,6 +64,7 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     public interface ReadFeedAdapterListener {
         void showCommentLoadButton(int isVisible);
+        void onCommentSwitchChanged(boolean isChecked);
     }
 
     public BoardReadFeedAdapter(CustomPostingObject postingObj, BoardCommentAdapter commentAdapter,
@@ -111,7 +112,6 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
         public EmptyViewHolder(View itemView) {
             super(itemView);
             ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(0, 100);
-
         }
     }
 
@@ -206,13 +206,16 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-        log.i("onCheckedChanged: %s", isChecked);
         if(isChecked) {
             commentBinding.recyclerComments.setVisibility(View.VISIBLE);
             int cntComment = Integer.parseInt(headerBinding.headerCommentCnt.getText().toString());
             int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             callback.showCommentLoadButton(visible);
-        } else commentBinding.recyclerComments.setVisibility(View.GONE);
+        } else {
+            commentBinding.recyclerComments.setVisibility(View.GONE);
+            callback.onCommentSwitchChanged(false);
+            commentAdapter.hideReply();
+        }
     }
 
 

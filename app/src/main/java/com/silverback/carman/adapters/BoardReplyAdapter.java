@@ -190,27 +190,24 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         }).addOnFailureListener(Throwable::printStackTrace);
     }
 
-    public void setReplyUserProfile(String userId, TextView textView, ImageView imageView) {
-        FirebaseFirestore.getInstance().collection("users").document(userId).get()
-                .addOnSuccessListener(user -> {
-            // Set the user name
+    private void setReplyUserProfile(String userId, TextView textView, ImageView imageView) {
+       mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
             if(user.get("user_names") != null) {
                 List<?> names = (List<?>)user.get("user_names");
                 assert names != null;
                 textView.setText((String)names.get(names.size() - 1));
             }
 
-            // Set the user image
             Uri userImage = null;
             if(user.getString("user_pic") != null) userImage = Uri.parse(user.getString("user_pic"));
             Glide.with(weakContextRef.get()).load(userImage)
                     .placeholder(R.drawable.ic_user_blank_white)
                     .fitCenter().circleCrop().into(imageView);
-        });
+       });
     }
 
 
-    public void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc) {
+    private void showReplyPopupWindow(View view, ViewHolder holder, DocumentSnapshot doc) {
         LayoutInflater inflater = LayoutInflater.from(view.getContext());
         View contentView = inflater.inflate(R.layout.popup_comment_overflow, holder.replyBinding.getRoot(), false);
 
