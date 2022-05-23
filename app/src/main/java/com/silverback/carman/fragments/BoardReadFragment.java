@@ -342,8 +342,10 @@ public class BoardReadFragment extends DialogFragment implements
 
     @Override
     public void onCommentSwitchChanged(boolean isChecked) {
-        log.i("onCommentSwitchChanged: %s", isChecked);
-
+        if(!isChecked) {
+            ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
+                    .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+        }
     }
 
     @Override

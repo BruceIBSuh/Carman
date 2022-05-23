@@ -1,5 +1,6 @@
 package com.silverback.carman.adapters;
 
+import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 
 import android.content.Context;
@@ -8,6 +9,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupWindow;
@@ -29,7 +31,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardItemviewCommentBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
@@ -50,7 +51,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapter.ViewHolder> implements
-        BoardReplyAdapter.ReplyAdapterListener {
+        BoardReplyAdapter.ReplyCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardCommentAdapter.class);
 
@@ -200,9 +201,9 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
 
     @Override
     public void OnDeleteReply(ViewHolder holder) {
-        int count = Integer.parseInt(holder.commentBinding.headerReplyCnt.getText().toString());
+        int count = Integer.parseInt(holder.getReplyCountView().getText().toString());
         count -= 1;
-        holder.commentBinding.headerReplyCnt.setText(String.valueOf(count));
+        holder.getReplyCountView().setText(String.valueOf(count));
     }
 
     private void setCommentUserProfile(String userId, TextView textView, ImageView imageView) {
@@ -221,36 +222,34 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         });
     }
 
+    // Implement the reply switch button method.
     private void showCommentReply(ViewHolder holder, DocumentSnapshot doc, boolean isChecked) {
         if(isChecked) {
+            // Create BoardReplyAdapter and set it to RecyclerView.
+            replyAdapter = BoardReplyAdapter.getInstance();
+            replyAdapter.initReplyAdapter(this, holder, viewerId);
+            LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
+            holder.getRecyclerReplyView().setLayoutManager(layout);
+            holder.getRecyclerReplyView().addItemDecoration(divider);
+            holder.getRecyclerReplyView().setHasFixedSize(false);
+            holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
+            holder.getRecyclerReplyView().setAdapter(replyAdapter);
+            // Set the visibility of the reply loading button
+            holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
+            final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
+            int visible = (cntReply > PAGING_REPLY) ? View.VISIBLE : View.GONE;
+            holder.commentBinding.btnLoadReplies.setVisibility(visible);
+            if(cntReply > 0) replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
             // When having a different switch checked, the current switch should be closed.
             if(checkedPos != holder.getBindingAdapterPosition()){
                 commentListener.OnReplySwitchChecked(checkedPos, holder.getBindingAdapterPosition());
                 checkedPos = holder.getBindingAdapterPosition();
             }
-
-            holder.commentBinding.linearReply.setVisibility(View.VISIBLE);
-            final long cntReply = Objects.requireNonNull(doc.getLong("cnt_reply"));
-            if(cntReply > 0) {
-                replyAdapter = BoardReplyAdapter.getInstance();
-                replyAdapter.initReplyAdapter(viewerId);
-
-                LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-                holder.getRecyclerReplyView().setLayoutManager(layout);
-                holder.getRecyclerReplyView().addItemDecoration(divider);
-                holder.getRecyclerReplyView().setHasFixedSize(false);
-                holder.getRecyclerReplyView().setItemAnimator(new DefaultItemAnimator());
-                holder.getRecyclerReplyView().setAdapter(replyAdapter);
-
-                int visible = (cntReply > PAGING_REPLY) ? View.VISIBLE : View.GONE;
-                holder.commentBinding.btnLoadReplies.setVisibility(visible);
-
-                replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
-            }
-
         } else {
             holder.commentBinding.linearReply.setVisibility(View.GONE);
             holder.commentBinding.btnLoadReplies.setVisibility(View.GONE);
+            InputMethodManager imm = ((InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE));
+            if(imm.isActive()) imm.hideSoftInputFromWindow(holder.commentBinding.getRoot().getWindowToken(), 0);
         }
 
     }
@@ -275,51 +274,13 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
             commentRef.update("cnt_reply", FieldValue.increment(1)).addOnSuccessListener(Void -> {
                 int count = Objects.requireNonNull(doc.getLong("cnt_reply")).intValue();
                 count += 1;
-                holder.commentBinding.headerReplyCnt.setText(String.valueOf(count));
+                holder.getReplyCountView().setText(String.valueOf(count));
             });
 
             replyAdapter.queryCommentReply(doc.getReference(), "timestamp");
             holder.commentBinding.etCommentReply.clearFocus();
             holder.commentBinding.etCommentReply.getText().clear();
         });
-
-
-
-
-        /*
-        final DocumentReference docref = mDB.collection("users").document(viewerId);
-        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
-            DocumentSnapshot doc = transaction.get(docref);
-            object.put("user_name", doc.getString("user_name"));
-            object.put("user_pic", doc.getString("user_pic"));
-
-            }).addOnFailureListener(e -> {
-                e.printStackTrace();
-                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), false);
-            });
-
-
-            commentshot.getReference().collection("replies").add(object).addOnSuccessListener(aVoid -> {
-                //replyAdapter.notifyItemInserted(0);
-                replyAdapter.queryCommentReply(commentshot.getReference(), "timestamp");
-                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), true);
-
-                commentshot.getReference().update("cnt_reply", FieldValue.increment(1));
-                holder.commentBinding.etCommentReply.clearFocus();
-                holder.commentBinding.etCommentReply.getText().clear();
-
-
-            }).addOnFailureListener(e -> {
-                e.printStackTrace();
-                commentListener.notifyUploadReplyDone(holder.getBindingAdapterPosition(), false);
-            });
-
-
-
-            return null;
-        });
-
-         */
 
         //commentListener.addCommentReply(replyAdapter, commentshot, content, position);
 
@@ -377,8 +338,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     public void hideReply(){
         log.i("checked reply position: %s", checkedPos);
         notifyItemChanged(checkedPos, true);
-
-
     }
 
     // RecyclerView Adapter for the comment reply.

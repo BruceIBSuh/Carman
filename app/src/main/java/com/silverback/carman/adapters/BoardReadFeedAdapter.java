@@ -1,5 +1,6 @@
 package com.silverback.carman.adapters;
 
+import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_HEADER;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_LIST;
@@ -14,6 +15,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;

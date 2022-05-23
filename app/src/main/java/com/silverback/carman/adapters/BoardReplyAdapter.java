@@ -4,7 +4,6 @@ import static com.silverback.carman.BoardActivity.PAGING_REPLY;
 
 import android.content.Context;
 import android.net.Uri;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,15 +24,11 @@ import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.Source;
-import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ItemviewBoardReplyBinding;
 import com.silverback.carman.databinding.PopupCommentOverflowBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.ApplyImageResourceUtil;
-import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.PopupDropdownUtil;
 
 import java.lang.ref.WeakReference;
@@ -46,43 +41,23 @@ import java.util.Locale;
 public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.ViewHolder> {
     final LoggingHelper log = LoggingHelperFactory.create(BoardReplyAdapter.class);
 
-    //private BoardCommentAdapter.CommentAdapterListener commentListener;
     private WeakReference<Context> weakContextRef;
     private FirebaseFirestore mDB;
-    private ReplyAdapterListener replyAdapterListener;
-    private BoardCommentAdapter.ViewHolder commentViewHolder;
+    private ReplyCallback replyCallback;
+    private BoardCommentAdapter.ViewHolder commentHolder;
     private AsyncListDiffer<DocumentSnapshot> mDiffer;
     private Query query;
     private DocumentReference commentRef;
     private QuerySnapshot querySnapshot;
     private List<DocumentSnapshot> replyList;
     private SimpleDateFormat sdf;
+    private String viewerId;
 
-    public interface ReplyAdapterListener {
+    public interface ReplyCallback {
         void OnDeleteReply(BoardCommentAdapter.ViewHolder holder);
     }
 
-    //private PopupDropdownUtil popupDropdownUtil;
-    private String viewerId;
-
-    // static instance using the lazy holder class.
-    /*
-    public BoardReplyAdapter(Context context, String viewerId, ReplyAdapterListener listener){
-        this.context = context;
-        this.viewerId = viewerId;
-        this.replyAdapterListener = listener;
-
-        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_REPLY);
-        replyList = new ArrayList<>();
-        sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-    }
-
-     */
-
-    public void setCommentViewHolder(BoardCommentAdapter.ViewHolder holder) {
-        this.commentViewHolder = holder;
-    }
-
+    // static instance using the lazy holder class which should be safe for multi-thread.
     private static class InnerReplyAdapterClazz {
         private static final BoardReplyAdapter sInstance = new BoardReplyAdapter();
     }
@@ -91,7 +66,9 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         return InnerReplyAdapterClazz.sInstance;
     }
 
-    public void initReplyAdapter(String viewerId) {
+    public void initReplyAdapter(ReplyCallback callback, BoardCommentAdapter.ViewHolder holder, String viewerId) {
+        this.replyCallback = callback;
+        this.commentHolder = holder;
         this.viewerId = viewerId;
 
         mDB = FirebaseFirestore.getInstance();
@@ -100,14 +77,8 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
     }
 
-
-    /*
-    public void setReplyAdapterListener(BoardCommentAdapter.CommentAdapterListener commentListener) {
-        this.commentListener = commentListener;
-    }
-
-     */
-
+    // AsyncListDiffer which computes the difference between two lists via DiffUtil on a background
+    // thread.
     public void submitReplyList(List<DocumentSnapshot> replyList){
         mDiffer.submitList(Lists.newArrayList(replyList));//, recyclerListener::onRecyclerUpdateDone);
     }
@@ -130,8 +101,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View replyView = LayoutInflater.from(parent.getContext()).inflate(
-                R.layout.itemview_board_reply, parent, false);
+        View replyView = LayoutInflater.from(parent.getContext()).inflate(R.layout.itemview_board_reply, parent, false);
         weakContextRef = new WeakReference<>(parent.getContext());
         return new ViewHolder(replyView);
     }
@@ -140,9 +110,6 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         DocumentSnapshot doc = mDiffer.getCurrentList().get(position);
         String replyId = doc.getString("user_id");
-        assert replyId != null;
-
-        //((BoardActivity)context).setUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
         setReplyUserProfile(replyId, holder.getUserNameView(), holder.getReplyUserImage());
         holder.replyBinding.tvReplyContent.setText(doc.getString("reply_content"));
         final Date date = doc.getDate("timestamp");
@@ -223,7 +190,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
                     commentRef.update("cnt_reply",FieldValue.increment(-1));
                     replyList.remove(holder.getBindingAdapterPosition());
                     submitReplyList(replyList);
-                    replyAdapterListener.OnDeleteReply(commentViewHolder);
+                    replyCallback.OnDeleteReply(commentHolder);
                 });
                 dropdown.dismiss();
             });
