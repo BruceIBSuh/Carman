@@ -1,6 +1,5 @@
 package com.silverback.carman.adapters;
 
-import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_HEADER;
 import static com.silverback.carman.fragments.BoardReadFragment.COMMENT_LIST;
@@ -8,20 +7,17 @@ import static com.silverback.carman.fragments.BoardReadFragment.EMPTY_VIEW;
 import static com.silverback.carman.fragments.BoardReadFragment.POST_CONTENT;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.util.DisplayMetrics;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
@@ -31,7 +27,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardReadCommentBinding;
 import com.silverback.carman.databinding.BoardReadHeaderBinding;
@@ -42,7 +37,6 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.CustomPostingObject;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,27 +45,24 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
         CompoundButton.OnCheckedChangeListener {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardReadFeedAdapter.class);
-
-
+    private static int NUM_FEED = 4;
 
     private Context context;
-    private FirebaseFirestore mDB;
-    private ReadFeedAdapterListener callback;
-    private CustomPostingObject postingObj;
+    private final ReadFeedAdapterCallback callback;
+    private final CustomPostingObject postingObj;
     private BoardReadPostBinding postBinding;
     private BoardReadHeaderBinding headerBinding;
     private BoardReadCommentBinding commentBinding;
 
     private final BoardCommentAdapter commentAdapter;
 
-    public interface ReadFeedAdapterListener {
+    public interface ReadFeedAdapterCallback {
         void showCommentLoadButton(int isVisible);
         void onCommentSwitchChanged(boolean isChecked);
     }
 
     public BoardReadFeedAdapter(CustomPostingObject postingObj, BoardCommentAdapter commentAdapter,
-                                ReadFeedAdapterListener callback) {
-        mDB = FirebaseFirestore.getInstance();
+                                ReadFeedAdapterCallback callback) {
         this.postingObj = postingObj;
         this.callback = callback;
         this.commentAdapter = commentAdapter;
@@ -93,6 +84,7 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
         TextView getCommentCountView() {
             return binding.headerCommentCnt;
         }
+        SwitchCompat getCommentSwitch() { return binding.switchComment; }
     }
 
     public static class CommentListViewHolder extends RecyclerView.ViewHolder {
@@ -179,12 +171,10 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
             if(position == COMMENT_HEADER) {
                 CommentHeaderViewHolder commentHolder = (CommentHeaderViewHolder)holder;
                 final String cntComment = String.valueOf(payloads.get(0));
-                //((CommentHeaderViewHolder)holder).getCommentCountView().setText(cntComment);
                 commentHolder.getCommentCountView().setText(cntComment);
-                if(!commentHolder.binding.switchComment.isChecked())
-                    commentHolder.binding.switchComment.setChecked(true);
-
-
+                if(!commentHolder.getCommentSwitch().isChecked()) {
+                    commentHolder.getCommentSwitch().setChecked(true);
+                }
             }
         }
 
@@ -203,15 +193,16 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     @Override
     public int getItemCount() {
-        return 4;
+        return NUM_FEED;
     }
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
         if(isChecked) {
             commentBinding.recyclerComments.setVisibility(View.VISIBLE);
-            int cntComment = Integer.parseInt(headerBinding.headerCommentCnt.getText().toString());
-            int visible = (cntComment > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
+            // Show the comment loading button if the number of comments is more than the default.
+            final String count = headerBinding.headerCommentCnt.getText().toString();
+            int visible = (Integer.parseInt(count) > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
             callback.showCommentLoadButton(visible);
         } else {
             commentBinding.recyclerComments.setVisibility(View.GONE);

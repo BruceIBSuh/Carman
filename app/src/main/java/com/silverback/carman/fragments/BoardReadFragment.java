@@ -84,8 +84,7 @@ import java.util.Map;
 public class BoardReadFragment extends DialogFragment implements
         View.OnClickListener,
         Toolbar.OnMenuItemClickListener,
-        //CompoundButton.OnCheckedChangeListener,
-        BoardReadFeedAdapter.ReadFeedAdapterListener,
+        BoardReadFeedAdapter.ReadFeedAdapterCallback,
         BoardCommentAdapter.CommentAdapterListener,
         QueryPostPaginationUtil.OnQueryPaginationCallback {
 
@@ -332,11 +331,10 @@ public class BoardReadFragment extends DialogFragment implements
         } else return false;
     }
 
-    // Implement BoardReadFeedAdapter.ReadFeedAdapterListener to handle the visibiillity of the button
+    // Implement BoardReadFeedAdapter.ReadFeedAdapterCallback to handle the visibiillity of the button
     // which loads more comments to load if the number of comments are more than the comment pagination.
     @Override
     public void showCommentLoadButton(int isVisible) {
-        log.i("showCommentLoadButton");
         binding.imgbtnLoadComment.setVisibility(isVisible);
     }
 

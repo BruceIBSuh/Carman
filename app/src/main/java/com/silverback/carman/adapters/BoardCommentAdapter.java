@@ -336,7 +336,6 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
     };
 
     public void hideReply(){
-        log.i("checked reply position: %s", checkedPos);
         notifyItemChanged(checkedPos, true);
     }
 
