@@ -41,6 +41,7 @@ public class FragmentSharedModel extends ViewModel {
     private MutableLiveData<DocumentSnapshot> removedPosting;
     private MutableLiveData<SparseArray<Object>> editedPosting;
     private MutableLiveData<SparseLongArray> newComment;
+    private MutableLiveData<SparseIntArray> commentCount;
 
     private MutableLiveData<FavoriteProviderEntity> favoriteGasEntity;
     private MutableLiveData<FavoriteProviderEntity> favoriteSvcEntity;
@@ -191,6 +192,11 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<SparseLongArray> getNewComment() {
         if(newComment == null) newComment = new MutableLiveData<>();
         return newComment;
+    }
+
+    public MutableLiveData<SparseIntArray> getCommentCount() {
+        if(commentCount == null) commentCount = new MutableLiveData<>();
+        return commentCount;
     }
 
 

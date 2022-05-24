@@ -103,10 +103,7 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
     }
 
     public static class EmptyViewHolder extends RecyclerView.ViewHolder{
-        public EmptyViewHolder(View itemView) {
-            super(itemView);
-            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(0, 100);
-        }
+        public EmptyViewHolder(View itemView) { super(itemView);}
     }
 
     @NonNull
@@ -168,13 +165,16 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            if(position == COMMENT_HEADER) {
+            // Update the number of comments
+            if(payloads.get(0) instanceof Integer) {
                 CommentHeaderViewHolder commentHolder = (CommentHeaderViewHolder)holder;
                 final String cntComment = String.valueOf(payloads.get(0));
                 commentHolder.getCommentCountView().setText(cntComment);
+                // Turn the comment switch on to show the comment list.
                 if(!commentHolder.getCommentSwitch().isChecked()) {
                     commentHolder.getCommentSwitch().setChecked(true);
                 }
+
             }
         }
 
@@ -196,18 +196,19 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
         return NUM_FEED;
     }
 
+    // Implement OnCheckedChangeListener of the comment switch button in the header
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
         if(isChecked) {
             commentBinding.recyclerComments.setVisibility(View.VISIBLE);
-            // Show the comment loading button if the number of comments is more than the default.
+            // Handle the visibility of the comment loading button in the bottom
             final String count = headerBinding.headerCommentCnt.getText().toString();
-            int visible = (Integer.parseInt(count) > PAGING_COMMENT) ? View.VISIBLE : View.GONE;
+            int visible = (Integer.parseInt(count) > PAGING_COMMENT) ? View.VISIBLE : View.INVISIBLE;
             callback.showCommentLoadButton(visible);
         } else {
             commentBinding.recyclerComments.setVisibility(View.GONE);
             callback.onCommentSwitchChanged(false);
-            commentAdapter.hideReply();
+            commentAdapter.switchCommentReplyOff();
         }
     }
 

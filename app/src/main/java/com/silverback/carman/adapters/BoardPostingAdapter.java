@@ -3,6 +3,7 @@ package com.silverback.carman.adapters;
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
+import android.util.SparseIntArray;
 import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -115,6 +116,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             imgAttached = binding.imgAttached;
             userImage = binding.imgUser;
         }
+
+        TextView getCommentCountView() { return postBinding.tvCountComment; }
+        TextView getViewerCountView() { return postBinding.tvCountViews; }
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
@@ -205,14 +209,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             log.i("partial binding: %s", payloads.size());
+            PostViewHolder postHolder = (PostViewHolder)holder;
             for(Object payload : payloads) {
                if(payload instanceof Long) {
-                    postBinding.tvCountViews.setText(String.valueOf(payload));
-
+                    postHolder.getViewerCountView().setText(String.valueOf(payload));
+                /*
                 } else if(payload instanceof SparseLongArray) {
-                    SparseLongArray sparseArray = (SparseLongArray)payload;
-                    postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
+                   log.i("sparselongarray:");
+                   SparseLongArray sparseArray = (SparseLongArray) payload;
+                   postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
 
+                */
+               } else if(payload instanceof Integer) {
+                   log.i("comment count update: %s", payload);
+                   postHolder.getCommentCountView().setText(String.valueOf(payload));
                 } else if(payload instanceof String) {
                     String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
                     ((PostViewHolder) holder).tvNumber.setText(bindingPos);

@@ -218,6 +218,7 @@
     <string name="board_btn_comment">댓글쓰기</string>
     <string name="board_btn_reply">더보기</string>
     <string name="board_msg_no_comment">댓글 내용이 없습니다</string>
+    <string name="board_msg_no_reply">답글 내용이 없습니다</string>
     <string name="board_msg_compathy">이미 공감 표시를 하였습니다</string>림
     <string name="board_alert_delete">글 삭제</string>
     <string name="board_alert_msg">확인버튼을 누르면 글이 삭제됩니다</string>

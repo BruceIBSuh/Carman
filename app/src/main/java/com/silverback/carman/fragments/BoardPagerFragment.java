@@ -2,6 +2,7 @@ package com.silverback.carman.fragments;
 
 
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -114,7 +115,6 @@ public class BoardPagerFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-
         if(getArguments() != null) {
             userId = getArguments().getString("userId");
             currentPage = getArguments().getInt("currentPage");
@@ -172,15 +172,14 @@ public class BoardPagerFragment extends Fragment implements
             log.i("new posting: %s", currentPage);
             postRef.get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
-                    DocumentSnapshot snapshot = task.getResult();
-                    log.i("post images: %s", snapshot.get("post_images"));
+                    //DocumentSnapshot snapshot = task.getResult();
+                    //log.i("post images: %s", snapshot.get("post_images"));
                     queryPagingUtil.setPostQuery(colRef, currentPage);
                 }
             });
         });
 
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
-            log.i("posting removed: %s", currentPage);
             postingList.remove(post);
             postingAdapter.submitPostList(postingList);
             //postingAdapter.updatePostList(postingList);
@@ -195,27 +194,17 @@ public class BoardPagerFragment extends Fragment implements
                 queryPagingUtil.setPostQuery(colRef, currentPage);
             });
         });
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
+        // Update the comment count
+        fragmentModel.getCommentCount().observe(getViewLifecycleOwner(), sparseArray -> {
+            postingAdapter.notifyItemChanged(sparseArray.keyAt(0), sparseArray.valueAt(0));
+            queryPagingUtil.setPostQuery(colRef, currentPage);
+        });
     }
 
     @Override
     public void onDestroyView() {
-        if(regListener != null) regListener.remove();
+        //if(regListener != null) regListener.remove();
         binding.recyclerBoardPostings.removeOnScrollListener(scrollListener);
         super.onDestroyView();
     }
@@ -259,14 +248,15 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public void onPostItemClicked(DocumentSnapshot snapshot, int position) {
         BoardReadFragment readPostFragment = new BoardReadFragment();
+        Bundle bundle = new Bundle();
+
         CustomPostingObject toObject = snapshot.toObject(CustomPostingObject.class);
         assert toObject != null;
-        Bundle bundle = new Bundle();
+        bundle.putParcelable("postingObj", toObject);
         bundle.putInt("tabPage", currentPage);
         bundle.putInt("position", position);
         bundle.putString("viewerId", userId);
         bundle.putString("documentId", snapshot.getId());
-        bundle.putParcelable("postingObj", toObject);
 
         readPostFragment.setArguments(bundle);
         requireActivity().getSupportFragmentManager().beginTransaction()

@@ -193,7 +193,7 @@ public class BoardActivity extends BaseActivity implements
         // ViewPager2
         pagerAdapter = new BoardPagerAdapter(getSupportFragmentManager(), getLifecycle(), userId, cbAutoFilter);
         // Set the default DEFAULT_OFFSCREEN_PAGES = 0 for this class to prevent preloading.
-        //binding.boardPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
+        binding.boardPager.setOffscreenPageLimit(ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
         //binding.boardPager.setOffscreenPageLimit(1);
         binding.boardPager.setAdapter(pagerAdapter);
         binding.boardPager.setVisibility(View.GONE);//show progressbar unitl the query completes.
@@ -684,6 +684,15 @@ public class BoardActivity extends BaseActivity implements
     }
 
     public void setUserProfile(String userId, TextView textView, ImageView imageView) {
+        // Handle admin Notification page
+        if(TextUtils.isEmpty(userId)) {
+            textView.setText("ADMIN");
+            Uri userImage = null;
+            Glide.with(this).load(userImage).placeholder(R.drawable.ic_user_blank_white)
+                    .fitCenter().circleCrop().into(imageView);
+            return;
+        }
+
         mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
             // Set the user name
             if(user.get("user_names") != null) {

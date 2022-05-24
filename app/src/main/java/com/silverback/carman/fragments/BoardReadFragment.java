@@ -17,6 +17,7 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGING_COMMENT;
 
 import android.app.Dialog;
@@ -30,6 +31,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.AbsoluteSizeSpan;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -100,14 +102,10 @@ public class BoardReadFragment extends DialogFragment implements
     private static final int STATE_EXPANDED = 1;
     private static final int STATE_IDLE = 2;
 
-    // Objects
-    private Context context;
-    private FirebaseFirestore mDB;
     private CustomPostingObject obj;
     private ListenerRegistration regListener;
     private QueryPostPaginationUtil queryPaginationUtil;
     private SharedPreferences mSettings;
-
     private BoardReadFeedAdapter boardReadFeedAdapter;
 
     private DocumentReference postRef;
@@ -129,7 +127,7 @@ public class BoardReadFragment extends DialogFragment implements
     private String tabTitle;
     private String userPic;
     private int tabPage, position;
-    private int replyCheckedPos;
+    private int checkedPos;
     private int appbarOffset;
     private int cntComment, cntCompathy;
     private boolean isCommentVisible;
@@ -160,19 +158,20 @@ public class BoardReadFragment extends DialogFragment implements
             if(obj.getAutofilter() != null) autofilter = new ArrayList<>(obj.getAutofilter());
         }
 
-        this.context = requireContext();
-        mDB = FirebaseFirestore.getInstance();
+        // Objects
+        Context context = requireContext();
+        FirebaseFirestore mDB = FirebaseFirestore.getInstance();
         mSettings = PreferenceManager.getDefaultSharedPreferences(context);
         imgUtil = new ApplyImageResourceUtil(context);
-        imm = (InputMethodManager)context.getSystemService(INPUT_METHOD_SERVICE);
+        imm = (InputMethodManager) context.getSystemService(INPUT_METHOD_SERVICE);
 
         queryPaginationUtil = new QueryPostPaginationUtil(mDB, this);
         commentShotList = new ArrayList<>();
         commentAdapter = new BoardCommentAdapter(getContext(), commentShotList, viewerId, this);
 
         boardReadFeedAdapter = new BoardReadFeedAdapter(obj, commentAdapter, this);
-
-        postRef = mDB.collection("user_post").document(documentId);
+        String target = (tabPage == NOTIFICATION)?"admin_post" : "user_post";
+        postRef = mDB.collection(target).document(documentId);
         queryPaginationUtil.setCommentQuery(postRef, "timestamp");
 
     }
@@ -343,6 +342,7 @@ public class BoardReadFragment extends DialogFragment implements
         if(!isChecked) {
             ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                     .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
+            if(binding.imgbtnLoadComment.isShown()) binding.imgbtnLoadComment.setVisibility(View.GONE);
         }
     }
 
@@ -353,13 +353,12 @@ public class BoardReadFragment extends DialogFragment implements
             // move to SettingPrefActivity to make a user name.
             if(checkUserName()) {
                 int visibility = isCommentVisible ? View.GONE : View.VISIBLE;
-                //int direction = isCommentVisible ? View.FOCUS_UP : View.FOCUS_DOWN;
                 binding.constraintComment.setVisibility(visibility);
                 binding.etComment.getText().clear();
 
                 if(!isCommentVisible) {
                     binding.etComment.requestFocus();
-                    commentAdapter.notifyItemChanged(replyCheckedPos, true);
+                    commentAdapter.notifyItemChanged(checkedPos, true);
                 }
 
                 isCommentVisible = !isCommentVisible;
@@ -372,7 +371,10 @@ public class BoardReadFragment extends DialogFragment implements
 
         } else if(v.getId() == R.id.imgbtn_load_comment) {
             if(cntComment > commentAdapter.getItemCount()) queryPaginationUtil.setNextCommentQuery();
-            else notifyNoData();
+            else {
+                final String msg = getString(R.string.board_msg_no_comment);
+                Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -403,68 +405,51 @@ public class BoardReadFragment extends DialogFragment implements
     }
 
     // The BoardCommentAdapter.CommentAdapterListener interface impelemts the following methods
-    // deleteComment(): may delete a comment as long as the reader is the owner of a comment.
-    // deleteCommentReply(): may delete a reply as long as the reader is the owner of a reply.
-    // addCommentReply(): may add a comment
-    // notifyReplyChecked(): notified of whether the switch button turns on or off.
     @Override
     public void deleteComment(DocumentSnapshot doc) {
         postRef.update("cnt_comment", FieldValue.increment(-1)).addOnSuccessListener(bVoid -> {
-            cntComment --;
+            cntComment--;
             if(cntComment <= PAGING_COMMENT) binding.imgbtnLoadComment.setVisibility(View.GONE);
             binding.tvCntComment.setText(String.valueOf(cntComment));
+
+            // Update the comment count in BoardReadFragment.
             boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
+
+            // Update the comment count in BoardPagerFragment
+            SparseIntArray sparseArray = new SparseIntArray(1);
+            sparseArray.put(position, cntComment);
+            sharedModel.getCommentCount().setValue(sparseArray);
         }).addOnFailureListener(Throwable::printStackTrace);
     }
 
     @Override
-    public void OnUploadReplyDone(int pos, boolean isDone) {
-        //log.i("upload reply: %s, %s", pos, isDone);
-        if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
-        String msg = (isDone)?"uploading reply done" : "uploading reply failed";
+    public void notifyNoReply() {
+        final String msg = getString(R.string.board_msg_no_reply);
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-        //commentAdapter.notifyItemChanged(position, false);
-        //queryPaginationUtil.setCommentReplyQuery();
-    }
-
-    @Override
-    public void notifyNoData() {
-        Snackbar.make(binding.getRoot(), "No more replies", Snackbar.LENGTH_SHORT).show();
     }
 
     @Override
     public void OnReplySwitchChecked(int checkedPos, int bindingPos) {
-        log.i("notified by the comment adapter: %s, %s", checkedPos, bindingPos);
         if(imm.isActive()) imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-
-        // Hide the comment edittext if the reply switch turns on.
+        // Hide the comment input if the reply switch turns on.
         if(binding.etComment.isFocused()) {
             binding.constraintComment.setVisibility(View.GONE);
             isCommentVisible = false;
         }
-        // A new reply switch turns on and the previous reply switch should be off.
-        if(checkedPos != bindingPos) commentAdapter.notifyItemChanged(checkedPos, true);
-        this.replyCheckedPos = bindingPos;
 
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.fullScroll(View.FOCUS_DOWN));
-        //int scrollY = binding.nestedScrollview.getHeight();
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, scrollY, 1500));
+        this.checkedPos = bindingPos;
     }
 
     @Override
     public void OnReplyContentFocused(View view) {
-        log.i("content edit text focused");
         if(!checkUserName()) view.clearFocus();
-        //binding.nestedScrollview.post(() -> binding.nestedScrollview.smoothScrollTo(0, view.getBottom()));
     }
 
+    // Implement ActivityResultLauncher.ActivityResultCallback
     private void getActivityResultCallback(ActivityResult result) {
         log.i("activity result: %s", result.getData());
         if(result.getData() != null) log.i("user name:");
     }
-
-
 
     // This abstract class notifies the state of the appbarlayout by implementing the listener.
     // The reason that the listener should be implemented first is that the listener notifies every
@@ -538,41 +523,16 @@ public class BoardReadFragment extends DialogFragment implements
                 cntComment++;
                 binding.tvCntComment.setText(String.valueOf(cntComment));
                 boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
+                // Update the number of comments in the posting adapter.
+                SparseIntArray sparseArray = new SparseIntArray();
+                sparseArray.put(position, cntComment);
+                sharedModel.getCommentCount().setValue(sparseArray);
             });
         }).addOnFailureListener(Throwable::printStackTrace);
 
         imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         binding.constraintComment.setVisibility(View.GONE);
         isCommentVisible = !isCommentVisible;
-
-        /*
-        DocumentReference userRef = mDB.collection("users").document(viewerId);
-        mDB.runTransaction((Transaction.Function<Void>) transaction -> {
-            DocumentSnapshot doc = transaction.get(userRef);
-            List<?> nameList = (List<?>)doc.get("user_names");
-            assert nameList != null;
-            List<String> tempList = new ArrayList<>();
-            for(Object obj : nameList) tempList.add((String)obj);
-
-            comment.put("user_name", tempList.get(tempList.size() - 1));
-            comment.put("user_pic", doc.getString("user_pic"));
-
-            postRef.collection("comments").add(comment).addOnSuccessListener(commentRef -> {
-                queryPaginationUtil.setCommentQuery(postRef, "timestamp");
-                postRef.update("cnt_comment", FieldValue.increment(1)).addOnSuccessListener(Void -> {
-                    cntComment++;
-                    binding.tvCntComment.setText(String.valueOf(cntComment));
-                    boardReadFeedAdapter.notifyItemChanged(COMMENT_HEADER, cntComment);
-                });
-            }).addOnFailureListener(Throwable::printStackTrace);
-
-            imm.hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
-            binding.constraintComment.setVisibility(View.GONE);
-            isCommentVisible = !isCommentVisible;
-            return null;
-        });
-
-         */
     }
 
     // Check if the user has already picked a post as favorite doing queries the compathy collection,
@@ -606,10 +566,6 @@ public class BoardReadFragment extends DialogFragment implements
         });
     }
 
-    // As long as a post belongs to the user, show the menu in the toolbar which enables the user
-    // to edits or delete the post.
-
-
     // Display the auto club if the user has set the automaker, automodel, enginetype, and autoyear.
     /*
     private void showUserAutoClub(final TextView autoInfo) {
@@ -637,44 +593,6 @@ public class BoardReadFragment extends DialogFragment implements
         });
     }
     */
-    /*
-    private void queryCommentSnapshot(DocumentReference docref) {
-        postRepo.setCommentQuery(docref);
-        PostingBoardLiveData postLiveData = postingModel.getPostingBoardLiveData();
-        if(postLiveData != null) {
-            postLiveData.observe(getViewLifecycleOwner(), operation -> {
-                int type = operation.getType();
-                DocumentSnapshot postshot = operation.getDocumentSnapshot();
-                switch(type) {
-                    case 0: // ADDED
-                        commentShotList.add(postshot);
-                        break;
-
-                    case 1: // MODIFIED
-                        log.i("MODIFIED");
-                        for(int i = 0; i < commentShotList.size(); i++) {
-                            DocumentSnapshot snapshot = commentShotList.get(i);
-                            if(snapshot.getId().equals(postshot.getId())) {
-                                commentShotList.remove(snapshot);
-                                commentShotList.add(i, postshot);
-                            }
-                        }
-                        break;
-
-                    case 2: // REMOVED
-                        for(int i = 0; i < commentShotList.size(); i++) {
-                            DocumentSnapshot snapshot = commentShotList.get(i);
-                            if(snapshot.getId().equals(postshot.getId())) commentShotList.remove(snapshot);
-                        }
-                        break;
-                }
-
-                commentAdapter.notifyDataSetChanged();
-
-            });
-        }
-    }
-     */
 
     private boolean checkUserName() {
         String userName = mSettings.getString(Constants.USER_NAME, null);

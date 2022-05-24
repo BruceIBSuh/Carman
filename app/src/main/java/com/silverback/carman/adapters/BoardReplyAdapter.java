@@ -54,7 +54,7 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
     private String viewerId;
 
     public interface ReplyCallback {
-        void OnDeleteReply(BoardCommentAdapter.ViewHolder holder);
+        void OnReplyRemoved(BoardCommentAdapter.ViewHolder holder);
     }
 
     // static instance using the lazy holder class which should be safe for multi-thread.
@@ -190,7 +190,8 @@ public class BoardReplyAdapter extends RecyclerView.Adapter<BoardReplyAdapter.Vi
                     commentRef.update("cnt_reply",FieldValue.increment(-1));
                     replyList.remove(holder.getBindingAdapterPosition());
                     submitReplyList(replyList);
-                    replyCallback.OnDeleteReply(commentHolder);
+
+                    replyCallback.OnReplyRemoved(commentHolder);
                 });
                 dropdown.dismiss();
             });
