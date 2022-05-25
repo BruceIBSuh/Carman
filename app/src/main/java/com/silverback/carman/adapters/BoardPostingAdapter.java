@@ -1,10 +1,12 @@
 package com.silverback.carman.adapters;
 
+import static com.silverback.carman.BoardActivity.AD_POSITION;
+import static com.silverback.carman.BoardActivity.AD_VIEW_TYPE;
+import static com.silverback.carman.BoardActivity.CONTENT_VIEW_TYPE;
+
 import android.content.Context;
 import android.net.Uri;
 import android.text.TextUtils;
-import android.util.SparseIntArray;
-import android.util.SparseLongArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +17,7 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -23,15 +26,18 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardItemviewPostBinding;
+import com.silverback.carman.fragments.BoardPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
+import com.silverback.carman.utils.MultiTypePostingItem;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 
 
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -39,39 +45,42 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPostingAdapter.class);
 
-    // Constants
-    private final int CONTENT_VIEW_TYPE = 0;
-    private final int AD_VIEW_TYPE = 1;
-
     // Objects
     private Context context;
     private final FirebaseFirestore mDB;
-    private final OnPostingAdapterListener postingAdapterListener;
-    private final AsyncListDiffer<DocumentSnapshot> mDiffer;
+    private final OnPostingAdapterCallback postingAdapterCallback;
+    //private final AsyncListDiffer<DocumentSnapshot> mDiffer;
+    private final AsyncListDiffer<MultiTypePostingItem> mDiffer;
+    //private final AsyncListDiffer<BoardPagerFragment.MultiTypeItemList> mDiffer;
     private final SimpleDateFormat sdf;
-    private BoardItemviewPostBinding postBinding;
-    private final List<DocumentSnapshot> snapshotList;
-    private final int category = CONTENT_VIEW_TYPE;//Must be refactored when the multi-type list applies.
+    //private final List<DocumentSnapshot> snapshotList;
+    private int category;//Must be refactored when the multi-type list applies.
+    private int postNum;//post number
 
-    public interface OnPostingAdapterListener {
+    public interface OnPostingAdapterCallback {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
         void onSubmitPostingListDone();
     }
 
     // Constructor
-    public BoardPostingAdapter(List<DocumentSnapshot> snapshots, OnPostingAdapterListener listener) {
+    public BoardPostingAdapter(List<MultiTypePostingItem> snapshots, OnPostingAdapterCallback callback) {
         super();
-        this.postingAdapterListener = listener;
-        snapshotList = snapshots;
-
+        this.postingAdapterCallback = callback;
+        //snapshotList = snapshots;
         mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
+        postNum = 0;
     }
 
     // Update the adapter using AsyncListDiffer.ItemCallback<T> which uses the background thread.
+    /*
     public void submitPostList(List<DocumentSnapshot> snapshotList) {
-        mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterListener::onSubmitPostingListDone);
+        mDiffer.submitList(Lists.newArrayList(snapshotList), postingAdapterCallback::onSubmitPostingListDone);
+    }
+     */
+    public void submitPostList(List<MultiTypePostingItem> multiTypeList) {
+        mDiffer.submitList(Lists.newArrayList(multiTypeList), postingAdapterCallback::onSubmitPostingListDone);
     }
 
     // Upadte the adapter using DiffUtil.Callback which uses the main thread.
@@ -84,41 +93,24 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
         diffResult.dispatchUpdatesTo(this);
     }
-
      */
 
     // Multi-type viewholder:PostViewHolder and AdViewHolder
     private static class PostViewHolder extends RecyclerView.ViewHolder {
-        final BoardItemviewPostBinding postBinding;
-        final TextView tvTitle;
-        final TextView tvNumber;
-        final TextView tvPostingDate;
-        final TextView tvPostingOwner;
-        final TextView tvCountViews;
-        final TextView tvCountComment;
-        final ImageView userImage;
-        final ImageView imgAttached;
-
-        PostViewHolder(BoardItemviewPostBinding binding) {
-            super(binding.getRoot());
-            this.postBinding = binding;
-
-            ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(itemView.getLayoutParams());
-            params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_POSTINGBOARD);
-            binding.getRoot().setLayoutParams(params);
-
-            tvTitle = binding.tvPostTitle;
-            tvNumber = binding.tvNumber;
-            tvPostingDate = binding.tvPostingDate;
-            tvPostingOwner = binding.tvPostOwner;
-            tvCountViews = binding.tvCountViews;
-            tvCountComment = binding.tvCountComment;
-            imgAttached = binding.imgAttached;
-            userImage = binding.imgUser;
+        BoardItemviewPostBinding postBinding;
+        PostViewHolder(View itemView) {
+            super(itemView);
+            postBinding = BoardItemviewPostBinding.bind(itemView);
         }
 
+        TextView getPostTitleView() {return postBinding.tvPostTitle; }
+        TextView getPostNumView() { return postBinding.tvNumber; }
+        TextView getPostDateView() { return postBinding.tvPostingDate; }
         TextView getCommentCountView() { return postBinding.tvCountComment; }
         TextView getViewerCountView() { return postBinding.tvCountViews; }
+        TextView getPostOwner() { return postBinding.tvPostOwner; }
+        ImageView getAttachedImageView() { return postBinding.imgAttached; }
+        ImageView getUserImageView() { return postBinding.imgUser; }
     }
 
     private static class AdViewHolder extends RecyclerView.ViewHolder {
@@ -127,18 +119,22 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         }
     }
 
-
-
     // Create 2 difference viewholders, one of which is to display the general post content and
     // the other is to display the plug-in content which will be used for
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
         this.context = viewGroup.getContext();
-        switch(category) {
+        this.category = viewType;
+
+        switch(viewType) {
             case CONTENT_VIEW_TYPE:
-                postBinding = BoardItemviewPostBinding.inflate(LayoutInflater.from(context), viewGroup, false);
-                return new PostViewHolder(postBinding);
+                View view = LayoutInflater.from(context).inflate(R.layout.board_itemview_post, viewGroup, false);
+                ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(view.getLayoutParams());
+                params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_POSTINGBOARD);
+                view.setLayoutParams(params);
+
+                return new PostViewHolder(view);
 
             case AD_VIEW_TYPE:
             default:
@@ -154,31 +150,35 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         switch(category) {
             case CONTENT_VIEW_TYPE:
                 final PostViewHolder postHolder = (PostViewHolder)holder;
-
                 //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                final DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
+                //final DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
+                MultiTypePostingItem multiTypeItem = mDiffer.getCurrentList().get(position);
+                DocumentSnapshot snapshot = multiTypeItem.getSnapshot();
+                postNum++;
+
+                //((PostViewHolder)holder).bindPostingItem(snapshot, position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
-                postHolder.tvTitle.setText(snapshot.getString("post_title"));
-                postHolder.tvNumber.setText(String.valueOf(position + 1));
+                postHolder.getPostTitleView().setText(snapshot.getString("post_title"));
+                postHolder.getPostNumView().setText(String.valueOf(postNum));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 if(snapshot.getDate("timestamp") != null) {
                     Date date = snapshot.getDate("timestamp");
-                    postHolder.tvPostingDate.setText(sdf.format(Objects.requireNonNull(date)));
+                    postHolder.getPostDateView().setText(sdf.format(Objects.requireNonNull(date)));
                 }
 
-                postHolder.tvCountViews.setText(String.valueOf(snapshot.getLong("cnt_view")));
-                postHolder.tvCountComment.setText(String.valueOf(snapshot.getLong("cnt_comment")));
+                postHolder.getViewerCountView().setText(String.valueOf(snapshot.getLong("cnt_view")));
+                postHolder.getCommentCountView().setText(String.valueOf(snapshot.getLong("cnt_comment")));
 
                 // Set the user name and image which should be fetched from the user collection to
                 // be updated. The notification page has no user id.
                 final String userId = snapshot.getString("user_id");
                 if(TextUtils.isEmpty(userId)) {
-                    postHolder.tvPostingOwner.setText(snapshot.getString("user_name"));
-                    Glide.with(context).load(R.drawable.ic_user_blank_white).into(postHolder.userImage);
-                } else setPostUserProfile(userId, postHolder.tvPostingOwner, postHolder.userImage);
+                    postHolder.getPostOwner().setText(snapshot.getString("user_name"));
+                    Glide.with(context).load(R.drawable.ic_user_blank_white).into(postHolder.getUserImageView());
+                } else setPostUserProfile(userId, postHolder.getPostOwner(), postHolder.getUserImageView());
 
                 // Set the attached image in the post, if any.
                 if(snapshot.get("post_images") != null) {
@@ -186,17 +186,18 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     assert postImageList != null;
                     String thumbnail = ((String)postImageList.get(0));
                     final Uri uri = Uri.parse(thumbnail);
-                    Glide.with(context).load(uri).fitCenter().into(postHolder.imgAttached);
-                } else Glide.with(context).clear(postHolder.imgAttached);
+                    Glide.with(context).load(uri).fitCenter().into(postHolder.getAttachedImageView());
+                } else Glide.with(context).clear(postHolder.getAttachedImageView());
 
 
                 // Set the listener for clicking the item with position
-                holder.itemView.setOnClickListener(view -> postingAdapterListener.onPostItemClicked (
+                holder.itemView.setOnClickListener(view -> postingAdapterCallback.onPostItemClicked (
                         snapshot, holder.getBindingAdapterPosition()));
 
                 break;
 
             case AD_VIEW_TYPE:
+                log.i("Ad view type");
                 break;
         }
     }
@@ -209,6 +210,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             log.i("partial binding: %s", payloads.size());
+            if(category == AD_VIEW_TYPE) return;
+
             PostViewHolder postHolder = (PostViewHolder)holder;
             for(Object payload : payloads) {
                if(payload instanceof Long) {
@@ -224,8 +227,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                    log.i("comment count update: %s", payload);
                    postHolder.getCommentCountView().setText(String.valueOf(payload));
                 } else if(payload instanceof String) {
+                    log.i("post number: %s", postNum);
                     String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
-                    ((PostViewHolder) holder).tvNumber.setText(bindingPos);
+                    postHolder.getPostNumView().setText(bindingPos);
                 }
 
             }
@@ -236,28 +240,20 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     public long getItemId(int position) {
         //return position;
         //return snapshotList.get(position).hashCode();
-        return mDiffer.getCurrentList().get(position).hashCode();
+        //return mDiffer.getCurrentList().get(position).hashCode();
+        MultiTypePostingItem multiItem = mDiffer.getCurrentList().get(position);
+        return (long)multiItem.getViewId();
     }
 
-    /*
+
     @Override
     public int getItemViewType(int position) {
-        switch(snapshotList.get(position).getViewType()){
-            case 0: return CONTENT_VIEW_TYPE;
-            case 1: return AD_VIEW_TYPE;
-            default: return -1;
-        }
-        //category = multiTypeItemList.get(position).getViewType();
-        return position;
+        return mDiffer.getCurrentList().get(position).getViewType();
     }
-
-     */
 
     @Override
     public int getItemCount() {
-        //return snapshotList.size();
         return mDiffer.getCurrentList().size();
-        //return multiTypeItemList.size();
     }
 
     private void setPostUserProfile(String userId, TextView textView, ImageView imageView) {
@@ -277,6 +273,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     // AsyncListDiffer which helps compute the dfference b/w two lists via DiffUtil on a background
     // thread.
+    /*
     private static final DiffUtil.ItemCallback<DocumentSnapshot> DIFF_CALLBACK_POST =
         new DiffUtil.ItemCallback<DocumentSnapshot>() {
             @Override
@@ -291,6 +288,30 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 return super.getChangePayload(oldItem, newItem);
             }
         };
+
+     */
+
+    private static final DiffUtil.ItemCallback<MultiTypePostingItem> DIFF_CALLBACK_POST =
+            new DiffUtil.ItemCallback<MultiTypePostingItem>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull MultiTypePostingItem oldItem,
+                                               @NonNull MultiTypePostingItem newItem) {
+                    return oldItem.getViewId() == newItem.getViewId();
+                }
+
+                @Override
+                public boolean areContentsTheSame(@NonNull MultiTypePostingItem oldItem,
+                                                  @NonNull MultiTypePostingItem newItem) {
+                    if(oldItem.getViewType() == newItem.getViewType()) {
+                        return oldItem.getSnapshot().getId().equals(newItem.getSnapshot().getId());
+                    } else return false;
+                }
+
+                public Object getChangePayload(@NonNull MultiTypePostingItem oldItem,
+                                               @NonNull MultiTypePostingItem newItem) {
+                    return super.getChangePayload(oldItem, newItem);
+                }
+            };
 
     /*
     private static class BoardDiffUtilCallback extends DiffUtil.Callback {

@@ -1,8 +1,8 @@
 package com.silverback.carman.fragments;
 
 
+import static com.silverback.carman.BoardActivity.AD_POSITION;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.NOTIFICATION;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -11,6 +11,7 @@ import android.animation.ObjectAnimator;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -49,6 +50,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.CustomPostingObject;
+import com.silverback.carman.utils.MultiTypePostingItem;
 import com.silverback.carman.utils.QueryPostPaginationUtil;
 import com.silverback.carman.utils.RecyclerDividerUtil;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
@@ -65,7 +67,7 @@ import java.util.Objects;
 
 public class BoardPagerFragment extends Fragment implements
         QueryPostPaginationUtil.OnQueryPaginationCallback,
-        BoardPostingAdapter.OnPostingAdapterListener {
+        BoardPostingAdapter.OnPostingAdapterCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(BoardPagerFragment.class);
 
@@ -82,8 +84,9 @@ public class BoardPagerFragment extends Fragment implements
     private FloatingActionButton fabWrite;
     private Menu menu;
 
-    //private List<MultiTypeItem> multiTypeItemList;
-    private List<DocumentSnapshot> postingList;
+    private MultiTypePostingItem multiItem;
+    private List<MultiTypePostingItem> multiTypeItemList;
+    //private List<DocumentSnapshot> postingList;
     private ArrayList<String> autofilter;
     private String automaker;
     private String userId;
@@ -127,10 +130,10 @@ public class BoardPagerFragment extends Fragment implements
 
         // Instantiate objects.
         mDB = FirebaseFirestore.getInstance();
-        postingList = new ArrayList<>();
-        //multiTypeItemList = new ArrayList<>();
-        postingAdapter = new BoardPostingAdapter(postingList, this);
-        //postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
+        //postingList = new ArrayList<>();
+        multiTypeItemList = new ArrayList<>();
+        //postingAdapter = new BoardPostingAdapter(postingList, this);
+        postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
         //postingAdapter.setHasStableIds(true);
 
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
@@ -169,7 +172,6 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
-            log.i("new posting: %s", currentPage);
             postRef.get().addOnCompleteListener(task -> {
                 if(task.isSuccessful()) {
                     //DocumentSnapshot snapshot = task.getResult();
@@ -180,8 +182,9 @@ public class BoardPagerFragment extends Fragment implements
         });
 
         fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
-            postingList.remove(post);
-            postingAdapter.submitPostList(postingList);
+            //postingList.remove(post);
+            multiTypeItemList.remove(new MultiTypePostingItem(0, post));
+            //postingAdapter.submitPostList(postingList);
             //postingAdapter.updatePostList(postingList);
             queryPagingUtil.setPostQuery(colRef, currentPage);
         });
@@ -190,7 +193,8 @@ public class BoardPagerFragment extends Fragment implements
             final int position = sparseArray.keyAt(0);
             final DocumentReference docRef = (DocumentReference)sparseArray.valueAt(0);
             docRef.get().addOnSuccessListener(doc -> {
-                postingList.set(position, doc);
+                //postingList.set(position, doc);
+                multiTypeItemList.set(position, new MultiTypePostingItem(0, doc));
                 queryPagingUtil.setPostQuery(colRef, currentPage);
             });
         });
@@ -271,12 +275,15 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        postingList.clear();
+        //postingList.clear();
+        multiTypeItemList.clear();
         if(querySnapshot.size() == 0) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
             binding.tvEmptyView.setVisibility(View.VISIBLE);
+            return;
         } else addPostByCategory(querySnapshot, false);
+
         isScrollable = true;
     }
 
@@ -290,6 +297,7 @@ public class BoardPagerFragment extends Fragment implements
     public void getLastQueryResult(QuerySnapshot lastShots) {
         addPostByCategory(lastShots, true);
         isScrollable = false;
+        // Add the ad post;
     }
 
 
@@ -308,30 +316,43 @@ public class BoardPagerFragment extends Fragment implements
                 if(autofilter == null || autofilter.size() == 0) break;
                 CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 if(toObject == null) return;
+
                 ArrayList<String> filters = new ArrayList<>(toObject.getAutofilter());
-                if(filters.containsAll(autofilter)) postingList.add(doc);
-            } else postingList.add(doc);
+                if(filters.containsAll(autofilter)) {
+                    //postingList.add(doc);
+                    multiTypeItemList.add(new MultiTypePostingItem(0, doc));
+                }
+            } else {
+                //postingList.add(doc);
+                multiTypeItemList.add(new MultiTypePostingItem(0, doc));
+            }
         }
 
+
+
         if(currentPage == AUTOCLUB) {
-            if (!isLast && postingList.size() < PAGINATION) {
+            if (!isLast && multiTypeItemList.size()/*postingList.size()*/ < PAGINATION) {
                 queryPagingUtil.setNextPostQuery();
                 isScrollable = false;
                 return;
             } else {
                 progbar.setVisibility(View.GONE);
-                postingAdapter.submitPostList(postingList);
+                //postingAdapter.submitPostList(postingList);
                 //postingAdapter.updatePostList(postingList);
+                multiTypeItemList.add(AD_POSITION, new MultiTypePostingItem(1));
+                postingAdapter.submitPostList(multiTypeItemList);
             }
         } else {
             progbar.setVisibility(View.GONE);
-            postingAdapter.submitPostList(postingList);
+            //postingAdapter.submitPostList(postingList);
             //postingAdapter.updatePostList(postingList);
+            multiTypeItemList.add(AD_POSITION, new MultiTypePostingItem(1));
+            postingAdapter.submitPostList(multiTypeItemList);
         }
 
 
         // Visibility control relying on whether the posting list exists. Refactor required.
-        if(isLast && postingList.size() == 0) {
+        if(isLast && multiTypeItemList.size() /*postingList.size()*/ == 1/*0*/) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
             binding.tvEmptyView.setVisibility(View.VISIBLE);
@@ -345,9 +366,7 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void onSubmitPostingListDone() {
-        log.i("onSubmitPostingListDone: %s, %s", postingStart, postingList.size());
-        Map<String, Object> objPost = new HashMap<>();
-        postingAdapter.notifyItemRangeChanged(0, postingList.size(), "indexing");
+        postingAdapter.notifyItemRangeChanged(0, multiTypeItemList.size(), "index");
     }
 
     public void resetAutoFilter(ArrayList<String> autofilter) {
@@ -470,33 +489,6 @@ public class BoardPagerFragment extends Fragment implements
         });
     }
 
-
-    /*
-    public static class MultiTypeItem {
-        DocumentSnapshot snapshot;
-        int index;
-        int viewType;
-
-        public MultiTypeItem(int viewType, int index, DocumentSnapshot snapshot) {
-            this.snapshot = snapshot;
-            this.viewType = viewType;
-            this.index = index;
-        }
-
-        public MultiTypeItem(int viewType){
-            this.viewType = viewType;
-        }
-        public DocumentSnapshot getItemSnapshot() {
-            return snapshot;
-        }
-        public int getViewType() {
-            return viewType;
-        }
-        public int getItemIndex() {
-            return index;
-        }
-    }
-     */
 }
 
 

@@ -126,6 +126,10 @@ public class BoardActivity extends BaseActivity implements
     public static final int AUTOCLUB = 2;
     public static final int NOTIFICATION = 3;
 
+    public static final int CONTENT_VIEW_TYPE = 0;
+    public static final int AD_VIEW_TYPE = 1;
+    public static final int AD_POSITION = 2;
+
     public static final int GALLERY = 1;
     public static final int CAMERA = 2;
 

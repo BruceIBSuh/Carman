@@ -174,6 +174,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         if(payloads.isEmpty()) super.onBindViewHolder(holder, pos, payloads);
         else {
             if(payloads.get(0) instanceof Boolean) {
+                log.i("reply switch checked: %s", payloads.get(0));
                 //if(!holder.commentBinding.switchReply.isChecked()) return;
                 //holder.commentBinding.linearReply.setVisibility(View.GONE);
                 holder.commentBinding.switchReply.setChecked(false);
