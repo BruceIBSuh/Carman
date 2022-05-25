@@ -189,11 +189,9 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                     Glide.with(context).load(uri).fitCenter().into(postHolder.getAttachedImageView());
                 } else Glide.with(context).clear(postHolder.getAttachedImageView());
 
-
                 // Set the listener for clicking the item with position
-                holder.itemView.setOnClickListener(view -> postingAdapterCallback.onPostItemClicked (
+                holder.itemView.setOnClickListener(view -> postingAdapterCallback.onPostItemClicked(
                         snapshot, holder.getBindingAdapterPosition()));
-
                 break;
 
             case AD_VIEW_TYPE:

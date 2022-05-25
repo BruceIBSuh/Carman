@@ -353,9 +353,11 @@ public class BoardWriteFragment extends DialogFragment implements
 
     //If any image is attached, compress images and upload them to Storage using a worker thread.
     private void uploadImageToStorage() {
+
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
+
         if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
         else {
             //binding.pbWriteContainer.setVisibility(View.VISIBLE);
@@ -367,6 +369,7 @@ public class BoardWriteFragment extends DialogFragment implements
         }
     }
     private void uploadPostToFirestore() {
+        log.i("uploading started");
         //binding.tvPbMessage.setText("Image Uploading...");
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
@@ -392,14 +395,15 @@ public class BoardWriteFragment extends DialogFragment implements
             post.put("auto_filter", filterList);
             post.put("isGeneral", isGeneral);
         } else post.put("isGeneral", true);
-
-
+        
         DocumentReference docRef = mDB.collection("users").document(userId);
         mDB.runTransaction((Transaction.Function<Void>) transaction -> {
             DocumentSnapshot doc = transaction.get(docRef);
+            log.i("user profile: %s", doc.get("user_names"));
             if(doc.exists()) {
                 post.put("user_pic", doc.getString("user_pic"));
                 mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
+                    log.i("post uploading done");
                     fragmentModel.getNewPosting().setValue(postRef);
                     dismiss();
                     /*
@@ -408,7 +412,6 @@ public class BoardWriteFragment extends DialogFragment implements
                         fragmentModel.getNewPosting().setValue(snapshot);
                         dismiss();
                     });
-
                      */
 
                 }).addOnFailureListener(Throwable::printStackTrace);
