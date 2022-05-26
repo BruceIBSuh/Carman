@@ -11,21 +11,19 @@ public class MultiTypePostingItem {
         this.snapshot = snapshot;
         this.viewType = viewType;
     }
-
     // constructor for the type of AD
     public MultiTypePostingItem(int viewType){
         this.viewType = viewType;
     }
+
     public DocumentSnapshot getSnapshot() {
         return snapshot;
     }
     public int getViewType() {
         return viewType;
     }
-
     public int getViewId() {
         return this.hashCode();
     }
-
 
 }

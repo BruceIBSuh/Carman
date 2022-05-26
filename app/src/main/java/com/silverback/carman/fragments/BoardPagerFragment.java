@@ -1,7 +1,7 @@
 package com.silverback.carman.fragments;
 
 
-import static com.silverback.carman.BoardActivity.AD_POSITION;
+import static com.silverback.carman.BoardActivity.AD_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
@@ -11,7 +11,6 @@ import android.animation.ObjectAnimator;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.SparseIntArray;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +30,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
@@ -44,7 +44,7 @@ import com.google.firebase.firestore.SetOptions;
 import com.silverback.carman.BoardActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.BoardPostingAdapter;
-import com.silverback.carman.databinding.FragmentBoardPagerBinding;
+import com.silverback.carman.databinding.BoardFragmentPagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
@@ -79,7 +79,7 @@ public class BoardPagerFragment extends Fragment implements
     private ApplyImageResourceUtil imgutil;
     private FragmentSharedModel fragmentModel;
 
-    private FragmentBoardPagerBinding binding;
+    private BoardFragmentPagerBinding binding;
     private ProgressBar progbar;
     private FloatingActionButton fabWrite;
     private Menu menu;
@@ -93,11 +93,7 @@ public class BoardPagerFragment extends Fragment implements
     private int currentPage;
     private boolean isViewOrder;
     private boolean isScrollable; // to block recyclerview from scrolling while loading posts.
-
-    private ImageView imgEmblem;
-    private ProgressBar pbEmblem;
-
-    private int postingStart = 0;
+    private int adPosition;
 
     // Constructor
     private BoardPagerFragment() {
@@ -125,7 +121,8 @@ public class BoardPagerFragment extends Fragment implements
             if(autofilter != null && autofilter.size() > 0) automaker = autofilter.get(0);
         }
 
-        progbar = ((BoardActivity)requireActivity()).getLoadingProgressBar();
+        //progbar = ((BoardActivity)requireActivity()).getLoadingProgressBar();
+
         imgutil = new ApplyImageResourceUtil(getContext());
 
         // Instantiate objects.
@@ -133,7 +130,7 @@ public class BoardPagerFragment extends Fragment implements
         //postingList = new ArrayList<>();
         multiTypeItemList = new ArrayList<>();
         //postingAdapter = new BoardPostingAdapter(postingList, this);
-        postingAdapter = new BoardPostingAdapter(multiTypeItemList, this);
+        postingAdapter = new BoardPostingAdapter(this);
         //postingAdapter.setHasStableIds(true);
 
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
@@ -147,7 +144,12 @@ public class BoardPagerFragment extends Fragment implements
     @Override
     public View onCreateView(
             @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        binding = FragmentBoardPagerBinding.inflate(inflater);
+        binding = BoardFragmentPagerBinding.inflate(inflater);
+
+        progbar = binding.progbarBoardLoading;
+        progbar.getIndeterminateDrawable().setColorFilter(
+                ContextCompat.getColor(requireContext(), android.R.color.holo_blue_light),
+                android.graphics.PorterDuff.Mode.SRC_IN);
 
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
         RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
@@ -226,8 +228,8 @@ public class BoardPagerFragment extends Fragment implements
     public void onPrepareOptionsMenu(@NonNull Menu menu) {
         if(currentPage == AUTOCLUB) {
             View actionView = menu.getItem(0).getActionView();
-            imgEmblem = actionView.findViewById(R.id.img_action_emblem);
-            pbEmblem = actionView.findViewById(R.id.pb_emblem);
+            ImageView imgEmblem = actionView.findViewById(R.id.img_action_emblem);
+            ProgressBar pbEmblem = actionView.findViewById(R.id.pb_emblem);
 
             if(TextUtils.isEmpty(automaker)) {
                 menu.getItem(0).setVisible(false);
@@ -275,7 +277,6 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
-        //postingList.clear();
         multiTypeItemList.clear();
         if(querySnapshot.size() == 0) {
             progbar.setVisibility(View.GONE);
@@ -297,7 +298,6 @@ public class BoardPagerFragment extends Fragment implements
     public void getLastQueryResult(QuerySnapshot lastShots) {
         addPostByCategory(lastShots, true);
         isScrollable = false;
-        // Add the ad post;
     }
 
 
@@ -316,22 +316,14 @@ public class BoardPagerFragment extends Fragment implements
                 if(autofilter == null || autofilter.size() == 0) break;
                 CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 if(toObject == null) return;
-
                 ArrayList<String> filters = new ArrayList<>(toObject.getAutofilter());
-                if(filters.containsAll(autofilter)) {
-                    //postingList.add(doc);
-                    multiTypeItemList.add(new MultiTypePostingItem(0, doc));
-                }
-            } else {
-                //postingList.add(doc);
-                multiTypeItemList.add(new MultiTypePostingItem(0, doc));
-            }
+                if(filters.containsAll(autofilter)) multiTypeItemList.add(new MultiTypePostingItem(0, doc));
+            } else multiTypeItemList.add(new MultiTypePostingItem(0, doc));
+
         }
 
-
-
         if(currentPage == AUTOCLUB) {
-            if (!isLast && multiTypeItemList.size()/*postingList.size()*/ < PAGINATION) {
+            if (!isLast && multiTypeItemList.size() < PAGINATION) {
                 queryPagingUtil.setNextPostQuery();
                 isScrollable = false;
                 return;
@@ -339,20 +331,25 @@ public class BoardPagerFragment extends Fragment implements
                 progbar.setVisibility(View.GONE);
                 //postingAdapter.submitPostList(postingList);
                 //postingAdapter.updatePostList(postingList);
-                multiTypeItemList.add(AD_POSITION, new MultiTypePostingItem(1));
+                //int adpos = Math.round((float)multiTypeItemList.size() / 2);
+                //multiTypeItemList.add(adpos, new MultiTypePostingItem(1));
+                addAdvertisePost();
                 postingAdapter.submitPostList(multiTypeItemList);
             }
+
         } else {
             progbar.setVisibility(View.GONE);
             //postingAdapter.submitPostList(postingList);
             //postingAdapter.updatePostList(postingList);
-            multiTypeItemList.add(AD_POSITION, new MultiTypePostingItem(1));
+            //int adpos = Math.round((float)multiTypeItemList.size() / 2);
+            //multiTypeItemList.add(adpos, new MultiTypePostingItem(1));
+            addAdvertisePost();
             postingAdapter.submitPostList(multiTypeItemList);
         }
 
 
         // Visibility control relying on whether the posting list exists. Refactor required.
-        if(isLast && multiTypeItemList.size() /*postingList.size()*/ == 1/*0*/) {
+        if(isLast && multiTypeItemList.size() == 0) {
             progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
             binding.tvEmptyView.setVisibility(View.VISIBLE);
@@ -364,11 +361,15 @@ public class BoardPagerFragment extends Fragment implements
 
     }
 
+    /*
     @Override
     public void onSubmitPostingListDone() {
-        postingAdapter.notifyItemRangeChanged(0, multiTypeItemList.size(), "index");
+        log.i("Posting Item size in the callback: %s", multiTypeItemList.size());
+        postingAdapter.notifyItemRangeChanged(0, multiTypeItemList.size(), "postingNumber");
     }
 
+     */
+    // Invoked from BoardPagerAdapter when the autofilter changes.
     public void resetAutoFilter(ArrayList<String> autofilter) {
         if(!menu.getItem(0).isVisible()) requireActivity().invalidateOptionsMenu();
         this.autofilter = autofilter;
@@ -489,6 +490,10 @@ public class BoardPagerFragment extends Fragment implements
         });
     }
 
+    private void addAdvertisePost() {
+        int adpos = Math.round((float)multiTypeItemList.size() / 2);
+        multiTypeItemList.add(adpos, new MultiTypePostingItem(AD_VIEW_TYPE));
+    }
 }
 
 

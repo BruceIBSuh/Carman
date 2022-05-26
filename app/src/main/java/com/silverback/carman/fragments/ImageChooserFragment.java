@@ -1,5 +1,6 @@
 package com.silverback.carman.fragments;
 
+import static android.content.Context.MEDIA_COMMUNICATION_SERVICE;
 import static com.silverback.carman.BoardActivity.CAMERA;
 import static com.silverback.carman.BoardActivity.GALLERY;
 
@@ -28,8 +29,11 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 public class ImageChooserFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ImageChooserFragment.class);
+    private final int MEDIA_GALLERY = 1;
+    private final int MEDIA_CAMERA = 2;
 
     private FragmentSharedModel fragmentModel;
+    private int mediaType;
     public ImageChooserFragment() {
         // Required empty public constructor which might be invoked by FragmentFacotry.
     }
@@ -50,18 +54,23 @@ public class ImageChooserFragment extends DialogFragment {
         builder.setView(binding.getRoot())
                 .setTitle(getString(R.string.pref_userpic_title));
 
+        Bundle result = new Bundle();
+        mediaType = -1;
+
         binding.tvGallery.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(GALLERY);
-            dismiss();
+            fragmentModel.getImageChooser().setValue(MEDIA_GALLERY);
+            mediaType = MEDIA_GALLERY;
+            //dismiss();
         });
         binding.tvCamera.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(CAMERA);
-            dismiss();
+            fragmentModel.getImageChooser().setValue(MEDIA_CAMERA);
+            mediaType = MEDIA_CAMERA;
+            //dismiss();
         });
 
         binding.tvNoImg.setOnClickListener(view -> {
             fragmentModel.getImageChooser().setValue(-1);
-            dismiss();
+            //dismiss();
         });
 
         new Dialog(requireActivity(), getTheme()) {
@@ -71,7 +80,11 @@ public class ImageChooserFragment extends DialogFragment {
             }
         };
 
+        result.putInt("mediaType", mediaType);
+        getParentFragmentManager().setFragmentResult("userImage", result);
+
         return builder.create();
     }
+
 
 }

@@ -15,6 +15,7 @@
  */
 package com.silverback.carman;
 
+import static com.silverback.carman.SettingActivity.PREF_AUTODATA;
 import static com.silverback.carman.SettingActivity.PREF_AUTODATA_TAG;
 
 import android.Manifest;
@@ -64,9 +65,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.adapters.BoardPagerAdapter;
-import com.silverback.carman.databinding.ActivityBoardBinding;
+import com.silverback.carman.databinding.BoardActivityBinding;
 import com.silverback.carman.fragments.BoardEditFragment;
 import com.silverback.carman.fragments.BoardWriteFragment;
 import com.silverback.carman.logs.LoggingHelper;
@@ -135,7 +135,7 @@ public class BoardActivity extends BaseActivity implements
 
     // Objects
     private FirebaseFirestore mDB;
-    private ActivityBoardBinding binding;
+    private BoardActivityBinding binding;
     private BoardPagerAdapter pagerAdapter;
     private BoardWriteFragment writePostFragment;
     private MenuItem menuItem;
@@ -169,7 +169,7 @@ public class BoardActivity extends BaseActivity implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityBoardBinding.inflate(getLayoutInflater());
+        binding = BoardActivityBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         setSupportActionBar(binding.boardToolbar);
@@ -177,11 +177,6 @@ public class BoardActivity extends BaseActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mDB = FirebaseFirestore.getInstance();
-
-        // Change the progressbar color using the PorterDuff filter
-        binding.progbarBoardLoading.getIndeterminateDrawable().setColorFilter(
-                ContextCompat.getColor(this, android.R.color.holo_blue_light),
-                android.graphics.PorterDuff.Mode.SRC_IN);
 
         // chkboxList is created by whether the autodata is set. cbAutoFilter is created
         // by whether each checkbox item is checked.
@@ -191,7 +186,7 @@ public class BoardActivity extends BaseActivity implements
 
         // Create the autofilter checkbox if the user's auto data is set. If null, it catches the
         // exception that calls setNoAutofilterText().
-        jsonAutoFilter = mSettings.getString(PREF_AUTODATA_TAG, null);
+        jsonAutoFilter = mSettings.getString(PREF_AUTODATA, null);
         createAutofilter(jsonAutoFilter, binding.autofilter);
 
         // ViewPager2
@@ -728,12 +723,6 @@ public class BoardActivity extends BaseActivity implements
     public SpannableStringBuilder getAutoClubTitle() {
         return clubTitle;
     }
-    // Invoked in BoardPagerAdapter to hold visibility control to the progressbar when post logindg
-    // complete and set it to gone in setFirstQuery().
-    public ProgressBar getLoadingProgressBar() {
-        return binding.progbarBoardLoading;
-    }
-
 
     // Refactor required!!:
     // Custom class to typecast Firestore array field of post_images to ArrayList<String> used

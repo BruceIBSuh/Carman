@@ -231,6 +231,7 @@ public class BoardWriteFragment extends DialogFragment implements
         else cbAutoFilter.remove(chkbox.getText().toString());
     }
 
+    // Create the option menu for uploading a post in BoardWriteFragment.
     private void createPostWriteMenu() {
         binding.toolbarBoardWrite.inflateMenu(R.menu.options_board_write);
         binding.toolbarBoardWrite.setOnMenuItemClickListener(item -> {
@@ -353,24 +354,24 @@ public class BoardWriteFragment extends DialogFragment implements
 
     //If any image is attached, compress images and upload them to Storage using a worker thread.
     private void uploadImageToStorage() {
-
         ((InputMethodManager)requireActivity().getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(binding.getRoot().getWindowToken(), 0);
         if(!doEmptyCheck()) return;
 
-        if(uriImageList.size() == 0) uploadPostToFirestore(); //no image attached
-        else {
-            //binding.pbWriteContainer.setVisibility(View.VISIBLE);
-            //binding.tvPbMessage.setText("Image beging compressed...");
-            for(int i = 0; i < uriImageList.size(); i++) {
-                final Uri uri = uriImageList.get(i);
-                bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
-            }
+        // ProgressBar gets started.
+        binding.progbarBoardUploading.setVisibility(View.VISIBLE);
+
+        if(uriImageList.size() == 0) {
+            uploadPostToFirestore(); //no image attached
+            return;
+        }
+
+        for(int i = 0; i < uriImageList.size(); i++) {
+            final Uri uri = uriImageList.get(i);
+            bitmapTask = ThreadManager2.uploadBitmapTask(getContext(), uri, i, imgViewModel);
         }
     }
     private void uploadPostToFirestore() {
-        log.i("uploading started");
-        //binding.tvPbMessage.setText("Image Uploading...");
         Map<String, Object> post = new HashMap<>();
         post.put("user_id", userId);
         post.put("user_name", userName);
@@ -379,7 +380,7 @@ public class BoardWriteFragment extends DialogFragment implements
         post.put("cnt_comment", 0);
         post.put("cnt_compathy", 0);
         post.put("cnt_view", 0);
-        post.put("isAutoclub", page == AUTOCLUB);
+        post.put("isAutoClub", page == AUTOCLUB);
         post.put("post_content", binding.etPostContent.getText().toString());
         // If the post has any images attached.
         if(sparseUriArray.size() > 0) {
@@ -404,20 +405,16 @@ public class BoardWriteFragment extends DialogFragment implements
                 post.put("user_pic", doc.getString("user_pic"));
                 mDB.collection("user_post").add(post).addOnSuccessListener(postRef -> {
                     log.i("post uploading done");
+                    binding.progbarBoardUploading.setVisibility(View.GONE);
                     fragmentModel.getNewPosting().setValue(postRef);
                     dismiss();
-                    /*
-                    postRef.get().addOnSuccessListener(snapshot -> {
-                        log.i("add a new post");
-                        fragmentModel.getNewPosting().setValue(snapshot);
-                        dismiss();
-                    });
-                     */
-
                 }).addOnFailureListener(Throwable::printStackTrace);
             }
             return null;
-        }).addOnFailureListener(e -> {log.e("transaction failed: %s", e);});
+        }).addOnFailureListener(e -> {
+            e.printStackTrace();
+            binding.progbarBoardUploading.setVisibility(View.GONE);
+        });
 
         // When uploading completes, the result is sent to BoardPagerFragment and the  notifes
         // BoardPagerFragment of a new posting. At the same time, the fragment dismisses.
@@ -441,24 +438,6 @@ public class BoardWriteFragment extends DialogFragment implements
             Snackbar.make(binding.getRoot(), getString(R.string.board_msg_no_content), Snackbar.LENGTH_SHORT).show();
             return false;
         } else return true;
-    }
-
-    private static class UserNames {
-        @PropertyName("user_names")
-        private List<String> userNames;
-
-        public UserNames () {}
-        public UserNames(List<String> userNames) {
-            this.userNames = userNames;
-        }
-        @PropertyName("user_names")
-        public List<String> getUserNames() {
-            return userNames;
-        }
-        @PropertyName("usre_names")
-        public void setUserNames(List<String> userNames) {
-            this.userNames = userNames;
-        }
     }
 
 }

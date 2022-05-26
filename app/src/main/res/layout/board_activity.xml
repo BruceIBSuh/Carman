@@ -126,14 +126,14 @@
         </FrameLayout>
     </androidx.core.widget.NestedScrollView>
     -->
-
+    <!--
     <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
         android:id="@+id/progbar_board_loading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_centerInParent="true" />
-
+    -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fab_board_write"
         android:visibility="gone"

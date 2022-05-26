@@ -58,6 +58,15 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+    <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
+        android:id="@+id/progbar_board_uploading"
+        android:visibility="gone"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true"
+        app:layout_dodgeInsetEdges="top"/>
+
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollview"
         android:layout_width="match_parent"

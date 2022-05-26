@@ -55,22 +55,22 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final SimpleDateFormat sdf;
     //private final List<DocumentSnapshot> snapshotList;
     private int category;//Must be refactored when the multi-type list applies.
-    private int postNum;//post number
+    private int adNum;
 
     public interface OnPostingAdapterCallback {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
-        void onSubmitPostingListDone();
+        //void onSubmitPostingListDone();
     }
 
     // Constructor
-    public BoardPostingAdapter(List<MultiTypePostingItem> snapshots, OnPostingAdapterCallback callback) {
+    public BoardPostingAdapter(OnPostingAdapterCallback callback) {
         super();
         this.postingAdapterCallback = callback;
         //snapshotList = snapshots;
         mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        postNum = 0;
+        adNum = 0;
     }
 
     // Update the adapter using AsyncListDiffer.ItemCallback<T> which uses the background thread.
@@ -80,7 +80,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
      */
     public void submitPostList(List<MultiTypePostingItem> multiTypeList) {
-        mDiffer.submitList(Lists.newArrayList(multiTypeList), postingAdapterCallback::onSubmitPostingListDone);
+        adNum = 0;//subtract the number
+        mDiffer.submitList(Lists.newArrayList(multiTypeList)/*, postingAdapterCallback::onSubmitPostingListDone*/);
     }
 
     // Upadte the adapter using DiffUtil.Callback which uses the main thread.
@@ -124,8 +125,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int viewType) {
+        log.i("onCreateViewHolder");
         this.context = viewGroup.getContext();
-        this.category = viewType;
 
         switch(viewType) {
             case CONTENT_VIEW_TYPE:
@@ -147,21 +148,19 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        switch(category) {
+        int viewType = mDiffer.getCurrentList().get(position).getViewType();
+        switch(viewType) {
             case CONTENT_VIEW_TYPE:
                 final PostViewHolder postHolder = (PostViewHolder)holder;
-                //DocumentSnapshot snapshot = multiTypeItemList.get(position).getItemSnapshot();
-                //final DocumentSnapshot snapshot = mDiffer.getCurrentList().get(position);
                 MultiTypePostingItem multiTypeItem = mDiffer.getCurrentList().get(position);
                 DocumentSnapshot snapshot = multiTypeItem.getSnapshot();
-                postNum++;
 
                 //((PostViewHolder)holder).bindPostingItem(snapshot, position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
                 postHolder.getPostTitleView().setText(snapshot.getString("post_title"));
-                postHolder.getPostNumView().setText(String.valueOf(postNum));
+                postHolder.getPostNumView().setText(String.valueOf(position + 1 - adNum));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 if(snapshot.getDate("timestamp") != null) {
@@ -196,6 +195,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             case AD_VIEW_TYPE:
                 log.i("Ad view type");
+                adNum += 1;
                 break;
         }
     }
@@ -207,30 +207,25 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         //holder.setIsRecyclable(false);
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            log.i("partial binding: %s", payloads.size());
-            if(category == AD_VIEW_TYPE) return;
-
+            log.i("partial binding: %s", payloads);
             PostViewHolder postHolder = (PostViewHolder)holder;
-            for(Object payload : payloads) {
-               if(payload instanceof Long) {
-                    postHolder.getViewerCountView().setText(String.valueOf(payload));
-                /*
-                } else if(payload instanceof SparseLongArray) {
-                   log.i("sparselongarray:");
-                   SparseLongArray sparseArray = (SparseLongArray) payload;
-                   postBinding.tvCountComment.setText(String.valueOf(sparseArray.valueAt(0)));
+            //for(Object payload : payloads) {
+               if(payloads.get(0) instanceof Long) {
+                    postHolder.getViewerCountView().setText(String.valueOf(payloads.get(0)));
+               } else if(payloads.get(0) instanceof Integer) {
+                   log.i("comment count update: %s", payloads.get(0));
+                   postHolder.getCommentCountView().setText(String.valueOf(payloads.get(0)));
+               }
 
-                */
-               } else if(payload instanceof Integer) {
-                   log.i("comment count update: %s", payload);
-                   postHolder.getCommentCountView().setText(String.valueOf(payload));
-                } else if(payload instanceof String) {
-                    log.i("post number: %s", postNum);
-                    String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
-                    postHolder.getPostNumView().setText(bindingPos);
+               /*
+                } else if(payloads.get(0) instanceof String) {
+                   log.i("update the posting index number");
+                   String bindingPos = String.valueOf(holder.getBindingAdapterPosition() + 1);
+                   postHolder.getPostNumView().setText(bindingPos);
+
                 }
-
-            }
+                */
+            //}
         }
     }
 

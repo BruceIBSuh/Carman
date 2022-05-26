@@ -55,16 +55,16 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
             @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads) {
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            for(Object payload : payloads) {
-                if(payload instanceof ArrayList<?>) {
-                    ArrayList<?> tempList = (ArrayList<?>)payload;
+            //for(Object payload : payloads) {
+                if(payloads.get(0) instanceof ArrayList<?>) {
+                    ArrayList<?> tempList = (ArrayList<?>)payloads.get(0);
                     ArrayList<String> autofilter = new ArrayList<>();
                     for(Object obj : tempList) autofilter.add((String)obj);
                     //autoFragment.updateAutoFilter(autofilter);
                     fragmentList.get(AUTOCLUB).resetAutoFilter(autofilter);
-                    break;
+                    //break;
                 }
-            }
+            //}
         }
     }
 
@@ -83,5 +83,4 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
         return false;
     }
 
-    public BoardPagerAdapter getBoardPagerAdapter() {return this;}
 }

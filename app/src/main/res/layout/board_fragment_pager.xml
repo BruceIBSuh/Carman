@@ -7,11 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".fragments.BoardPagerFragment">
-    <!--
-    <com.silverback.carman.views.PostingRecyclerView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-    -->
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_board_postings"
         android:layout_width="match_parent"
@@ -25,6 +21,14 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/board_emptyview" />
+
+    <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
+        android:id="@+id/progbar_board_loading"
+        android:visibility="gone"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_gravity="center"
+        android:layout_centerInParent="true" />
     <!--
     <ProgressBar style="?android:attr/progressBarStyleLarge"
         android:visibility="gone"

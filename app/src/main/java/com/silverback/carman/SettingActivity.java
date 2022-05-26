@@ -71,11 +71,21 @@ public class SettingActivity extends BaseActivity implements
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
     public static final String PREF_USERNAME_TAG = "carman_pref_nickname";
-    public static final String PREF_DISTRICT_TAG ="carman_pref_district";
-    public static final String PREF_AUTODATA_TAG = "carman_pref_autodata";
-    public static final String PREF_FUEL_TAG = "carman_pref_ls_fuel";
+    public static final String PREF_AUTODATA = "carman_pref_autodata";
+    public static final String PREF_AUTOMODEL = "carman_pref_automodel";
+    public static final String PREF_AUTOMAKER = "carman_pref_automaker";
+    public static final String PREF_AUTOTYPE = "carman_pref_autotype";
+    public static final String PREF_AUTOYEAR = "carman_pref_autoyear";
+    public static final String PREF_ENGINETYPE = "carman_pref_enginetype";
+    public static final String PREF_ODOMETER = "carman_pref_odometer";
+    public static final String PREF_DISTRICT ="carman_pref_district";
+    //public static final String PREF_AUTODATA_TAG = "carman_pref_autodata";
+    public static final String PREF_FUELTYPE = "carman_pref_ls_fuel";
     public static final String PREF_SEARCH_RADIOUS_TAG = "carman_pref_searching_radius";
-    public static final String PREF_USERIMG_TAG = "carman_pref_userpic";
+    public static final String PREF_USER_IMAGE = "carman_pref_userpic";
+    public static final String PREF_FAVORITE = "carman_pref_favorite_provider";
+    public static final String PREF_FAVORITE_GAS = "carman_pref_favorite_gas";
+    public static final String PREF_FAVORITE_SVC = "carman_pref_favorite_svc";
 
     //private static final int REQUEST_CODE_GALLERY = 10;
     //private static final int REQUEST_CODE_CAMERA = 11;
@@ -306,8 +316,8 @@ public class SettingActivity extends BaseActivity implements
                 if(!TextUtils.isEmpty(userName)) resultIntent.putExtra("userName", userName);
                 break;
 
-            case PREF_AUTODATA_TAG:
-                String jsonAutoData = mSettings.getString(Constants.AUTO_DATA, null);
+            case PREF_AUTODATA:
+                String jsonAutoData = mSettings.getString(PREF_AUTODATA, null);
                 // Auto data should be saved both in SharedPreferences and Firestore for a statistical
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
@@ -317,12 +327,12 @@ public class SettingActivity extends BaseActivity implements
                 }
                 break;
 
-            case PREF_FUEL_TAG:
+            case PREF_FUELTYPE:
                 String gasCode = mSettings.getString(key, null);
                 resultIntent.putExtra("gasCode", gasCode);
                 break;
 
-            case PREF_DISTRICT_TAG:
+            case PREF_DISTRICT:
                 try {
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
@@ -336,7 +346,7 @@ public class SettingActivity extends BaseActivity implements
                 resultIntent.putExtra("searchRadius", radius);
                 break;
 
-            case PREF_USERIMG_TAG:
+            case PREF_USER_IMAGE:
                 userImage = mSettings.getString(key, null);
                 break;
         }
@@ -433,7 +443,7 @@ public class SettingActivity extends BaseActivity implements
                 break;
 
             case Constants.REQUEST_BOARD_SETTING_AUTOCLUB:
-                Preference autoPref = fragment.findPreference(Constants.AUTO_DATA);
+                Preference autoPref = fragment.findPreference(PREF_AUTODATA);
                 Objects.requireNonNull(autoPref).setIcon(R.drawable.setting_arrow_indicator);
                 break;
 

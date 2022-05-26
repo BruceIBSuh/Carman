@@ -1,9 +1,18 @@
 package com.silverback.carman.fragments;
 
 
-import static com.silverback.carman.SettingActivity.PREF_USERIMG_TAG;
-import static com.silverback.carman.SettingActivity.PREF_DISTRICT_TAG;
+import static com.silverback.carman.SettingActivity.PREF_AUTODATA;
+import static com.silverback.carman.SettingActivity.PREF_AUTOMAKER;
+import static com.silverback.carman.SettingActivity.PREF_AUTOMODEL;
+import static com.silverback.carman.SettingActivity.PREF_DISTRICT;
+import static com.silverback.carman.SettingActivity.PREF_FAVORITE;
+import static com.silverback.carman.SettingActivity.PREF_FAVORITE_GAS;
+import static com.silverback.carman.SettingActivity.PREF_FAVORITE_SVC;
+import static com.silverback.carman.SettingActivity.PREF_ODOMETER;
+import static com.silverback.carman.SettingActivity.PREF_USER_IMAGE;
 import static com.silverback.carman.SettingActivity.PREF_USERNAME_TAG;
+import static com.silverback.carman.utils.Constants.FAVORITE_GAS;
+import static com.silverback.carman.utils.Constants.FAVORITE_SVC;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -15,6 +24,7 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
@@ -95,27 +105,24 @@ public class SettingPrefFragment extends SettingBaseFragment {
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         namePref = findPreference(PREF_USERNAME_TAG);
-
         String userName = mSettings.getString(PREF_USERNAME_TAG, getString(R.string.pref_entry_void));
-        //if(namePref != null) {
-            namePref.setSummary(userName);
-            namePref.setOnPreferenceClickListener(v -> {
-                if(namePref.getSummary() != null) {
-                    String name = namePref.getSummary().toString();
-                    String userId = requireArguments().getString("userId");
-                    DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
-                    dialogFragment.show(getChildFragmentManager(), "NameFragment");
-                }
-                return true;
-            });
-        //}
+        namePref.setSummary(userName);
+        namePref.setOnPreferenceClickListener(v -> {
+            if(namePref.getSummary() != null) {
+                String name = namePref.getSummary().toString();
+                String userId = requireArguments().getString("userId");
+                DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
+                dialogFragment.show(getChildFragmentManager(), "NameFragment");
+            }
+            return true;
+        });
 
         // Call SettingAutoFragment which contains preferences to have car related data which are
         // used as filters for querying the posting board. On clicking the UP button, the preference
         // values are notified here as the JSONString and reset the preference summary.
-        autoPref = findPreference(Constants.AUTO_DATA);
-        makerName = mSettings.getString(Constants.AUTO_MAKER, null);
-        modelName = mSettings.getString(Constants.AUTO_MODEL, null);
+        autoPref = findPreference(PREF_AUTODATA);
+        makerName = mSettings.getString(PREF_AUTOMAKER, null);
+        modelName = mSettings.getString(PREF_AUTOMODEL, null);
         // Set the void summary to the auto preference unless the auto maker name is given. Otherwise,
         // query the registration number of the automaker and the automodel, if the model name is given.
         // At the same time, show the progressbar until the number is queried.
@@ -133,7 +140,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Custom SummaryProvider overriding provideSummary() with Lambda expression.
         // Otherwise, just set app:useSimpleSummaryProvider="true" in xml for EditTextPreference
         // and ListPreference.
-        EditTextPreference etMileage = findPreference(Constants.ODOMETER);
+        EditTextPreference etMileage = findPreference(PREF_ODOMETER);
         if(etMileage != null) {
             etMileage.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
             etMileage.setSummaryProvider(pref -> {
@@ -155,7 +162,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Custom preference to display the custom PreferenceDialogFragmentCompat which has dual
         // spinners to pick the district of Sido and Sigun based upon the given Sido. The default
         // district name and code is saved as JSONString.
-        spinnerPref = findPreference(PREF_DISTRICT_TAG);
+        spinnerPref = findPreference(PREF_DISTRICT);
         sigunCode = jsonDistrict.optString(2);
         if(spinnerPref != null && jsonDistrict != null) {
             spinnerPref.setSummaryProvider((Preference.SummaryProvider<Preference>) preference -> {
@@ -179,7 +186,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
 
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
-        favorite = findPreference(Constants.FAVORITE);
+        favorite = findPreference(PREF_FAVORITE);
         mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String favoriteStn = getString(R.string.pref_no_favorite);
             String favoriteSvc = getString(R.string.pref_no_favorite);
@@ -194,9 +201,9 @@ public class SettingPrefFragment extends SettingBaseFragment {
             favorite.setSummaryProvider(preference -> summary);
         });
 
-        Preference gasStation = findPreference(Constants.FAVORITE_GAS);
+        Preference gasStation = findPreference(PREF_FAVORITE_GAS);
         Objects.requireNonNull(gasStation).setSummaryProvider(preference -> getString(R.string.pref_summary_gas));
-        Preference svcCenter = findPreference(Constants.FAVORITE_SVC);
+        Preference svcCenter = findPreference(PREF_FAVORITE_SVC);
         Objects.requireNonNull(svcCenter).setSummaryProvider(preference -> getString(R.string.pref_summary_svc));
 
         // Set the standard of period between month and mileage.
@@ -212,7 +219,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Image Editor which pops up the dialog to select which resource location to find an image.
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
-        userImagePref = findPreference(PREF_USERIMG_TAG);
+        userImagePref = findPreference(PREF_USER_IMAGE);
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(PREF_USERNAME_TAG, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -220,14 +227,18 @@ public class SettingPrefFragment extends SettingBaseFragment {
             }
 
             DialogFragment dialogFragment = new ImageChooserFragment();
-            dialogFragment.show(getChildFragmentManager(), "imageMediaChooser");
+            FragmentManager fragmentManager = getChildFragmentManager();
+
+            fragmentManager.setFragmentResultListener("userImage", dialogFragment, (req, res) -> {
+            });
+
+            dialogFragment.show(fragmentManager, "imageMediaChooser");
             return true;
         });
 
         // LiveData from ApplyImageREsourceUtil to set a drawable to the icon. The viewmodel is
         // defined in onViewCreated().
-        ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-        imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
+
     }
 
     /*
@@ -239,6 +250,9 @@ public class SettingPrefFragment extends SettingBaseFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
+
+        imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
 
         fragmentModel.getUserName().observe(getViewLifecycleOwner(), userName -> {
             mSettings.edit().putString(PREF_USERNAME_TAG, userName).apply();
@@ -246,7 +260,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         });
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonAutoDataArray -> {
-            mSettings.edit().putString(Constants.AUTO_DATA, jsonAutoDataArray.toString()).apply();
+            mSettings.edit().putString(PREF_AUTODATA, jsonAutoDataArray.toString()).apply();
             mSettings.edit().putBoolean(Constants.AUTOCLUB_LOCK, false).apply();
             //makerName = parseAutoData(jsonString).get(0);
             //modelName = parseAutoData(jsonString).get(1);
@@ -271,7 +285,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
             sigunCode = distList.get(2);
             spinnerPref.setSummaryProvider(pref -> String.format("%s %s", distList.get(0), distList.get(1)));
             JSONArray jsonArray = new JSONArray(distList);
-            mSettings.edit().putString(PREF_DISTRICT_TAG, jsonArray.toString()).apply();
+            mSettings.edit().putString(PREF_DISTRICT, jsonArray.toString()).apply();
         });
 
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), media ->

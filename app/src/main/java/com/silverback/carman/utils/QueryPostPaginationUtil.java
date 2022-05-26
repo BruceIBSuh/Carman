@@ -104,7 +104,6 @@ public class QueryPostPaginationUtil {
         */
         query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
-            log.i("query: %s", querySnapshot.getMetadata().isFromCache());
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(Throwable::printStackTrace);
     }
@@ -116,9 +115,8 @@ public class QueryPostPaginationUtil {
                 .limit(PAGINATION).get()
                 .addOnSuccessListener(querySnapshot -> {
                     this.querySnapshot = querySnapshot;
-                    if(!querySnapshot.getMetadata().hasPendingWrites()) {
-                        mCallback.getFirstQueryResult(querySnapshot);
-                    }
+                    mCallback.getFirstQueryResult(querySnapshot);
+                    //if(!querySnapshot.getMetadata().hasPendingWrites()) {}
                 }).addOnFailureListener(Throwable::printStackTrace);
     }
 
