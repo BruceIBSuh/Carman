@@ -2,6 +2,8 @@ package com.silverback.carman.fragments;
 
 import static android.content.Context.INPUT_METHOD_SERVICE;
 
+import static com.silverback.carman.SettingActivity.PREF_AUTODATA;
+
 import android.app.Dialog;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -213,7 +215,7 @@ public class BoardEditFragment extends DialogFragment implements
                 if(isAutoclub) {
                     isGeneral = toObject.isGeneral();
                     binding.scrollAutofilter.setVisibility(View.VISIBLE);
-                    String json = mSettings.getString(Constants.AUTO_DATA, null);
+                    String json = mSettings.getString(PREF_AUTODATA, null);
                     setEditCheckbox(json, toObject.getAutofilter());
                 }
             }

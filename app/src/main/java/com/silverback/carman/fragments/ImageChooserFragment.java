@@ -83,6 +83,7 @@ public class ImageChooserFragment extends DialogFragment {
         result.putInt("mediaType", mediaType);
         getParentFragmentManager().setFragmentResult("userImage", result);
 
+
         return builder.create();
     }
 

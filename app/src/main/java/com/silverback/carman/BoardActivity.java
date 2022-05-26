@@ -16,7 +16,6 @@
 package com.silverback.carman;
 
 import static com.silverback.carman.SettingActivity.PREF_AUTODATA;
-import static com.silverback.carman.SettingActivity.PREF_AUTODATA_TAG;
 
 import android.Manifest;
 import android.animation.Animator;

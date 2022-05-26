@@ -1,6 +1,8 @@
 package com.silverback.carman.fragments;
 
 
+import static com.silverback.carman.SettingActivity.PREF_ODOMETER;
+
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
@@ -200,7 +202,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
 
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvGasDatetime.setText(sdf.format(visitTime));
-        binding.tvGasMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
+        binding.tvGasMileage.setText(mSettings.getString(PREF_ODOMETER, "0"));
         binding.tvGasPayment.setText(mSettings.getString(Constants.PAYMENT, "0"));
 
         // Attach the event listeners
@@ -421,7 +423,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // Insert the data to the db.
         long rowId = mDB.gasManagerModel().insertBoth(baseEntity, gasEntity);
         if(rowId > 0) {
-            mSettings.edit().putString(Constants.ODOMETER, binding.tvGasMileage.getText().toString()).apply();
+            mSettings.edit().putString(PREF_ODOMETER, binding.tvGasMileage.getText().toString()).apply();
             uploadGasDataToFirestore(userId, baseEntity.totalExpense);
         }
 

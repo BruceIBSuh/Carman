@@ -1,6 +1,8 @@
 package com.silverback.carman.fragments;
 
 
+import static com.silverback.carman.SettingActivity.PREF_ODOMETER;
+
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
@@ -151,7 +153,7 @@ public class ExpenseServiceFragment extends Fragment implements
         long visitTime = (isGeofenceIntent)? geoTime : System.currentTimeMillis();
         binding.tvServiceDate.setText(sdf.format(visitTime));
         binding.tvSvcPayment.setText("0");
-        binding.tvSvcMileage.setText(mSettings.getString(Constants.ODOMETER, "0"));
+        binding.tvSvcMileage.setText(mSettings.getString(PREF_ODOMETER, "0"));
         binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite);
         createRecyclerServiceItemView();
 
@@ -476,7 +478,7 @@ public class ExpenseServiceFragment extends Fragment implements
         // using @Transaction in ServiceManagerDao.
         int rowId = mDB.serviceManagerModel().insertAll(baseEntity, serviceEntity, itemEntityList);
         if(rowId > 0) {
-            mSettings.edit().putString(Constants.ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
+            mSettings.edit().putString(PREF_ODOMETER, binding.tvSvcMileage.getText().toString()).apply();
             //SparseIntArray sparseArray = new SparseIntArray();
             //sparseArray.put(Constants.SVC, totalExpense);
             fragmentModel.getTotalExpenseByCategory().setValue(serviceTotal);
