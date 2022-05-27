@@ -3,6 +3,7 @@ package com.silverback.carman.fragments;
 
 import static com.silverback.carman.BoardActivity.AD_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
+import static com.silverback.carman.BoardActivity.CONTENT_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -94,6 +95,7 @@ public class BoardPagerFragment extends Fragment implements
     private boolean isViewOrder;
     private boolean isScrollable; // to block recyclerview from scrolling while loading posts.
     private int adPosition;
+    private int postingNumber;
 
     // Constructor
     private BoardPagerFragment() {
@@ -132,6 +134,7 @@ public class BoardPagerFragment extends Fragment implements
         //postingAdapter = new BoardPostingAdapter(postingList, this);
         postingAdapter = new BoardPostingAdapter(this);
         //postingAdapter.setHasStableIds(true);
+        postingNumber = 0;
 
         queryPagingUtil = new QueryPostPaginationUtil(mDB, this);
         colRef = mDB.collection("user_post");
@@ -174,21 +177,28 @@ public class BoardPagerFragment extends Fragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
 
         fragmentModel.getNewPosting().observe(getViewLifecycleOwner(), postRef -> {
-            postRef.get().addOnCompleteListener(task -> {
-                if(task.isSuccessful()) {
+            postRef.get().addOnSuccessListener(doc -> {
+                if(doc.exists()) {
                     //DocumentSnapshot snapshot = task.getResult();
-                    //log.i("post images: %s", snapshot.get("post_images"));
+                    log.i("new posting: %s", doc.getString("post_title"));
+                    //MultiTypePostingItem newPosting = new MultiTypePostingItem(doc, CONTENT_VIEW_TYPE, 1);
+                    //multiTypeItemList.add(0, newPosting);
+                    //postingAdapter.submitPostList(multiTypeItemList);
+                    //postingAdapter.notifyItemRangeChanged(0, multiTypeItemList.size(), "postIndex");
+
                     queryPagingUtil.setPostQuery(colRef, currentPage);
                 }
             });
         });
 
-        fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), post -> {
+        //fragmentModel.getRemovedPosting().observe(getViewLifecycleOwner(), position -> {
+        fragmentModel.getNotifyPostChanged().observe(getViewLifecycleOwner(), isRemoved -> {
             //postingList.remove(post);
-            multiTypeItemList.remove(new MultiTypePostingItem(0, post));
+            //multiTypeItemList.remove(new MultiTypePostingItem(post, 0, ));
             //postingAdapter.submitPostList(postingList);
             //postingAdapter.updatePostList(postingList);
-            queryPagingUtil.setPostQuery(colRef, currentPage);
+            //multiTypeItemList.remove(multiTypeItemList.get(position));
+            if(isRemoved) queryPagingUtil.setPostQuery(colRef, currentPage);
         });
 
         fragmentModel.getEditedPosting().observe(getViewLifecycleOwner(), sparseArray -> {
@@ -196,7 +206,7 @@ public class BoardPagerFragment extends Fragment implements
             final DocumentReference docRef = (DocumentReference)sparseArray.valueAt(0);
             docRef.get().addOnSuccessListener(doc -> {
                 //postingList.set(position, doc);
-                multiTypeItemList.set(position, new MultiTypePostingItem(0, doc));
+                //multiTypeItemList.set(position, new MultiTypePostingItem(0, doc));
                 queryPagingUtil.setPostQuery(colRef, currentPage);
             });
         });
@@ -277,11 +287,12 @@ public class BoardPagerFragment extends Fragment implements
 
     @Override
     public void getFirstQueryResult(QuerySnapshot querySnapshot) {
+        postingNumber = 0;
         multiTypeItemList.clear();
         if(querySnapshot.size() == 0) {
-            progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
             binding.tvEmptyView.setVisibility(View.VISIBLE);
+            progbar.setVisibility(View.GONE);
             return;
         } else addPostByCategory(querySnapshot, false);
 
@@ -317,8 +328,14 @@ public class BoardPagerFragment extends Fragment implements
                 CustomPostingObject toObject = doc.toObject(CustomPostingObject.class);
                 if(toObject == null) return;
                 ArrayList<String> filters = new ArrayList<>(toObject.getAutofilter());
-                if(filters.containsAll(autofilter)) multiTypeItemList.add(new MultiTypePostingItem(0, doc));
-            } else multiTypeItemList.add(new MultiTypePostingItem(0, doc));
+                if(filters.containsAll(autofilter)) {
+                    postingNumber++;
+                    multiTypeItemList.add(new MultiTypePostingItem(doc, 0, postingNumber));
+                }
+            } else {
+                postingNumber++;
+                multiTypeItemList.add(new MultiTypePostingItem(doc, 0, postingNumber));
+            }
 
         }
 
@@ -350,7 +367,6 @@ public class BoardPagerFragment extends Fragment implements
 
         // Visibility control relying on whether the posting list exists. Refactor required.
         if(isLast && multiTypeItemList.size() == 0) {
-            progbar.setVisibility(View.GONE);
             binding.recyclerBoardPostings.setVisibility(View.GONE);
             binding.tvEmptyView.setVisibility(View.VISIBLE);
         } else {

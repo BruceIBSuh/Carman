@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:background="@color/barColor3">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_alignParentStart="true"
+        android:src="@drawable/bg_imgbtn_start"
+        android:contentDescription="@null"/>
+
+    <ProgressBar
+        android:id="@+id/progbar"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_alignParentStart="true"
+        android:layout_centerInParent="true"
+        android:indeterminateOnly="true" />
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toEndOf="@id/icon"
+        android:layout_marginStart="32dp"
+        android:layout_gravity="center_vertical"
+        android:text="사용자 이미지 설정"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+</RelativeLayout>

@@ -174,13 +174,14 @@ public class BoardReadFragment extends DialogFragment implements
         postRef = mDB.collection(target).document(documentId);
         queryPaginationUtil.setCommentQuery(postRef, "timestamp");
 
+        log.i("posting index: %s", position);
+
     }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        //binding = FragmentBoardReadBinding.inflate(inflater);
         binding = BoardFragmentReadBinding.inflate(inflater, container, false);
         headerBinding = BoardReadHeaderBinding.inflate(inflater, container, false);
         // Set the stand-alone toolabr which works in the same way that the action bar does in most
@@ -268,17 +269,14 @@ public class BoardReadFragment extends DialogFragment implements
     public void onResume() {
         super.onResume();
     }
-
     @Override
     public void onPause() {
         super.onPause();
     }
-
     @Override
     public void onDestroyView() {
         super.onDestroyView();
     }
-
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
@@ -314,17 +312,29 @@ public class BoardReadFragment extends DialogFragment implements
             String msg = getString(R.string.board_alert_msg);
 
             DialogFragment fragment = CustomDialogFragment.newInstance(title, msg, Constants.BOARD);
-            FragmentManager fragmentManager = getChildFragmentManager();
-            fragmentManager.setFragmentResultListener("confirmToRemove", fragment, (req, res) -> {
-                if(req.matches("confirmToRemove") && (res.getBoolean("confirmed"))) {
+            getChildFragmentManager().setFragmentResultListener("removePost", fragment, (req, res) -> {
+                //if(req.matches("removePost") && (res.getBoolean("confirmed"))) {
+                if(res.getBoolean("confirmed")) {
+                    postRef.delete().addOnSuccessListener(Void -> {
+                        //sharedModel.getRemovedPosting().setValue(position);
+                        sharedModel.getNotifyPostChanged().setValue(true);
+                        dismiss();
+                    }).addOnFailureListener(e -> {
+                        sharedModel.getNotifyPostChanged().setValue(false);
+                        e.printStackTrace();
+                        dismiss();
+                    });
+                    /*
                     postRef.get().addOnSuccessListener(post -> {
                         sharedModel.getRemovedPosting().setValue(post);
                         postRef.delete().addOnSuccessListener(aVoid -> dismiss());
                     });
+
+                     */
                 }
             });
 
-            fragment.show(fragmentManager, "alert");
+            fragment.show(getChildFragmentManager(), "removePost");
             return true;
 
         } else return false;

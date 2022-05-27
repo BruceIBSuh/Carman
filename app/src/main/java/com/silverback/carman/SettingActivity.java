@@ -70,7 +70,7 @@ public class SettingActivity extends BaseActivity implements
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(SettingActivity.class);
 
-    public static final String PREF_USERNAME_TAG = "carman_pref_nickname";
+    public static final String PREF_USERNAME = "carman_pref_nickname";
     public static final String PREF_AUTODATA = "carman_pref_autodata";
     public static final String PREF_AUTOMODEL = "carman_pref_automodel";
     public static final String PREF_AUTOMAKER = "carman_pref_automaker";
@@ -277,7 +277,6 @@ public class SettingActivity extends BaseActivity implements
      * in most cases, it is strongly recommend to implement this method, thereby you can fully configure
      * transitions b/w Fragment objects and update the title in the toolbar, if applicable.
      */
-    //@SuppressWarnings("ConstantConditions")
     @Override
     public boolean onPreferenceStartFragment(@NonNull PreferenceFragmentCompat caller, Preference pref) {
         final Bundle args = pref.getExtras();
@@ -311,7 +310,7 @@ public class SettingActivity extends BaseActivity implements
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
-            case PREF_USERNAME_TAG:
+            case PREF_USERNAME:
                 String userName = mSettings.getString(key, null);
                 if(!TextUtils.isEmpty(userName)) resultIntent.putExtra("userName", userName);
                 break;
@@ -372,8 +371,7 @@ public class SettingActivity extends BaseActivity implements
                 });
                 break;
 
-            default:
-                break;
+            default: break;
         }
 
     }
@@ -393,6 +391,7 @@ public class SettingActivity extends BaseActivity implements
         //startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
         cropImageResultLauncher.launch(intent);
     }
+
     private void getCameraImage(boolean isTaken) {
         if(isTaken) mGetContent.launch("image/*");
     }
@@ -457,8 +456,6 @@ public class SettingActivity extends BaseActivity implements
     //@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
     private void uploadUserImageToFirebase(Uri uri) {
         log.i("user id of Image upaloading: %s", userId);
-        // Popup the progressbar displaying dialogfragment.
-        //ProgressBarDialogFragment progbarFragment = new ProgressBarDialogFragment();
         String msg = (uri == null)?
                 getString(R.string.setting_msg_remove_image):
                 getString(R.string.setting_msg_upload_image);

@@ -102,7 +102,7 @@ public class QueryPostPaginationUtil {
             }
         });
         */
-        query.limit(PAGINATION).get(source).addOnSuccessListener(querySnapshot -> {
+        query.limit(PAGINATION).get().addOnSuccessListener(querySnapshot -> {
             this.querySnapshot = querySnapshot;
             mCallback.getFirstQueryResult(querySnapshot);
         }).addOnFailureListener(Throwable::printStackTrace);
@@ -136,7 +136,7 @@ public class QueryPostPaginationUtil {
                 break;
         }
 
-        query.startAfter(lastVisible).limit(PAGINATION).get(source).addOnSuccessListener(nextshots -> {
+        query.startAfter(lastVisible).limit(PAGINATION).get().addOnSuccessListener(nextshots -> {
             this.querySnapshot = nextshots;
             if(nextshots.size() >= PAGINATION) mCallback.getNextQueryResult(nextshots);
             else mCallback.getLastQueryResult(nextshots);

@@ -31,9 +31,9 @@ public class ImageChooserFragment extends DialogFragment {
     private static final LoggingHelper log = LoggingHelperFactory.create(ImageChooserFragment.class);
     private final int MEDIA_GALLERY = 1;
     private final int MEDIA_CAMERA = 2;
+    private final int NO_IMAGE = -1;
 
-    private FragmentSharedModel fragmentModel;
-    private int mediaType;
+    //private FragmentSharedModel fragmentModel;
     public ImageChooserFragment() {
         // Required empty public constructor which might be invoked by FragmentFacotry.
     }
@@ -41,7 +41,7 @@ public class ImageChooserFragment extends DialogFragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
+        //fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
     }
 
     @NonNull
@@ -55,22 +55,24 @@ public class ImageChooserFragment extends DialogFragment {
                 .setTitle(getString(R.string.pref_userpic_title));
 
         Bundle result = new Bundle();
-        mediaType = -1;
-
         binding.tvGallery.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(MEDIA_GALLERY);
-            mediaType = MEDIA_GALLERY;
-            //dismiss();
+            //fragmentModel.getImageChooser().setValue(MEDIA_GALLERY);
+            result.putInt("mediaType", MEDIA_GALLERY);
+            getParentFragmentManager().setFragmentResult("selectMedia", result);
+            dismiss();
         });
         binding.tvCamera.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(MEDIA_CAMERA);
-            mediaType = MEDIA_CAMERA;
-            //dismiss();
+            //fragmentModel.getImageChooser().setValue(MEDIA_CAMERA);
+            result.putInt("mediaType", MEDIA_CAMERA);
+            getParentFragmentManager().setFragmentResult("selectMedia", result);
+            dismiss();
         });
 
         binding.tvNoImg.setOnClickListener(view -> {
-            fragmentModel.getImageChooser().setValue(-1);
-            //dismiss();
+            //fragmentModel.getImageChooser().setValue(-1);
+            result.putInt("mediaType", NO_IMAGE);
+            getParentFragmentManager().setFragmentResult("selectMedia", result);
+            dismiss();
         });
 
         new Dialog(requireActivity(), getTheme()) {
@@ -79,10 +81,6 @@ public class ImageChooserFragment extends DialogFragment {
                 dismiss();
             }
         };
-
-        result.putInt("mediaType", mediaType);
-        getParentFragmentManager().setFragmentResult("userImage", result);
-
 
         return builder.create();
     }

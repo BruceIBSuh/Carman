@@ -38,8 +38,9 @@ public class FragmentSharedModel extends ViewModel {
 
     private MutableLiveData<Boolean> alertPostResult;
     private MutableLiveData<DocumentReference> newPosting;
-    private MutableLiveData<DocumentSnapshot> removedPosting;
+    private MutableLiveData<Integer> removedPosting;
     private MutableLiveData<SparseArray<Object>> editedPosting;
+    private MutableLiveData<Boolean> notifyPostChanged;
     private MutableLiveData<SparseLongArray> newComment;
     private MutableLiveData<SparseIntArray> commentCount;
 
@@ -177,7 +178,7 @@ public class FragmentSharedModel extends ViewModel {
     }
 
     // Communicate b/w CustomDialogFragment and fragment calling the dialog fragment
-    public MutableLiveData<DocumentSnapshot> getRemovedPosting() {
+    public MutableLiveData<Integer> getRemovedPosting() {
         if(removedPosting == null) removedPosting = new MutableLiveData<>();
         return removedPosting;
     }
@@ -186,6 +187,11 @@ public class FragmentSharedModel extends ViewModel {
     public MutableLiveData<SparseArray<Object>> getEditedPosting() {
         if(editedPosting == null) editedPosting = new MutableLiveData<>();
         return editedPosting;
+    }
+
+    public MutableLiveData<Boolean> getNotifyPostChanged(){
+        if(notifyPostChanged == null) notifyPostChanged = new MutableLiveData<>();
+        return notifyPostChanged;
     }
 
     // Communicate b/w BoardPagerFragment and BoardReadFragment to pass a new comment in a post.

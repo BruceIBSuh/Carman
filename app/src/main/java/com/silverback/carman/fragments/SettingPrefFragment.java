@@ -10,9 +10,7 @@ import static com.silverback.carman.SettingActivity.PREF_FAVORITE_GAS;
 import static com.silverback.carman.SettingActivity.PREF_FAVORITE_SVC;
 import static com.silverback.carman.SettingActivity.PREF_ODOMETER;
 import static com.silverback.carman.SettingActivity.PREF_USER_IMAGE;
-import static com.silverback.carman.SettingActivity.PREF_USERNAME_TAG;
-import static com.silverback.carman.utils.Constants.FAVORITE_GAS;
-import static com.silverback.carman.utils.Constants.FAVORITE_SVC;
+import static com.silverback.carman.SettingActivity.PREF_USERNAME;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -21,6 +19,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
@@ -43,7 +42,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
-import com.silverback.carman.views.ProgressBarPreference;
+import com.silverback.carman.views.AutoDataPreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -70,7 +69,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
     private Preference namePref;
     private Preference userImagePref;
     // Custom preferences defined in views package
-    private ProgressBarPreference autoPref; // custom preference to show the progressbar.
+    private AutoDataPreference autoPref; // custom preference to show the progressbar.
     //private SpinnerDialogPreference spinnerPref;
     private Preference spinnerPref;
     private Preference favorite;
@@ -104,17 +103,26 @@ public class SettingPrefFragment extends SettingBaseFragment {
         CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
-        namePref = findPreference(PREF_USERNAME_TAG);
-        String userName = mSettings.getString(PREF_USERNAME_TAG, getString(R.string.pref_entry_void));
+        // Set the user name.
+        namePref = findPreference(PREF_USERNAME);
+        String userName = mSettings.getString(PREF_USERNAME, getString(R.string.pref_entry_void));
         namePref.setSummary(userName);
         namePref.setOnPreferenceClickListener(v -> {
-            if(namePref.getSummary() != null) {
-                String name = namePref.getSummary().toString();
-                String userId = requireArguments().getString("userId");
-                DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
-                dialogFragment.show(getChildFragmentManager(), "NameFragment");
-            }
-            return true;
+            String name = Objects.requireNonNull(namePref.getSummary()).toString();
+            String userId = requireArguments().getString("userId");
+            DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
+            /*
+            getChildFragmentManager().setFragmentResultListener("namePref", dialogFragment, (req, res) -> {
+                if(req.matches("namePref")) {
+                    mSettings.edit().putString(PREF_USERNAME, res.getString("userName")).apply();
+                    namePref.setSummary(res.getString("userName"));
+                }
+            });
+
+             */
+
+            dialogFragment.show(getChildFragmentManager(), "nameFragment");
+            return true;//true if the click was handled
         });
 
         // Call SettingAutoFragment which contains preferences to have car related data which are
@@ -221,15 +229,22 @@ public class SettingPrefFragment extends SettingBaseFragment {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         userImagePref = findPreference(PREF_USER_IMAGE);
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
-            if(TextUtils.isEmpty(mSettings.getString(PREF_USERNAME_TAG, null))) {
+            if(TextUtils.isEmpty(mSettings.getString(PREF_USERNAME, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
                 return false;
             }
 
             DialogFragment dialogFragment = new ImageChooserFragment();
             FragmentManager fragmentManager = getChildFragmentManager();
+            fragmentManager.setFragmentResultListener("selectMedia", dialogFragment, (req, res) -> {
+                if(req.matches("selectMedia")) {
+                    int type = res.getInt("mediaType");
+                    if(type == -1) {
 
-            fragmentManager.setFragmentResultListener("userImage", dialogFragment, (req, res) -> {
+                    } else {
+                        ((SettingActivity)requireActivity()).selectImageMedia(type);
+                    }
+                }
             });
 
             dialogFragment.show(fragmentManager, "imageMediaChooser");
@@ -255,9 +270,10 @@ public class SettingPrefFragment extends SettingBaseFragment {
         imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
 
         fragmentModel.getUserName().observe(getViewLifecycleOwner(), userName -> {
-            mSettings.edit().putString(PREF_USERNAME_TAG, userName).apply();
+            mSettings.edit().putString(PREF_USERNAME, userName).apply();
             namePref.setSummary(userName);
         });
+
         // Observe whether the auto data in SettingAutoFragment has changed.
         fragmentModel.getAutoData().observe(getViewLifecycleOwner(), jsonAutoDataArray -> {
             mSettings.edit().putString(PREF_AUTODATA, jsonAutoDataArray.toString()).apply();
@@ -288,9 +304,12 @@ public class SettingPrefFragment extends SettingBaseFragment {
             mSettings.edit().putString(PREF_DISTRICT, jsonArray.toString()).apply();
         });
 
+        /*
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), media ->
             ((SettingActivity)requireActivity()).selectImageMedia(media)
         );
+
+         */
     }
 
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
@@ -330,6 +349,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
             autoPref.showProgressBar(false);
         }
     }
+
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

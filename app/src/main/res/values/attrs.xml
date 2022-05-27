@@ -79,9 +79,13 @@
         <attr name="indicator" format="reference" />
     </declare-styleable>
 
-    <declare-styleable name="ProgressBarPreference">
+    <declare-styleable name="AutoDataPreference">
         <attr name="pbAutoData" format="reference" />
         <attr name="showIndicator" format="boolean" />
+    </declare-styleable>
+
+    <declare-styleable name="UserImagePreference" >
+        <attr name="progressbar" format="reference" />
     </declare-styleable>
 
     <declare-styleable name="ViewPagerWithIndicator">

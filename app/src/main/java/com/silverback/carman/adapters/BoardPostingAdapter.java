@@ -1,6 +1,5 @@
 package com.silverback.carman.adapters;
 
-import static com.silverback.carman.BoardActivity.AD_POSITION;
 import static com.silverback.carman.BoardActivity.AD_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.CONTENT_VIEW_TYPE;
 
@@ -17,7 +16,6 @@ import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -26,7 +24,6 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.BoardItemviewPostBinding;
-import com.silverback.carman.fragments.BoardPagerFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -37,7 +34,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 
 
 public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -53,9 +49,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     private final AsyncListDiffer<MultiTypePostingItem> mDiffer;
     //private final AsyncListDiffer<BoardPagerFragment.MultiTypeItemList> mDiffer;
     private final SimpleDateFormat sdf;
-    //private final List<DocumentSnapshot> snapshotList;
-    private int category;//Must be refactored when the multi-type list applies.
-    private int adNum;
 
     public interface OnPostingAdapterCallback {
         void onPostItemClicked(DocumentSnapshot snapshot, int position);
@@ -70,7 +63,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_POST);
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
-        adNum = 0;
     }
 
     // Update the adapter using AsyncListDiffer.ItemCallback<T> which uses the background thread.
@@ -80,7 +72,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
      */
     public void submitPostList(List<MultiTypePostingItem> multiTypeList) {
-        adNum = 0;//subtract the number
         mDiffer.submitList(Lists.newArrayList(multiTypeList)/*, postingAdapterCallback::onSubmitPostingListDone*/);
     }
 
@@ -153,14 +144,14 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case CONTENT_VIEW_TYPE:
                 final PostViewHolder postHolder = (PostViewHolder)holder;
                 MultiTypePostingItem multiTypeItem = mDiffer.getCurrentList().get(position);
-                DocumentSnapshot snapshot = multiTypeItem.getSnapshot();
+                DocumentSnapshot snapshot = multiTypeItem.getDocument();
 
                 //((PostViewHolder)holder).bindPostingItem(snapshot, position);
                 // Calculate the index number by taking the plugin at the end of the pagination
                 // into account.
                 //int index = multiTypeItemList.get(position).getItemIndex();
                 postHolder.getPostTitleView().setText(snapshot.getString("post_title"));
-                postHolder.getPostNumView().setText(String.valueOf(position + 1 - adNum));
+                postHolder.getPostNumView().setText(String.valueOf(multiTypeItem.getItemIndex()));
 
                 // Refactor considered: day based format as like today, yesterday format, 2 days ago.
                 if(snapshot.getDate("timestamp") != null) {
@@ -195,7 +186,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
 
             case AD_VIEW_TYPE:
                 log.i("Ad view type");
-                adNum += 1;
+                // Subtract the advertise number out of the number of posting position
                 break;
         }
     }
@@ -208,6 +199,8 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
             log.i("partial binding: %s", payloads);
+            if(mDiffer.getCurrentList().get(position).getViewType() == AD_VIEW_TYPE) return;
+
             PostViewHolder postHolder = (PostViewHolder)holder;
             //for(Object payload : payloads) {
                if(payloads.get(0) instanceof Long) {
@@ -215,6 +208,12 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                } else if(payloads.get(0) instanceof Integer) {
                    log.i("comment count update: %s", payloads.get(0));
                    postHolder.getCommentCountView().setText(String.valueOf(payloads.get(0)));
+               } else if(((String)payloads.get(0)).matches("postIndex")) {
+                   //if(postHolder.getPostNumView() != null) {
+                       int num = postHolder.getBindingAdapterPosition() + 1;
+                       postHolder.getPostNumView().setText(String.valueOf(num));
+                   //}
+
                }
 
                /*
@@ -295,9 +294,16 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
                 @Override
                 public boolean areContentsTheSame(@NonNull MultiTypePostingItem oldItem,
                                                   @NonNull MultiTypePostingItem newItem) {
+
                     if(oldItem.getViewType() == newItem.getViewType()) {
-                        return oldItem.getSnapshot().getId().equals(newItem.getSnapshot().getId());
-                    } else return false;
+                        if(oldItem.getViewType() == CONTENT_VIEW_TYPE) {
+                            return oldItem.getDocument().equals(newItem.getDocument());
+                        } else if(oldItem.getViewType() == AD_VIEW_TYPE) {
+                            return oldItem.getViewId() == newItem.getViewId();
+                        }
+                    }
+
+                    return false;
                 }
 
                 public Object getChangePayload(@NonNull MultiTypePostingItem oldItem,

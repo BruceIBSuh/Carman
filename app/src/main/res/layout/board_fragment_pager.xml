@@ -24,7 +24,6 @@
 
     <ProgressBar style="@android:style/Widget.Holo.Light.ProgressBar.Large"
         android:id="@+id/progbar_board_loading"
-        android:visibility="gone"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_gravity="center"

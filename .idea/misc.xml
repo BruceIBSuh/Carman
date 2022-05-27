@@ -25,6 +25,7 @@
         <entry key="app/src/main/res/layout/activity_station_map.xml" value="0.2796296296296296" />
         <entry key="app/src/main/res/layout/board_comment_overflow_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/board_fragment_edit.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/board_fragment_pager.xml" value="0.23385416666666667" />
         <entry key="app/src/main/res/layout/board_fragment_read.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/board_fragment_write.xml" value="0.4256410256410256" />
         <entry key="app/src/main/res/layout/board_read_comment.xml" value="0.23802083333333332" />
@@ -68,6 +69,7 @@
         <entry key="app/src/main/res/layout/popup_comment_overflow.xml" value="0.1" />
         <entry key="app/src/main/res/layout/recycler_expense_stmts.xml" value="0.25" />
         <entry key="app/src/main/res/layout/recyclerview_expense_stmts.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/setting_pref_userimg.xml" value="0.23385416666666667" />
         <entry key="app/src/main/res/layout/settings_pref_category.xml" value="0.33" />
         <entry key="app/src/main/res/layout/spinner_district_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/spinner_district_entry.xml" value="0.2989583333333333" />
@@ -133,7 +135,7 @@
       </value>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

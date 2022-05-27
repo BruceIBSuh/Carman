@@ -180,10 +180,12 @@ public class BoardWriteFragment extends DialogFragment implements
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         imgViewModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
+        /*
         fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), chooser -> {
             log.i("getImageChooser in BoardWriteFragment");
             ((BoardActivity)requireActivity()).chooseImageMedia(chooser, binding.getRoot());
         });
+        */
 
         imgViewModel.getDownloadBitmapUri().observe(getViewLifecycleOwner(), sparseArray -> {
             sparseUriArray.put(sparseArray.keyAt(0), sparseArray.valueAt(0));
@@ -201,6 +203,7 @@ public class BoardWriteFragment extends DialogFragment implements
     public void onDestroyView() {
         log.i("onDestroyView");
         fragmentModel.getImageChooser().removeObservers(this);
+        imgViewModel.getDownloadBitmapUri().removeObservers(this);
         super.onDestroyView();
     }
 
@@ -329,6 +332,14 @@ public class BoardWriteFragment extends DialogFragment implements
         // Pop up the dialog to select which media to use bewteen the camera and gallery, the viewmodel
         // of which passes the value to getImageChooser().
         DialogFragment dialog = new ImageChooserFragment();
+        getChildFragmentManager().setFragmentResultListener("selectMedia", dialog, (req, res) -> {
+            if(req.matches("selectMedia") && res.getInt("mediaType") > 0) {
+                log.i("fragmentResultListener: %s", res.getInt("mediaType"));
+                final int type = res.getInt("mediaType");
+                ((BoardActivity)requireActivity()).chooseImageMedia(type, binding.getRoot());
+            }
+        });
+
         dialog.show(getChildFragmentManager(), "ImageMediaChooser");
         /*
          * This works for both, inserting a text at the current position and replacing
