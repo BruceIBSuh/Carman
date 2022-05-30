@@ -10,13 +10,13 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class StationListTask extends ThreadTask implements
-        StationListRunnable.StationListMethod,
+public class GasStationListTask extends ThreadTask implements
+        GasStationListRunnable.StationListMethod,
         FirestoreGetRunnable.FireStoreGetMethods,
         FirestoreSetRunnable.FireStoreSetMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationListTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListTask.class);
 
     // Constants
     static final int DOWNLOAD_NEAR_STATIONS = 1;
@@ -34,7 +34,7 @@ public class StationListTask extends ThreadTask implements
     private final Runnable mStationListRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
-    private List<Opinet.GasStnParcelable> mStationList; //used by StationListRunnable
+    private List<Opinet.GasStnParcelable> mStationList; //used by GasStationListRunnable
     private final SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
@@ -44,9 +44,9 @@ public class StationListTask extends ThreadTask implements
     private String stnId;
 
     // Constructor
-    StationListTask() {
+    GasStationListTask() {
         super();
-        mStationListRunnable = new StationListRunnable(this);
+        mStationListRunnable = new GasStationListRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
         sparseBooleanArray = new SparseBooleanArray();
@@ -73,7 +73,7 @@ public class StationListTask extends ThreadTask implements
         }
     }
 
-    // Callback invoked by StationListRunnable and StationInfoRunnable as well to set the current
+    // Callback invoked by GasStationListRunnable and StationInfoRunnable as well to set the current
     // thread of each Runnables.
     @Override
     public void setStationTaskThread(Thread thread) {
@@ -123,7 +123,7 @@ public class StationListTask extends ThreadTask implements
 
 
 
-    // The following  callbacks are invoked by StationListRunnable to retrieve stations within
+    // The following  callbacks are invoked by GasStationListRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().
     @Override
     public String[] getDefaultParam() {
@@ -139,7 +139,7 @@ public class StationListTask extends ThreadTask implements
     public String getStationId() {
         return stnId;
     }
-    // FirestoreGetRunnable invokes this for having the near stations retrieved by StationListRunnable,
+    // FirestoreGetRunnable invokes this for having the near stations retrieved by GasStationListRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {

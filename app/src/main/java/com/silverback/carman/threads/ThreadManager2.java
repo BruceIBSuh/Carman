@@ -12,7 +12,6 @@ import androidx.annotation.Nullable;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
@@ -62,7 +61,8 @@ public class ThreadManager2 {
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
     private final Queue<ThreadTask> mThreadTaskQueue;
-    private final BlockingQueue<StationListTask> mStnListTaskQueue;
+    private final BlockingQueue<GasStationListTask> mStnListTaskQueue;
+    private final BlockingQueue<ElecStationListTask> mElecListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
@@ -82,7 +82,7 @@ public class ThreadManager2 {
     private DistCodeSpinnerTask distSpinnerTak;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
-    private StationListTask stnListTask;
+    private GasStationListTask stnListTask;
     private UploadBitmapTask uploadBitmapTask;
 
     // Constructor private
@@ -92,6 +92,7 @@ public class ThreadManager2 {
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
 
         mStnListTaskQueue = new LinkedBlockingQueue<>();
+        mElecListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
@@ -134,12 +135,12 @@ public class ThreadManager2 {
     void handleState(ThreadTask task, int state) {
         Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
-            // StationListTask contains multiple Runnables of StationListRunnable, FirestoreGetRunnable,
+            // GasStationListTask contains multiple Runnables of GasStationListRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
             // in different URLs. This process will continue until Firetore will complete to hold up
             // the data in a unified form.
             //
-            // StationListRunnable downloads near stations or the current station from the Opinet,
+            // GasStationListRunnable downloads near stations or the current station from the Opinet,
             // the id(s) of which is used to check if the station(s) has been already saved in
             // Firestore. Otherwise, add the station(s) to Firestore w/ the carwash field left null.
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
@@ -148,14 +149,14 @@ public class ThreadManager2 {
                 break;
             case DOWNLOAD_NEAR_STATIONS:
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationListTask)task).getFireStoreRunnable());
+                        ((GasStationListTask)task).getFireStoreRunnable());
                 break;
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 log.i("upload station data: %s", task);
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationListTask)task).setFireStoreRunnalbe());
+                        ((GasStationListTask)task).setFireStoreRunnalbe());
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
@@ -272,16 +273,25 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static StationListTask startStationListTask(
+    public static GasStationListTask startGasStationListTask(
             StationListViewModel model, Location location, String[] params) {
 
-        StationListTask stationListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
-        if(stationListTask == null) stationListTask = new StationListTask();
-        stationListTask.initStationTask(model, location, params);
-        log.i("StationListTask: %s", stationListTask);
+        GasStationListTask gasStationListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        if(gasStationListTask == null) gasStationListTask = new GasStationListTask();
+        gasStationListTask.initStationTask(model, location, params);
+        log.i("GasStationListTask: %s", gasStationListTask);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(stationListTask.getStationListRunnable());
-        return stationListTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(gasStationListTask.getStationListRunnable());
+        return gasStationListTask;
+    }
+
+    // Electric Charge Station
+    public static ElecStationListTask startElecStatoinListTask(Location location) {
+        ElecStationListTask elecStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+        if(elecStationListTask == null) elecStationListTask = new ElecStationListTask(location);
+
+        InnerClazz.sInstance.threadPoolExecutor.execute(elecStationListTask.getElecStationListRunnable());
+        return elecStationListTask;
     }
 
     public static UploadBitmapTask uploadBitmapTask(
@@ -318,9 +328,9 @@ public class ThreadManager2 {
         } else if(task instanceof LocationTask) {
             task.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
-        } else if(task instanceof StationListTask) {
+        } else if(task instanceof GasStationListTask) {
             task.recycle();
-            mStnListTaskQueue.offer((StationListTask)task);
+            mStnListTaskQueue.offer((GasStationListTask)task);
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);

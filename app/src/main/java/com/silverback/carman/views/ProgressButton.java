@@ -60,7 +60,7 @@ public class ProgressButton extends LinearLayout {
 
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(bgButtonRef);
-        binding.button.setOnClickListener(view -> setEvent(context, view));
+        binding.button.setOnClickListener(view -> setEvent(context, eventRef));
 
     }
 
@@ -87,10 +87,11 @@ public class ProgressButton extends LinearLayout {
         }
     }
 
-    private void setEvent(Context context, View view){
+    private void setEvent(Context context, int code){
         switch(eventRef){
-            case 0: ((MainActivity)context).locateNearStations(view); break;
-            case 1: ((MainActivity)context).locateNearServices(view); break;
+            case 0: ((MainActivity)context).locateNearStations(code); break;
+            case 1: ((MainActivity)context).locateNearServices(code); break;
+            case 2: ((MainActivity)context).locateElecStations(code); break;
         }
     }
 

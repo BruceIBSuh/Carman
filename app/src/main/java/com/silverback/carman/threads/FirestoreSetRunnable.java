@@ -15,7 +15,6 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -87,7 +86,7 @@ public class FirestoreSetRunnable implements Runnable {
                     DocumentSnapshot snapshot = transaction.get(docRef);
                     if (snapshot.exists()) {
                         transaction.set(docRef, data, SetOptions.merge());
-                        mCallback.handleTaskState(StationListTask.FIRESTORE_SET_COMPLETE);
+                        mCallback.handleTaskState(GasStationListTask.FIRESTORE_SET_COMPLETE);
                     }
 
                     return null;

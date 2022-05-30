@@ -36,8 +36,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.LocationTask;
-import com.silverback.carman.threads.StationListTask;
-import com.silverback.carman.threads.ThreadManager;
+import com.silverback.carman.threads.GasStationListTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
@@ -76,7 +75,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
 
     private FavoriteGeofenceHelper geofenceHelper;
     private LocationTask locationTask;
-    private StationListTask stnListTask;
+    private GasStationListTask stnListTask;
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private SimpleDateFormat sdf;
@@ -245,7 +244,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
             if(mPrevLocation == null || location.distanceTo(mPrevLocation) > Constants.UPDATE_DISTANCE) {
                 String[] defaultParams = ((BaseActivity)requireActivity()).getNearStationParams();
                 defaultParams[1] = Constants.MIN_RADIUS;
-                stnListTask = ThreadManager2.startStationListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager2.startGasStationListTask(stnListModel, location, defaultParams);
                 mPrevLocation = location;
             } else {
                 binding.pbSearchStation.setVisibility(View.GONE);

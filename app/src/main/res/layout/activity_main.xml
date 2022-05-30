@@ -125,7 +125,8 @@
             app:layout_constraintEnd_toStartOf="@+id/progbtn_gas"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/bottom_view2"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:onEvent="elec"/>
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_gas"
             android:layout_width="wrap_content"

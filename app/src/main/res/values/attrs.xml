@@ -26,6 +26,7 @@
         <attr name="onEvent" format="enum">
             <enum name="gas" value="0" />
             <enum name="svc" value="1" />
+            <enum name="elec" value="2" />
         </attr>
     </declare-styleable>
 

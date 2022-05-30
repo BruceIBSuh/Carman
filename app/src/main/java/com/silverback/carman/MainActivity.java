@@ -2,7 +2,6 @@ package com.silverback.carman;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
-import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
 import android.location.Location;
@@ -40,9 +39,10 @@ import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.ElecStationListTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
-import com.silverback.carman.threads.StationListTask;
+import com.silverback.carman.threads.GasStationListTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -89,7 +89,8 @@ public class MainActivity extends BaseActivity implements
     private OpinetViewModel opinetModel;
 
     private LocationTask locationTask;
-    private StationListTask stationListTask;
+    private GasStationListTask gasStationListTask;
+    private ElecStationListTask evTask;
 
     private MainContentAdapter mainContentAdapter;
     private StationListAdapter stnListAdapter;
@@ -168,8 +169,10 @@ public class MainActivity extends BaseActivity implements
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
         // Method for implementing ViewModel callbacks to fetch a location and near station list.
-        observeViewModel(locationModel);
+        //observeViewModel(locationModel);
         observeViewModel(stnModel);
+
+
     }
 
     @Override
@@ -199,11 +202,11 @@ public class MainActivity extends BaseActivity implements
 
     @Override
     public void onStop() {
+        super.onStop();
         //activityResultLauncher.unregister();
         if(locationTask != null) locationTask = null;
-        if(stationListTask != null) stationListTask = null;
-        //if(gasPriceTask != null) gasPriceTask = null;
-        super.onStop();
+        if(gasStationListTask != null) gasStationListTask = null;
+        if(evTask != null) evTask = null;
     }
 
     @Override
@@ -276,7 +279,7 @@ public class MainActivity extends BaseActivity implements
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            stationListTask = ThreadManager2.startStationListTask(stnModel, mPrevLocation, defaultParams);
+            gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, mPrevLocation, defaultParams);
         }
     }
     @Override
@@ -353,7 +356,7 @@ public class MainActivity extends BaseActivity implements
     };
 
     // Implement onClickListener of the toggle button which is defined in the xml file.
-    public void locateNearStations(View view) {
+    public void locateNearStations(int eventRef) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         if(!isStnViewOn) {
             final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
@@ -361,6 +364,7 @@ public class MainActivity extends BaseActivity implements
             checkRuntimePermission(binding.getRoot(), perm, rationale,  ()->{
                 binding.progbtnGas.setProgressColor(isStnViewOn);
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                observeViewModel(locationModel);
             });
 
         } else {
@@ -375,8 +379,21 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-    public void locateNearServices(View view) {
+    public void locateNearServices(int eventRef) {
         log.i("method for locating near servce centers");
+    }
+
+    public void locateElecStations (int eventRef) {
+        log.i("Locate Electric Charger Stations");
+        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+        final String rationale = "permission required to use Fine Location";
+        checkRuntimePermission(binding.getRoot(), perm, rationale,  ()->{
+            binding.progbtnGas.setProgressColor(isStnViewOn);
+            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+            locationModel.getLocation().observe(this, location -> {
+                evTask = ThreadManager2.startElecStatoinListTask(location);
+            });
+        });
     }
 
     // Reorder near station list according to the distance/price, which is called from the layout
@@ -409,6 +426,7 @@ public class MainActivity extends BaseActivity implements
     }
 
 
+
     // Method for implementing ViewModel callbacks to fetch a location and station list around
     // the location.
     private void observeViewModel(ViewModel model) {
@@ -419,12 +437,13 @@ public class MainActivity extends BaseActivity implements
                     //binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
                     defaultParams[0] = gasCode;
-                    stationListTask = ThreadManager2.startStationListTask(stnModel, location, defaultParams);
+                    gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
 
                 // Station default params changed from SettingPrefActivity.
                 } else if(isRadiusChanged || isGasTypeChanged) {
                     log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
-                    stationListTask = ThreadManager2.startStationListTask(stnModel, location, defaultParams);
+
+                    gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
 
                 } else {
                     //binding.pbNearStns.setVisibility(View.GONE);

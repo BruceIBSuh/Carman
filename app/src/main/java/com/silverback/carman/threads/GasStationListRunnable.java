@@ -3,8 +3,6 @@ package com.silverback.carman.threads;
 import android.location.Location;
 import android.os.Process;
 
-import androidx.core.content.ContextCompat;
-
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.coords.GeoPoint;
 import com.silverback.carman.coords.GeoTrans;
@@ -21,10 +19,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
-public class StationListRunnable implements Runnable{
+public class GasStationListRunnable implements Runnable{
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationListRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListRunnable.class);
 
     // Constants
     private static final String OPINET = "https://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
@@ -46,7 +44,7 @@ public class StationListRunnable implements Runnable{
     }
 
     // Constructor
-    public StationListRunnable(StationListMethod task) {
+    public GasStationListRunnable(StationListMethod task) {
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mStationList = null;
         mTask = task;
@@ -98,21 +96,21 @@ public class StationListRunnable implements Runnable{
                 if(mStationList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {
                         mTask.setCurrentStation(mStationList.get(0));
-                        mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION);
+                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_CURRENT_STATION);
                     } else {
                         mTask.setStationList(mStationList);
-                        mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS);
+                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS);
                     }
                 } else {
                     if(radius.matches(Constants.MIN_RADIUS)) {
-                        mTask.handleTaskState(StationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
-                    } else mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
+                    } else mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
                 }
             } finally { conn.disconnect(); }
 
         } catch (IOException | InterruptedException e) {
             mTask.notifyException(e.getLocalizedMessage());
-            mTask.handleTaskState(StationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+            mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
         }
     }
 
