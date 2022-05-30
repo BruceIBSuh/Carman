@@ -1,6 +1,5 @@
 package com.silverback.carman;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -11,13 +10,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 
-import androidx.activity.result.ActivityResult;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -27,11 +22,7 @@ import androidx.preference.PreferenceFragmentCompat;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.silverback.carman.databinding.ActivitySettingsBinding;
 import com.silverback.carman.fragments.SettingAutoFragment;
 import com.silverback.carman.fragments.SettingFavorGasFragment;
@@ -49,12 +40,6 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -89,13 +74,14 @@ public class SettingActivity extends BaseActivity implements
 
     //private static final int REQUEST_CODE_GALLERY = 10;
     //private static final int REQUEST_CODE_CAMERA = 11;
-    private static final int REQUEST_CODE_CROP = 12;
-    private static final int REQUEST_PERM_CAMERA = 1000;
+    public static final int REQUEST_CODE_CROP = 12;
+    public static final int REQUEST_PERM_CAMERA = 1000;
 
     // Objects
     private Intent resultIntent; //back results to MainActivity
     private FirebaseFirestore mDB;
     private FirebaseStorage storage;
+    private DocumentReference docRef;
     private ApplyImageResourceUtil applyImageResourceUtil;
     private ImageViewModel imgModel;
     private SettingPrefFragment settingFragment;
@@ -113,6 +99,7 @@ public class SettingActivity extends BaseActivity implements
     private Uri downloadUserImageUri;
     private int requestCode;
 
+    /*
     // StratActivityForResult with ActivityResultcoracts and ActvityResultCallback.
     // Calling CropImageActivity right after getting the image uri.
     private final ActivityResultLauncher<Intent> cropImageResultLauncher = registerForActivityResult(
@@ -123,7 +110,7 @@ public class SettingActivity extends BaseActivity implements
     // Getting Uri from Camera
     private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
             new ActivityResultContracts.TakePicture(), this::getCameraImage);
-
+    */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -142,6 +129,7 @@ public class SettingActivity extends BaseActivity implements
         resultIntent = new Intent();
         mDB = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
+
         applyImageResourceUtil = new ApplyImageResourceUtil(this);
 
         // ViewModels
@@ -150,6 +138,7 @@ public class SettingActivity extends BaseActivity implements
         
         if(TextUtils.isEmpty(userId)) userId = getUserIdFromStorage(this);
         JSONArray jsonDistArray = getDistrictJSONArray();
+        docRef = FirebaseFirestore.getInstance().collection("users").document(userId);
 
         settingFragment = new SettingPrefFragment();
         Bundle bundle = new Bundle();
@@ -158,12 +147,16 @@ public class SettingActivity extends BaseActivity implements
         settingFragment.setArguments(bundle);
 
         addPreferenceFragment(getSupportFragmentManager(), settingFragment);
+
         // Sync issue may occur.
         String imageUri = mSettings.getString(Constants.USER_IMAGE, null);
         if(!TextUtils.isEmpty(imageUri)) {
+            /*
             applyImageResourceUtil.applyGlideToDrawable(imageUri, Constants.ICON_SIZE_PREFERENCE, imgModel);
             imgModel.getGlideDrawableTarget().observe(this, drawable ->
                 settingFragment.getUserImagePreference().setIcon(drawable));
+
+             */
         }
 
 
@@ -321,8 +314,9 @@ public class SettingActivity extends BaseActivity implements
                 // use.
                 if(jsonAutoData != null && !jsonAutoData.isEmpty()) {
                     resultIntent.putExtra("autodata", jsonAutoData);
-                    final DocumentReference docref = mDB.collection("users").document(userId);
-                    docref.update("auto_data", jsonAutoData).addOnFailureListener(Throwable::printStackTrace);
+                    //final DocumentReference docref = mDB.collection("users").document(userId);
+                    docRef.update("auto_data", jsonAutoData)
+                            .addOnFailureListener(Throwable::printStackTrace);
                 }
                 break;
 
@@ -353,6 +347,7 @@ public class SettingActivity extends BaseActivity implements
 
     }
 
+    /*
     // Referenced from the fragment to pass the media which has been decided in the dialog fragment.
     public void selectImageMedia(int media) {
         switch(media) {
@@ -403,6 +398,7 @@ public class SettingActivity extends BaseActivity implements
         mSettings.edit().putString(Constants.USER_IMAGE, croppedImageUri.toString()).apply();
         uploadUserImageToFirebase(croppedImageUri);
     }
+     */
 
     // Add the setting fragmnet and regster the fragment lifecycle listener.
     private void addPreferenceFragment(FragmentManager fm, PreferenceFragmentCompat fragment) {
@@ -454,15 +450,9 @@ public class SettingActivity extends BaseActivity implements
     // of Firesotre. When the uploading process completes, put the uri in SharedPreferenes.
     // At the same time, the new uri has to be uploaded in the documents written by the user.
     //@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-    private void uploadUserImageToFirebase(Uri uri) {
+    /*
+    public void uploadUserImageToFirebase(Uri uri) {
         log.i("user id of Image upaloading: %s", userId);
-        String msg = (uri == null)?
-                getString(R.string.setting_msg_remove_image):
-                getString(R.string.setting_msg_upload_image);
-
-        //progbarFragment.setProgressMsg(msg);
-        //getSupportFragmentManager().beginTransaction().add(android.R.id.content, progbarFragment).commit();
-
         // Instantiate Firebase Storage.
         final StorageReference userImgRef = storage.getReference().child("user_pic/" + userId + ".png");
         // Delete the file from FireStorage and, if successful, it goes to FireStore to delete the
@@ -470,16 +460,12 @@ public class SettingActivity extends BaseActivity implements
         if(uri == null) {
             userImgRef.delete().addOnSuccessListener(aVoid -> {
                 // Delete(update) the document with null value.
-                DocumentReference docref = mDB.collection("users").document(userId);
-                docref.update("user_pic", null).addOnSuccessListener(bVoid -> {
-                    Snackbar.make(frameLayout, getString(R.string.pref_snackbar_image_deleted),
-                            Snackbar.LENGTH_SHORT).show();
-
-                    // Dismiss the progbar dialogfragment
-                    //progbarFragment.dismiss();
+                //DocumentReference docref = mDB.collection("users").document(userId);
+                docRef.update("user_pic", null).addOnSuccessListener(bVoid -> {
+                    final String msg = getString(R.string.pref_snackbar_image_deleted);
+                    Snackbar.make(frameLayout, msg, Snackbar.LENGTH_SHORT).show();
                 }).addOnFailureListener(Throwable::printStackTrace);
             }).addOnFailureListener(Throwable::printStackTrace);
-
             return;
         }
 
@@ -490,36 +476,20 @@ public class SettingActivity extends BaseActivity implements
                 .addOnFailureListener(e -> log.e("Upload failed"));
 
         // On completing upload, return the download url which goes to Firebase.Firestore
-        uploadTask.continueWithTask(task -> {
-            //if(!task.isSuccessful()) task.getException();
-            return userImgRef.getDownloadUrl();
-
-        }).addOnCompleteListener(task -> {
+        uploadTask.continueWithTask(task -> userImgRef.getDownloadUrl()).addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
                 downloadUserImageUri = task.getResult();
-                log.i("Download uri: %s", downloadUserImageUri);
-
-                // Receive the image uri from Firebase Storage and upload the uri to FireStore to
-                // reference the user image.
                 Map<String, String> uriUserImage = new HashMap<>();
                 uriUserImage.put("user_pic", downloadUserImageUri.toString());
 
                 // Update the "user_pic" field of the document in the "users" collection
-                mDB.collection("users").document(userId).set(uriUserImage, SetOptions.merge())
-                        .addOnCompleteListener(userimgTask -> {
-                            if(userimgTask.isSuccessful()) {
-                                log.i("user image update in Firestore");
-                                // On compeleting the upload, save the uri in SharedPreferences and
-                                // set the drawable to the preferernce icon.
-                                // ProgressBar should be come in here!!!
-                                mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                                applyImageResourceUtil.applyGlideToDrawable(
-                                        uri.toString(), Constants.ICON_SIZE_PREFERENCE, imgModel);
-
-                                // Dismiss the prgbar dialogfragment
-                                //progbarFragment.dismiss();
-                            }
-                        });
+                docRef.set(uriUserImage, SetOptions.merge()).addOnCompleteListener(userimgTask -> {
+                    if(userimgTask.isSuccessful()) {
+                        mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
+                        applyImageResourceUtil.applyGlideToDrawable(
+                                uri.toString(), Constants.ICON_SIZE_PREFERENCE, imgModel);
+                    }
+                });
 
                 // Update the user image in the posting items wrtiiten by the user.
                 // Consider that all documents should be updated. Otherwise, limit condition would
@@ -536,5 +506,7 @@ public class SettingActivity extends BaseActivity implements
             }
         });
     }
+
+     */
 
 }

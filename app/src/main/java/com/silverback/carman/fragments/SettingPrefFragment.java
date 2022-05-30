@@ -11,17 +11,25 @@ import static com.silverback.carman.SettingActivity.PREF_FAVORITE_SVC;
 import static com.silverback.carman.SettingActivity.PREF_ODOMETER;
 import static com.silverback.carman.SettingActivity.PREF_USER_IMAGE;
 import static com.silverback.carman.SettingActivity.PREF_USERNAME;
+import static com.silverback.carman.SettingActivity.REQUEST_CODE_CROP;
 
+import android.Manifest;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ProgressBar;
+import android.widget.ImageView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
@@ -31,22 +39,41 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
+import com.silverback.carman.BaseActivity;
+import com.silverback.carman.CropImageActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.SettingActivity;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.FavoriteProviderDao;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.views.AutoDataPreference;
+import com.silverback.carman.views.UserImagePreference;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 /*
@@ -65,9 +92,12 @@ public class SettingPrefFragment extends SettingBaseFragment {
     //private static final String DIALOG_USERIMG_TAG = "carman_pref_userpic";
 
     // Objects
+    private FirebaseFirestore mDB;
+    private FirebaseStorage storage;
+    private DocumentReference userRef;
     private SharedPreferences mSettings;
     private Preference namePref;
-    private Preference userImagePref;
+    private UserImagePreference userImagePref;
     // Custom preferences defined in views package
     private AutoDataPreference autoPref; // custom preference to show the progressbar.
     //private SpinnerDialogPreference spinnerPref;
@@ -78,6 +108,16 @@ public class SettingPrefFragment extends SettingBaseFragment {
     private JSONArray jsonDistrict;
     private String sigunCode;
     private String regMakerNum;
+    private String userId;
+
+    // Gettng Uri from Gallery
+    private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
+            new ActivityResultContracts.GetContent(), this::getAttachedImageUriCallback);
+    // Getting Uri from Camera
+    private final ActivityResultLauncher<Uri> mTakePicture = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(), this::getCameraImage);
+    private final ActivityResultLauncher<Intent> cropImageResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), this::getCropImageResult);
 
     /*
      * To popup a custom dialogfragment, there should be options to create it.
@@ -86,7 +126,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
      */
     @NonNull
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState){
         this.parentView = parent;
         return super.onCreateView(inflater, parent, savedInstanceState);
     }
@@ -96,11 +136,15 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Set Preference hierarchy defined as XML and placed in res/xml directory.
         setPreferencesFromResource(R.xml.preferences, rootKey);
 
+        // Get arguments from the parent activity.
         String jsonString = requireArguments().getString("district");
         try {jsonDistrict = new JSONArray(jsonString);}
         catch(JSONException e) {e.printStackTrace();}
-
-        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(getContext());
+        userId = requireArguments().getString("userId");
+        // Instantiate objects
+        mDB = FirebaseFirestore.getInstance();
+        storage = FirebaseStorage.getInstance();
+        userRef = mDB.collection("users").document(userId);
         mSettings = PreferenceManager.getDefaultSharedPreferences(requireContext());
 
         // Set the user name.
@@ -109,7 +153,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         namePref.setSummary(userName);
         namePref.setOnPreferenceClickListener(v -> {
             String name = Objects.requireNonNull(namePref.getSummary()).toString();
-            String userId = requireArguments().getString("userId");
+            userId = requireArguments().getString("userId");
             DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
             /*
             getChildFragmentManager().setFragmentResultListener("namePref", dialogFragment, (req, res) -> {
@@ -118,9 +162,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
                     namePref.setSummary(res.getString("userName"));
                 }
             });
-
              */
-
             dialogFragment.show(getChildFragmentManager(), "nameFragment");
             return true;//true if the click was handled
         });
@@ -195,7 +237,8 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
         favorite = findPreference(PREF_FAVORITE);
-        mDB.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+        CarmanDatabase sqlite = CarmanDatabase.getDatabaseInstance(getContext());
+        sqlite.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
             String favoriteStn = getString(R.string.pref_no_favorite);
             String favoriteSvc = getString(R.string.pref_no_favorite);
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
@@ -227,7 +270,18 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Image Editor which pops up the dialog to select which resource location to find an image.
         // Consider to replace this with the custom preference defined as ProgressImagePreference.
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
+        //userImagePref = findPreference(PREF_USER_IMAGE);
+
+        //TEST CODING
         userImagePref = findPreference(PREF_USER_IMAGE);
+        log.i("userImagePref: %s", userImagePref.getUserImageView());
+        userRef.get().addOnSuccessListener(doc -> {
+            if(doc.exists() && !TextUtils.isEmpty(doc.getString("user_pic"))){
+                String imageUrl = doc.getString("user_pic");
+                ImageView imgView = userImagePref.getUserImageView();
+                setUserImage(imgView, Uri.parse(imageUrl));
+            }
+        });
         Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(PREF_USERNAME, null))) {
                 Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
@@ -240,19 +294,14 @@ public class SettingPrefFragment extends SettingBaseFragment {
                 if(req.matches("selectMedia")) {
                     int type = res.getInt("mediaType");
                     if(type == -1) {
-
-                    } else {
-                        ((SettingActivity)requireActivity()).selectImageMedia(type);
-                    }
+                        log.i("no image");
+                    } else selectImageMedia(type);
                 }
             });
 
             dialogFragment.show(fragmentManager, "imageMediaChooser");
             return true;
         });
-
-        // LiveData from ApplyImageREsourceUtil to set a drawable to the icon. The viewmodel is
-        // defined in onViewCreated().
 
     }
 
@@ -267,7 +316,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
         FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
         ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
 
-        imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
+        //imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
 
         fragmentModel.getUserName().observe(getViewLifecycleOwner(), userName -> {
             mSettings.edit().putString(PREF_USERNAME, userName).apply();
@@ -350,6 +399,124 @@ public class SettingPrefFragment extends SettingBaseFragment {
         }
     }
 
+    public void selectImageMedia(int media) {
+        switch(media) {
+            case 1: //gallery
+                mGetContent.launch("image/*");
+                break;
+
+            case 2: //camera
+                final String perm = Manifest.permission.CAMERA;
+                final String rationale = "permission required to use Camera";
+                ((BaseActivity)parentView.getContext()).checkRuntimePermission(parentView, perm, rationale, () -> {
+                    File tmpFile = new File(parentView.getContext().getCacheDir(), new SimpleDateFormat(
+                            "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
+                    Uri photoUri = FileProvider.getUriForFile(
+                            parentView.getContext(), Constants.FILE_IMAGES, tmpFile);
+                    mTakePicture.launch(photoUri);
+                });
+                break;
+            default: break;
+        }
+
+    }
+
+    // ActivityResult callback to pass the uri of an attached image, then get the image orientation
+    // using the util class.
+    private void getAttachedImageUriCallback(Uri uri) {
+        if(uri == null) return;
+        ApplyImageResourceUtil cropHelper = new ApplyImageResourceUtil(parentView.getContext());
+        int orientation = cropHelper.getImageOrientation(uri);
+        if(orientation != 0) uri = cropHelper.rotateBitmapUri(uri, orientation);
+
+        Intent intent = new Intent(parentView.getContext(), CropImageActivity.class);
+        intent.setData(uri);
+        intent.putExtra("requestCrop", REQUEST_CODE_CROP);
+        //startActivityForResult(galleryIntent, REQUEST_CODE_CROP);
+        cropImageResultLauncher.launch(intent);
+    }
+
+    private void getCameraImage(boolean isTaken) {
+        if(isTaken) mGetContent.launch("image/*");
+    }
+
+    // Callback method for ActivityResultLauncher
+    private void getCropImageResult(ActivityResult result) {
+        if(result.getData() == null) return;
+
+        Uri croppedImageUri = Objects.requireNonNull(result.getData().getData());
+        mSettings.edit().putString(PREF_USER_IMAGE, croppedImageUri.toString()).apply();
+        uploadUserImage(croppedImageUri);
+
+        //Get the image loader started
+        userImagePref.setUserImageLoader(true);
+    }
+
+    public void uploadUserImage(Uri uri) {
+        final StorageReference userImgRef = storage.getReference().child("user_pic/" + userId + ".png");
+        // Delete the file from FireStorage and, if successful, it goes to FireStore to delete the
+        // Url of the image.
+        if(uri == null) {
+            userImgRef.delete().addOnSuccessListener(aVoid -> {
+                // Delete(update) the document with null value.
+                //DocumentReference docref = mDB.collection("users").document(userId);
+                userRef.update("user_pic", null).addOnSuccessListener(bVoid -> {
+                    final String msg = getString(R.string.pref_snackbar_image_deleted);
+                    Snackbar.make(parentView, msg, Snackbar.LENGTH_SHORT).show();
+                }).addOnFailureListener(Throwable::printStackTrace);
+            }).addOnFailureListener(Throwable::printStackTrace);
+            return;
+        }
+
+        // Upload a new user image file to Firebase.Storage.
+        UploadTask uploadTask = userImgRef.putFile(uri);
+        uploadTask.addOnProgressListener(listener -> log.i("progresslistener"))
+                .addOnSuccessListener(taskSnapshot -> log.i("task succeeded"))
+                .addOnFailureListener(e -> log.e("Upload failed"));
+
+        // On completing upload, return the download url which goes to Firebase.Firestore
+        uploadTask.continueWithTask(task -> userImgRef.getDownloadUrl()).addOnCompleteListener(task -> {
+            if(task.isSuccessful()) {
+                Uri downloadUserImageUri = task.getResult();
+                Map<String, String> uriUserImage = new HashMap<>();
+                uriUserImage.put("user_pic", downloadUserImageUri.toString());
+
+                // Update the "user_pic" field of the document in the "users" collection
+                userRef.set(uriUserImage, SetOptions.merge()).addOnCompleteListener(userimgTask -> {
+                    if(userimgTask.isSuccessful()) {
+                        mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
+                        final ImageView imgview = userImagePref.getUserImageView();
+                        setUserImage(imgview, uri);
+                    }
+                });
+
+                // Update the user image in the posting items wrtiiten by the user.
+                // Consider that all documents should be updated. Otherwise, limit condition would
+                // be added.
+                mDB.collection("user_post").whereEqualTo("user_id", userId).get()
+                        .addOnCompleteListener(postTask -> {
+                            if(postTask.isSuccessful() && postTask.getResult() != null) {
+                                for(QueryDocumentSnapshot document : postTask.getResult()) {
+                                    DocumentReference docRef = document.getReference();
+                                    docRef.update("user_pic", downloadUserImageUri.toString());
+                                }
+                            }
+                        });
+            }
+        });
+    }
+
+    private void setUserImage(ImageView imgview, Uri uri) {
+        final float scale = parentView.getResources().getDisplayMetrics().density;
+        final int size = (int)(Constants.ICON_SIZE_PREFERENCE * scale + 0.5f);
+        //userImagePref.setUserImageLoader(false);
+
+        Glide.with(parentView).load(uri).override(size)
+                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
+                .fitCenter()
+                .circleCrop()
+                .into(imgview);
+    }
 
     // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
     // the profile image icon

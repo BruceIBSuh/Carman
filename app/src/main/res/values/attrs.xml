@@ -86,7 +86,7 @@
     </declare-styleable>
 
     <declare-styleable name="UserImagePreference" >
-        <attr name="progressbar" format="reference" />
+        <attr name="showLoader" format="boolean" />
     </declare-styleable>
 
     <declare-styleable name="ViewPagerWithIndicator">

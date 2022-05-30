@@ -3,32 +3,31 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
-    android:background="@color/barColor3">
-
+    android:padding="8dp" >
     <ImageView
-        android:id="@+id/icon"
+        android:id="@+id/imgview_userpic"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_alignParentStart="true"
-        android:src="@drawable/bg_imgbtn_start"
-        android:contentDescription="@null"/>
-
+        android:layout_alignParentTop="true"
+        android:contentDescription="@null"
+        android:visibility="visible" />
     <ProgressBar
-        android:id="@+id/progbar"
+        android:id="@+id/progbar_userImg"
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_alignParentStart="true"
         android:layout_centerInParent="true"
         android:indeterminateOnly="true" />
-
     <TextView
         android:id="@+id/title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toEndOf="@id/icon"
-        android:layout_marginStart="32dp"
-        android:layout_gravity="center_vertical"
+        android:layout_toEndOf="@id/imgview_userpic"
+        android:layout_alignTop="@id/imgview_userpic"
+        android:layout_alignBottom="@id/imgview_userpic"
+        android:layout_marginStart="30dp"
+        android:gravity="center_vertical"
         android:text="사용자 이미지 설정"
         android:textSize="16sp"
         android:textStyle="bold"/>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.preference.PreferenceScreen
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:custom="http://schemas.android.com/apk/res-auto">
     <PreferenceCategory
         app:title="@string/pref_category_auto_info"
         app:key="carman_pref_basic_info"
@@ -105,6 +105,7 @@
         <com.silverback.carman.views.UserImagePreference
             app:key="carman_pref_userpic"
             app:title="@string/pref_app_userImage" />
+            <!--custom:showLoader="false"/>-->
         <!--
         <Preference
             app:key="carman_pref_userpic"
