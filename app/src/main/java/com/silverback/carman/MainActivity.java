@@ -1,5 +1,7 @@
 package com.silverback.carman;
 
+import static com.silverback.carman.SettingActivity.PREF_USER_IMAGE;
+
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
@@ -31,6 +33,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
@@ -155,21 +159,17 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
         binding.mainTopFrame.avgPriceView.addPriceView(defaultParams[0]);
 
-        // ViewModels
-        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
-        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
-        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-
         imgResUtil = new ApplyImageResourceUtil(this);
-
         // Event Handlers
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
 
-        // Method for implementing ViewModel callbacks to fetch a location and near station list.
-        //observeViewModel(locationModel);
+        // ViewModels
+        locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
+        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
+        opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
         observeViewModel(stnModel);
 
 
@@ -179,7 +179,7 @@ public class MainActivity extends BaseActivity implements
     public void onResume() {
         super.onResume();
         //binding.mainTopFrame.viewpagerPrice.registerOnPageChangeCallback(pagerCallback);
-        String userImg = mSettings.getString(Constants.USER_IMAGE, null);
+        String userImg = mSettings.getString(PREF_USER_IMAGE, null);
         String imgUri = (TextUtils.isEmpty(userImg))?Constants.imgPath + "ic_user_blank_gray":userImg;
         imgResUtil.applyGlideToDrawable(imgUri, Constants.ICON_SIZE_TOOLBAR_USERPIC, imgModel);
         imgModel.getGlideDrawableTarget().observe(this, userImage -> {
@@ -187,6 +187,7 @@ public class MainActivity extends BaseActivity implements
         });
         // Return the fuel price pager to the first page.
         binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+
     }
 
     @Override
@@ -262,9 +263,8 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long l) {
         //gasCode = (defaultParams[0].matches(arrGasCode[pos]))?defaultParams[0]:arrGasCode[pos];
-        if(defaultParams[0].matches(arrGasCode[pos])) {
-            gasCode = defaultParams[0];
-        } else {
+        if(defaultParams[0].matches(arrGasCode[pos])) gasCode = defaultParams[0];
+        else {
             gasCode = arrGasCode[pos];
             binding.mainTopFrame.avgPriceView.addPriceView(gasCode);
         }
@@ -354,6 +354,38 @@ public class MainActivity extends BaseActivity implements
             super.onScrollStateChanged(recyclerView, newState);
         }
     };
+
+    public void locateStations(int type){
+        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        if(!isStnViewOn) {
+            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+            final String rationale = "permission required to use Fine Location";
+            checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
+                switch(type) {
+                    case 0: binding.progbtnGas.setProgressColor(isStnViewOn);break;
+                    case 1: binding.progbtnSvc.setProgressColor(isStnViewOn);break;
+                    case 2: binding.progbtnElec.setProgressColor(isStnViewOn);break;
+                }
+                //binding.progbtnGas.setProgressColor(isStnViewOn);
+                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                observeViewModel(locationModel);
+            });
+        } else {
+            binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.fab.setVisibility(View.GONE);
+            binding.recyclerContents.setVisibility(View.VISIBLE);
+            switch(type) {
+                case 0: binding.progbtnGas.setProgressColor(isStnViewOn);break;
+                case 1: binding.progbtnSvc.setProgressColor(isStnViewOn);break;
+                case 2: binding.progbtnElec.setProgressColor(isStnViewOn);break;
+            }
+
+            // Return the viewpagers to the initial page.
+            binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+            mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
+        }
+
+    }
 
     // Implement onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(int eventRef) {
@@ -641,7 +673,6 @@ public class MainActivity extends BaseActivity implements
         }
 
         if(!TextUtils.isEmpty(district)) {
-            log.i("district: %s", district);
             GasPriceTask gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
                 log.i("viewmodel");

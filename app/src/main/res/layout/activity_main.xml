@@ -85,13 +85,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            app:bgToggle="@drawable/bg_svc_station"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/bottom_view1"
             app:layout_constraintHorizontal_bias="0.1"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
+            app:bgToggle="@drawable/bg_svc_station"
             app:onEvent="svc" />
         <View
             android:id="@+id/bottom_view1"
@@ -120,24 +120,24 @@
             android:id="@+id/progbtn_elec"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:bgToggle="@drawable/ic_elec_station"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/progbtn_gas"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/bottom_view2"
             app:layout_constraintTop_toTopOf="parent"
+            app:bgToggle="@drawable/ic_elec_station"
             app:onEvent="elec"/>
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_gas"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
-            app:bgToggle="@drawable/bg_gas_station"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/progbtn_elec"
             app:layout_constraintTop_toTopOf="parent"
+            app:bgToggle="@drawable/bg_gas_station"
             app:onEvent="gas" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

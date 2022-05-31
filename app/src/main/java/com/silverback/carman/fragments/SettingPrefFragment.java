@@ -14,8 +14,12 @@ import static com.silverback.carman.SettingActivity.PREF_USERNAME;
 import static com.silverback.carman.SettingActivity.REQUEST_CODE_CROP;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -23,6 +27,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResult;
@@ -69,6 +74,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -98,6 +107,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
     private SharedPreferences mSettings;
     private Preference namePref;
     private UserImagePreference userImagePref;
+    //private Preference userImagePref;
     // Custom preferences defined in views package
     private AutoDataPreference autoPref; // custom preference to show the progressbar.
     //private SpinnerDialogPreference spinnerPref;
@@ -109,6 +119,7 @@ public class SettingPrefFragment extends SettingBaseFragment {
     private String sigunCode;
     private String regMakerNum;
     private String userId;
+    private Uri photoUri;
 
     // Gettng Uri from Gallery
     private final ActivityResultLauncher<String> mGetContent = registerForActivityResult(
@@ -151,18 +162,10 @@ public class SettingPrefFragment extends SettingBaseFragment {
         namePref = findPreference(PREF_USERNAME);
         String userName = mSettings.getString(PREF_USERNAME, getString(R.string.pref_entry_void));
         namePref.setSummary(userName);
-        namePref.setOnPreferenceClickListener(v -> {
+        namePref.setOnPreferenceClickListener(view -> {
             String name = Objects.requireNonNull(namePref.getSummary()).toString();
             userId = requireArguments().getString("userId");
             DialogFragment dialogFragment = new SettingNameFragment(namePref, name, userId);
-            /*
-            getChildFragmentManager().setFragmentResultListener("namePref", dialogFragment, (req, res) -> {
-                if(req.matches("namePref")) {
-                    mSettings.edit().putString(PREF_USERNAME, res.getString("userName")).apply();
-                    namePref.setSummary(res.getString("userName"));
-                }
-            });
-             */
             dialogFragment.show(getChildFragmentManager(), "nameFragment");
             return true;//true if the click was handled
         });
@@ -272,37 +275,33 @@ public class SettingPrefFragment extends SettingBaseFragment {
         //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
         //userImagePref = findPreference(PREF_USER_IMAGE);
 
-        //TEST CODING
+        // Show the user image in the icon holder and set the event handler for creating a new user
+        // image
         userImagePref = findPreference(PREF_USER_IMAGE);
-        log.i("userImagePref: %s", userImagePref.getUserImageView());
         userRef.get().addOnSuccessListener(doc -> {
             if(doc.exists() && !TextUtils.isEmpty(doc.getString("user_pic"))){
-                String imageUrl = doc.getString("user_pic");
-                ImageView imgView = userImagePref.getUserImageView();
-                setUserImage(imgView, Uri.parse(imageUrl));
+                Uri uri = Uri.parse(doc.getString("user_pic"));
+                userImagePref.setUserIcon(uri);
             }
         });
-        Objects.requireNonNull(userImagePref).setOnPreferenceClickListener(view -> {
+
+        userImagePref.setOnPreferenceClickListener(view -> {
             if(TextUtils.isEmpty(mSettings.getString(PREF_USERNAME, null))) {
-                Snackbar.make(parentView, R.string.pref_snackbar_edit_image, Snackbar.LENGTH_SHORT).show();
+                final String msg = getString(R.string.pref_snackbar_edit_image);
+                Snackbar.make(parentView, msg, Snackbar.LENGTH_SHORT).show();
                 return false;
             }
+
 
             DialogFragment dialogFragment = new ImageChooserFragment();
             FragmentManager fragmentManager = getChildFragmentManager();
             fragmentManager.setFragmentResultListener("selectMedia", dialogFragment, (req, res) -> {
-                if(req.matches("selectMedia")) {
-                    int type = res.getInt("mediaType");
-                    if(type == -1) {
-                        log.i("no image");
-                    } else selectImageMedia(type);
-                }
+                if(req.matches("selectMedia")) selectImageMedia(res.getInt("mediaType"));
             });
 
             dialogFragment.show(fragmentManager, "imageMediaChooser");
             return true;
         });
-
     }
 
     /*
@@ -314,9 +313,6 @@ public class SettingPrefFragment extends SettingBaseFragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         FragmentSharedModel fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        ImageViewModel imgModel = new ViewModelProvider(requireActivity()).get(ImageViewModel.class);
-
-        //imgModel.getGlideDrawableTarget().observe(requireActivity(), res -> userImagePref.setIcon(res));
 
         fragmentModel.getUserName().observe(getViewLifecycleOwner(), userName -> {
             mSettings.edit().putString(PREF_USERNAME, userName).apply();
@@ -331,8 +327,6 @@ public class SettingPrefFragment extends SettingBaseFragment {
             //modelName = parseAutoData(jsonString).get(1);
             makerName = (jsonAutoDataArray.isNull(0))? null : jsonAutoDataArray.optString(0);
             modelName = (jsonAutoDataArray.isNull(1))? null : jsonAutoDataArray.optString(1);
-
-            log.i("maker and model: %s, %s", makerName, modelName);
             // The null value that JSONObject returns seems different than that of other regular
             // object. Thus, JSONObject.isNull(int) should be checked, then set the null value to it
             // if it is true. This is firmly at bug issue.
@@ -352,13 +346,6 @@ public class SettingPrefFragment extends SettingBaseFragment {
             JSONArray jsonArray = new JSONArray(distList);
             mSettings.edit().putString(PREF_DISTRICT, jsonArray.toString()).apply();
         });
-
-        /*
-        fragmentModel.getImageChooser().observe(getViewLifecycleOwner(), media ->
-            ((SettingActivity)requireActivity()).selectImageMedia(media)
-        );
-
-         */
     }
 
     // queryAutoMaker() defined in the parent fragment(SettingBaseFragment) queries the auto maker,
@@ -401,22 +388,24 @@ public class SettingPrefFragment extends SettingBaseFragment {
 
     public void selectImageMedia(int media) {
         switch(media) {
-            case 1: //gallery
+            case 0: //no image
+                uploadUserImage(null);
+                break;
+            case 1://gallery
                 mGetContent.launch("image/*");
                 break;
-
-            case 2: //camera
+            case 2://camera: permission check, the method of which is defined in BaseActivity
                 final String perm = Manifest.permission.CAMERA;
                 final String rationale = "permission required to use Camera";
-                ((BaseActivity)parentView.getContext()).checkRuntimePermission(parentView, perm, rationale, () -> {
-                    File tmpFile = new File(parentView.getContext().getCacheDir(), new SimpleDateFormat(
-                            "yyyyMMdd_HHmmss", Locale.US ).format(new Date( )) + ".jpg" );
-                    Uri photoUri = FileProvider.getUriForFile(
-                            parentView.getContext(), Constants.FILE_IMAGES, tmpFile);
+                final Context context = parentView.getContext();
+
+                ((BaseActivity)context).checkRuntimePermission(parentView, perm, rationale, () -> {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
+                    File tmpFile = new File(parentView.getContext().getCacheDir(), sdf.format(new Date( )) + ".jpg" );
+                    photoUri = FileProvider.getUriForFile(context, Constants.FILE_IMAGES, tmpFile);
                     mTakePicture.launch(photoUri);
                 });
                 break;
-            default: break;
         }
 
     }
@@ -436,33 +425,34 @@ public class SettingPrefFragment extends SettingBaseFragment {
         cropImageResultLauncher.launch(intent);
     }
 
+    // ActivityResult callback for taking camera
     private void getCameraImage(boolean isTaken) {
-        if(isTaken) mGetContent.launch("image/*");
+        if(isTaken) {
+            Intent intent = new Intent(parentView.getContext(), CropImageActivity.class);
+            intent.setData(photoUri);
+            intent.putExtra("requestCrop", REQUEST_CODE_CROP);
+            cropImageResultLauncher.launch(intent);
+        }
     }
 
     // Callback method for ActivityResultLauncher
     private void getCropImageResult(ActivityResult result) {
         if(result.getData() == null) return;
-
         Uri croppedImageUri = Objects.requireNonNull(result.getData().getData());
-        mSettings.edit().putString(PREF_USER_IMAGE, croppedImageUri.toString()).apply();
         uploadUserImage(croppedImageUri);
-
-        //Get the image loader started
-        userImagePref.setUserImageLoader(true);
+        userImagePref.setProgressBarVisibility(View.VISIBLE);
     }
 
     public void uploadUserImage(Uri uri) {
         final StorageReference userImgRef = storage.getReference().child("user_pic/" + userId + ".png");
-        // Delete the file from FireStorage and, if successful, it goes to FireStore to delete the
-        // Url of the image.
         if(uri == null) {
             userImgRef.delete().addOnSuccessListener(aVoid -> {
-                // Delete(update) the document with null value.
-                //DocumentReference docref = mDB.collection("users").document(userId);
+                final String msg = getString(R.string.pref_snackbar_image_deleted);
+                Snackbar.make(parentView, msg, Snackbar.LENGTH_SHORT).show();
                 userRef.update("user_pic", null).addOnSuccessListener(bVoid -> {
-                    final String msg = getString(R.string.pref_snackbar_image_deleted);
-                    Snackbar.make(parentView, msg, Snackbar.LENGTH_SHORT).show();
+                    userImagePref.setUserIcon(null);
+                    mSettings.edit().putString(PREF_USER_IMAGE, null).apply();
+                    updateUserProfileToPost(null);
                 }).addOnFailureListener(Throwable::printStackTrace);
             }).addOnFailureListener(Throwable::printStackTrace);
             return;
@@ -484,45 +474,29 @@ public class SettingPrefFragment extends SettingBaseFragment {
                 // Update the "user_pic" field of the document in the "users" collection
                 userRef.set(uriUserImage, SetOptions.merge()).addOnCompleteListener(userimgTask -> {
                     if(userimgTask.isSuccessful()) {
-                        mSettings.edit().putString(Constants.USER_IMAGE, uri.toString()).apply();
-                        final ImageView imgview = userImagePref.getUserImageView();
-                        setUserImage(imgview, uri);
+                        log.i("how to notify the custom preference change");
+                        userImagePref.setProgressBarVisibility(View.GONE);
+                        userImagePref.setUserIcon(uri);
+                        mSettings.edit().putString(PREF_USER_IMAGE, uri.toString()).apply();
                     }
                 });
 
                 // Update the user image in the posting items wrtiiten by the user.
-                // Consider that all documents should be updated. Otherwise, limit condition would
-                // be added.
-                mDB.collection("user_post").whereEqualTo("user_id", userId).get()
-                        .addOnCompleteListener(postTask -> {
-                            if(postTask.isSuccessful() && postTask.getResult() != null) {
-                                for(QueryDocumentSnapshot document : postTask.getResult()) {
-                                    DocumentReference docRef = document.getReference();
-                                    docRef.update("user_pic", downloadUserImageUri.toString());
-                                }
-                            }
-                        });
+                updateUserProfileToPost(downloadUserImageUri);
             }
         });
     }
 
-    private void setUserImage(ImageView imgview, Uri uri) {
-        final float scale = parentView.getResources().getDisplayMetrics().density;
-        final int size = (int)(Constants.ICON_SIZE_PREFERENCE * scale + 0.5f);
-        //userImagePref.setUserImageLoader(false);
-
-        Glide.with(parentView).load(uri).override(size)
-                .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                .fitCenter()
-                .circleCrop()
-                .into(imgview);
+    private void updateUserProfileToPost(Uri uri) {
+        mDB.collection("user_post").whereEqualTo("user_id", userId).get().addOnCompleteListener(postTask -> {
+            if(postTask.isSuccessful() && postTask.getResult() != null) {
+                for(QueryDocumentSnapshot document : postTask.getResult()) {
+                    DocumentReference docRef = document.getReference();
+                    if(uri == null) docRef.update("user_pic", null);
+                    else docRef.update("user_pic", uri.toString());
+                }
+            }
+        });
     }
-
-    // Referenced by OnSelectImageMedia callback when selecting the deletion in order to remove
-    // the profile image icon
-    public Preference getUserImagePreference() {
-        return userImagePref;
-    }
-
 
 }

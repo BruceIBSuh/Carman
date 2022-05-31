@@ -27,6 +27,7 @@ public class ProgressButton extends LinearLayout {
     private Context context;
     private int pbColorRef;
     private int eventRef;
+    private boolean isClicked;
     private int offColor, onColor;
 
     public ProgressButton(Context context) {
@@ -49,18 +50,18 @@ public class ProgressButton extends LinearLayout {
         this.context = context;
         Drawable bgButtonRef;
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
+        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
         try {
-            pbColorRef = a.getColor(R.styleable.ProgressButton_progBgColor, 0);
-            bgButtonRef = a.getDrawable(R.styleable.ProgressButton_bgToggle);
-            eventRef = a.getInt(R.styleable.ProgressButton_onEvent, -1);
+            pbColorRef = typedArray.getColor(R.styleable.ProgressButton_progBgColor, 0);
+            bgButtonRef = typedArray.getDrawable(R.styleable.ProgressButton_bgToggle);
+            eventRef = typedArray.getInt(R.styleable.ProgressButton_onEvent, -1);
         } finally {
-            a.recycle();
+            typedArray.recycle();
         }
 
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(bgButtonRef);
-        binding.button.setOnClickListener(view -> setEvent(context, eventRef));
+        binding.button.setOnClickListener(view -> setEvent(eventRef));
 
     }
 
@@ -81,18 +82,26 @@ public class ProgressButton extends LinearLayout {
             binding.progressBar.setScaleY(5f);
         } else {
             binding.progressBar.setIndeterminate(false);
-            pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
+            pbColorRef = (pbColorRef == 0) ? ContextCompat.getColor(context, android.R.color.holo_red_light) : 0;
             binding.progressBar.setBackgroundColor(pbColorRef);
             binding.progressBar.setScaleY(1f);
         }
     }
 
-    private void setEvent(Context context, int code){
+    public int getPbColorRef() {
+        return pbColorRef;
+    }
+
+    private void setEvent(int type){
+        ((MainActivity)context).locateStations(type);
+        /*
         switch(eventRef){
             case 0: ((MainActivity)context).locateNearStations(code); break;
             case 1: ((MainActivity)context).locateNearServices(code); break;
             case 2: ((MainActivity)context).locateElecStations(code); break;
         }
+
+         */
     }
 
 }

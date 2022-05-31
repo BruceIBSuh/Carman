@@ -29,9 +29,9 @@ import com.silverback.carman.viewmodels.FragmentSharedModel;
 public class ImageChooserFragment extends DialogFragment {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ImageChooserFragment.class);
+    private final int NO_IMAGE = 0;
     private final int MEDIA_GALLERY = 1;
     private final int MEDIA_CAMERA = 2;
-    private final int NO_IMAGE = -1;
 
     //private FragmentSharedModel fragmentModel;
     public ImageChooserFragment() {

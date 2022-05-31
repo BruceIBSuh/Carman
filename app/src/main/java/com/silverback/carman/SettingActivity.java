@@ -304,6 +304,7 @@ public class SettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case PREF_USERNAME:
+
                 String userName = mSettings.getString(key, null);
                 if(!TextUtils.isEmpty(userName)) resultIntent.putExtra("userName", userName);
                 break;
@@ -327,6 +328,7 @@ public class SettingActivity extends BaseActivity implements
 
             case PREF_DISTRICT:
                 try {
+                    log.i("district changed");
                     String jsonDist = mSettings.getString(key, null);
                     JSONArray jsonDistArray = new JSONArray(jsonDist);
                     String distCode = jsonDistArray.optString(2);
@@ -341,6 +343,7 @@ public class SettingActivity extends BaseActivity implements
 
             case PREF_USER_IMAGE:
                 userImage = mSettings.getString(key, null);
+                resultIntent.putExtra("userImage", userImage);
                 break;
         }
 
