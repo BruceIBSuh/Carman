@@ -268,12 +268,6 @@ public class SettingPrefFragment extends SettingBaseFragment {
 
         // Preference for whether the geofence notification is permiited to receive or not.
         SwitchPreferenceCompat switchGeofencePref = findPreference(Constants.NOTIFICATION_GEOFENCE);
-        log.i("notification switch: %s", mSettings.getBoolean(Constants.NOTIFICATION_GEOFENCE, true));
-
-        // Image Editor which pops up the dialog to select which resource location to find an image.
-        // Consider to replace this with the custom preference defined as ProgressImagePreference.
-        //ProgressImagePreference progImgPref = findPreference(Constants.USER_IMAGE);
-        //userImagePref = findPreference(PREF_USER_IMAGE);
 
         // Show the user image in the icon holder and set the event handler for creating a new user
         // image

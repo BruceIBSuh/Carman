@@ -8,6 +8,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable-anydpi/bg_gas_station.xml" value="0.1" />
         <entry key="app/src/main/res/drawable-anydpi/ic_image_holder.xml" value="0.16666666666666666" />
         <entry key="app/src/main/res/drawable/bg_board_comment.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/bg_border_line.xml" value="0.1" />

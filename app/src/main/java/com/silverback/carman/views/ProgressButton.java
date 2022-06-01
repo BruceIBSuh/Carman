@@ -3,12 +3,9 @@ package com.silverback.carman.views;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.widget.LinearLayout;
 
 import androidx.core.content.ContextCompat;
@@ -27,7 +24,7 @@ public class ProgressButton extends LinearLayout {
     private Context context;
     private int pbColorRef;
     private int eventRef;
-    private boolean isClicked;
+    private boolean isActive;
     private int offColor, onColor;
 
     public ProgressButton(Context context) {
@@ -48,20 +45,24 @@ public class ProgressButton extends LinearLayout {
         LayoutInflater inflater = LayoutInflater.from(context);
         binding = ViewProgressButtonBinding.inflate(inflater, this, true);
         this.context = context;
-        Drawable bgButtonRef;
+        this.isActive = false;
+        Drawable btnBgRef;
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
         try {
-            pbColorRef = typedArray.getColor(R.styleable.ProgressButton_progBgColor, 0);
-            bgButtonRef = typedArray.getDrawable(R.styleable.ProgressButton_bgToggle);
-            eventRef = typedArray.getInt(R.styleable.ProgressButton_onEvent, -1);
+            pbColorRef = typedArray.getColor(R.styleable.ProgressButton_pbColor, 0);
+            btnBgRef = typedArray.getDrawable(R.styleable.ProgressButton_btnBg);
+            eventRef = typedArray.getInt(R.styleable.ProgressButton_onType, -1);
         } finally {
             typedArray.recycle();
         }
 
         binding.progressBar.setBackgroundColor(pbColorRef);
-        binding.button.setBackground(bgButtonRef);
-        binding.button.setOnClickListener(view -> setEvent(eventRef));
+        binding.button.setBackground(btnBgRef);
+        binding.button.setOnClickListener(view -> {
+            setEvent(eventRef, isActive);
+            isActive = !isActive;
+        });
 
     }
 
@@ -75,33 +76,25 @@ public class ProgressButton extends LinearLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-
-    public void setProgressColor(boolean isVisible) {
-        if(!isVisible) {
+    public void setProgressColor(boolean isStateOn) {
+        if(!isStateOn) {
             binding.progressBar.setIndeterminate(true);
             binding.progressBar.setScaleY(5f);
         } else {
             binding.progressBar.setIndeterminate(false);
-            pbColorRef = (pbColorRef == 0) ? ContextCompat.getColor(context, android.R.color.holo_red_light) : 0;
+            pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
             binding.progressBar.setBackgroundColor(pbColorRef);
             binding.progressBar.setScaleY(1f);
         }
     }
 
-    public int getPbColorRef() {
-        return pbColorRef;
+    public boolean isProgBtnActive() {
+        return isActive;
     }
 
-    private void setEvent(int type){
-        ((MainActivity)context).locateStations(type);
-        /*
-        switch(eventRef){
-            case 0: ((MainActivity)context).locateNearStations(code); break;
-            case 1: ((MainActivity)context).locateNearServices(code); break;
-            case 2: ((MainActivity)context).locateElecStations(code); break;
-        }
-
-         */
+    private void setEvent(int type, boolean isActive){
+        log.i("event invoked: %s", isActive);
+        ((MainActivity)context).locateStations(type, isActive);
     }
 
 }

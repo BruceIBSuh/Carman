@@ -91,14 +91,14 @@
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:bgToggle="@drawable/bg_svc_station"
-            app:onEvent="svc" />
+            app:btnBg="@drawable/bg_svc_station"
+            app:onType="svc" />
         <View
             android:id="@+id/bottom_view1"
             android:visibility="invisible"
             android:layout_width="26dp"
             android:layout_height="30dp"
-            android:background="@android:color/darker_gray"
+            android:background="@android:color/holo_green_light"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/bottom_view2"
             app:layout_constraintHorizontal_bias="0.5"
@@ -110,7 +110,7 @@
             android:visibility="invisible"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:background="@android:color/darker_gray"
+            android:background="@android:color/holo_green_light"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/progbtn_elec"
             app:layout_constraintHorizontal_bias="0.5"
@@ -125,8 +125,8 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/bottom_view2"
             app:layout_constraintTop_toTopOf="parent"
-            app:bgToggle="@drawable/ic_elec_station"
-            app:onEvent="elec"/>
+            app:btnBg="@drawable/ic_elec_station"
+            app:onType="elec"/>
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_gas"
             android:layout_width="wrap_content"
@@ -137,8 +137,8 @@
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/progbtn_elec"
             app:layout_constraintTop_toTopOf="parent"
-            app:bgToggle="@drawable/bg_gas_station"
-            app:onEvent="gas" />
+            app:btnBg="@drawable/bg_gas_station"
+            app:onType="gas" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

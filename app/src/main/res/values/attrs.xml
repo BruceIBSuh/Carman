@@ -21,9 +21,9 @@
     </declare-styleable>
 
     <declare-styleable name="ProgressButton">
-        <attr name="bgToggle" format="reference" />
-        <attr name="progBgColor" format="color|reference" />
-        <attr name="onEvent" format="enum">
+        <attr name="btnBg" format="reference" />
+        <attr name="pbColor" format="color|reference" />
+        <attr name="onType" format="enum">
             <enum name="gas" value="0" />
             <enum name="svc" value="1" />
             <enum name="elec" value="2" />

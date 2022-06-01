@@ -56,6 +56,7 @@ import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.views.ProgressButton;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -63,6 +64,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -106,6 +108,7 @@ public class MainActivity extends BaseActivity implements
 
 
     // Fields
+    private List<ProgressButton> progbtnList;
     private String[] arrGasCode;
     private String[] defaultParams;
     private String gasCode;
@@ -160,6 +163,12 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.avgPriceView.addPriceView(defaultParams[0]);
 
         imgResUtil = new ApplyImageResourceUtil(this);
+
+        progbtnList = new ArrayList<>();
+        progbtnList.add(binding.progbtnGas);
+        progbtnList.add(binding.progbtnSvc);
+        progbtnList.add(binding.progbtnElec);
+
         // Event Handlers
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
@@ -355,38 +364,21 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    public void locateStations(int type){
-        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        if(!isStnViewOn) {
-            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-            final String rationale = "permission required to use Fine Location";
-            checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
-                switch(type) {
-                    case 0: binding.progbtnGas.setProgressColor(isStnViewOn);break;
-                    case 1: binding.progbtnSvc.setProgressColor(isStnViewOn);break;
-                    case 2: binding.progbtnElec.setProgressColor(isStnViewOn);break;
-                }
-                //binding.progbtnGas.setProgressColor(isStnViewOn);
-                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                observeViewModel(locationModel);
+    int prevButton;
+    public void locateStations(int type, boolean isState){
+        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+        final String rationale = "permission required to use Fine Location";
+        checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
+            progbtnList.get(type).setProgressColor(false);
+            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+            //observeViewModel(locationModel);
+            locationModel.getLocation().observe(this, location -> {
+                log.i("location: %s, %s", location, type);
+                progbtnList.get(type).setProgressColor(true);
             });
-        } else {
-            binding.stationRecyclerView.setVisibility(View.GONE);
-            binding.fab.setVisibility(View.GONE);
-            binding.recyclerContents.setVisibility(View.VISIBLE);
-            switch(type) {
-                case 0: binding.progbtnGas.setProgressColor(isStnViewOn);break;
-                case 1: binding.progbtnSvc.setProgressColor(isStnViewOn);break;
-                case 2: binding.progbtnElec.setProgressColor(isStnViewOn);break;
-            }
-
-            // Return the viewpagers to the initial page.
-            binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-            mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
-        }
-
+        });
     }
-
+    /*
     // Implement onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(int eventRef) {
         isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
@@ -427,6 +419,8 @@ public class MainActivity extends BaseActivity implements
             });
         });
     }
+
+     */
 
     // Reorder near station list according to the distance/price, which is called from the layout
     // file as well.
@@ -744,5 +738,6 @@ public class MainActivity extends BaseActivity implements
         boardIntent.putExtra("category", category);
         startActivity(boardIntent);
     }
+
 }
 
