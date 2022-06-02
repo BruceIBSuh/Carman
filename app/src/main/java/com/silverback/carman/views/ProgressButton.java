@@ -1,5 +1,6 @@
 package com.silverback.carman.views;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -15,6 +16,7 @@ import com.silverback.carman.R;
 import com.silverback.carman.databinding.ViewProgressButtonBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.ThreadManager2;
 
 public class ProgressButton extends LinearLayout {
 
@@ -80,28 +82,33 @@ public class ProgressButton extends LinearLayout {
         } else {
             log.i("invoked when the location fetched");
             binding.progressBar.setIndeterminate(false);
-            pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
+            pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
+            //pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
             binding.progressBar.setBackgroundColor(pbColorRef);
             binding.progressBar.setScaleY(1f);
+            binding.button.setClickable(true);
         }
 
     }
 
-    public int getProgressColr() {
-        return pbColorRef;
+    public boolean getButtonState() {
+        return isActive;
     }
 
     private void setEvent(int type){
-        if(pbColorRef == 0){
-            log.i("turn on");
-            setProgressColor(false);
-            ((MainActivity)context).locateStations(type);
+       if(!isActive) {
+           log.i("make active");
+           binding.button.setClickable(false);
+           ((MainActivity)context).locateStations(type);
 
-        } else {
-            log.i("turn off");
-            setProgressColor(true);
-        }
+       } else {
+           log.i("reset");
+           pbColorRef = ContextCompat.getColor(context, android.R.color.white);
+           binding.progressBar.setBackgroundColor(pbColorRef);
+           ((MainActivity)context).hideStations(type);
+       }
 
+       isActive = !isActive;
     }
 
 }

@@ -364,22 +364,32 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    int prevButton = -1;
-    public void locateStations(int curButton){
-        if(curButton != prevButton) {
-            if(prevButton != -1) progbtnList.get(prevButton).setProgressColor(true);
 
-            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-            final String rationale = "permission required to use Fine Location";
-            checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
-                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                locationModel.getLocation().observe(this, location -> {
-                    progbtnList.get(curButton).setProgressColor(true);
-                    prevButton = curButton;
-                });
+    int prev = -1;
+    public void locateStations(int type){
+        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+        final String rationale = "permission required to use Fine Location";
+        for(ProgressButton progbtn : progbtnList) {
+            if(progbtn.getButtonState()) log.i("type: %s", type);
+        }
+        checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
+            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+            progbtnList.get(type).setProgressColor(false);
+            locationModel.getLocation().observe(this, location -> {
+                progbtnList.get(type).setProgressColor(true);
+                observeViewModel(locationModel);
             });
+        });
+    }
 
-        } else progbtnList.get(curButton).setProgressColor(true);
+    public void hideStations(int type) {
+        binding.stationRecyclerView.setVisibility(View.GONE);
+        binding.fab.setVisibility(View.GONE);
+        binding.recyclerContents.setVisibility(View.VISIBLE);
+
+        // Return the viewpagers to the initial page.
+        binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
+        mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
     }
     /*
     // Implement onClickListener of the toggle button which is defined in the xml file.
