@@ -23,7 +23,7 @@ public class ProgressButton extends LinearLayout {
     private ViewProgressButtonBinding binding;
     private Context context;
     private int pbColorRef;
-    private int eventRef;
+    private int buttonRef;
     private boolean isActive;
     private int offColor, onColor;
 
@@ -52,17 +52,12 @@ public class ProgressButton extends LinearLayout {
         try {
             pbColorRef = typedArray.getColor(R.styleable.ProgressButton_pbColor, 0);
             btnBgRef = typedArray.getDrawable(R.styleable.ProgressButton_btnBg);
-            eventRef = typedArray.getInt(R.styleable.ProgressButton_onType, -1);
-        } finally {
-            typedArray.recycle();
-        }
+            buttonRef = typedArray.getInt(R.styleable.ProgressButton_onType, -1);
+        } finally { typedArray.recycle();}
 
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(btnBgRef);
-        binding.button.setOnClickListener(view -> {
-            setEvent(eventRef, isActive);
-            isActive = !isActive;
-        });
+        binding.button.setOnClickListener(view -> setEvent(buttonRef));
 
     }
 
@@ -80,21 +75,33 @@ public class ProgressButton extends LinearLayout {
         if(!isStateOn) {
             binding.progressBar.setIndeterminate(true);
             binding.progressBar.setScaleY(5f);
+            //binding.button.setClickable(false);
+
         } else {
+            log.i("invoked when the location fetched");
             binding.progressBar.setIndeterminate(false);
             pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
             binding.progressBar.setBackgroundColor(pbColorRef);
             binding.progressBar.setScaleY(1f);
         }
+
     }
 
-    public boolean isProgBtnActive() {
-        return isActive;
+    public int getProgressColr() {
+        return pbColorRef;
     }
 
-    private void setEvent(int type, boolean isActive){
-        log.i("event invoked: %s", isActive);
-        ((MainActivity)context).locateStations(type, isActive);
+    private void setEvent(int type){
+        if(pbColorRef == 0){
+            log.i("turn on");
+            setProgressColor(false);
+            ((MainActivity)context).locateStations(type);
+
+        } else {
+            log.i("turn off");
+            setProgressColor(true);
+        }
+
     }
 
 }

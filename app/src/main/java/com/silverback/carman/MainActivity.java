@@ -364,19 +364,22 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    int prevButton;
-    public void locateStations(int type, boolean isState){
-        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-        final String rationale = "permission required to use Fine Location";
-        checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
-            progbtnList.get(type).setProgressColor(false);
-            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-            //observeViewModel(locationModel);
-            locationModel.getLocation().observe(this, location -> {
-                log.i("location: %s, %s", location, type);
-                progbtnList.get(type).setProgressColor(true);
+    int prevButton = -1;
+    public void locateStations(int curButton){
+        if(curButton != prevButton) {
+            if(prevButton != -1) progbtnList.get(prevButton).setProgressColor(true);
+
+            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+            final String rationale = "permission required to use Fine Location";
+            checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
+                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                locationModel.getLocation().observe(this, location -> {
+                    progbtnList.get(curButton).setProgressColor(true);
+                    prevButton = curButton;
+                });
             });
-        });
+
+        } else progbtnList.get(curButton).setProgressColor(true);
     }
     /*
     // Implement onClickListener of the toggle button which is defined in the xml file.
