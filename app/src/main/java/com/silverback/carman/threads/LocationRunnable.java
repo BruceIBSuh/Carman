@@ -41,6 +41,8 @@ public class LocationRunnable implements
     //private LocationCallback locationCallback;
     //private Location mCurrentLocation;
 
+    private int index;
+
 
     // Interface
     public interface LocationMethods {
@@ -54,6 +56,7 @@ public class LocationRunnable implements
     LocationRunnable(Context context, LocationMethods task) {
         this.task = task;
         this.context = context;
+        index = 0;
     }
 
     @Override
@@ -100,10 +103,14 @@ public class LocationRunnable implements
             try {
                 final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
                 final CancellationToken token = new CancellationTokenSource().getToken();
+                // Test Code
+
                 mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
                     //if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
                     if(location != null) {
                         //mCurrentLocation = location;
+                        index++;
+                        log.i("fused location: %s", index);
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
                     } else {

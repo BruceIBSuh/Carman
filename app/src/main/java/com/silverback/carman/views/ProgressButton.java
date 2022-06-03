@@ -59,7 +59,7 @@ public class ProgressButton extends LinearLayout {
 
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(btnBgRef);
-        binding.button.setOnClickListener(view -> setEvent(buttonRef));
+        binding.button.setOnClickListener(view -> setEvent(buttonRef, isActive));
 
     }
 
@@ -75,12 +75,13 @@ public class ProgressButton extends LinearLayout {
 
     public void setProgressColor(boolean isStateOn) {
         if(!isStateOn) {
+            log.i("state on");
             binding.progressBar.setIndeterminate(true);
             binding.progressBar.setScaleY(5f);
-            //binding.button.setClickable(false);
+            binding.button.setClickable(false);
 
         } else {
-            log.i("invoked when the location fetched");
+            log.i("invoked when the location fetched: %s", buttonRef);
             binding.progressBar.setIndeterminate(false);
             pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
             //pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
@@ -91,24 +92,20 @@ public class ProgressButton extends LinearLayout {
 
     }
 
-    public boolean getButtonState() {
-        return isActive;
+    public void resetButton() {
+        log.i("resetButton");
+        pbColorRef = ContextCompat.getColor(context, android.R.color.white);
+        binding.progressBar.setBackgroundColor(pbColorRef);
+        binding.progressBar.setScaleY(1f);
+        this.isActive = !isActive;
     }
 
-    private void setEvent(int type){
-       if(!isActive) {
-           log.i("make active");
-           binding.button.setClickable(false);
-           ((MainActivity)context).locateStations(type);
+    private void setEvent(int type, boolean isActive){
+        log.i("setEvent");
+        ((MainActivity)context).locateStations(type, isActive);
+        this.isActive = !isActive;
 
-       } else {
-           log.i("reset");
-           pbColorRef = ContextCompat.getColor(context, android.R.color.white);
-           binding.progressBar.setBackgroundColor(pbColorRef);
-           ((MainActivity)context).hideStations(type);
-       }
 
-       isActive = !isActive;
     }
 
 }

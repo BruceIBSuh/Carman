@@ -2,14 +2,14 @@ package com.silverback.carman.threads;
 
 import android.location.Location;
 
-public class ElecStationListTask extends ThreadTask implements ElecStationListRunnable.ElecStationCallback {
+public class EVStationListTask extends ThreadTask implements EVStationListRunnable.ElecStationCallback {
 
     private final Runnable elecStationListRunnable;
     private final Location location;
     private Thread currentThread;
 
-    public ElecStationListTask(Location location) {
-        elecStationListRunnable = new ElecStationListRunnable(this);
+    public EVStationListTask(Location location) {
+        elecStationListRunnable = new EVStationListRunnable(this);
         this.location = location;
     }
 

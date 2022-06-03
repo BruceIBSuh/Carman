@@ -33,8 +33,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationListAdapter;
@@ -43,7 +41,7 @@ import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.ElecStationListTask;
+import com.silverback.carman.threads.EVStationListTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.GasStationListTask;
@@ -96,7 +94,7 @@ public class MainActivity extends BaseActivity implements
 
     private LocationTask locationTask;
     private GasStationListTask gasStationListTask;
-    private ElecStationListTask evTask;
+    private EVStationListTask evTask;
 
     private MainContentAdapter mainContentAdapter;
     private StationListAdapter stnListAdapter;
@@ -282,6 +280,7 @@ public class MainActivity extends BaseActivity implements
         mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount() - 1, gasCode);
         // Update the average gas price and the hidden price bar.
         setCollapsedPriceBar();
+
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
@@ -364,33 +363,86 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-
-    int prev = -1;
-    public void locateStations(int type){
-        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-        final String rationale = "permission required to use Fine Location";
-        for(ProgressButton progbtn : progbtnList) {
-            if(progbtn.getButtonState()) log.i("type: %s", type);
+    int prevButton = -1;
+    public void locateStations(int curButton, boolean isActive){
+        if(prevButton != -1 && prevButton != curButton) {
+            progbtnList.get(prevButton).resetButton();
+            locationModel.getLocation().removeObservers(this);
         }
-        checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
-            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-            progbtnList.get(type).setProgressColor(false);
-            locationModel.getLocation().observe(this, location -> {
-                progbtnList.get(type).setProgressColor(true);
-                observeViewModel(locationModel);
+
+        if(!isActive) {
+            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
+            final String rationale = "permission required to use Fine Location";
+            checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
+                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+                progbtnList.get(curButton).setProgressColor(false);
+                locationModel.getLocation().observe(this, location -> {
+                    switch(curButton) {
+                        case 0: locateGasStations(location); break;
+                        case 1: locateSvcStations(location); break;
+                        case 2: locateEVStations(location); break;
+                    }
+
+                    progbtnList.get(curButton).setProgressColor(true);
+                });
+
+                locationModel.getLocationException().observe(this, exception -> {
+                    log.i("Exception occurred while fetching location");
+                    SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
+                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                    binding.stationRecyclerView.showSpannableTextView(spannableString);
+
+                });
             });
-        });
+
+            prevButton = curButton;
+
+        } else {
+            binding.recyclerContents.setVisibility(View.VISIBLE);
+            binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.fab.setVisibility(View.GONE);
+            progbtnList.get(curButton).resetButton();
+        }
     }
 
-    public void hideStations(int type) {
-        binding.stationRecyclerView.setVisibility(View.GONE);
-        binding.fab.setVisibility(View.GONE);
-        binding.recyclerContents.setVisibility(View.VISIBLE);
-
-        // Return the viewpagers to the initial page.
-        binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-        mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
+    private void locateGasStations(Location location) {
+        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
+            mPrevLocation = location;
+            defaultParams[0] = gasCode;
+            gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
+        } else {
+            binding.recyclerContents.setVisibility(View.GONE);
+            binding.stationRecyclerView.setVisibility(View.VISIBLE);
+            binding.fab.setVisibility(View.VISIBLE);
+        }
     }
+
+    private void locateSvcStations(Location location) {
+        log.i("Service Stations: %s", location);
+        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
+            mPrevLocation = location;
+        } else {
+            binding.recyclerContents.setVisibility(View.GONE);
+            binding.stationRecyclerView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void locateEVStations(Location location) {
+        log.i("EV stations: %s", location);
+        mPrevLocation = location;
+        evTask = ThreadManager2.startEVStatoinListTask(location);
+        /*
+        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
+            mPrevLocation = location;
+            evTask = ThreadManager2.startEVStatoinListTask(location);
+        } else {
+            binding.recyclerContents.setVisibility(View.GONE);
+            binding.stationRecyclerView.setVisibility(View.VISIBLE);
+        }
+
+         */
+    }
+
     /*
     // Implement onClickListener of the toggle button which is defined in the xml file.
     public void locateNearStations(int eventRef) {
@@ -470,6 +522,7 @@ public class MainActivity extends BaseActivity implements
     // the location.
     private void observeViewModel(ViewModel model) {
         if(model instanceof LocationViewModel) {
+            /*
             locationModel.getLocation().observe(this, location -> {
                 // Location fetched or changed at a preset distance.
                 if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
@@ -481,7 +534,6 @@ public class MainActivity extends BaseActivity implements
                 // Station default params changed from SettingPrefActivity.
                 } else if(isRadiusChanged || isGasTypeChanged) {
                     log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
-
                     gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
 
                 } else {
@@ -493,6 +545,8 @@ public class MainActivity extends BaseActivity implements
                 }
             });
 
+
+
             locationModel.getLocationException().observe(this, exception -> {
                 log.i("Exception occurred while fetching location");
                 SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
@@ -502,12 +556,13 @@ public class MainActivity extends BaseActivity implements
 
             });
 
+             */
+
         } else if(model instanceof StationListViewModel) {
             stnModel.getNearStationList().observe(this, stnList -> {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 //binding.btnToggleStation.setChecked(true);
-
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());
                     mStationList = stnList;
@@ -515,6 +570,7 @@ public class MainActivity extends BaseActivity implements
                     binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                     binding.stationRecyclerView.showStationRecyclerView();
                     binding.fab.setVisibility(View.VISIBLE);
+
 
                 } else {
                     // No near stations post an message that contains the clickable span to link to the

@@ -62,7 +62,7 @@ public class ThreadManager2 {
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
     private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<GasStationListTask> mStnListTaskQueue;
-    private final BlockingQueue<ElecStationListTask> mElecListTaskQueue;
+    private final BlockingQueue<EVStationListTask> mElecListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
@@ -286,12 +286,12 @@ public class ThreadManager2 {
     }
 
     // Electric Charge Station
-    public static ElecStationListTask startElecStatoinListTask(Location location) {
-        ElecStationListTask elecStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
-        if(elecStationListTask == null) elecStationListTask = new ElecStationListTask(location);
+    public static EVStationListTask startEVStatoinListTask(Location location) {
+        EVStationListTask EVStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+        if(EVStationListTask == null) EVStationListTask = new EVStationListTask(location);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(elecStationListTask.getElecStationListRunnable());
-        return elecStationListTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(EVStationListTask.getElecStationListRunnable());
+        return EVStationListTask;
     }
 
     public static UploadBitmapTask uploadBitmapTask(

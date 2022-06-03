@@ -15,8 +15,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     private static final LoggingHelper log = LoggingHelperFactory.create(LocationTask.class);
 
     // Objects
-    //private LocationViewModel viewModel;
-    private WeakReference<LocationViewModel> weakModelReference;
+    private LocationViewModel viewModel;
+    //private WeakReference<LocationViewModel> weakModelReference;
     private Location mLocation;
     private final Runnable mLocationRunnable;
 
@@ -27,8 +27,8 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     }
 
     void initLocationTask(LocationViewModel viewModel) {
-        //this.viewModel = viewModel;
-        weakModelReference = new WeakReference<>(viewModel);
+        this.viewModel = viewModel;
+        //weakModelReference = new WeakReference<>(viewModel);
     }
 
     Runnable getLocationRunnable() {
@@ -37,10 +37,13 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     public void recycle() {
         if(mLocation != null) mLocation = null;
+        /*
         if(weakModelReference != null) {
             weakModelReference.clear();
             weakModelReference = null;
         }
+
+         */
     }
 
     @Override
@@ -52,12 +55,14 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
     public void setCurrentLocation(Location location) {
         log.i("current location:%s", location);
         mLocation = location;
-        weakModelReference.get().getLocation().postValue(location);
+        //weakModelReference.get().getLocation().postValue(location);
+        viewModel.getLocation().postValue(location);
     }
 
     @Override
     public void notifyLocationException(String msg) {
-        weakModelReference.get().getLocationException().postValue(msg);
+        //weakModelReference.get().getLocationException().postValue(msg);
+        viewModel.getLocationException().postValue(msg);
     }
 
     @Override
