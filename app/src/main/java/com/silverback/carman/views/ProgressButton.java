@@ -1,6 +1,5 @@
 package com.silverback.carman.views;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -11,12 +10,12 @@ import android.widget.LinearLayout;
 
 import androidx.core.content.ContextCompat;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.MainActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.ViewProgressButtonBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.ThreadManager2;
 
 public class ProgressButton extends LinearLayout {
 
@@ -27,7 +26,6 @@ public class ProgressButton extends LinearLayout {
     private int pbColorRef;
     private int buttonRef;
     private boolean isActive;
-    private int offColor, onColor;
 
     public ProgressButton(Context context) {
         super(context);
@@ -73,39 +71,36 @@ public class ProgressButton extends LinearLayout {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
-    public void setProgressColor(boolean isStateOn) {
-        if(!isStateOn) {
-            log.i("state on");
-            binding.progressBar.setIndeterminate(true);
-            binding.progressBar.setScaleY(5f);
-            binding.button.setClickable(false);
-
-        } else {
-            log.i("invoked when the location fetched: %s", buttonRef);
-            binding.progressBar.setIndeterminate(false);
-            pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
-            //pbColorRef = (pbColorRef == 0)?ContextCompat.getColor(context, android.R.color.holo_red_light):0;
-            binding.progressBar.setBackgroundColor(pbColorRef);
-            binding.progressBar.setScaleY(1f);
-            binding.button.setClickable(true);
-        }
-
+    public void setProgress() {
+        binding.progressBar.setIndeterminate(true);
+        binding.progressBar.setScaleY(5f);
+        binding.button.setClickable(false);
     }
 
-    public void resetButton() {
+    public void stopProgress() {
+        binding.progressBar.setIndeterminate(false);
+        pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
+        binding.progressBar.setBackgroundColor(pbColorRef);
+        binding.progressBar.setScaleY(1f);
+        binding.button.setClickable(true);
+    }
+
+    public void resetProgress(){
         log.i("resetButton");
         pbColorRef = ContextCompat.getColor(context, android.R.color.white);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
-        this.isActive = !isActive;
+        isActive = !isActive;
     }
 
     private void setEvent(int type, boolean isActive){
-        log.i("setEvent");
+        if(type == 1) {
+            String msg = context.getString(R.string.main_general_no_service);
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+            return; //exclude temporarily the service button
+        }
         ((MainActivity)context).locateStations(type, isActive);
         this.isActive = !isActive;
-
-
     }
 
 }

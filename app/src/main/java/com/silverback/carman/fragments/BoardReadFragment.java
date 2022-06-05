@@ -47,7 +47,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
-import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -211,7 +210,7 @@ public class BoardReadFragment extends DialogFragment implements
         binding.tvCntCompathy.setText(String.valueOf(cntCompathy));
 
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_BOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerRead.setHasFixedSize(false);
         binding.recyclerRead.setLayoutManager(layout);

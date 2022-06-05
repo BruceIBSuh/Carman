@@ -30,7 +30,7 @@ public class GasStationListTask extends ThreadTask implements
 
     // Objects
     private StationListViewModel viewModel;
-    private WeakReference<StationListViewModel> weakModelReference;
+    //private WeakReference<StationListViewModel> weakModelReference;
     private final Runnable mStationListRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
@@ -56,8 +56,8 @@ public class GasStationListTask extends ThreadTask implements
     void initStationTask(StationListViewModel viewModel, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
-        //this.viewModel = viewModel;
-        weakModelReference = new WeakReference<>(viewModel);
+        this.viewModel = viewModel;
+        //weakModelReference = new WeakReference<>(viewModel);
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -67,10 +67,12 @@ public class GasStationListTask extends ThreadTask implements
 
     // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
+        /*
         if(weakModelReference != null) {
             weakModelReference.clear();
             weakModelReference = null;
         }
+         */
     }
 
     // Callback invoked by GasStationListRunnable and StationInfoRunnable as well to set the current
@@ -83,8 +85,8 @@ public class GasStationListTask extends ThreadTask implements
     @Override
     public void setStationList(List<Opinet.GasStnParcelable> list) {
         mStationList = list;
-        //viewModel.getNearStationList().postValue(mStationList);
-        weakModelReference.get().getNearStationList().postValue(mStationList);
+        viewModel.getNearStationList().postValue(mStationList);
+        //weakModelReference.get().getNearStationList().postValue(mStationList);
     }
 
     @Override
@@ -100,8 +102,8 @@ public class GasStationListTask extends ThreadTask implements
         // incur a unexpectable result.
         if(sparseBooleanArray.size() == mStationList.size()) {
             log.i("Invoke CarWash viewmodel");
-            //viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
-            weakModelReference.get().getStationCarWashInfo().postValue(sparseBooleanArray);
+            viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
+            //weakModelReference.get().getStationCarWashInfo().postValue(sparseBooleanArray);
         }
     }
 
@@ -109,16 +111,16 @@ public class GasStationListTask extends ThreadTask implements
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
         //postValue() used in worker thread. In UI thread, use setInputValue().
-        //viewModel.getCurrentStation().postValue(station);
-        weakModelReference.get().getCurrentStation().postValue(station);
+        viewModel.getCurrentStation().postValue(station);
+        //weakModelReference.get().getCurrentStation().postValue(station);
     }
 
 
     @Override
     public void notifyException(String msg) {
         //log.i("Exception occurred: %s", msg);
-        //viewModel.getExceptionMessage().postValue(msg);
-        weakModelReference.get().getExceptionMessage().postValue(msg);
+        viewModel.getExceptionMessage().postValue(msg);
+        //weakModelReference.get().getExceptionMessage().postValue(msg);
     }
 
 

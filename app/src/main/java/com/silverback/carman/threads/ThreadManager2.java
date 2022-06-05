@@ -62,8 +62,9 @@ public class ThreadManager2 {
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
     private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<GasStationListTask> mStnListTaskQueue;
-    private final BlockingQueue<EVStationListTask> mElecListTaskQueue;
+    private final BlockingQueue<EvStationListTask> mElecListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
+    private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
@@ -94,6 +95,7 @@ public class ThreadManager2 {
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mElecListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mGeocoderReverseTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
@@ -214,23 +216,23 @@ public class ThreadManager2 {
         return geocoderTask;
     }
 
-    public GeocoderReverseTask startReverseGeocoderTask (
+    public static GeocoderReverseTask startReverseGeocoderTask (
             Context context, LocationViewModel model, Location location) {
-        //GeocoderReverseTask geocoderReverseTask = (GeocoderReverseTask)sInstance.mTaskWorkQueue.poll();
+
+        GeocoderReverseTask geocoderReverseTask = InnerClazz.sInstance.mGeocoderReverseTaskQueue.poll();
         if(geocoderReverseTask == null) geocoderReverseTask = new GeocoderReverseTask(context);
         geocoderReverseTask.initGeocoderReverseTask(model, location);
         InnerClazz.sInstance.threadPoolExecutor.execute(geocoderReverseTask.getGeocoderRunnable());
         return geocoderReverseTask;
     }
 
-    public DistCodeSpinnerTask loadDistrictSpinnerTask(Context context, OpinetViewModel model, int code) {
+    public static DistCodeSpinnerTask loadDistrictSpinnerTask(Context context, OpinetViewModel model, int code) {
         DistCodeSpinnerTask districtSpinnerTask = InnerClazz.sInstance.mDistCodeSpinnerTaskQueue.poll();
         if(districtSpinnerTask == null) districtSpinnerTask = new DistCodeSpinnerTask(context);
-
         districtSpinnerTask.initSpinnerDistCodeTask(model, code);
         InnerClazz.sInstance.threadPoolExecutor.execute(districtSpinnerTask.getDistCodeSpinnerRunnable());
 
-        return distSpinnerTak;
+        return districtSpinnerTask;
     }
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified
@@ -286,9 +288,11 @@ public class ThreadManager2 {
     }
 
     // Electric Charge Station
-    public static EVStationListTask startEVStatoinListTask(Location location) {
-        EVStationListTask EVStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
-        if(EVStationListTask == null) EVStationListTask = new EVStationListTask(location);
+    public static EvStationListTask startEVStatoinListTask(
+            Context context, StationListViewModel model, Location location) {
+
+        EvStationListTask EVStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+        if(EVStationListTask == null) EVStationListTask = new EvStationListTask(context, model, location);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(EVStationListTask.getElecStationListRunnable());
         return EVStationListTask;

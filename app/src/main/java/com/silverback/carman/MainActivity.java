@@ -30,18 +30,20 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.silverback.carman.adapters.EvStationListAdapter;
+import com.silverback.carman.adapters.GasStationListAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
-import com.silverback.carman.adapters.StationListAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.EVStationListTask;
+import com.silverback.carman.threads.EvStationListTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.GasStationListTask;
@@ -69,7 +71,7 @@ import java.util.Objects;
 
 
 public class MainActivity extends BaseActivity implements
-        StationListAdapter.OnRecyclerItemClickListener,
+        GasStationListAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
         MainContentAdapter.MainContentAdapterListener,
         AdapterView.OnItemSelectedListener {
@@ -88,17 +90,20 @@ public class MainActivity extends BaseActivity implements
     private ActivityMainBinding binding;
 
     private LocationViewModel locationModel;
-    private StationListViewModel stnModel;
+    private StationListViewModel stationModel;
     private ImageViewModel imgModel;
     private OpinetViewModel opinetModel;
 
     private LocationTask locationTask;
     private GasStationListTask gasStationListTask;
-    private EVStationListTask evTask;
+    private EvStationListTask evTask;
 
     private MainContentAdapter mainContentAdapter;
-    private StationListAdapter stnListAdapter;
+    private GasStationListAdapter stnListAdapter;
+    private EvStationListAdapter evListAdapter;
     private MainPricePagerAdapter mainPricePagerAdapter;
+
+    private RecyclerDividerUtil divider, divider2;
 
     private Location mPrevLocation;
     private List<Opinet.GasStnParcelable> mStationList;
@@ -140,8 +145,8 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(
-                Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
+        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
+        divider2 = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_STN, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(mainContentAdapter);
         binding.recyclerContents.addItemDecoration(divider);
 
@@ -160,8 +165,14 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);
         binding.mainTopFrame.avgPriceView.addPriceView(defaultParams[0]);
 
+        // Set the station recyclerview
+        binding.recyclerStations.setHasFixedSize(true);
+        binding.recyclerStations.addItemDecoration(divider2);
+        binding.recyclerStations.setItemAnimator(new DefaultItemAnimator());
+
         imgResUtil = new ApplyImageResourceUtil(this);
 
+        // Multi-button board in the bottom
         progbtnList = new ArrayList<>();
         progbtnList.add(binding.progbtnGas);
         progbtnList.add(binding.progbtnSvc);
@@ -170,16 +181,15 @@ public class MainActivity extends BaseActivity implements
         // Event Handlers
         binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
+        //binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
+        binding.recyclerStations.addOnScrollListener(scrollListener);
 
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        observeViewModel(stnModel);
-
-
+        observeViewModel(stationModel);
     }
 
     @Override
@@ -200,7 +210,6 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
-        //binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
     }
 
     @Override
@@ -215,6 +224,7 @@ public class MainActivity extends BaseActivity implements
         if(locationTask != null) locationTask = null;
         if(gasStationListTask != null) gasStationListTask = null;
         if(evTask != null) evTask = null;
+        binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
     }
 
     @Override
@@ -251,7 +261,7 @@ public class MainActivity extends BaseActivity implements
         endDialog.show(getSupportFragmentManager(), "endDialog");
     }
 
-    // Implement StationListAdapter.OnRecyclerItemClickListener
+    // Implement GasStationListAdapter.OnRecyclerItemClickListener
     @Override
     public void onItemClicked(final int pos) {
         // Disable click until any data has been downloaded from Firestore.
@@ -284,10 +294,11 @@ public class MainActivity extends BaseActivity implements
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
-        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        //isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, mPrevLocation, defaultParams);
+            gasStationListTask = ThreadManager2.startGasStationListTask(stationModel, mPrevLocation, defaultParams);
         }
     }
     @Override
@@ -363,10 +374,13 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    int prevButton = -1;
-    public void locateStations(int curButton, boolean isActive){
-        if(prevButton != -1 && prevButton != curButton) {
-            progbtnList.get(prevButton).resetButton();
+    int prev = -1;
+    public void locateStations(int type, boolean isActive){
+        if(prev != -1 && prev != type) {
+            progbtnList.get(prev).resetProgress();
+            binding.recyclerStations.setVisibility(View.GONE);
+            // Remove the observer to prevent invoking the previous progbtn as the current button
+            // fetches a location.
             locationModel.getLocation().removeObservers(this);
         }
 
@@ -375,117 +389,62 @@ public class MainActivity extends BaseActivity implements
             final String rationale = "permission required to use Fine Location";
             checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                progbtnList.get(curButton).setProgressColor(false);
+                progbtnList.get(type).setProgress();
                 locationModel.getLocation().observe(this, location -> {
-                    switch(curButton) {
+                    switch(type) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
                         case 2: locateEVStations(location); break;
                     }
-
-                    progbtnList.get(curButton).setProgressColor(true);
                 });
 
                 locationModel.getLocationException().observe(this, exception -> {
                     log.i("Exception occurred while fetching location");
-                    SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                    binding.stationRecyclerView.showSpannableTextView(spannableString);
-
+                    String msg = getString(R.string.general_no_location);
+                    SpannableString spannableString = new SpannableString(msg);
+                    //binding.stationRecyclerView.setVisibility(View.VISIBLE);
+                    //binding.stationRecyclerView.showSpannableTextView(spannableString);
                 });
             });
 
-            prevButton = curButton;
+            prev = type;
 
         } else {
+            binding.recyclerStations.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
-            progbtnList.get(curButton).resetButton();
+            progbtnList.get(type).resetProgress();
         }
     }
 
     private void locateGasStations(Location location) {
-        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
-            mPrevLocation = location;
-            defaultParams[0] = gasCode;
-            gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
-        } else {
-            binding.recyclerContents.setVisibility(View.GONE);
-            binding.stationRecyclerView.setVisibility(View.VISIBLE);
-            binding.fab.setVisibility(View.VISIBLE);
-        }
+        mPrevLocation = location;
+        defaultParams[0] = gasCode;
+        gasStationListTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
     }
 
     private void locateSvcStations(Location location) {
         log.i("Service Stations: %s", location);
-        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
-            mPrevLocation = location;
-        } else {
-            binding.recyclerContents.setVisibility(View.GONE);
-            binding.stationRecyclerView.setVisibility(View.VISIBLE);
-        }
+
     }
 
     private void locateEVStations(Location location) {
-        log.i("EV stations: %s", location);
+        //Hide the pricebar
+        binding.pricebar.getRoot().setVisibility(View.GONE);
         mPrevLocation = location;
-        evTask = ThreadManager2.startEVStatoinListTask(location);
-        /*
-        if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
-            mPrevLocation = location;
-            evTask = ThreadManager2.startEVStatoinListTask(location);
-        } else {
+
+        evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
+        stationModel.getEvStationList().observe(this, evList -> {
+            evListAdapter = new EvStationListAdapter(evList);
+            binding.recyclerStations.setAdapter(evListAdapter);
+
+            binding.recyclerStations.setVisibility(View.VISIBLE);
             binding.recyclerContents.setVisibility(View.GONE);
-            binding.stationRecyclerView.setVisibility(View.VISIBLE);
-        }
+            progbtnList.get(2).stopProgress();
 
-         */
-    }
-
-    /*
-    // Implement onClickListener of the toggle button which is defined in the xml file.
-    public void locateNearStations(int eventRef) {
-        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
-        if(!isStnViewOn) {
-            final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-            final String rationale = "permission required to use Fine Location";
-            checkRuntimePermission(binding.getRoot(), perm, rationale,  ()->{
-                binding.progbtnGas.setProgressColor(isStnViewOn);
-                locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                observeViewModel(locationModel);
-            });
-
-        } else {
-            binding.stationRecyclerView.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
-            binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.progbtnGas.setProgressColor(isStnViewOn);
-
-            // Return the viewpagers to the initial page.
-            binding.mainTopFrame.viewpagerPrice.setCurrentItem(0, true);
-            mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, 0);
-        }
-    }
-
-    public void locateNearServices(int eventRef) {
-        log.i("method for locating near servce centers");
-    }
-
-    public void locateElecStations (int eventRef) {
-        log.i("Locate Electric Charger Stations");
-        final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
-        final String rationale = "permission required to use Fine Location";
-        checkRuntimePermission(binding.getRoot(), perm, rationale,  ()->{
-            binding.progbtnGas.setProgressColor(isStnViewOn);
-            locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-            locationModel.getLocation().observe(this, location -> {
-                evTask = ThreadManager2.startElecStatoinListTask(location);
-            });
         });
     }
-
-     */
 
     // Reorder near station list according to the distance/price, which is called from the layout
     // file as well.
@@ -521,6 +480,49 @@ public class MainActivity extends BaseActivity implements
     // Method for implementing ViewModel callbacks to fetch a location and station list around
     // the location.
     private void observeViewModel(ViewModel model) {
+        stationModel.getNearStationList().observe(this, stnList -> {
+            //binding.btnToggleStation.setChecked(true);
+            if (stnList != null && stnList.size() > 0) {
+                mStationList = stnList;
+                stnListAdapter = new GasStationListAdapter(mStationList, this);
+                //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
+                //binding.stationRecyclerView.showStationRecyclerView();
+                binding.recyclerStations.setAdapter(stnListAdapter);
+
+                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
+                progbtnList.get(0).stopProgress();
+
+            } else {
+                // No near stations post an message that contains the clickable span to link to the
+                // SettingPreferenceActivity for resetting the searching radius.
+                //SpannableString spannableString = handleStationListException();
+                //binding.stationRecyclerView.showSpannableTextView(spannableString);
+            }
+
+            isRadiusChanged = false;
+            isGasTypeChanged = false;
+            //binding.pbNearStns.setVisibility(View.GONE);
+            //binding.progbtnGas.setProgress(true);
+            binding.recyclerContents.setVisibility(View.GONE);
+            //binding.stationRecyclerView.setVisibility(View.VISIBLE);
+            binding.recyclerStations.setVisibility(View.VISIBLE);
+            progbtnList.get(0).stopProgress();
+        });
+
+        // Update the carwash info to StationList and notify the data change to Adapter.
+        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+        // e.g. when the view is not attached.
+        stationModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            for(int i = 0; i < sparseArray.size(); i++) {
+                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+            }
+            // To notify that fetching station list has completed.
+            hasStationInfo = true;
+        });
+
+
+        /*
         if(model instanceof LocationViewModel) {
             /*
             locationModel.getLocation().observe(this, location -> {
@@ -556,17 +558,17 @@ public class MainActivity extends BaseActivity implements
 
             });
 
-             */
+
 
         } else if(model instanceof StationListViewModel) {
-            stnModel.getNearStationList().observe(this, stnList -> {
+            stnListModel.getNearStationList().observe(this, stnList -> {
                 binding.recyclerContents.setVisibility(View.GONE);
                 binding.stationRecyclerView.setVisibility(View.VISIBLE);
                 //binding.btnToggleStation.setChecked(true);
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());
                     mStationList = stnList;
-                    stnListAdapter = new StationListAdapter(mStationList, this);
+                    stnListAdapter = new GasStationListAdapter(mStationList, this);
                     binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                     binding.stationRecyclerView.showStationRecyclerView();
                     binding.fab.setVisibility(View.VISIBLE);
@@ -582,13 +584,14 @@ public class MainActivity extends BaseActivity implements
                 isRadiusChanged = false;
                 isGasTypeChanged = false;
                 //binding.pbNearStns.setVisibility(View.GONE);
-                binding.progbtnGas.setProgressColor(true);
+                //binding.progbtnGas.setProgress(true);
+                progbtnList.get(0).stopProgress();
             });
 
             // Update the carwash info to StationList and notify the data change to Adapter.
             // Adapter should not assume that the payload will always be passed to onBindViewHolder()
             // e.g. when the view is not attached.
-            stnModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            stnListModel.getStationCarWashInfo().observe(this, sparseArray -> {
                 for(int i = 0; i < sparseArray.size(); i++) {
                     mStationList.get(i).setIsWash(sparseArray.valueAt(i));
                     stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
@@ -597,6 +600,8 @@ public class MainActivity extends BaseActivity implements
                 hasStationInfo = true;
             });
         }
+
+         */
     }
 
     private SpannableString handleStationListException(){
@@ -657,17 +662,19 @@ public class MainActivity extends BaseActivity implements
     // Implement ActivityResultCallback<Intent> defined as a param in registerForActivityResult.
     private void getActivityResult(ActivityResult result) {
         // If the station reyelcerview is in the visible state, it should be gone
-        isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        //isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
-            binding.stationRecyclerView.setVisibility(View.GONE);
+            //binding.stationRecyclerView.setVisibility(View.GONE);
+            binding.recyclerStations.setVisibility(View.GONE);
             binding.fab.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
-            binding.progbtnGas.setProgressColor(isStnViewOn);
+            //binding.progbtnGas.setProgress(isStnViewOn);
+            progbtnList.get(0).stopProgress();
         }
 
         Intent resultIntent = result.getData();
         if(resultIntent == null) return;
-
         switch(result.getResultCode()) {
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 int total = resultIntent.getIntExtra("expense", 0);
@@ -716,8 +723,6 @@ public class MainActivity extends BaseActivity implements
             } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
         }
     }
-
-
 
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
     private void updateSettingResult(ActivityResult result) {

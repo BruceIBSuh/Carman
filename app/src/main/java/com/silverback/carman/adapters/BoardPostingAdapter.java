@@ -123,7 +123,7 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
             case CONTENT_VIEW_TYPE:
                 View view = LayoutInflater.from(context).inflate(R.layout.board_itemview_post, viewGroup, false);
                 ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(view.getLayoutParams());
-                params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_POSTINGBOARD);
+                params.setMargins(0, 0, 0, Constants.DIVIDER_HEIGHT_BOARD);
                 view.setLayoutParams(params);
 
                 return new PostViewHolder(view);

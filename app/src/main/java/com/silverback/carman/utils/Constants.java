@@ -64,7 +64,8 @@ public class Constants {
     // RecyclerView.ItemDecorator: divider
     public static final int DIVIDER_HEIGHT_MAIN = 80;
     public static final int DIVIDER_HEIGHT_EXPENSE = 16;
-    public static final int DIVIDER_HEIGHT_POSTINGBOARD = 8;
+    public static final int DIVIDER_HEIGHT_BOARD = 8;
+    public static final int DIVIDER_HEIGHT_STN = 8;
 
     // Board
     //public static final int PAGINATION = 10;

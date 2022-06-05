@@ -4,11 +4,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
@@ -20,7 +18,6 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewholders.StationListHolder;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -28,10 +25,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> {
+public class GasStationListAdapter extends RecyclerView.Adapter<StationListHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationListAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListAdapter.class);
 
     // Objects
     private Context context;
@@ -44,7 +41,7 @@ public class StationListAdapter extends RecyclerView.Adapter<StationListHolder> 
     }
 
     // Constructor
-    public StationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
+    public GasStationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
         stationList = list;
         mListener = listener;

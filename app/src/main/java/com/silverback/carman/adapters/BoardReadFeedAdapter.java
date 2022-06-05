@@ -125,7 +125,7 @@ public class BoardReadFeedAdapter extends RecyclerView.Adapter<RecyclerView.View
             case COMMENT_LIST:
                 commentBinding = BoardReadCommentBinding.inflate(inflater, parent,false);
                 LinearLayoutManager layout = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-                RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+                RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_BOARD,
                         0, ContextCompat.getColor(context, R.color.recyclerDivider));
                 commentBinding.recyclerComments.setHasFixedSize(false); //due to banner plugin
                 commentBinding.recyclerComments.setLayoutManager(layout);

@@ -55,6 +55,10 @@
     <string name="main_no_station_fetched">미터 반경에서 주유소를 찾을 수 없습니다\n 탐색 반경을 변경해 주세요</string>
     <string name="main_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
+    <string name="main_general_no_service">준비중입니다</string>
+    <string name="main_ev_chgrtype">타입:</string>
+    <string name="main_ev_access_limt">이용제한:</string>
+    <string name="main_ev_no_limit">없음</string>
 
     <!-- MainActivity updated version-->
     <string name="main_subtitle_news">알립니다</string>

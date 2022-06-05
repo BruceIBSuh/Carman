@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.EvStationListRunnable;
 
 import java.util.List;
 
@@ -21,6 +22,8 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
     private MutableLiveData<SparseBooleanArray> hasCarWash;
     private MutableLiveData<String> exceptionMessage;
+
+    private MutableLiveData<List<EvStationListRunnable.EvStationInfo> > evStationList;
 
     // Get a station list stationos of which are located within a given radius conditions.
     public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
@@ -50,6 +53,11 @@ public class StationListViewModel extends ViewModel {
     public MutableLiveData<String> getExceptionMessage() {
         if(exceptionMessage == null) exceptionMessage = new MutableLiveData<>();
         return exceptionMessage;
+    }
+
+    public MutableLiveData<List<EvStationListRunnable.EvStationInfo>> getEvStationList() {
+        if(evStationList == null) evStationList = new MutableLiveData<>();
+        return evStationList;
     }
 
 

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/imageView8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@null"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@android:drawable/presence_online" />
+
+    <TextView
+        android:id="@+id/tv_evName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView8"
+        app:layout_constraintStart_toEndOf="@+id/imageView8"
+        app:layout_constraintTop_toTopOf="@+id/imageView8" />
+
+    <TextView
+        android:id="@+id/tv_chgrId"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_evName"
+        app:layout_constraintStart_toEndOf="@+id/tv_evName"
+        app:layout_constraintTop_toTopOf="@+id/tv_evName" />
+
+    <TextView
+        android:id="@+id/tv_label_distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/general_station_distance"
+        app:layout_constraintStart_toStartOf="@+id/tv_evName"
+        app:layout_constraintTop_toBottomOf="@+id/tv_evName" />
+
+    <TextView
+        android:id="@+id/tv_distance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_distance"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_distance"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_distance" />
+
+    <TextView
+        android:id="@+id/tv_unit_meter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/unit_meter"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_distance"
+        app:layout_constraintStart_toEndOf="@+id/tv_distance"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_distance" />
+
+    <TextView
+        android:id="@+id/tv_label_charger"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="@string/main_ev_chgrtype"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_distance"
+        app:layout_constraintStart_toEndOf="@+id/tv_unit_meter"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_distance" />
+
+    <TextView
+        android:id="@+id/tv_chgr_type"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_charger"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_charger"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_charger" />
+
+    <TextView
+        android:id="@+id/tv_chgr_limited"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tv_label_limit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/main_ev_access_limt"
+        app:layout_constraintStart_toStartOf="@+id/tv_evName"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_distance" />
+
+    <TextView
+        android:id="@+id/tv_limit_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_limit"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_limit"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_limit" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

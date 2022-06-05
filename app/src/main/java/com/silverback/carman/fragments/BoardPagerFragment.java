@@ -3,7 +3,6 @@ package com.silverback.carman.fragments;
 
 import static com.silverback.carman.BoardActivity.AD_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.AUTOCLUB;
-import static com.silverback.carman.BoardActivity.CONTENT_VIEW_TYPE;
 import static com.silverback.carman.BoardActivity.PAGINATION;
 
 import android.animation.Animator;
@@ -31,7 +30,6 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.SimpleItemAnimator;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.CollectionReference;
@@ -155,7 +153,7 @@ public class BoardPagerFragment extends Fragment implements
                 android.graphics.PorterDuff.Mode.SRC_IN);
 
         LinearLayoutManager layout = new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false);
-        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_BOARD,
                 0, ContextCompat.getColor(requireContext(), R.color.recyclerDivider));
         binding.recyclerBoardPostings.setHasFixedSize(false);
         binding.recyclerBoardPostings.setLayoutManager(layout);

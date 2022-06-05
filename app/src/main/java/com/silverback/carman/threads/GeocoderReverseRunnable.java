@@ -38,15 +38,11 @@ public class GeocoderReverseRunnable implements Runnable {
 
     @Override
     public void run() {
-        log.i("GeocoderReverseRunnable");
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         geocoderTask.setGeocoderThread(Thread.currentThread());
         Location location = geocoderTask.getLocation();
-
         Geocoder geocoder = new Geocoder(context, Locale.getDefault());
         List<Address> addressList;
-
-
         try {
             addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 3);
             for(Address addrs : addressList) {
@@ -56,13 +52,7 @@ public class GeocoderReverseRunnable implements Runnable {
                     break;
                 }
             }
-        } catch(IOException  | IllegalArgumentException e) {
-            // If the network is unstable, it causes the grpc error in processing the revserse
-            // geocoding, which may happen in particular when using wi-fi in the emulator.
-            // Required to make a retry code just in case.
-            log.e("Reverse Geocoder error: %s", e.getMessage());
-        }
-
+        } catch(IOException  | IllegalArgumentException e) { e.printStackTrace(); }
 
     }
 }

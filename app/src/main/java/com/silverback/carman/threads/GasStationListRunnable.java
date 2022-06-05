@@ -91,7 +91,7 @@ public class GasStationListRunnable implements Runnable{
             conn.connect();
             try(InputStream is = new BufferedInputStream(conn.getInputStream())) {
                 mStationList = xmlHandler.parseStationListParcelable(is);
-                // Get near stations which may be the current station if MIN_RADIUS is given as param or
+                // Get near stations which may be the current station if MIN_RADIUS is given  or
                 // it should be near stations located within SEARCHING_RADIUS.
                 if(mStationList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {

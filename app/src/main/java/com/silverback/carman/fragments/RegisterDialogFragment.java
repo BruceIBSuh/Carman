@@ -114,7 +114,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @NonNull
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        LayoutInflater inflater = LayoutInflater.from(getContext());
+        LayoutInflater inflater = getLayoutInflater();
         binding = DialogRegisterProviderBinding.inflate(inflater);
         setCancelable(false);
 
@@ -179,7 +179,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         if(parent == binding.spinnerSido) {
-            spinnerTask = ThreadManager2.getInstance().loadDistrictSpinnerTask(getContext(), opinetModel, pos);
+            spinnerTask = ThreadManager2.loadDistrictSpinnerTask(getContext(), opinetModel, pos);
             if(pos != mSidoItemPos) mSigunItemPos = 0;
         } else tmpSigunPos = pos;
     }
@@ -234,11 +234,10 @@ public class RegisterDialogFragment extends DialogFragment implements
     private void setReverseGeocoderAddress() {
         //setRegisterProgressBar(true);
         isLocationFetched = true;
-        locationTask = ThreadManager2.getInstance().fetchLocationTask(getContext(), locationModel);
+        locationTask = ThreadManager2.fetchLocationTask(getContext(), locationModel);
         locationModel.getLocation().observe(this, location -> {
-            log.i("Current Location: %s", location);
             mLocation = location;
-            geoReverseTask = ThreadManager2.getInstance().startReverseGeocoderTask(getContext(), locationModel, location);
+            geoReverseTask = ThreadManager2.startReverseGeocoderTask(getContext(), locationModel, location);
         });
 
         // Fetch the current address and split it for inputting sido and sigun name respectively into

@@ -88,7 +88,7 @@ public class BoardCommentAdapter extends RecyclerView.Adapter<BoardCommentAdapte
         mDB = FirebaseFirestore.getInstance();
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_COMMENT);
         //popupDropdownUtil = PopupDropdownUtil.getInstance();
-        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_POSTINGBOARD,
+        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_BOARD,
                 0, ContextCompat.getColor(context, R.color.recyclerDivider));
 
         sdf = new SimpleDateFormat("MM.dd HH:mm", Locale.getDefault());
