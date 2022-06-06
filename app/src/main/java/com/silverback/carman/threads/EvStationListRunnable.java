@@ -66,6 +66,7 @@ public class EvStationListRunnable implements Runnable{
         // querying scope.
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
+        log.i("Sidocode: %s", sidoCode);
 
         StringBuilder sb = new StringBuilder(evInfo); /*URL*/
         try {
@@ -74,7 +75,7 @@ public class EvStationListRunnable implements Runnable{
             sb.append("&").append(URLEncoder.encode("pageNo", "UTF-8"));
             sb.append("=").append(URLEncoder.encode("1", "UTF-8")); /*페이지 번호*/
             sb.append("&").append(URLEncoder.encode("numOfRows", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("1000", "UTF-8")); /*한 페이지 결과 수 (최소 10, 최대 9999)*/
+            sb.append("=").append(URLEncoder.encode("100", "UTF-8")); /*한 페이지 결과 수 (최소 10, 최대 9999)*/
             sb.append("&").append(URLEncoder.encode("period", "UTF-8"));
             sb.append("=").append(URLEncoder.encode("5", "UTF-8")); /*상태갱신 조회 범위(분) (기본값 5, 최소 1, 최대 10)*/
             sb.append("&").append(URLEncoder.encode("zcode", "UTF-8"));
@@ -92,20 +93,27 @@ public class EvStationListRunnable implements Runnable{
                 conn.connect();
 
                 List<EvStationInfo> evStationList = new ArrayList<>();
-                try(InputStream is = new BufferedInputStream(conn.getInputStream());) {
-                    for(EvStationInfo info : xmlHandler.parseEvStationInfo(is)) {
+                try(InputStream is = new BufferedInputStream(conn.getInputStream())) {
+                    evStationList = xmlHandler.parseEvStationInfo(is);
+                    //for(EvStationInfo info : xmlHandler.parseEvStationInfo(is)) {
+                    for(EvStationInfo info : evStationList) {
                         float[] results = new float[3];
                         Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                                 info.getLat(), info.getLng(), results);
 
-                        int distance = (int)results[0];
-                        if(distance < 3000) {
+                        int distance = (int) results[0];
+                        log.i("Distance: %s", distance);
+                        // Get EV stations within 3000m out of retrieved ones.
+                        if (distance < 3000) {
                             info.setDistance(distance);
                             evStationList.add(info);
                         }
                     }
+                } catch(IOException e) {
+                    log.e("parse error: %s", e.getLocalizedMessage());
+                    e.printStackTrace();
                 } finally {
-                    callback.setEvStationList(evStationList);
+                    if(evStationList != null) callback.setEvStationList(evStationList);
                     conn.disconnect();
                 }
 
@@ -137,7 +145,7 @@ public class EvStationListRunnable implements Runnable{
 
     public static class XmlEvPullParserHandler {
         public XmlEvPullParserHandler() {
-            //Default constructor left empty
+            //default constructor left empty
         }
         public List<EvStationInfo> parseEvStationInfo(InputStream is) {
             List<EvStationInfo> evList = new ArrayList<>();
@@ -146,9 +154,9 @@ public class EvStationListRunnable implements Runnable{
                 XmlPullParser parser = factory.newPullParser();
                 parser.setInput(inputStream, "utf-8");
                 int eventType = parser.getEventType();
+
                 String tagName = "";
                 EvStationInfo evInfo = null;
-
                 while(eventType != XmlPullParser.END_DOCUMENT) {
                     switch(eventType) {
                         case XmlPullParser.START_TAG:
@@ -167,9 +175,11 @@ public class EvStationListRunnable implements Runnable{
                                     evInfo.setEvName(parser.getText());
                                     break;
                                 case "lat":
+                                    log.i("lat: %s", parser.getText());
                                     evInfo.setLat(Double.parseDouble(parser.getText()));
                                     break;
                                 case "lng":
+                                    log.i("lng: %s", parser.getText());
                                     evInfo.setLng(Double.parseDouble(parser.getText()));
                                     break;
                                 case "chgerId":
@@ -271,7 +281,6 @@ public class EvStationListRunnable implements Runnable{
 
         public void setLimitDetail(String limitDetail) {
             this.limitDetail = limitDetail;
-            //this.limitDetail = limitDetail;
         }
     }
 

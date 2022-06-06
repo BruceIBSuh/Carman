@@ -71,6 +71,7 @@ public class EvStationListAdapter extends RecyclerView.Adapter<EvStationListAdap
         holder.getAccessView().setText(info.getIsPublic());
         holder.getLimitDetailView().setText(limitDetail);
 
+        log.i("Distance: %s", info.getDistance());
         holder.getDistanceView().setText(df.format(info.getDistance()));
         holder.getChargerTypeView().setText(info.getChargerType());
     }

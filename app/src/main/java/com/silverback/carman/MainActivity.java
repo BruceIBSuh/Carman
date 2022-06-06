@@ -34,6 +34,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.silverback.carman.adapters.EvStationListAdapter;
 import com.silverback.carman.adapters.GasStationListAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
@@ -179,7 +180,7 @@ public class MainActivity extends BaseActivity implements
         progbtnList.add(binding.progbtnElec);
 
         // Event Handlers
-        binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
+        //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
         //binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
         binding.recyclerStations.addOnScrollListener(scrollListener);
@@ -375,10 +376,16 @@ public class MainActivity extends BaseActivity implements
     };
 
     int prev = -1;
-    public void locateStations(int type, boolean isActive){
-        if(prev != -1 && prev != type) {
+    public void locateStations(int button, boolean isActive){
+        if(prev != -1 && prev != button) {
             progbtnList.get(prev).resetProgress();
             binding.recyclerStations.setVisibility(View.GONE);
+            binding.appbar.removeOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+                @Override
+                public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+
+                }
+            });
             // Remove the observer to prevent invoking the previous progbtn as the current button
             // fetches a location.
             locationModel.getLocation().removeObservers(this);
@@ -389,9 +396,9 @@ public class MainActivity extends BaseActivity implements
             final String rationale = "permission required to use Fine Location";
             checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                progbtnList.get(type).setProgress();
+                progbtnList.get(button).setProgress();
                 locationModel.getLocation().observe(this, location -> {
-                    switch(type) {
+                    switch(button) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
                         case 2: locateEVStations(location); break;
@@ -407,13 +414,13 @@ public class MainActivity extends BaseActivity implements
                 });
             });
 
-            prev = type;
+            prev = button;
 
         } else {
             binding.recyclerStations.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.fab.setVisibility(View.GONE);
-            progbtnList.get(type).resetProgress();
+            progbtnList.get(button).resetProgress();
         }
     }
 
@@ -486,8 +493,10 @@ public class MainActivity extends BaseActivity implements
                 mStationList = stnList;
                 stnListAdapter = new GasStationListAdapter(mStationList, this);
                 //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
-                //binding.stationRecyclerView.showStationRecyclerView();
+                //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
+                // Set the listener to handle the visibility of the price bar by scrolling.
+                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
 
                 if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
                 progbtnList.get(0).stopProgress();
