@@ -8,6 +8,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable-anydpi/ic_elec_station.xml" value="0.1" />
         <entry key="app/src/main/res/drawable-anydpi/ic_image_holder.xml" value="0.16666666666666666" />
         <entry key="app/src/main/res/drawable/bg_board_comment.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/bg_border_line.xml" value="0.1" />
@@ -56,7 +57,6 @@
         <entry key="app/src/main/res/layout/main_content_ads.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_content_carlife.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_expense.xml" value="0.25" />
-        <entry key="app/src/main/res/layout/main_content_gas_stations.xml" value="0.1" />
         <entry key="app/src/main/res/layout/main_content_notification.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_pager_config.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_content_pager_svc.xml" value="0.24427083333333333" />
@@ -64,7 +64,7 @@
         <entry key="app/src/main/res/layout/main_incl_priceinfo.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_pager_district_price.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_pager_station_price.xml" value="0.24427083333333333" />
-        <entry key="app/src/main/res/layout/main_recyclerview_ev.xml" value="0.67" />
+        <entry key="app/src/main/res/layout/main_recyclerview_ev.xml" value="0.5" />
         <entry key="app/src/main/res/layout/popup_comment.xml" value="0.1" />
         <entry key="app/src/main/res/layout/popup_comment_dropdown.xml" value="0.1" />
         <entry key="app/src/main/res/layout/popup_comment_overflow.xml" value="0.1" />

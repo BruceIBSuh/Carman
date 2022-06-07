@@ -96,19 +96,22 @@ public class GasStationListAdapter extends RecyclerView.Adapter<StationListHolde
      * @param uri :  file saved in the cache location
      * @param sort : true - price order, false - distance order
      */
-    @SuppressWarnings("unchecked")
+    //@SuppressWarnings("unchecked")
     public List<Opinet.GasStnParcelable> sortStationList(boolean bStationOrder) {
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
         Uri uri = Uri.fromFile(file);
 
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
-            stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
+            List<?> listObj = (List<?>)ois.readObject();
+            for(Object obj : listObj) stationList.add((Opinet.GasStnParcelable)obj);
+            //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 
             if(bStationOrder) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
             else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
 
-            notifyDataSetChanged();
+            //notifyDataSetChanged();
+            notifyItemRangeChanged(0, stationList.size());
 
             return stationList;
 

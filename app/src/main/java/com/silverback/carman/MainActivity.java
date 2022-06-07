@@ -44,6 +44,7 @@ import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.EvStationListRunnable;
 import com.silverback.carman.threads.EvStationListTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
@@ -171,7 +172,7 @@ public class MainActivity extends BaseActivity implements
         binding.recyclerStations.addItemDecoration(divider2);
         binding.recyclerStations.setItemAnimator(new DefaultItemAnimator());
 
-        imgResUtil = new ApplyImageResourceUtil(this);
+
 
         // Multi-button board in the bottom
         progbtnList = new ArrayList<>();
@@ -185,6 +186,7 @@ public class MainActivity extends BaseActivity implements
         //binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
         binding.recyclerStations.addOnScrollListener(scrollListener);
 
+        imgResUtil = new ApplyImageResourceUtil(this);
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
         stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
@@ -375,20 +377,16 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    int prev = -1;
-    public void locateStations(int button, boolean isActive){
-        if(prev != -1 && prev != button) {
-            progbtnList.get(prev).resetProgress();
-            binding.recyclerStations.setVisibility(View.GONE);
-            binding.appbar.removeOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-                @Override
-                public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+    int prevButton = -1;
+    public void locateStations(int activeButton, boolean isActive){
 
-                }
-            });
+        if(prevButton != -1 && prevButton != activeButton) {
+            progbtnList.get(prevButton).resetProgress();
+            binding.recyclerStations.setVisibility(View.GONE);
             // Remove the observer to prevent invoking the previous progbtn as the current button
             // fetches a location.
             locationModel.getLocation().removeObservers(this);
+
         }
 
         if(!isActive) {
@@ -396,12 +394,13 @@ public class MainActivity extends BaseActivity implements
             final String rationale = "permission required to use Fine Location";
             checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                progbtnList.get(button).setProgress();
+                progbtnList.get(activeButton).setProgress();
                 locationModel.getLocation().observe(this, location -> {
-                    switch(button) {
+                    switch(activeButton) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
-                        case 2: locateEVStations(location); break;
+                        case 2: locateEvStations(location); break;
+                        case 3: locateHydroStations(location); break;
                     }
                 });
 
@@ -414,13 +413,13 @@ public class MainActivity extends BaseActivity implements
                 });
             });
 
-            prev = button;
+            prevButton = activeButton;
 
         } else {
             binding.recyclerStations.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.fab.setVisibility(View.GONE);
-            progbtnList.get(button).resetProgress();
+            progbtnList.get(activeButton).resetProgress();
         }
     }
 
@@ -428,67 +427,7 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         defaultParams[0] = gasCode;
         gasStationListTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
-    }
-
-    private void locateSvcStations(Location location) {
-        log.i("Service Stations: %s", location);
-
-    }
-
-    private void locateEVStations(Location location) {
-        //Hide the pricebar
-        binding.pricebar.getRoot().setVisibility(View.GONE);
-        mPrevLocation = location;
-
-        evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
-        stationModel.getEvStationList().observe(this, evList -> {
-            evListAdapter = new EvStationListAdapter(evList);
-            binding.recyclerStations.setAdapter(evListAdapter);
-
-            binding.recyclerStations.setVisibility(View.VISIBLE);
-            binding.recyclerContents.setVisibility(View.GONE);
-            progbtnList.get(2).stopProgress();
-
-            binding.fab.setVisibility(View.GONE);
-        });
-    }
-
-    // Reorder near station list according to the distance/price, which is called from the layout
-    // file as well.
-    public void switchNearStationOrder(View view) {
-        bStnOrder = !bStnOrder;
-        Uri uri = saveNearStationList(mStationList);
-        if(uri == null) return;
-        // Switch the FAB background.
-        if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
-        else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
-        mStationList = stnListAdapter.sortStationList(bStnOrder);
-    }
-
-    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
-        File file = new File(getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
-        // Delete the file before saving a new list.
-        if(file.exists()) {
-            boolean delete = file.delete();
-            if(delete) log.i("cache cleared");
-        }
-
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(list);
-            return Uri.fromFile(file);
-        } catch (IOException e) { e.printStackTrace();}
-
-        return null;
-    }
-
-
-
-    // Method for implementing ViewModel callbacks to fetch a location and station list around
-    // the location.
-    private void observeViewModel(ViewModel model) {
         stationModel.getNearStationList().observe(this, stnList -> {
-            //binding.btnToggleStation.setChecked(true);
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 stnListAdapter = new GasStationListAdapter(mStationList, this);
@@ -529,8 +468,114 @@ public class MainActivity extends BaseActivity implements
             // To notify that fetching station list has completed.
             hasStationInfo = true;
         });
+    }
 
 
+
+    private void locateEvStations(Location location) {
+        mPrevLocation = location;
+        evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
+        stationModel.getEvStationList().observe(this, evList -> {
+            if(evList != null && evList.size() > 0) {
+                evListAdapter = new EvStationListAdapter(evList);
+                binding.recyclerStations.setAdapter(evListAdapter);
+
+                binding.recyclerStations.setVisibility(View.VISIBLE);
+                binding.recyclerContents.setVisibility(View.GONE);
+                progbtnList.get(2).stopProgress();
+
+                binding.fab.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void locateSvcStations(Location location) {
+        log.i("Service Stations: %s", location);
+
+    }
+
+    private void locateHydroStations(Location location) {
+        log.i("Hydro Stations: %s", location);
+
+    }
+
+    // Reorder near station list according to the distance/price, which is called from the layout
+    // file as well.
+    public void switchNearStationOrder(View view) {
+        bStnOrder = !bStnOrder;
+        Uri uri = saveNearStationList(mStationList);
+        if(uri == null) return;
+        // Switch the FAB background.
+        if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
+        else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
+        mStationList = stnListAdapter.sortStationList(bStnOrder);
+    }
+
+    private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {
+        File file = new File(getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
+        // Delete the file before saving a new list.
+        if(file.exists()) {
+            boolean delete = file.delete();
+            if(delete) log.i("cache cleared");
+        }
+
+        try(FileOutputStream fos = new FileOutputStream(file);
+            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            oos.writeObject(list);
+            return Uri.fromFile(file);
+        } catch (IOException e) { e.printStackTrace();}
+
+        return null;
+    }
+
+
+
+    // Method for implementing ViewModel callbacks to fetch a location and station list around
+    // the location.
+    private void observeViewModel(ViewModel model) {
+        /*
+        stationModel.getNearStationList().observe(this, stnList -> {
+            if (stnList != null && stnList.size() > 0) {
+                mStationList = stnList;
+                stnListAdapter = new GasStationListAdapter(mStationList, this);
+                //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
+                //binding.stationRecyclerView.showStationRecyclerView();``
+                binding.recyclerStations.setAdapter(stnListAdapter);
+                // Set the listener to handle the visibility of the price bar by scrolling.
+                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
+
+                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
+                progbtnList.get(0).stopProgress();
+
+            } else {
+                // No near stations post an message that contains the clickable span to link to the
+                // SettingPreferenceActivity for resetting the searching radius.
+                //SpannableString spannableString = handleStationListException();
+                //binding.stationRecyclerView.showSpannableTextView(spannableString);
+            }
+
+            isRadiusChanged = false;
+            isGasTypeChanged = false;
+            //binding.pbNearStns.setVisibility(View.GONE);
+            //binding.progbtnGas.setProgress(true);
+            binding.recyclerContents.setVisibility(View.GONE);
+            //binding.stationRecyclerView.setVisibility(View.VISIBLE);
+            binding.recyclerStations.setVisibility(View.VISIBLE);
+            progbtnList.get(0).stopProgress();
+        });
+
+        // Update the carwash info to StationList and notify the data change to Adapter.
+        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
+        // e.g. when the view is not attached.
+        stationModel.getStationCarWashInfo().observe(this, sparseArray -> {
+            for(int i = 0; i < sparseArray.size(); i++) {
+                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
+                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
+            }
+            // To notify that fetching station list has completed.
+            hasStationInfo = true;
+        });
+        */
         /*
         if(model instanceof LocationViewModel) {
             /*

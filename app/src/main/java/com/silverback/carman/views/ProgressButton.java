@@ -94,7 +94,7 @@ public class ProgressButton extends LinearLayout {
     }
 
     private void setEvent(int type, boolean isActive){
-        if(type == 1) {
+        if(type == 1 || type == 3) {
             String msg = context.getString(R.string.main_general_no_service);
             Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
             return; //exclude temporarily the service button

@@ -2,7 +2,6 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -91,30 +90,29 @@
         app:layout_insetEdge="bottom">
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_svc"
-            android:enabled="false"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/bottom_view1"
+            app:layout_constraintEnd_toStartOf="@+id/progbtn_hydro"
             app:layout_constraintHorizontal_bias="0.1"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:btnBg="@drawable/bg_svc_station"
             app:onType="svc" />
-        <View
-            android:id="@+id/bottom_view1"
-            android:visibility="invisible"
-            android:layout_width="26dp"
-            android:layout_height="30dp"
-            android:background="@android:color/holo_green_light"
+        <com.silverback.carman.views.ProgressButton
+            android:id="@+id/progbtn_hydro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/bottom_view2"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toEndOf="@+id/progbtn_svc"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:btnBg="@drawable/bg_hydrogen_station"
+            app:onType="hydro"/>
         <View
             android:id="@+id/bottom_view2"
             android:visibility="invisible"
@@ -124,7 +122,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/progbtn_elec"
             app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toEndOf="@+id/bottom_view1"
+            app:layout_constraintStart_toEndOf="@+id/progbtn_hydro"
             app:layout_constraintTop_toTopOf="parent" />
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_elec"

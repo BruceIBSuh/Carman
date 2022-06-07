@@ -46,7 +46,7 @@ public class EvStationListAdapter extends RecyclerView.Adapter<EvStationListAdap
         }
         TextView getDistanceView() { return binding.tvDistance;}
         TextView getChargerIdView() { return binding.tvChgrId; }
-        TextView getAccessView() { return binding.tvChgrLimited; }
+        TextView getChargerStatus() { return binding.tvChgrStatus; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
         TextView getChargerTypeView() { return binding.tvChgrType;}
 
@@ -65,10 +65,11 @@ public class EvStationListAdapter extends RecyclerView.Adapter<EvStationListAdap
         EvStationListRunnable.EvStationInfo info = evList.get(position);
         String limitDetail = (info.getLimitDetail() == null)?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
+        String charId = "_" + Integer.parseInt(info.getChargerId());
 
         holder.getEvStationName().setText(info.getEvName());
-        holder.getChargerIdView().setText(info.getChargerId());
-        holder.getAccessView().setText(info.getIsPublic());
+        holder.getChargerIdView().setText(charId);
+        holder.getChargerStatus().setText(info.getChargerStatus());
         holder.getLimitDetailView().setText(limitDetail);
 
         log.i("Distance: %s", info.getDistance());
