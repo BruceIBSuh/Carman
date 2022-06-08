@@ -47,6 +47,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.EvStationListRunnable;
 import com.silverback.carman.threads.EvStationListTask;
 import com.silverback.carman.threads.GasPriceTask;
+import com.silverback.carman.threads.HydroStationListTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.GasStationListTask;
 import com.silverback.carman.threads.ThreadManager2;
@@ -99,6 +100,7 @@ public class MainActivity extends BaseActivity implements
     private LocationTask locationTask;
     private GasStationListTask gasStationListTask;
     private EvStationListTask evTask;
+    private HydroStationListTask hydroTask;
 
     private MainContentAdapter mainContentAdapter;
     private GasStationListAdapter stnListAdapter;
@@ -179,6 +181,7 @@ public class MainActivity extends BaseActivity implements
         progbtnList.add(binding.progbtnGas);
         progbtnList.add(binding.progbtnSvc);
         progbtnList.add(binding.progbtnElec);
+        progbtnList.add(binding.progbtnHydro);
 
         // Event Handlers
         //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
@@ -227,6 +230,8 @@ public class MainActivity extends BaseActivity implements
         if(locationTask != null) locationTask = null;
         if(gasStationListTask != null) gasStationListTask = null;
         if(evTask != null) evTask = null;
+        if(hydroTask != null) hydroTask = null;
+
         binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
     }
 
@@ -420,6 +425,8 @@ public class MainActivity extends BaseActivity implements
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.fab.setVisibility(View.GONE);
             progbtnList.get(activeButton).resetProgress();
+            // temp: test required
+            if(locationModel.getLocation() != null) locationModel.getLocation().removeObservers(this);
         }
     }
 
@@ -496,6 +503,10 @@ public class MainActivity extends BaseActivity implements
 
     private void locateHydroStations(Location location) {
         log.i("Hydro Stations: %s", location);
+        mPrevLocation = location;
+        hydroTask = ThreadManager2.startHydroStationListTask(this, stationModel, location);
+
+
 
     }
 

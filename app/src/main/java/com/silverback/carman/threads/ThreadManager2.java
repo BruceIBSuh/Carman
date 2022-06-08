@@ -63,6 +63,7 @@ public class ThreadManager2 {
     private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<GasStationListTask> mStnListTaskQueue;
     private final BlockingQueue<EvStationListTask> mElecListTaskQueue;
+    private final BlockingQueue<HydroStationListTask> mHydroListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
@@ -94,6 +95,7 @@ public class ThreadManager2 {
 
         mStnListTaskQueue = new LinkedBlockingQueue<>();
         mElecListTaskQueue = new LinkedBlockingQueue<>();
+        mHydroListTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mGeocoderReverseTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
@@ -291,11 +293,22 @@ public class ThreadManager2 {
     public static EvStationListTask startEVStatoinListTask(
             Context context, StationListViewModel model, Location location) {
 
-        EvStationListTask EVStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
-        if(EVStationListTask == null) EVStationListTask = new EvStationListTask(context, model, location);
+        EvStationListTask evStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+        if(evStationListTask == null) evStationListTask = new EvStationListTask(context, model, location);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(EVStationListTask.getElecStationListRunnable());
-        return EVStationListTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(evStationListTask.getElecStationListRunnable());
+        return evStationListTask;
+    }
+
+    public static HydroStationListTask startHydroStationListTask(
+            Context context, StationListViewModel model, Location location) {
+
+        HydroStationListTask hydroStationsTask = InnerClazz.sInstance.mHydroListTaskQueue.poll();
+        if(hydroStationsTask == null) hydroStationsTask = new HydroStationListTask(context, model, location);
+        InnerClazz.sInstance.threadPoolExecutor.execute(hydroStationsTask.getHydroListRunnable());
+        return hydroStationsTask;
+
+
     }
 
     public static UploadBitmapTask uploadBitmapTask(
