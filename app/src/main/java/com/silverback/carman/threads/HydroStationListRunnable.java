@@ -6,13 +6,13 @@ import android.os.Process;
 
 import androidx.annotation.NonNull;
 
-import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;
@@ -24,13 +24,12 @@ import retrofit2.http.GET;
 
 public class HydroStationListRunnable implements Runnable {
 
-    private static LoggingHelper log = LoggingHelperFactory.create(HydroStationListRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(HydroStationListRunnable.class);
 
-    private HydroStationCallback callback;
-    private Context context;
-    private StringBuilder sb;
+    private final HydroStationCallback callback;
+    private final Context context;
 
-    private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
+    //private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
     private final String key = "Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
     private final String baseUrl = "https://api.odcloud.kr/api/15090186/v1/uddi:ed364e3a-4aba-41c8-88ab-cae488761eef";
 
@@ -55,7 +54,7 @@ public class HydroStationListRunnable implements Runnable {
 
         Location location = callback.getHydroLocation();
         //StringBuilder sb = new StringBuilder(baseUrl);
-        sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
         try {
             sb.append("?").append(URLEncoder.encode("page", "UTF-8"));
             sb.append("=").append(URLEncoder.encode("1", "UTF-8"));
@@ -72,19 +71,15 @@ public class HydroStationListRunnable implements Runnable {
             @Override
             public void onResponse(
                     @NonNull Call<HydroStationList> call, @NonNull Response<HydroStationList> response) {
-                log.i("response: %s", response);
                 HydroStationList hydroStationList = response.body();
                 assert hydroStationList != null;
                 List<HydroStationInfo>  infoList = hydroStationList.getHydroStationInfo();
                 log.i("infoList: %s", infoList.size());
 
-
-
             }
 
             @Override
-            public void onFailure(
-                    @NonNull Call<HydroStationList> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<HydroStationList> call, @NonNull Throwable t) {
                 log.e("response failed: %s", t);
             }
         });
@@ -98,7 +93,6 @@ public class HydroStationListRunnable implements Runnable {
     public static class HydroStationList {
         @SerializedName("data")
         private List<HydroStationInfo> hydroInfoList;
-
         public List<HydroStationInfo> getHydroStationInfo() {
             return hydroInfoList;
         }
@@ -109,7 +103,6 @@ public class HydroStationListRunnable implements Runnable {
         String base_url = "https://api.odcloud.kr/api/";
         @GET("15090186/v1/uddi:ed364e3a-4aba-41c8-88ab-cae488761eef?page=1&perPage=20&serviceKey=" +
                 "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D%20")
-
         Call<HydroStationList> getHydroStationList();
     }
 
@@ -127,15 +120,15 @@ public class HydroStationListRunnable implements Runnable {
         private static class LazyHolder {
             private static final RetrofitClient sInstance = new RetrofitClient();
         }
-
         public static RetrofitClient getIntance() {
             return LazyHolder.sInstance;
         }
-
         public HydroStationService getHydroService() {
             return hydroService;
         }
     }
+
+
 
 
 }

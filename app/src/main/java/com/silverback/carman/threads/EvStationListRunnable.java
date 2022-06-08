@@ -91,15 +91,13 @@ public class EvStationListRunnable implements Runnable{
             sb.append("=").append(URLEncoder.encode("5", "UTF-8")); /*상태갱신 조회 범위(분) (기본값 5, 최소 1, 최대 10)*/
             sb.append("&").append(URLEncoder.encode("zcode", "UTF-8"));
             sb.append("=").append(URLEncoder.encode(sidoCode, "UTF-8")); /*시도 코드 (행정구역코드 앞 2자리)*/
-            sb.append("/");
 
             XmlEvPullParserHandler xmlHandler = new XmlEvPullParserHandler();
             URL url = new URL(sb.toString());
-            log.i("elec url: %s", url);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            //conn.setRequestProperty("Content-type", "application/json");
-            conn.setRequestProperty("Connection", "close");
+            conn.setRequestProperty("Content-type", "application/json");
+            //conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();

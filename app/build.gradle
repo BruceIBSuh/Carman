@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
     buildToolsVersion '30.0.3'
     defaultConfig {
         applicationId "com.silverback.carman"
         minSdkVersion 23
-        targetSdkVersion 31
+        targetSdkVersion 32
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
@@ -45,12 +45,15 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //implementation files('libs/poi-5.2.2.jar')
+    //implementation files('libs/poi-ooxml-5.2.2.jar')
+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test:runner:1.4.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     testImplementation 'androidx.room:room-testing:2.4.2' //room test database
 
-    implementation 'com.google.android.gms:play-services-location:19.0.1'
+    implementation 'com.google.android.gms:play-services-location:20.0.0'
     implementation 'com.google.android.gms:play-services-maps:18.0.2'
     //AndroidX Preference Library
     //def room_version = '2.3.0' //$room_version quoted by double quote in room implementation
@@ -84,12 +87,12 @@ dependencies {
     implementation 'com.google.guava:guava:27.0.1-android'
 
     // CameraX core library using the camera2 implementation
-    def camerax_version = "1.1.0-beta01"
+    def camerax_version = "1.2.0-alpha02"
     // The following line is optional, as the core library is included indirectly by camera-camera2
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     // If you want to additionally use the CameraX Lifecycle library
-    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+    implementation "androidx.camera:camera-lifecycle:$camerax_version"
     // If you want to additionally use the CameraX VideoCapture library
     implementation "androidx.camera:camera-video:${camerax_version}"
     // If you want to additionally use the CameraX View class
