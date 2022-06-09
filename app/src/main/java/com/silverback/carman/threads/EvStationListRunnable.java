@@ -78,7 +78,6 @@ public class EvStationListRunnable implements Runnable{
         // querying scope.
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
-
         StringBuilder sb = new StringBuilder(evInfo); /*URL*/
         try {
             sb.append("?").append(URLEncoder.encode("serviceKey", "UTF-8"));

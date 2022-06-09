@@ -2,18 +2,45 @@ package com.silverback.carman.threads;
 
 import android.content.Context;
 import android.location.Location;
+import android.os.Build;
+import android.os.FileUtils;
 import android.os.Process;
 
 import androidx.annotation.NonNull;
 
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.utils.ExcelToJsonUtil;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -21,11 +48,13 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
+import retrofit2.http.Url;
 
 public class HydroStationListRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(HydroStationListRunnable.class);
 
+    private ExcelToJsonUtil excelToJsonUtil;
     private final HydroStationCallback callback;
     private final Context context;
 
@@ -43,6 +72,7 @@ public class HydroStationListRunnable implements Runnable {
     public HydroStationListRunnable(Context context, HydroStationCallback callback) {
         this.callback = callback;
         this.context = context;
+        excelToJsonUtil = ExcelToJsonUtil.getInstance();
 
     }
 
@@ -51,9 +81,55 @@ public class HydroStationListRunnable implements Runnable {
     public void run() {
         callback.setHydroStationThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
+        /*
         Location location = callback.getHydroLocation();
         //StringBuilder sb = new StringBuilder(baseUrl);
+        String baseUrl = "https://www.ev.or.kr/portal/monitor/h2Excel";
+
+        try {
+            URL url = new URL(baseUrl);
+            InputStream is = new BufferedInputStream(url.openStream());
+            File fileName = File.createTempFile(String.valueOf(is.hashCode()), ".xls");
+            Files.copy(is, fileName, StandardCopyOption.REPLACE_EXISTING);
+            fileName.deleteOnExit();
+
+            excelToJsonUtil.setExcelFile(fileName);
+            JSONObject jsonObject = excelToJsonUtil.convExcelToJson();
+            log.i("JSONObject: %s", jsonObject);
+
+
+            try(FileOutputStream fos = new FileOutputStream(tmpFile)) {
+                int read;
+                byte[] buffer = new byte[1024];
+                while((read = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                }
+            }
+        } catch(IOException | InvalidFormatException | JSONException e) {e.printStackTrace();}
+        */
+
+        try {
+            File xlsFile = new File(context.getFilesDir(), "hydro.xls");
+            excelToJsonUtil.setExcelFile(xlsFile);
+
+            JSONObject jsonObject = excelToJsonUtil.convExcelToJson();
+            log.i("JSONObject: %s", jsonObject);
+
+            List<JSONObject> dataList = new ArrayList<>();
+            JSONArray jsonArray = (JSONArray)jsonObject.get("Sheet1");
+            for(int i = 0; i < jsonArray.length(); i++) {
+                log.i("DataList: %s", jsonArray.get(i));
+                JSONObject obj = (JSONObject) jsonArray.get(i);
+                dataList.add(obj);
+            }
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        /*
         StringBuilder sb = new StringBuilder();
         try {
             sb.append("?").append(URLEncoder.encode("page", "UTF-8"));
@@ -66,16 +142,14 @@ public class HydroStationListRunnable implements Runnable {
         } catch(IOException e) { e.printStackTrace(); }
 
 
-        Call<HydroStationList> call = RetrofitClient.getIntance().getHydroService().getHydroStationList();
+        Call<HydroStationList> call = RetrofitClient.getIntance().getHydroStationService().getHydroStationList();
         call.enqueue(new Callback<HydroStationList>() {
             @Override
-            public void onResponse(
-                    @NonNull Call<HydroStationList> call, @NonNull Response<HydroStationList> response) {
+            public void onResponse(@NonNull Call<HydroStationList> call, @NonNull Response<HydroStationList> response) {
                 HydroStationList hydroStationList = response.body();
                 assert hydroStationList != null;
-                List<HydroStationInfo>  infoList = hydroStationList.getHydroStationInfo();
-                log.i("infoList: %s", infoList.size());
 
+                List<HydroStationInfo> infoList = hydroStationList.getHydroStationInfo();
             }
 
             @Override
@@ -83,52 +157,115 @@ public class HydroStationListRunnable implements Runnable {
                 log.e("response failed: %s", t);
             }
         });
+        */
 
     }
 
+
+
+    public interface HydroStationService {
+        String base_url = "https://api.odcloud.kr/api/";
+        @GET("15090186/v1/uddi:ed364e3a-4aba-41c8-88ab-cae488761eef?page=1&perPage=20&serviceKey=" +
+                "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D%20")
+
+        Call<HydroStationList> getHydroStationList();
+    }
+
     public static class HydroStationInfo {
+        private String hydroName;
+        private String hydrochgr;
+        private String addrs;
+        private String bizhour;
+        private String price;
+        private String phone;
+
+        public String getHydroName() {
+            return hydroName;
+        }
+
+        public void setHydroName(String hydroName) {
+            this.hydroName = hydroName;
+        }
+
+        public String getHydrochgr() {
+            return hydrochgr;
+        }
+
+        public void setHydrochgr(String hydrochgr) {
+            this.hydrochgr = hydrochgr;
+        }
+
+        public String getAddrs() {
+            return addrs;
+        }
+
+        public void setAddrs(String addrs) {
+            this.addrs = addrs;
+        }
+
+        public String getBizhour() {
+            return bizhour;
+        }
+
+        public void setBizhour(String bizhour) {
+            this.bizhour = bizhour;
+        }
+
+        public String getPrice() {
+            return price;
+        }
+
+        public void setPrice(String price) {
+            this.price = price;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+
 
     }
 
     public static class HydroStationList {
         @SerializedName("data")
-        private List<HydroStationInfo> hydroInfoList;
+        private final List<HydroStationInfo> hydroInfoList;
+
+        public HydroStationList(List<HydroStationInfo> hydroInfoList) {
+            this.hydroInfoList = hydroInfoList;
+        }
+
         public List<HydroStationInfo> getHydroStationInfo() {
             return hydroInfoList;
         }
 
     }
 
-    public interface HydroStationService {
-        String base_url = "https://api.odcloud.kr/api/";
-        @GET("15090186/v1/uddi:ed364e3a-4aba-41c8-88ab-cae488761eef?page=1&perPage=20&serviceKey=" +
-                "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D%20")
-        Call<HydroStationList> getHydroStationList();
-    }
-
     public static class RetrofitClient {
-        private final HydroStationService hydroService;
+        private final HydroStationService hydroStationService;
 
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder().baseUrl(HydroStationService.base_url)
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
 
-            hydroService = retrofit.create(HydroStationService.class);
+            hydroStationService = retrofit.create(HydroStationService.class);
         }
 
+        // Bill-Pugh Singleton instance
         private static class LazyHolder {
             private static final RetrofitClient sInstance = new RetrofitClient();
         }
         public static RetrofitClient getIntance() {
             return LazyHolder.sInstance;
         }
-        public HydroStationService getHydroService() {
-            return hydroService;
+        public HydroStationService getHydroStationService() {
+            return hydroStationService;
         }
     }
-
-
-
 
 }

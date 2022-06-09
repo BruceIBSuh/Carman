@@ -13,4 +13,5 @@
     <files-path path="distcode/" name= "dist"  />
     <files-path path="images/" name="emblem" />
     <cache-path path="images/" name="roatedImage" />
+    <files-path path="." name="hydro" />
 </paths>
