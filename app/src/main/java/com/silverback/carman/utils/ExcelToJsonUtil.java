@@ -19,14 +19,16 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ExcelToJsonUtil {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ExcelToJsonUtil.class);
 
+    private final List<HydroStationInfo> hydroList;
     private File excelFile;
     private ExcelToJsonUtil() {
-
+        hydroList = new ArrayList<>();
     }
     private static class InnerClazz {
         private static final ExcelToJsonUtil sInstance = new ExcelToJsonUtil();
@@ -40,55 +42,124 @@ public class ExcelToJsonUtil {
     }
 
 
-    public JSONObject convExcelToJson() throws IOException, InvalidFormatException, JSONException {
+    public void convExcelToJson() throws IOException, InvalidFormatException, JSONException {
         JSONObject sheetsJsonObject = new JSONObject();
         //Workbook workbook = new XSSFWorkbook(excelFile);
         Workbook workbook = WorkbookFactory.create(excelFile);
 
         for(int i = 0; i < workbook.getNumberOfSheets(); i++) {
-            JSONArray sheetArray = new JSONArray();
+            //JSONArray sheetArray = new JSONArray();
             ArrayList<String> columnNames = new ArrayList<>();
             Sheet sheet = workbook.getSheetAt(i);
             for(Row currentRow : sheet) {
-                JSONObject jsonObject = new JSONObject();
+                HydroStationInfo hydroInfo = new HydroStationInfo();
+                //JSONObject jsonObject = new JSONObject();
                 if (currentRow.getRowNum() >= 3) {
                     for(int j = 0; j < columnNames.size(); j++) {
                         if (currentRow.getCell(j) != null) {
                             if (currentRow.getCell(j).getCellTypeEnum() == CellType.STRING) {
-                                log.i("name: %s, %s", currentRow.getCell(0).getStringCellValue(), currentRow.getCell(2).getStringCellValue());
-                                jsonObject.put(columnNames.get(j), currentRow.getCell(j).getStringCellValue());
+                                hydroInfo.setName(currentRow.getCell(0).getStringCellValue());
+                                int count = Integer.parseInt(currentRow.getCell(1).getStringCellValue());
+                                hydroInfo.setCount(count);
+                                hydroInfo.setAddrs(currentRow.getCell(2).getStringCellValue());
+                                hydroInfo.setBizhour(currentRow.getCell(3).getStringCellValue());
+                                hydroInfo.setPrice(currentRow.getCell(4).getStringCellValue());
+                                hydroInfo.setPhone(currentRow.getCell(5).getStringCellValue());
+
+                                //jsonObject.put(columnNames.get(j), currentRow.getCell(j).getStringCellValue());
                             } else if (currentRow.getCell(j).getCellTypeEnum() == CellType.NUMERIC) {
-                                jsonObject.put(columnNames.get(j), currentRow.getCell(j).getNumericCellValue());
+                                //jsonObject.put(columnNames.get(j), currentRow.getCell(j).getNumericCellValue());
                             } else if (currentRow.getCell(j).getCellTypeEnum() == CellType.BOOLEAN) {
-                                jsonObject.put(columnNames.get(j), currentRow.getCell(j).getBooleanCellValue());
+                                //jsonObject.put(columnNames.get(j), currentRow.getCell(j).getBooleanCellValue());
                             } else if (currentRow.getCell(j).getCellTypeEnum() == CellType.BLANK) {
-                                jsonObject.put(columnNames.get(j), "");
+                                //jsonObject.put(columnNames.get(j), "");
                             }
                         } else {
-                            jsonObject.put(columnNames.get(j), "");
+                            //jsonObject.put(columnNames.get(j), "");
                         }
 
                     }
 
-                    sheetArray.put(jsonObject);
+                    //sheetArray.put(jsonObject);
+                    hydroList.add(hydroInfo);
 
-                }
-
-                else {
+                } else {
                     // store column names
                     for (int k = 0; k < currentRow.getPhysicalNumberOfCells(); k++) {
-                        log.i("store column names: %s", currentRow.getCell(k).getStringCellValue());
                         columnNames.add(currentRow.getCell(k).getStringCellValue());
                     }
                 }
 
             }
 
-            sheetsJsonObject.put(workbook.getSheetName(i), sheetArray);
+            //sheetsJsonObject.put(workbook.getSheetName(i), sheetArray);
         }
 
-        log.i("JSONObject: %s", sheetsJsonObject);
-        return sheetsJsonObject;
+        //return hydroList;
+    }
+
+    public List<HydroStationInfo> getHydroList() {
+        return hydroList;
+    }
+
+    public static class HydroStationInfo {
+        String name;
+        int count;
+        String addrs;
+        String bizhour;
+        String price;
+        String phone;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String stationName) {
+            this.name = stationName;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        public String getAddrs() {
+            return addrs;
+        }
+
+        public void setAddrs(String addrs) {
+            this.addrs = addrs;
+        }
+
+        public String getBizhour() {
+            return bizhour;
+        }
+
+        public void setBizhour(String bizhour) {
+            this.bizhour = bizhour;
+        }
+
+        public String getPrice() {
+            return price;
+        }
+
+        public void setPrice(String price) {
+            this.price = price;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public void setPhone(String phone) {
+            this.phone = phone;
+        }
+
+
+
     }
 
 
