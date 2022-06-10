@@ -55,6 +55,7 @@ public class EvStationListRunnable implements Runnable{
         void setElecStationTaskThread(Thread thread);
         Location getElecStationLocation();
         void setEvStationList(List<EvStationInfo> evList);
+        void notifyEvStationError(Exception e);
     }
 
     public EvStationListRunnable(Context context, ElecStationCallback callback) {
@@ -68,12 +69,13 @@ public class EvStationListRunnable implements Runnable{
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         Location location = callback.getElecStationLocation();
+        /*
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
         GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);
         GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
-
+        */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
@@ -93,10 +95,11 @@ public class EvStationListRunnable implements Runnable{
 
             XmlEvPullParserHandler xmlHandler = new XmlEvPullParserHandler();
             URL url = new URL(sb.toString());
+            log.i("EV url: %s", url);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
-            conn.setRequestProperty("Content-type", "application/json");
-            //conn.setRequestProperty("Connection", "close");
+            //conn.setRequestProperty("Content-type", "application/json");
+            conn.setRequestProperty("Connection", "close");
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();
@@ -122,12 +125,13 @@ public class EvStationListRunnable implements Runnable{
                 else Collections.sort(evStationList, (t1, t2) ->
                             Integer.compare((int)t1.getDistance(), (int)t2.getDistance()));
 
-            } catch(IOException e) {
-                e.printStackTrace();
-            } finally {
                 callback.setEvStationList(evStationList);
-                conn.disconnect();
-            }
+
+            } catch(IOException e) {
+                callback.notifyEvStationError(e);
+                e.printStackTrace();
+
+            } finally {conn.disconnect();}
 
         } catch(IOException e) {
             e.getLocalizedMessage();
@@ -138,6 +142,12 @@ public class EvStationListRunnable implements Runnable{
     // address done.
     private int getAddressfromLocation(double lat, double lng) {
         int sidoCode = -1;
+        // Remove less than the third decimal place.
+        /*
+        double lat = Math.round(latitude * 1000) / 1000.0;
+        double lng = Math.round(longitude * 1000) / 1000.0;
+        log.i("Geocoding: %s, %s, %s", lat, lng, sidoCode);
+        */
         try {
             List<Address> addressList = geocoder.getFromLocation(lat, lng, 1);
             for(Address addrs : addressList) {
@@ -148,6 +158,7 @@ public class EvStationListRunnable implements Runnable{
                     break;
                 }
             }
+
         } catch(IOException e) { e.printStackTrace(); }
 
         return sidoCode;

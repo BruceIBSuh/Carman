@@ -1,9 +1,22 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.HydroStationListTask.HYDRO_STATE_FAIL;
+import static com.silverback.carman.threads.HydroStationListTask.HYDRO_STATE_SUCCEED;
+
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Process;
+import android.text.TextUtils;
 
+import com.google.android.gms.maps.model.LatLng;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.model.Document;
+import com.silverback.carman.coords.GeoPoint;
+import com.silverback.carman.coords.GeoTrans;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ExcelToJsonUtil;
@@ -16,12 +29,15 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 public class HydroStationListRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(HydroStationListRunnable.class);
 
+    private FirebaseFirestore mDB;
+    private List<HydroStationObj> hydroList;
     private final ExcelToJsonUtil excelToJsonUtil;
     private final HydroStationCallback callback;
     private final Context context;
@@ -32,15 +48,20 @@ public class HydroStationListRunnable implements Runnable {
 
 
     public interface HydroStationCallback {
-        void setHydroStationThread(Thread thread);
-        void setHydroList(List<ExcelToJsonUtil.HydroStationInfo> hydroList);
         Location getHydroLocation();
+        void setHydroStationThread(Thread thread);
+        //void setHydroList(List<ExcelToJsonUtil.HydroStationObj> hydroList);
+        void setFirebaseHydroList(List<HydroStationObj> hydroList);
+        void handleTaskState(int state);
+
     }
 
     public HydroStationListRunnable(Context context, HydroStationCallback callback) {
         this.callback = callback;
         this.context = context;
         excelToJsonUtil = ExcelToJsonUtil.getInstance();
+        mDB = FirebaseFirestore.getInstance();
+        hydroList = new ArrayList<>();
     }
 
     @Override
@@ -49,30 +70,102 @@ public class HydroStationListRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         Location location = callback.getHydroLocation();
+        /*
+        GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
+        GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);
+        GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
+        float x = (float) katec_pt.getX();
+        float y = (float) katec_pt.getY();
+        */
+        mDB.collection("hydro_station").get().addOnSuccessListener(snapshots -> {
+            if(snapshots != null && snapshots.size() > 0) {
+                float[] results = new float[3];
+                for(DocumentSnapshot document : snapshots) {
+                    Object objLat = document.get("lat");
+                    Object objLng = document.get("lng");
+
+                    if(objLat != null && objLng != null) {
+                        Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                                (double)objLat, (double)objLng, results
+                        );
+                    }
+
+                    int distance = (int) results[0];
+                    if (distance < 10000) {
+                        HydroStationObj obj = document.toObject(HydroStationObj.class);
+                        if(obj != null) obj.setDistance(distance);
+                        hydroList.add(obj);
+                    }
+                }
+
+                callback.setFirebaseHydroList(hydroList);
+            }
+
+
+        }).addOnFailureListener(e -> {
+            log.e("Hydro failed");
+            e.printStackTrace();
+        });
+
+        /*
         //StringBuilder sb = new StringBuilder(baseUrl);
         String baseUrl = "https://www.ev.or.kr/portal/monitor/h2Excel";
-        File hydro = new File(context.getCacheDir(), "hydro.xls");
-        hydro.deleteOnExit();
-        try(BufferedInputStream bis = new BufferedInputStream(new URL(baseUrl).openStream());
-            FileOutputStream fos = new FileOutputStream(hydro)) {
-            int bytesRead;
-            byte[] dataBuffer = new byte[1024];
-            while((bytesRead = bis.read(dataBuffer)) != -1) {
-                fos.write(dataBuffer, 0, bytesRead);
-            }
-        } catch(IOException e) {
-            e.printStackTrace();
-        } finally {
-            excelToJsonUtil.setExcelFile(hydro);
-            try {
-                excelToJsonUtil.convExcelToJson();
-                List<ExcelToJsonUtil.HydroStationInfo> infoList = excelToJsonUtil.getHydroList();
-                callback.setHydroList(infoList);
+        File hydroFile = new File(context.getCacheDir(), "hydro.xls");
+        hydroFile.deleteOnExit();
 
-            } catch (IOException | JSONException | InvalidFormatException e) {
+        if(!hydroFile.exists()) {
+            log.i("download hybrofile");
+            try(BufferedInputStream bis = new BufferedInputStream(new URL(baseUrl).openStream());
+                FileOutputStream fos = new FileOutputStream(hydroFile)) {
+                int bytesRead;
+                byte[] dataBuffer = new byte[1024];
+                while((bytesRead = bis.read(dataBuffer)) != -1) {
+                    fos.write(dataBuffer, 0, bytesRead);
+                }
+            } catch(IOException e) {
                 e.printStackTrace();
             }
         }
+
+        try {
+            excelToJsonUtil.setExcelFile(hydroFile);
+            excelToJsonUtil.convExcelToList(0, 2, 3);
+            List<ExcelToJsonUtil.HydroStationObj> infoList = excelToJsonUtil.getHydroList();
+
+            callback.setHydroList(infoList);
+
+
+            Geocoder geoCoder = new Geocoder(context);
+            List<Address> address;
+            for(ExcelToJsonUtil.HydroStationObj obj : infoList) {
+                if(!TextUtils.isEmpty(obj.getAddrs())) {
+                    try {
+                        address = geoCoder.getFromLocationName(obj.getAddrs(), 5);
+                        if (address.get(0) != null) {
+                            double lat = Math.round(address.get(0).getLatitude() * 1000000) / 1000000.0;
+                            double lng = Math.round(address.get(0).getLongitude() * 1000000) / 1000000.0;
+                            log.i("Location: %s, %s, %s", obj.getName(), lat, lng);
+                            obj.setLat(lat);
+                            obj.setLng(lng);
+                        }
+
+                    } catch(IndexOutOfBoundsException e) { e.getLocalizedMessage(); }
+                }
+
+                mDB.collection("hydro_station").add(obj).addOnCompleteListener(task -> {
+                    if(task.isSuccessful()) log.i("Upload hytro done");
+                });
+            }
+
+
+
+
+
+        } catch (IOException | InvalidFormatException e) {
+            e.printStackTrace();
+            callback.handleTaskState(HYDRO_STATE_FAIL);
+        }
+        */
         /*
         try {
             URL url = new URL(baseUrl);
@@ -145,6 +238,72 @@ public class HydroStationListRunnable implements Runnable {
         });
         */
 
+    }
+
+    public static class HydroStationObj {
+        private String name;
+        private String addrs;
+        private String phone;
+        private String price;
+        private String bizhour;
+        private int charger;
+        private int distance;
+        private double lat;
+        private double lng;
+
+        public HydroStationObj(){}
+        public HydroStationObj(String name, String addrs, String phone, String price, String bizhour,
+                               int charger, double lat, double lng)
+        {
+            this.name = name;
+            this.addrs = addrs;
+            this.phone = phone;
+            this.price = price;
+            this.bizhour = bizhour;
+            this.charger = charger;
+            this.lat = lat;
+            this.lng = lng;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getAddrs() {
+            return addrs;
+        }
+
+        public String getPhone() {
+            return phone;
+        }
+
+        public String getPrice() {
+            return price;
+        }
+
+        public String getBizhour() {
+            return bizhour;
+        }
+
+        public int getCharger() {
+            return charger;
+        }
+
+        public double getLat() {
+            return lat;
+        }
+
+        public double getLng() {
+            return lng;
+        }
+
+        public void setDistance(int distance) {
+            this.distance = distance;
+        }
+
+        public int getDistance() {
+            return distance;
+        }
     }
 
 

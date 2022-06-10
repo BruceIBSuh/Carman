@@ -40,4 +40,9 @@ public class EvStationListTask extends ThreadTask implements EvStationListRunnab
     public void setEvStationList(List<EvStationListRunnable.EvStationInfo> evList) {
         if(evList.size() > 0) viewModel.getEvStationList().postValue(evList);
     }
+
+    @Override
+    public void notifyEvStationError(Exception e) {
+        viewModel.getExceptionMessage().postValue(String.valueOf(e));
+    }
 }

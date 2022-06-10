@@ -35,8 +35,10 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.adapters.EvStationListAdapter;
 import com.silverback.carman.adapters.GasStationListAdapter;
+import com.silverback.carman.adapters.HydroStationListAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.database.CarmanDatabase;
@@ -90,6 +92,7 @@ public class MainActivity extends BaseActivity implements
 
 
     // Objects
+    private FirebaseFirestore mDB;
     private ActivityMainBinding binding;
 
     private LocationViewModel locationModel;
@@ -105,6 +108,7 @@ public class MainActivity extends BaseActivity implements
     private MainContentAdapter mainContentAdapter;
     private GasStationListAdapter stnListAdapter;
     private EvStationListAdapter evListAdapter;
+    private HydroStationListAdapter hydroAdapter;
     private MainPricePagerAdapter mainPricePagerAdapter;
 
     private RecyclerDividerUtil divider, divider2;
@@ -133,6 +137,7 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        mDB = FirebaseFirestore.getInstance();
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
@@ -178,10 +183,10 @@ public class MainActivity extends BaseActivity implements
 
         // Multi-button board in the bottom
         progbtnList = new ArrayList<>();
-        progbtnList.add(binding.progbtnGas);
-        progbtnList.add(binding.progbtnSvc);
-        progbtnList.add(binding.progbtnElec);
-        progbtnList.add(binding.progbtnHydro);
+        progbtnList.add(0, binding.progbtnGas);
+        progbtnList.add(1, binding.progbtnSvc);
+        progbtnList.add(2, binding.progbtnElec);
+        progbtnList.add(3, binding.progbtnHydro);
 
         // Event Handlers
         //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
@@ -384,7 +389,6 @@ public class MainActivity extends BaseActivity implements
 
     int prevButton = -1;
     public void locateStations(int activeButton, boolean isActive){
-
         if(prevButton != -1 && prevButton != activeButton) {
             progbtnList.get(prevButton).resetProgress();
             binding.recyclerStations.setVisibility(View.GONE);
@@ -415,6 +419,10 @@ public class MainActivity extends BaseActivity implements
                     SpannableString spannableString = new SpannableString(msg);
                     //binding.stationRecyclerView.setVisibility(View.VISIBLE);
                     //binding.stationRecyclerView.showSpannableTextView(spannableString);
+                });
+
+                stationModel.getExceptionMessage().observe(this, exception -> {
+                    progbtnList.get(activeButton).stopProgress();
                 });
             });
 
@@ -496,18 +504,29 @@ public class MainActivity extends BaseActivity implements
         });
     }
 
-    private void locateSvcStations(Location location) {
-        log.i("Service Stations: %s", location);
-
-    }
-
     private void locateHydroStations(Location location) {
-        log.i("Hydro Stations: %s", location);
         mPrevLocation = location;
         hydroTask = ThreadManager2.startHydroStationListTask(this, stationModel, location);
+        stationModel.getHydroStationList().observe(this, hydroList -> {
+            if(hydroList != null && hydroList.size() > 0) {
+                log.i("hydrolist: %s, %s", hydroList.size(), hydroList.get(0).getName());
+                hydroAdapter = new HydroStationListAdapter(hydroList);
+                binding.recyclerStations.setAdapter(hydroAdapter);
+
+                binding.recyclerStations.setVisibility(View.VISIBLE);
+                binding.recyclerContents.setVisibility(View.GONE);
+                progbtnList.get(3).stopProgress();
+
+                binding.fab.setVisibility(View.GONE);
 
 
+            }
 
+        });
+    }
+
+    private void locateSvcStations(Location location) {
+        log.i("Service Stations: %s", location);
     }
 
     // Reorder near station list according to the distance/price, which is called from the layout

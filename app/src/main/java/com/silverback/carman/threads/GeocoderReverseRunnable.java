@@ -41,7 +41,7 @@ public class GeocoderReverseRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         geocoderTask.setGeocoderThread(Thread.currentThread());
         Location location = geocoderTask.getLocation();
-        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+        Geocoder geocoder = new Geocoder(context, Locale.KOREAN);
         List<Address> addressList;
         try {
             addressList = geocoder.getFromLocation(location.getLatitude(), location.getLongitude(), 3);
