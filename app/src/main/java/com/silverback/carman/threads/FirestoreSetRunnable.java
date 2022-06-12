@@ -86,7 +86,7 @@ public class FirestoreSetRunnable implements Runnable {
                     DocumentSnapshot snapshot = transaction.get(docRef);
                     if (snapshot.exists()) {
                         transaction.set(docRef, data, SetOptions.merge());
-                        mCallback.handleTaskState(GasStationListTask.FIRESTORE_SET_COMPLETE);
+                        mCallback.handleTaskState(StationGasTask.FIRESTORE_SET_COMPLETE);
                     }
 
                     return null;

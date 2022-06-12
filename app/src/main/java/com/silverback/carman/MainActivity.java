@@ -34,24 +34,21 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.appbar.AppBarLayout;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman.adapters.EvStationListAdapter;
-import com.silverback.carman.adapters.GasStationListAdapter;
-import com.silverback.carman.adapters.HydroStationListAdapter;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
+import com.silverback.carman.adapters.StationEvAdapter;
+import com.silverback.carman.adapters.StationGasAdapter;
+import com.silverback.carman.adapters.StationHydroAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.EvStationListRunnable;
-import com.silverback.carman.threads.EvStationListTask;
+import com.silverback.carman.threads.StationEvTask;
 import com.silverback.carman.threads.GasPriceTask;
-import com.silverback.carman.threads.HydroStationListTask;
+import com.silverback.carman.threads.StationGasTask;
+import com.silverback.carman.threads.StationHydroTask;
 import com.silverback.carman.threads.LocationTask;
-import com.silverback.carman.threads.GasStationListTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -76,7 +73,7 @@ import java.util.Objects;
 
 
 public class MainActivity extends BaseActivity implements
-        GasStationListAdapter.OnRecyclerItemClickListener,
+        StationGasAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
         MainContentAdapter.MainContentAdapterListener,
         AdapterView.OnItemSelectedListener {
@@ -92,7 +89,6 @@ public class MainActivity extends BaseActivity implements
 
 
     // Objects
-    private FirebaseFirestore mDB;
     private ActivityMainBinding binding;
 
     private LocationViewModel locationModel;
@@ -101,17 +97,15 @@ public class MainActivity extends BaseActivity implements
     private OpinetViewModel opinetModel;
 
     private LocationTask locationTask;
-    private GasStationListTask gasStationListTask;
-    private EvStationListTask evTask;
-    private HydroStationListTask hydroTask;
+    private StationGasTask stationGasTask;
+    private StationEvTask evTask;
+    private StationHydroTask hydroTask;
 
     private MainContentAdapter mainContentAdapter;
-    private GasStationListAdapter stnListAdapter;
-    private EvStationListAdapter evListAdapter;
-    private HydroStationListAdapter hydroAdapter;
+    private StationGasAdapter stnListAdapter;
+    private StationEvAdapter evListAdapter;
+    private StationHydroAdapter hydroAdapter;
     private MainPricePagerAdapter mainPricePagerAdapter;
-
-    private RecyclerDividerUtil divider, divider2;
 
     private Location mPrevLocation;
     private List<Opinet.GasStnParcelable> mStationList;
@@ -137,7 +131,6 @@ public class MainActivity extends BaseActivity implements
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        mDB = FirebaseFirestore.getInstance();
 
         // Set the toolbar with icon, titile. The OptionsMenu are defined below to override
         // methods.
@@ -154,8 +147,8 @@ public class MainActivity extends BaseActivity implements
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
-        divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
-        divider2 = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_STN, 0, getColor(R.color.recyclerDivider));
+        RecyclerDividerUtil divider = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_MAIN, 0, getColor(R.color.recyclerDivider));
+        RecyclerDividerUtil divider2 = new RecyclerDividerUtil(Constants.DIVIDER_HEIGHT_STN, 0, getColor(R.color.recyclerDivider));
         binding.recyclerContents.setAdapter(mainContentAdapter);
         binding.recyclerContents.addItemDecoration(divider);
 
@@ -179,14 +172,12 @@ public class MainActivity extends BaseActivity implements
         binding.recyclerStations.addItemDecoration(divider2);
         binding.recyclerStations.setItemAnimator(new DefaultItemAnimator());
 
-
-
-        // Multi-button board in the bottom
+        // Multi-button tab in the bottom
         progbtnList = new ArrayList<>();
-        progbtnList.add(0, binding.progbtnGas);
-        progbtnList.add(1, binding.progbtnSvc);
-        progbtnList.add(2, binding.progbtnElec);
-        progbtnList.add(3, binding.progbtnHydro);
+        progbtnList.add(binding.progbtnGas);
+        progbtnList.add(binding.progbtnSvc);
+        progbtnList.add(binding.progbtnElec);
+        progbtnList.add(binding.progbtnHydro);
 
         // Event Handlers
         //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
@@ -221,6 +212,13 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onPause() {
         super.onPause();
+        if(locationTask != null) locationTask = null;
+        if(stationGasTask != null) stationGasTask = null;
+        if(evTask != null) evTask = null;
+        if(hydroTask != null) hydroTask = null;
+
+        binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
+
     }
 
     @Override
@@ -232,12 +230,6 @@ public class MainActivity extends BaseActivity implements
     public void onStop() {
         super.onStop();
         //activityResultLauncher.unregister();
-        if(locationTask != null) locationTask = null;
-        if(gasStationListTask != null) gasStationListTask = null;
-        if(evTask != null) evTask = null;
-        if(hydroTask != null) hydroTask = null;
-
-        binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
     }
 
     @Override
@@ -274,7 +266,7 @@ public class MainActivity extends BaseActivity implements
         endDialog.show(getSupportFragmentManager(), "endDialog");
     }
 
-    // Implement GasStationListAdapter.OnRecyclerItemClickListener
+    // Implement StationGasAdapter.OnRecyclerItemClickListener
     @Override
     public void onItemClicked(final int pos) {
         // Disable click until any data has been downloaded from Firestore.
@@ -307,18 +299,17 @@ public class MainActivity extends BaseActivity implements
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
-        //isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
         isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            gasStationListTask = ThreadManager2.startGasStationListTask(stationModel, mPrevLocation, defaultParams);
+            stationGasTask = ThreadManager2.startGasStationListTask(
+                    stationModel, mPrevLocation, defaultParams);
         }
     }
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {}
 
     // Implement FinishAppDialogFragment.NoticeDialogListener interface ;
-    //@SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     public void onDialogPositiveClick(DialogFragment dialog) {
         File cacheDir = getCacheDir();
@@ -327,6 +318,7 @@ public class MainActivity extends BaseActivity implements
                 if(file.delete()) log.i("file deleted: %s", file.getPath());
             }
         }
+
         if(CarmanDatabase.getDatabaseInstance(this) != null) CarmanDatabase.destroyInstance();
         finishAffinity();
     }
@@ -395,7 +387,6 @@ public class MainActivity extends BaseActivity implements
             // Remove the observer to prevent invoking the previous progbtn as the current button
             // fetches a location.
             locationModel.getLocation().removeObservers(this);
-
         }
 
         if(!isActive) {
@@ -405,6 +396,7 @@ public class MainActivity extends BaseActivity implements
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
                 progbtnList.get(activeButton).setProgress();
                 locationModel.getLocation().observe(this, location -> {
+                    log.i("observe location:%s", activeButton);
                     switch(activeButton) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
@@ -422,7 +414,11 @@ public class MainActivity extends BaseActivity implements
                 });
 
                 stationModel.getExceptionMessage().observe(this, exception -> {
+                    log.i("Exception occurred while getting station list");
+                    locationTask = null;
                     progbtnList.get(activeButton).stopProgress();
+
+                    //progbtnList.get(activeButton).stopProgress();
                 });
             });
 
@@ -433,19 +429,23 @@ public class MainActivity extends BaseActivity implements
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.fab.setVisibility(View.GONE);
             progbtnList.get(activeButton).resetProgress();
+
             // temp: test required
-            if(locationModel.getLocation() != null) locationModel.getLocation().removeObservers(this);
+            if(locationModel.getLocation() != null)
+                locationModel.getLocation().removeObservers(this);
         }
     }
 
     private void locateGasStations(Location location) {
         mPrevLocation = location;
         defaultParams[0] = gasCode;
-        gasStationListTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+        stationGasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+
         stationModel.getNearStationList().observe(this, stnList -> {
+            log.i("station: %s", stnList);
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
-                stnListAdapter = new GasStationListAdapter(mStationList, this);
+                stnListAdapter = new StationGasAdapter(mStationList, this);
                 //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                 //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
@@ -469,6 +469,8 @@ public class MainActivity extends BaseActivity implements
             binding.recyclerContents.setVisibility(View.GONE);
             //binding.stationRecyclerView.setVisibility(View.VISIBLE);
             binding.recyclerStations.setVisibility(View.VISIBLE);
+
+
             progbtnList.get(0).stopProgress();
         });
 
@@ -486,19 +488,22 @@ public class MainActivity extends BaseActivity implements
     }
 
 
-
+    int count = 1;
     private void locateEvStations(Location location) {
         mPrevLocation = location;
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
+            log.i("multiple invoke:%s", count);
+            count++;
             if(evList != null && evList.size() > 0) {
-                evListAdapter = new EvStationListAdapter(evList);
+                evListAdapter = new StationEvAdapter(evList);
                 binding.recyclerStations.setAdapter(evListAdapter);
 
                 binding.recyclerStations.setVisibility(View.VISIBLE);
                 binding.recyclerContents.setVisibility(View.GONE);
-                progbtnList.get(2).stopProgress();
 
+                progbtnList.get(2).stopProgress();
+                evTask = null;
                 binding.fab.setVisibility(View.GONE);
             }
         });
@@ -510,7 +515,7 @@ public class MainActivity extends BaseActivity implements
         stationModel.getHydroStationList().observe(this, hydroList -> {
             if(hydroList != null && hydroList.size() > 0) {
                 log.i("hydrolist: %s, %s", hydroList.size(), hydroList.get(0).getName());
-                hydroAdapter = new HydroStationListAdapter(hydroList);
+                hydroAdapter = new StationHydroAdapter(hydroList);
                 binding.recyclerStations.setAdapter(hydroAdapter);
 
                 binding.recyclerStations.setVisibility(View.VISIBLE);
@@ -567,7 +572,7 @@ public class MainActivity extends BaseActivity implements
         stationModel.getNearStationList().observe(this, stnList -> {
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
-                stnListAdapter = new GasStationListAdapter(mStationList, this);
+                stnListAdapter = new StationGasAdapter(mStationList, this);
                 //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                 //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
@@ -615,12 +620,12 @@ public class MainActivity extends BaseActivity implements
                     //binding.pbNearStns.setVisibility(View.VISIBLE);
                     mPrevLocation = location;
                     defaultParams[0] = gasCode;
-                    gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
+                    stationGasTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
 
                 // Station default params changed from SettingPrefActivity.
                 } else if(isRadiusChanged || isGasTypeChanged) {
                     log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
-                    gasStationListTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
+                    stationGasTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
 
                 } else {
                     //binding.pbNearStns.setVisibility(View.GONE);
@@ -652,7 +657,7 @@ public class MainActivity extends BaseActivity implements
                 if (stnList != null && stnList.size() > 0) {
                     log.i("near stations: %s", stnList.size());
                     mStationList = stnList;
-                    stnListAdapter = new GasStationListAdapter(mStationList, this);
+                    stnListAdapter = new StationGasAdapter(mStationList, this);
                     binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                     binding.stationRecyclerView.showStationRecyclerView();
                     binding.fab.setVisibility(View.VISIBLE);

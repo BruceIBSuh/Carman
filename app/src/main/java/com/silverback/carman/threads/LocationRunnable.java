@@ -14,6 +14,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsResponse;
 import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.Priority;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -53,7 +54,7 @@ public class LocationRunnable implements
     }
 
     // Constructor
-    LocationRunnable(Context context, LocationMethods task) {
+    public LocationRunnable(Context context, LocationMethods task) {
         this.task = task;
         this.context = context;
         index = 0;
@@ -101,10 +102,9 @@ public class LocationRunnable implements
             task.notifyLocationException(context.getString(R.string.location_notify_network));
         } else {
             try {
-                final int priority = LocationRequest.PRIORITY_HIGH_ACCURACY;
+                final int priority = Priority.PRIORITY_HIGH_ACCURACY ;
                 final CancellationToken token = new CancellationTokenSource().getToken();
                 // Test Code
-
                 mFusedLocationClient.getCurrentLocation(priority, token).addOnSuccessListener(location -> {
                     //if (location != null && location.getLatitude() > 0 && location.getLongitude() > 0){
                     if(location != null) {
@@ -113,6 +113,7 @@ public class LocationRunnable implements
                         log.i("fused location: %s", index);
                         task.setCurrentLocation(location);
                         task.handleLocationTask(LOCATION_TASK_COMPLETE);
+
                     } else {
                         log.i("location null");
                         //mFusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());

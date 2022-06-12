@@ -45,7 +45,7 @@ import com.silverback.carman.fragments.ExpenseGraphFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.LocationTask;
-import com.silverback.carman.threads.GasStationListTask;
+import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.DatePickerFragment;
@@ -72,7 +72,7 @@ import java.util.Objects;
  * at the top.
  *
  * At the same time, LocationTask is initiated to have the current location, with which GeneralFragment
- * starts GasStationListTask to fetch the current station via StationListViewModel when the task completes.
+ * starts StationGasTask to fetch the current station via StationListViewModel when the task completes.
  *
  * On the other hand, separate process should be made if the activity gets started by tabbing the
  * geofence notification. In particular, be careful of the notification that contains the intent of
@@ -99,7 +99,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
 
     //private ThreadTask tabPagerTask;
     private LocationTask locationTask;
-    private GasStationListTask gasStationListTask;
+    private StationGasTask stationGasTask;
     private Location mPrevLocation;
 
     private ViewPager2 recentExpensePager;
@@ -214,7 +214,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
         super.onStop();
         binding.pagerTabFragment.unregisterOnPageChangeCallback(addPageChangeCallback());
         if(locationTask != null) locationTask = null;
-        if(gasStationListTask != null) gasStationListTask = null;
+        if(stationGasTask != null) stationGasTask = null;
 
     }
 
@@ -476,7 +476,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 String[] defaults = getNearStationParams();
                 defaults[1] = Constants.MIN_RADIUS;
                 StationListViewModel stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
-                gasStationListTask = sThreadManager.startGasStationListTask(stnListModel, location, defaults);
+                stationGasTask = sThreadManager.startGasStationListTask(stnListModel, location, defaults);
             }
         });
     }

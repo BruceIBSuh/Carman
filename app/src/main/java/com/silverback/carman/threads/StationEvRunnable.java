@@ -4,42 +4,31 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
-import android.text.TextUtils;
 
-import com.silverback.carman.adapters.GasStationListAdapter;
-import com.silverback.carman.coords.GeoPoint;
-import com.silverback.carman.coords.GeoTrans;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.Opinet;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-public class EvStationListRunnable implements Runnable{
+public class StationEvRunnable implements Runnable{
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(EvStationListRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
     private final String evUrl = "http://apis.data.go.kr/B552584/EvCharger";
 
     private final String evStatus = "http://apis.data.go.kr/B552584/EvCharger/getChargerStatus";
@@ -58,7 +47,7 @@ public class EvStationListRunnable implements Runnable{
         void notifyEvStationError(Exception e);
     }
 
-    public EvStationListRunnable(Context context, ElecStationCallback callback) {
+    public StationEvRunnable(Context context, ElecStationCallback callback) {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
     }
@@ -100,8 +89,8 @@ public class EvStationListRunnable implements Runnable{
             conn.setRequestMethod("GET");
             //conn.setRequestProperty("Content-type", "application/json");
             conn.setRequestProperty("Connection", "close");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
             conn.connect();
 
             List<EvStationInfo> evStationList = new ArrayList<>();
@@ -113,7 +102,7 @@ public class EvStationListRunnable implements Runnable{
 
                     int distance = (int) results[0];
                     // Get EV stations within 3000m out of retrieved ones.
-                    if (distance < 2500) {
+                    if (distance < 1500) {
                         info.setDistance(distance);
                         evStationList.add(info);
                     }
@@ -128,6 +117,7 @@ public class EvStationListRunnable implements Runnable{
                 callback.setEvStationList(evStationList);
 
             } catch(IOException e) {
+                log.i("EV exception: %s", e.getMessage());
                 callback.notifyEvStationError(e);
                 e.printStackTrace();
 

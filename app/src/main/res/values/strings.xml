@@ -376,8 +376,9 @@
     <string name="title_activity_station_maps">Map</string>
     <string name="title_activity_maps">Map</string>
 
-    <string name="unit_km">km</string>
-    <string name="unit_meter">m</string>
+
+    <string name="unit_km">\u0020 km</string>
+    <string name="unit_meter">\u0020 m</string>
     <string name="unit_liter">리터</string>
     <string name="unit_won">원</string>
     <string name="unit_month">개월</string>

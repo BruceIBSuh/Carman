@@ -67,7 +67,7 @@ public class FirestoreGetRunnable implements Runnable {
             docRef.addSnapshotListener((snapshot, e) -> {
                 if(e != null) {
                     mCallback.notifyException(e.getLocalizedMessage());
-                    mCallback.handleTaskState(GasStationListTask.FIRESTORE_GET_FAIL);
+                    mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_FAIL);
                     return;
                 }
 
@@ -79,7 +79,7 @@ public class FirestoreGetRunnable implements Runnable {
                     if(snapshot.get("carwash") != null) {
                         Boolean hasCarwash = snapshot.getBoolean("carwash");
                         if(hasCarwash != null) mCallback.setCarWashInfo(pos, hasCarwash);
-                        //mCallback.handleTaskState(GasStationListTask.FIRESTORE_SET_COMPLETE);
+                        //mCallback.handleTaskState(StationGasTask.FIRESTORE_SET_COMPLETE);
                     } else {
                         mCallback.setCarWashInfo(pos, false); //to match the number w/ the station list.
                         uploadStationData(pos);
@@ -105,7 +105,7 @@ public class FirestoreGetRunnable implements Runnable {
                 .set(stnData)
                 .addOnSuccessListener(documentReference -> {
                     mCallback.setStationId(stnList.get(position).getStnId());
-                    mCallback.handleTaskState(GasStationListTask.FIRESTORE_GET_COMPLETE);
+                    mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_COMPLETE);
                 }).addOnFailureListener(error -> log.e("failed to add data"));
     }
 

@@ -1,40 +1,24 @@
 package com.silverback.carman.threads;
 
-import static com.silverback.carman.threads.HydroStationListTask.HYDRO_STATE_FAIL;
-import static com.silverback.carman.threads.HydroStationListTask.HYDRO_STATE_SUCCEED;
-
 import android.content.Context;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Process;
-import android.text.TextUtils;
 
-import com.google.android.gms.maps.model.LatLng;
-import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.model.Document;
-import com.silverback.carman.coords.GeoPoint;
-import com.silverback.carman.coords.GeoTrans;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ExcelToJsonUtil;
 
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.json.JSONException;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class HydroStationListRunnable implements Runnable {
+public class StationHydroRunnable implements Runnable {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(HydroStationListRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationHydroRunnable.class);
 
     private FirebaseFirestore mDB;
     private List<HydroStationObj> hydroList;
@@ -56,7 +40,7 @@ public class HydroStationListRunnable implements Runnable {
 
     }
 
-    public HydroStationListRunnable(Context context, HydroStationCallback callback) {
+    public StationHydroRunnable(Context context, HydroStationCallback callback) {
         this.callback = callback;
         this.context = context;
         excelToJsonUtil = ExcelToJsonUtil.getInstance();
@@ -91,12 +75,18 @@ public class HydroStationListRunnable implements Runnable {
                     }
 
                     int distance = (int) results[0];
-                    if (distance < 10000) {
+                    if (distance < 20000) {
                         HydroStationObj obj = document.toObject(HydroStationObj.class);
                         if(obj != null) obj.setDistance(distance);
                         hydroList.add(obj);
                     }
                 }
+
+                // Sort the hydrolist in the distance-descending order
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    Collections.sort(hydroList, Comparator.comparingInt(t -> (int)t.getDistance()));
+                else Collections.sort(hydroList, (t1, t2) ->
+                        Integer.compare((int)t1.getDistance(), (int)t2.getDistance()));
 
                 callback.setFirebaseHydroList(hydroList);
             }
@@ -131,10 +121,7 @@ public class HydroStationListRunnable implements Runnable {
             excelToJsonUtil.setExcelFile(hydroFile);
             excelToJsonUtil.convExcelToList(0, 2, 3);
             List<ExcelToJsonUtil.HydroStationObj> infoList = excelToJsonUtil.getHydroList();
-
             callback.setHydroList(infoList);
-
-
             Geocoder geoCoder = new Geocoder(context);
             List<Address> address;
             for(ExcelToJsonUtil.HydroStationObj obj : infoList) {

@@ -7,7 +7,7 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.List;
 
-public class EvStationListTask extends ThreadTask implements EvStationListRunnable.ElecStationCallback {
+public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecStationCallback {
 
     private final Runnable elecStationListRunnable;
     private final Location location;
@@ -15,8 +15,8 @@ public class EvStationListTask extends ThreadTask implements EvStationListRunnab
     private StationListViewModel viewModel;
     private Thread currentThread;
 
-    public EvStationListTask(Context context, StationListViewModel viewModel, Location location) {
-        elecStationListRunnable = new EvStationListRunnable(context, this);
+    public StationEvTask(Context context, StationListViewModel viewModel, Location location) {
+        elecStationListRunnable = new StationEvRunnable(context, this);
         this.location = location;
         this.viewModel = viewModel;
     }
@@ -37,7 +37,7 @@ public class EvStationListTask extends ThreadTask implements EvStationListRunnab
     }
 
     @Override
-    public void setEvStationList(List<EvStationListRunnable.EvStationInfo> evList) {
+    public void setEvStationList(List<StationEvRunnable.EvStationInfo> evList) {
         if(evList.size() > 0) viewModel.getEvStationList().postValue(evList);
     }
 

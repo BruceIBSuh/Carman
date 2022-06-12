@@ -61,9 +61,9 @@ public class ThreadManager2 {
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
     private final Queue<ThreadTask> mThreadTaskQueue;
-    private final BlockingQueue<GasStationListTask> mStnListTaskQueue;
-    private final BlockingQueue<EvStationListTask> mElecListTaskQueue;
-    private final BlockingQueue<HydroStationListTask> mHydroListTaskQueue;
+    private final BlockingQueue<StationGasTask> mStnListTaskQueue;
+    private final BlockingQueue<StationEvTask> mElecListTaskQueue;
+    private final BlockingQueue<StationHydroTask> mHydroListTaskQueue;
     private final BlockingQueue<LocationTask> mLocationTaskQueue;
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
@@ -84,7 +84,7 @@ public class ThreadManager2 {
     private DistCodeSpinnerTask distSpinnerTak;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
-    private GasStationListTask stnListTask;
+    private StationGasTask stnListTask;
     private UploadBitmapTask uploadBitmapTask;
 
     // Constructor private
@@ -139,12 +139,12 @@ public class ThreadManager2 {
     void handleState(ThreadTask task, int state) {
         Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
-            // GasStationListTask contains multiple Runnables of GasStationListRunnable, FirestoreGetRunnable,
+            // StationGasTask contains multiple Runnables of StationGasRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
             // in different URLs. This process will continue until Firetore will complete to hold up
             // the data in a unified form.
             //
-            // GasStationListRunnable downloads near stations or the current station from the Opinet,
+            // StationGasRunnable downloads near stations or the current station from the Opinet,
             // the id(s) of which is used to check if the station(s) has been already saved in
             // Firestore. Otherwise, add the station(s) to Firestore w/ the carwash field left null.
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
@@ -153,14 +153,14 @@ public class ThreadManager2 {
                 break;
             case DOWNLOAD_NEAR_STATIONS:
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((GasStationListTask)task).getFireStoreRunnable());
+                        ((StationGasTask)task).getFireStoreRunnable());
                 break;
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 log.i("upload station data: %s", task);
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((GasStationListTask)task).setFireStoreRunnalbe());
+                        ((StationGasTask)task).setFireStoreRunnalbe());
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
@@ -277,34 +277,34 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static GasStationListTask startGasStationListTask(
+    public static StationGasTask startGasStationListTask(
             StationListViewModel model, Location location, String[] params) {
 
-        GasStationListTask gasStationListTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
-        if(gasStationListTask == null) gasStationListTask = new GasStationListTask();
-        gasStationListTask.initStationTask(model, location, params);
-        log.i("GasStationListTask: %s", gasStationListTask);
+        StationGasTask stationGasTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        if(stationGasTask == null) stationGasTask = new StationGasTask();
+        stationGasTask.initStationTask(model, location, params);
+        log.i("StationGasTask: %s", stationGasTask);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(gasStationListTask.getStationListRunnable());
-        return gasStationListTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(stationGasTask.getStationListRunnable());
+        return stationGasTask;
     }
 
     // Electric Charge Station
-    public static EvStationListTask startEVStatoinListTask(
+    public static StationEvTask startEVStatoinListTask(
             Context context, StationListViewModel model, Location location) {
 
-        EvStationListTask evStationListTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
-        if(evStationListTask == null) evStationListTask = new EvStationListTask(context, model, location);
+        StationEvTask stationEvTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+        if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(evStationListTask.getElecStationListRunnable());
-        return evStationListTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
+        return stationEvTask;
     }
 
-    public static HydroStationListTask startHydroStationListTask(
+    public static StationHydroTask startHydroStationListTask(
             Context context, StationListViewModel model, Location location) {
 
-        HydroStationListTask hydroStationsTask = InnerClazz.sInstance.mHydroListTaskQueue.poll();
-        if(hydroStationsTask == null) hydroStationsTask = new HydroStationListTask(context, model, location);
+        StationHydroTask hydroStationsTask = InnerClazz.sInstance.mHydroListTaskQueue.poll();
+        if(hydroStationsTask == null) hydroStationsTask = new StationHydroTask(context, model, location);
         InnerClazz.sInstance.threadPoolExecutor.execute(hydroStationsTask.getHydroListRunnable());
         return hydroStationsTask;
 
@@ -345,9 +345,9 @@ public class ThreadManager2 {
         } else if(task instanceof LocationTask) {
             task.recycle();
             mLocationTaskQueue.offer((LocationTask)task);
-        } else if(task instanceof GasStationListTask) {
+        } else if(task instanceof StationGasTask) {
             task.recycle();
-            mStnListTaskQueue.offer((GasStationListTask)task);
+            mStnListTaskQueue.offer((StationGasTask)task);
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);

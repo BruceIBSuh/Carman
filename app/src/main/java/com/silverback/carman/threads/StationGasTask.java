@@ -7,16 +7,15 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
-import java.lang.ref.WeakReference;
 import java.util.List;
 
-public class GasStationListTask extends ThreadTask implements
-        GasStationListRunnable.StationListMethod,
+public class StationGasTask extends ThreadTask implements
+        StationGasRunnable.StationListMethod,
         FirestoreGetRunnable.FireStoreGetMethods,
         FirestoreSetRunnable.FireStoreSetMethods {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationGasTask.class);
 
     // Constants
     static final int DOWNLOAD_NEAR_STATIONS = 1;
@@ -34,7 +33,7 @@ public class GasStationListTask extends ThreadTask implements
     private final Runnable mStationListRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
-    private List<Opinet.GasStnParcelable> mStationList; //used by GasStationListRunnable
+    private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
     private final SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
@@ -44,9 +43,9 @@ public class GasStationListTask extends ThreadTask implements
     private String stnId;
 
     // Constructor
-    GasStationListTask() {
+    StationGasTask() {
         super();
-        mStationListRunnable = new GasStationListRunnable(this);
+        mStationListRunnable = new StationGasRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
         sparseBooleanArray = new SparseBooleanArray();
@@ -58,6 +57,8 @@ public class GasStationListTask extends ThreadTask implements
         mLocation = location;
         this.viewModel = viewModel;
         //weakModelReference = new WeakReference<>(viewModel);
+
+        log.i("Location in GasTask: %s", mLocation);
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -75,7 +76,7 @@ public class GasStationListTask extends ThreadTask implements
          */
     }
 
-    // Callback invoked by GasStationListRunnable and StationInfoRunnable as well to set the current
+    // Callback invoked by StationGasRunnable and StationInfoRunnable as well to set the current
     // thread of each Runnables.
     @Override
     public void setStationTaskThread(Thread thread) {
@@ -83,7 +84,8 @@ public class GasStationListTask extends ThreadTask implements
     }
 
     @Override
-    public void setStationList(List<Opinet.GasStnParcelable> list) {
+    public void setNearStationList(List<Opinet.GasStnParcelable> list) {
+        log.i("viewmodel test: %s", list.size());
         mStationList = list;
         viewModel.getNearStationList().postValue(mStationList);
         //weakModelReference.get().getNearStationList().postValue(mStationList);
@@ -125,7 +127,7 @@ public class GasStationListTask extends ThreadTask implements
 
 
 
-    // The following  callbacks are invoked by GasStationListRunnable to retrieve stations within
+    // The following  callbacks are invoked by StationGasRunnable to retrieve stations within
     // a radius and location, then give them back by setStationList().
     @Override
     public String[] getDefaultParam() {
@@ -141,7 +143,7 @@ public class GasStationListTask extends ThreadTask implements
     public String getStationId() {
         return stnId;
     }
-    // FirestoreGetRunnable invokes this for having the near stations retrieved by GasStationListRunnable,
+    // FirestoreGetRunnable invokes this for having the near stations retrieved by StationGasRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {

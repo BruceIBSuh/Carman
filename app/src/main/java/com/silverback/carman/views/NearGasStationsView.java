@@ -107,7 +107,7 @@ public class NearGasStationsView extends RelativeLayout {
         }
     }
 
-    // Invoked from the parent GeneralFragment when GasStationListTask failed to fetch any station
+    // Invoked from the parent GeneralFragment when StationGasTask failed to fetch any station
     // within a givene radius or the network connection failed to make.
     public void showSpannableTextView(SpannableString message){
         if(mTextViewResId != -1 && getParent() instanceof View) {

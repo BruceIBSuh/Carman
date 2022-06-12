@@ -36,7 +36,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.FavoritePriceTask;
 import com.silverback.carman.threads.LocationTask;
-import com.silverback.carman.threads.GasStationListTask;
+import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.FavoriteGeofenceHelper;
@@ -75,7 +75,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
 
     private FavoriteGeofenceHelper geofenceHelper;
     private LocationTask locationTask;
-    private GasStationListTask stnListTask;
+    private StationGasTask stnListTask;
     private FavoritePriceTask favPriceTask;
     private SharedPreferences mSettings;
     private SimpleDateFormat sdf;

@@ -3,17 +3,15 @@ package com.silverback.carman.threads;
 import android.content.Context;
 import android.location.Location;
 
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.ExcelToJsonUtil;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.List;
 
-public class HydroStationListTask extends ThreadTask implements HydroStationListRunnable.HydroStationCallback {
+public class StationHydroTask extends ThreadTask implements StationHydroRunnable.HydroStationCallback {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(HydroStationListTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationHydroTask.class);
 
     static final int HYDRO_STATE_SUCCEED = 1;
     static final int HYDRO_STATE_FAIL = -1;
@@ -23,8 +21,8 @@ public class HydroStationListTask extends ThreadTask implements HydroStationList
     public StationListViewModel model;
     public Location location;
 
-    public HydroStationListTask(Context context, StationListViewModel model, Location location) {
-        hydroStationListRunnable = new HydroStationListRunnable(context, this);
+    public StationHydroTask(Context context, StationListViewModel model, Location location) {
+        hydroStationListRunnable = new StationHydroRunnable(context, this);
         this.context = context;
         this.model = model;
         this.location = location;
@@ -53,7 +51,7 @@ public class HydroStationListTask extends ThreadTask implements HydroStationList
      */
 
     @Override
-    public void setFirebaseHydroList(List<HydroStationListRunnable.HydroStationObj> hydroList) {
+    public void setFirebaseHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
         log.i("hydroList: %s", hydroList.size());
         if(hydroList.size() > 0) model.getHydroStationList().postValue(hydroList);
     }

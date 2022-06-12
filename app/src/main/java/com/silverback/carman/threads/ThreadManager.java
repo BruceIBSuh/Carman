@@ -102,7 +102,7 @@ public class ThreadManager {
     private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final Queue<FavoritePriceTask> mFavoritePriceTaskQueue;
     private final Queue<ExpenseTabPagerTask> mExpenseTabPagerTaskQueue;
-    private final Queue<GasStationListTask> mGasStationListTaskQueue;
+    private final Queue<StationGasTask> mStationGasTaskQueue;
     private final Queue<LocationTask> mLocationTaskQueue;
     private final Queue<UploadBitmapTask> mUploadBitmapTaskQueue;
     private final Queue<DownloadImageTask> mDownloadImageTaskQueue;
@@ -137,7 +137,7 @@ public class ThreadManager {
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mExpenseTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
-        mGasStationListTaskQueue = new LinkedBlockingQueue<>();
+        mStationGasTaskQueue = new LinkedBlockingQueue<>();
         mLocationTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mDownloadImageTaskQueue = new LinkedBlockingQueue<>();
@@ -182,25 +182,25 @@ public class ThreadManager {
     void handleState(ThreadTask task, int state) {
         Message msg = mMainHandler.obtainMessage(state, task);
         switch(state) {
-            // GasStationListTask contains multiple Runnables of GasStationListRunnable, FirestoreGetRunnable,
+            // StationGasTask contains multiple Runnables of StationGasRunnable, FirestoreGetRunnable,
             // and FirestoreSetRunnable to get the station data b/c the Opinet provides related data
             // in different URLs. This process will continue until Firetore will complete to hold up
             // the data in a unified form.
 
-            // GasStationListRunnable downloads near stations or the current station from the Opinet,
+            // StationGasRunnable downloads near stations or the current station from the Opinet,
             // the id(s) of which is used to check if the station(s) has been already saved in
             // Firestore. Otherwise, add the station(s) to Firestore w/ the carwash field left null.
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
             // from the Opinet and update other fields including the carwash field in Firestore.
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                mDownloadThreadPool.execute(((GasStationListTask)task).getFireStoreRunnable());
+                mDownloadThreadPool.execute(((StationGasTask)task).getFireStoreRunnable());
                 //msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                mDownloadThreadPool.execute(((GasStationListTask) task).setFireStoreRunnalbe());
+                mDownloadThreadPool.execute(((StationGasTask) task).setFireStoreRunnalbe());
                 //msg.sendToTarget();
                 break;
             /*
@@ -353,13 +353,13 @@ public class ThreadManager {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static GasStationListTask startStationListTask(
+    public static StationGasTask startStationListTask(
             StationListViewModel model, Location location, String[] params) {
 
-        GasStationListTask stationListTask = sInstance.mGasStationListTaskQueue.poll();
+        StationGasTask stationListTask = sInstance.mStationGasTaskQueue.poll();
 
         if(stationListTask == null) {
-            stationListTask = new GasStationListTask();
+            stationListTask = new StationGasTask();
         }
 
         stationListTask.initStationTask(model, location, params);
@@ -459,9 +459,9 @@ public class ThreadManager {
             ((LocationTask)task).recycle();
             mLocationTaskQueue.offer((LocationTask)task);
 
-        } else if(task instanceof GasStationListTask) {
+        } else if(task instanceof StationGasTask) {
             // Offer() should be invoked when FirestoreSetRunnable completes.
-            mGasStationListTaskQueue.offer((GasStationListTask)task);
+            mStationGasTaskQueue.offer((StationGasTask)task);
 
         } else if(task instanceof GasPriceTask) {
             log.i("GasPriceTask done");

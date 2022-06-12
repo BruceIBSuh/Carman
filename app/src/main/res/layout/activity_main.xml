@@ -100,7 +100,7 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:btnBg="@drawable/bg_svc_station"
-            app:onType="svc" />
+            app:btnId="svc" />
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_hydro"
             android:layout_width="wrap_content"
@@ -112,7 +112,7 @@
             app:layout_constraintStart_toEndOf="@+id/progbtn_svc"
             app:layout_constraintTop_toTopOf="parent"
             app:btnBg="@drawable/bg_hydrogen_station"
-            app:onType="hydro"/>
+            app:btnId="hydro"/>
         <View
             android:id="@+id/bottom_view2"
             android:visibility="invisible"
@@ -134,7 +134,7 @@
             app:layout_constraintStart_toEndOf="@+id/bottom_view2"
             app:layout_constraintTop_toTopOf="parent"
             app:btnBg="@drawable/ic_elec_station"
-            app:onType="elec"/>
+            app:btnId="elec"/>
         <com.silverback.carman.views.ProgressButton
             android:id="@+id/progbtn_gas"
             android:layout_width="wrap_content"
@@ -146,7 +146,7 @@
             app:layout_constraintStart_toEndOf="@+id/progbtn_elec"
             app:layout_constraintTop_toTopOf="parent"
             app:btnBg="@drawable/bg_gas_station"
-            app:onType="gas" />
+            app:btnId="gas" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton

@@ -25,10 +25,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class GasStationListAdapter extends RecyclerView.Adapter<StationListHolder> {
+public class StationGasAdapter extends RecyclerView.Adapter<StationListHolder> {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationGasAdapter.class);
 
     // Objects
     private Context context;
@@ -41,7 +41,7 @@ public class GasStationListAdapter extends RecyclerView.Adapter<StationListHolde
     }
 
     // Constructor
-    public GasStationListAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
+    public StationGasAdapter(List<Opinet.GasStnParcelable> list, OnRecyclerItemClickListener listener) {
         super();
         stationList = list;
         mListener = listener;

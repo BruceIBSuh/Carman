@@ -5,12 +5,10 @@ import android.util.SparseBooleanArray;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.EvStationListRunnable;
-import com.silverback.carman.threads.HydroStationListRunnable;
-import com.silverback.carman.utils.ExcelToJsonUtil;
+import com.silverback.carman.threads.StationEvRunnable;
+import com.silverback.carman.threads.StationHydroRunnable;
 
 import java.util.List;
 
@@ -26,8 +24,8 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<SparseBooleanArray> hasCarWash;
 
 
-    private MutableLiveData<List<EvStationListRunnable.EvStationInfo>> evStationList;
-    private MutableLiveData<List<HydroStationListRunnable.HydroStationObj>> hydroStationList;
+    private MutableLiveData<List<StationEvRunnable.EvStationInfo>> evStationList;
+    private MutableLiveData<List<StationHydroRunnable.HydroStationObj>> hydroStationList;
 
     private MutableLiveData<String> exceptionMessage;
 
@@ -56,12 +54,12 @@ public class StationListViewModel extends ViewModel {
         return hasCarWash;
     }
 
-    public MutableLiveData<List<EvStationListRunnable.EvStationInfo>> getEvStationList() {
+    public MutableLiveData<List<StationEvRunnable.EvStationInfo>> getEvStationList() {
         if(evStationList == null) evStationList = new MutableLiveData<>();
         return evStationList;
     }
 
-    public MutableLiveData<List<HydroStationListRunnable.HydroStationObj>> getHydroStationList() {
+    public MutableLiveData<List<StationHydroRunnable.HydroStationObj>> getHydroStationList() {
         if(hydroStationList == null) hydroStationList = new MutableLiveData<>();
         return hydroStationList;
     }

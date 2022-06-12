@@ -19,10 +19,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 
-public class GasStationListRunnable implements Runnable{
+public class StationGasRunnable implements Runnable{
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(GasStationListRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationGasRunnable.class);
 
     // Constants
     private static final String OPINET = "https://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
@@ -37,14 +37,14 @@ public class GasStationListRunnable implements Runnable{
         String[] getDefaultParam();
         Location getStationLocation();
         void setStationTaskThread(Thread thread);
-        void setStationList(List<Opinet.GasStnParcelable> list);
+        void setNearStationList(List<Opinet.GasStnParcelable> list);
         void setCurrentStation(Opinet.GasStnParcelable station);
         void notifyException(String msg);
         void handleTaskState(int state);
     }
 
     // Constructor
-    public GasStationListRunnable(StationListMethod task) {
+    public StationGasRunnable(StationListMethod task) {
         if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mStationList = null;
         mTask = task;
@@ -82,6 +82,7 @@ public class GasStationListRunnable implements Runnable{
 
         try {
             if(Thread.interrupted()) throw new InterruptedException();
+
             final URL url = new URL(OPINET_AROUND);
             XmlPullParserHandler xmlHandler = new XmlPullParserHandler();
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
@@ -89,6 +90,7 @@ public class GasStationListRunnable implements Runnable{
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
             conn.connect();
+
             try(InputStream is = new BufferedInputStream(conn.getInputStream())) {
                 mStationList = xmlHandler.parseStationListParcelable(is);
                 // Get near stations which may be the current station if MIN_RADIUS is given  or
@@ -96,21 +98,21 @@ public class GasStationListRunnable implements Runnable{
                 if(mStationList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {
                         mTask.setCurrentStation(mStationList.get(0));
-                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_CURRENT_STATION);
+                        mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION);
                     } else {
-                        mTask.setStationList(mStationList);
-                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS);
+                        mTask.setNearStationList(mStationList);
+                        mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS);
                     }
                 } else {
                     if(radius.matches(Constants.MIN_RADIUS)) {
-                        mTask.handleTaskState(GasStationListTask.DOWNLOAD_CURRENT_STATION_FAIL);
-                    } else mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                        mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION_FAIL);
+                    } else mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL);
                 }
             } finally { conn.disconnect(); }
 
         } catch (IOException | InterruptedException e) {
             mTask.notifyException(e.getLocalizedMessage());
-            mTask.handleTaskState(GasStationListTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+            mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL);
         }
     }
 

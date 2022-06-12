@@ -13,21 +13,21 @@ import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainRecyclerviewEvBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.EvStationListRunnable;
+import com.silverback.carman.threads.StationEvRunnable;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Locale;
 
-public class EvStationListAdapter extends RecyclerView.Adapter<EvStationListAdapter.ViewHolder> {
-    private static final LoggingHelper log = LoggingHelperFactory.create(EvStationListAdapter.class);
+public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.ViewHolder> {
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationEvAdapter.class);
 
-    private final List<EvStationListRunnable.EvStationInfo> evList;
+    private final List<StationEvRunnable.EvStationInfo> evList;
     private final DecimalFormat df;
     private Context context;
 
-    public EvStationListAdapter(List<EvStationListRunnable.EvStationInfo> evList) {
+    public StationEvAdapter(List<StationEvRunnable.EvStationInfo> evList) {
         this.evList = evList;
         df = (DecimalFormat) NumberFormat.getInstance(Locale.getDefault());
         df.applyPattern("#,###");
@@ -62,7 +62,7 @@ public class EvStationListAdapter extends RecyclerView.Adapter<EvStationListAdap
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        EvStationListRunnable.EvStationInfo info = evList.get(position);
+        StationEvRunnable.EvStationInfo info = evList.get(position);
         String limitDetail = (info.getLimitDetail() == null)?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
         String charId = "_" + Integer.parseInt(info.getChargerId());
