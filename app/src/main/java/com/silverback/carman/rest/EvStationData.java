@@ -8,41 +8,42 @@ import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory;
 
 import java.util.List;
 
-import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.converter.simplexml.SimpleXmlConverterFactory;
 import retrofit2.http.GET;
-import retrofit2.http.Query;
 import retrofit2.http.Headers;
+import retrofit2.http.Query;
 
 public class EvStationData {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(EvStationData.class);
 
     public interface RetrofitApi {
-        @GET("B552584/EvCharger/getChargerInfo")
+        //@GET("getChargerStatus")
+        @GET("getChargerStatus")
         @Headers({"Accept:application/xml"})
         Call<List<EvStationModel>> getEvStationInfo (
-                @Query(value="serviceKey", encoded=true) String serviceKey,
-                @Query(value="pageNo", encoded=true) int page,
-                @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="zcode", encoded=true) String sido
+                @Query(value="ServiceKey", encoded=true) String serviceKey,
+                @Query("pageNo") int page,
+                @Query("numOfRows") int rows,
+                @Query("period") int period,
+                @Query("zcode") String sido
         );
-
-
-
-        Call<List<EvStationModel>> getEvStations();
     }
 
     public static class RetrofitClient {
         private final RetrofitApi retrofitApi;
+
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl("http://apis.data.go.kr/")
+                    .baseUrl("http://apis.data.go.kr/B552584/EvCharger/")
                     //.addConverterFactory(GsonConverterFactory.create())
-                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                    .addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
+                    //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
+                    .addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().build()))
                     .build();
             retrofitApi = retrofit.create(RetrofitApi.class);
         }
@@ -60,7 +61,6 @@ public class EvStationData {
     }
 
     public static class EvStationModel {
-
         private String hydroName;
         private String hydrochgr;
         private String addrs;

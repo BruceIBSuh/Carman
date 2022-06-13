@@ -4,7 +4,6 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.os.Build;
 import android.os.Process;
 
 import androidx.annotation.NonNull;
@@ -17,15 +16,9 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -40,7 +33,7 @@ public class StationEvRunnable implements Runnable{
 
     private final String evStatus = "http://apis.data.go.kr/B552584/EvCharger/getChargerStatus";
     private final String evInfo = "http://apis.data.go.kr/B552584/EvCharger/getChargerInfo";
-    //private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
+    private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
     private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
 
     private final Geocoder geocoder;
@@ -140,7 +133,8 @@ public class StationEvRunnable implements Runnable{
 
         Call<List<EvStationData.EvStationModel>> call = EvStationData.RetrofitClient.getIntance()
                 .getRetrofitApi()
-                .getEvStationInfo(key, 1, 25, "11");
+                .getEvStationInfo(encodingKey, 1, 20, 5, "11");
+
         call.enqueue(new Callback<List<EvStationData.EvStationModel>>() {
             @Override
             public void onResponse(@NonNull Call<List<EvStationData.EvStationModel>> call, @NonNull Response<List<EvStationData.EvStationModel>> response) {
