@@ -7,8 +7,11 @@ import android.location.Location;
 import android.os.Build;
 import android.os.Process;
 
+import androidx.annotation.NonNull;
+
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.rest.EvStationData;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -26,6 +29,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
 public class StationEvRunnable implements Runnable{
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
@@ -33,8 +40,8 @@ public class StationEvRunnable implements Runnable{
 
     private final String evStatus = "http://apis.data.go.kr/B552584/EvCharger/getChargerStatus";
     private final String evInfo = "http://apis.data.go.kr/B552584/EvCharger/getChargerInfo";
-    private final String key = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
-    private final String code ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
+    //private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
+    private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
@@ -67,20 +74,22 @@ public class StationEvRunnable implements Runnable{
         */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
+        /*
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
-        StringBuilder sb = new StringBuilder(evInfo); /*URL*/
+        StringBuilder sb = new StringBuilder(evInfo); //URL
+
         try {
             sb.append("?").append(URLEncoder.encode("serviceKey", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode(code, "UTF-8")); /*Service Key*/
+            sb.append("=").append(URLEncoder.encode(key, "UTF-8")); //Service Key
             sb.append("&").append(URLEncoder.encode("pageNo", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("1", "UTF-8")); /*페이지 번호*/
+            sb.append("=").append(URLEncoder.encode("1", "UTF-8")); //페이지 번호
             sb.append("&").append(URLEncoder.encode("numOfRows", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("9999", "UTF-8")); /*한 페이지 결과 수 (최소 10, 최대 9999)*/
+            sb.append("=").append(URLEncoder.encode("1000", "UTF-8")); //한 페이지 결과 수 (최소 10, 최대 9999)
             sb.append("&").append(URLEncoder.encode("period", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("5", "UTF-8")); /*상태갱신 조회 범위(분) (기본값 5, 최소 1, 최대 10)*/
+            sb.append("=").append(URLEncoder.encode("5", "UTF-8")); //상태갱신 조회 범위(분) (기본값 5, 최소 1, 최대 10)
             sb.append("&").append(URLEncoder.encode("zcode", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode(sidoCode, "UTF-8")); /*시도 코드 (행정구역코드 앞 2자리)*/
+            sb.append("=").append(URLEncoder.encode(sidoCode, "UTF-8")); //시도 코드 (행정구역코드 앞 2자리)
 
             XmlEvPullParserHandler xmlHandler = new XmlEvPullParserHandler();
             URL url = new URL(sb.toString());
@@ -89,8 +98,8 @@ public class StationEvRunnable implements Runnable{
             conn.setRequestMethod("GET");
             //conn.setRequestProperty("Content-type", "application/json");
             conn.setRequestProperty("Connection", "close");
-            conn.setConnectTimeout(10000);
-            conn.setReadTimeout(10000);
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
             conn.connect();
 
             List<EvStationInfo> evStationList = new ArrayList<>();
@@ -126,7 +135,28 @@ public class StationEvRunnable implements Runnable{
         } catch(IOException e) {
             e.getLocalizedMessage();
         }
+
+         */
+
+        Call<List<EvStationData.EvStationModel>> call = EvStationData.RetrofitClient.getIntance()
+                .getRetrofitApi()
+                .getEvStationInfo(key, 1, 25, "11");
+        call.enqueue(new Callback<List<EvStationData.EvStationModel>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<EvStationData.EvStationModel>> call, @NonNull Response<List<EvStationData.EvStationModel>> response) {
+                log.i("response body: %s", response.body());
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<EvStationData.EvStationModel>> call, @NonNull Throwable t) {
+                log.e("response failed: %s", t);
+            }
+        });
+
+
     }
+
+
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
     // address done.
@@ -330,4 +360,14 @@ public class StationEvRunnable implements Runnable{
             default: return "N/A";
         }
     }
+
+
+
+
+
+
+
+
+
+
 }
