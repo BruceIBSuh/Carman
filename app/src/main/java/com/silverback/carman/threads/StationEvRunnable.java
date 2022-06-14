@@ -1,16 +1,23 @@
 package com.silverback.carman.threads;
 
+import android.content.ClipData;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Process;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.rest.EvStationData;
+import com.tickaroo.tikxml.TikXml;
+import com.tickaroo.tikxml.annotation.Element;
+import com.tickaroo.tikxml.annotation.Path;
+import com.tickaroo.tikxml.annotation.PropertyElement;
+import com.tickaroo.tikxml.annotation.Xml;
+import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -25,6 +32,13 @@ import java.util.Locale;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.Header;
+import retrofit2.http.Headers;
+import retrofit2.http.Query;
 
 public class StationEvRunnable implements Runnable{
 
@@ -131,24 +145,82 @@ public class StationEvRunnable implements Runnable{
 
          */
 
-        Call<List<EvStationData.EvStationModel>> call = EvStationData.RetrofitClient.getIntance()
-                .getRetrofitApi()
-                .getEvStationInfo(encodingKey, 1, 20, 5, "11");
-
-        call.enqueue(new Callback<List<EvStationData.EvStationModel>>() {
+        Call<EvStationModel> call = RetrofitClient.getIntance().getRetrofitApi().getEvStationInfo(key, 1, 25, 5, "11");
+        call.enqueue(new Callback<EvStationModel>() {
             @Override
-            public void onResponse(@NonNull Call<List<EvStationData.EvStationModel>> call, @NonNull Response<List<EvStationData.EvStationModel>> response) {
-                log.i("response body: %s", response.body());
+            public void onResponse(@NonNull Call<EvStationModel> call, @NonNull Response<EvStationModel> response) {
+                EvStationModel model = response.body();
+                log.i("response: %s", response.body());
+                assert model != null;
+                String name = model.getStaNm();
+                String addr = model.getAddr();
+                log.i("model: %s, %s", name, addr);
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<EvStationData.EvStationModel>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
                 log.e("response failed: %s", t);
             }
         });
 
 
     }
+
+    public interface RetrofitApi {
+        @GET("getChargerInfo")
+        //@Headers({"Accept:application/xml"})
+        Call<EvStationModel> getEvStationInfo (
+                @Query(value="serviceKey", encoded=true) String serviceKey,
+                @Query(value="pageNo", encoded=true) int page,
+                @Query(value="numOfRows", encoded=true) int rows,
+                @Query(value="period", encoded=true) int period,
+                @Query(value="zcode", encoded=true) String sido
+        );
+    }
+
+    public static class RetrofitClient {
+        private final RetrofitApi retrofitApi;
+
+        private RetrofitClient() {
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl("http://apis.data.go.kr/B552584/EvCharger/")
+                    //.addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
+                    .build();
+            retrofitApi = retrofit.create(RetrofitApi.class);
+        }
+
+        // Bill-Pugh Singleton instance
+        private static class LazyHolder {
+            private static final RetrofitClient sInstance = new RetrofitClient();
+        }
+        public static RetrofitClient getIntance() {
+            return RetrofitClient.LazyHolder.sInstance;
+        }
+
+        public RetrofitApi getRetrofitApi() {
+            return retrofitApi;
+        }
+    }
+
+    @Xml
+    public static class EvStationModel {
+        @Path("body/items/item")
+        @PropertyElement
+        String staNm;
+        @PropertyElement
+        String addr;
+
+        public String getStaNm() {
+            return staNm;
+        }
+
+        public String getAddr() {
+            return addr;
+        }
+    }
+
 
 
 

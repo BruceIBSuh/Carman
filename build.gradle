@@ -20,7 +20,7 @@ allprojects {
         google()
         //jcenter()
         mavenCentral()
-        // Namver map sdk.
+        // Naver map sdk.
         maven { url 'https://naver.jfrog.io/artifactory/maven/' }
     }
 
