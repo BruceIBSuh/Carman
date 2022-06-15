@@ -143,14 +143,17 @@ public class StationEvRunnable implements Runnable{
 
          */
 
-        Call<EvStationModel> call = RetrofitClient.getIntance().getRetrofitApi().getEvStationInfo(key, 1, 25, 5, "11");
-        log.i("Call: %s", call);
+        Call<EvStationModel> call = RetrofitClient.getIntance().getRetrofitApi().getEvStationInfo(encodingKey, 1, 25, 5, "11");
         call.enqueue(new Callback<EvStationModel>() {
             @Override
             public void onResponse(@NonNull Call<EvStationModel> call, @NonNull Response<EvStationModel> response) {
                 EvStationModel model = response.body();
                 assert model != null;
                 log.i("model: %s", model.body.items);
+                List<Item> itemList = model.body.items.item;
+                for(Item item : itemList) {
+                    log.i("station: %s, %s", item.stdNm, item.addr);
+                }
             }
 
             @Override
@@ -205,6 +208,8 @@ public class StationEvRunnable implements Runnable{
     static class EvStationModel {
         @Element Header header;
         @Element Body body;
+
+        public Body getBody() { return body; }
     }
 
     @Xml(name="header")
