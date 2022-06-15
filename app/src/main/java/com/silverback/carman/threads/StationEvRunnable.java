@@ -45,8 +45,6 @@ public class StationEvRunnable implements Runnable{
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
     private final String evUrl = "http://apis.data.go.kr/B552584/EvCharger";
 
-    private final String evStatus = "http://apis.data.go.kr/B552584/EvCharger/getChargerStatus";
-    private final String evInfo = "http://apis.data.go.kr/B552584/EvCharger/getChargerInfo";
     private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
     private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
 
@@ -146,15 +144,13 @@ public class StationEvRunnable implements Runnable{
          */
 
         Call<EvStationModel> call = RetrofitClient.getIntance().getRetrofitApi().getEvStationInfo(key, 1, 25, 5, "11");
+        log.i("Call: %s", call);
         call.enqueue(new Callback<EvStationModel>() {
             @Override
             public void onResponse(@NonNull Call<EvStationModel> call, @NonNull Response<EvStationModel> response) {
                 EvStationModel model = response.body();
-                log.i("response: %s", response.body());
                 assert model != null;
-                String name = model.getStaNm();
-                String addr = model.getAddr();
-                log.i("model: %s, %s", name, addr);
+                log.i("model: %s", model.body.items);
             }
 
             @Override
@@ -185,9 +181,10 @@ public class StationEvRunnable implements Runnable{
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("http://apis.data.go.kr/B552584/EvCharger/")
                     //.addConverterFactory(GsonConverterFactory.create())
-                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
+
             retrofitApi = retrofit.create(RetrofitApi.class);
         }
 
@@ -204,23 +201,89 @@ public class StationEvRunnable implements Runnable{
         }
     }
 
-    @Xml
-    public static class EvStationModel {
-        @Path("body/items/item")
-        @PropertyElement
-        String staNm;
-        @PropertyElement
-        String addr;
-
-        public String getStaNm() {
-            return staNm;
-        }
-
-        public String getAddr() {
-            return addr;
-        }
+    @Xml(name="response")
+    static class EvStationModel {
+        @Element Header header;
+        @Element Body body;
     }
 
+    @Xml(name="header")
+    static class Header {
+        @PropertyElement String resultCode;
+        @PropertyElement String resultMsg;
+        @PropertyElement int totalCount;
+        @PropertyElement int pageNo;
+        @PropertyElement int numOfRows;
+    }
+
+    @Xml(name="body")
+    static class Body {
+        @Element(name="items") Items items;
+
+    }
+
+    @Xml
+    public static class Items {
+        @Element(name="item")
+        List<Item> item;
+    }
+
+
+    @Xml
+    static class Item {
+        @PropertyElement(name="statNm")
+        String stdNm;
+        @PropertyElement(name="statId")
+        String stdId;
+        @PropertyElement(name="chgerId")
+        String chgerId;
+        @PropertyElement(name="chgerType")
+        String chgerType;
+        @PropertyElement(name="addr")
+        String addr;
+        @PropertyElement(name="location")
+        String location;
+        @PropertyElement(name="lat")
+        double lat;
+        @PropertyElement(name="lng")
+        double lng;
+        @PropertyElement(name="useTime")
+        String useTime;
+        @PropertyElement(name="busiId")
+        String busiId;
+        @PropertyElement(name="bnm")
+        String bnm;
+        @PropertyElement(name="busiNm")
+        String busiNm;
+        @PropertyElement(name="busiCall")
+        String busiCall;
+        @PropertyElement(name="stat")
+        int stat;
+        @PropertyElement(name="statUpdDt")
+        String statUpdDt;
+        @PropertyElement(name="lastTsdt")
+        String lastTsdt;
+        @PropertyElement(name="lastTedt")
+        String lastTedt;
+        @PropertyElement(name="nowTsdt")
+        String nowTsdt;
+        @PropertyElement(name="powerType")
+        String powerType;
+        @PropertyElement(name="output")
+        String output;
+        @PropertyElement(name="method")
+        String method;
+        @PropertyElement(name="zcode")
+        String zcode;
+        @PropertyElement(name="parkingFree")
+        boolean parkingFree;
+        @PropertyElement(name="note")
+        String node;
+        @PropertyElement(name="limitYn")
+        boolean limitYn;
+        @PropertyElement(name="limitDetail")
+        String limitDetail;
+    }
 
 
 
