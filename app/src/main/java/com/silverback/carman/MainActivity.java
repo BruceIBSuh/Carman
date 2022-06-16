@@ -494,9 +494,9 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
-            log.i("multiple invoke:%s", count);
+            log.i("multiple invoke:%s, %s", count, evList.size());
             count++;
-            if(evList != null && evList.size() > 0) {
+            //if(evList != null && evList.size() > 0) {
                 evListAdapter = new StationEvAdapter(evList);
                 binding.recyclerStations.setAdapter(evListAdapter);
 
@@ -506,7 +506,7 @@ public class MainActivity extends BaseActivity implements
                 progbtnList.get(2).stopProgress();
                 evTask = null;
 
-            }
+            //}
         });
 
         stationModel.getExceptionMessage().observe(this, err -> {

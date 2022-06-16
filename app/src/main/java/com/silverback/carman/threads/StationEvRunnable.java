@@ -55,6 +55,7 @@ public class StationEvRunnable implements Runnable{
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
 
+
     // Interface
     public interface ElecStationCallback {
         void setElecStationTaskThread(Thread thread);
@@ -88,7 +89,6 @@ public class StationEvRunnable implements Runnable{
         String sidoCode = String.valueOf(sido);
         /*
         StringBuilder sb = new StringBuilder(evInfo); //URL
-
         try {
             sb.append("?").append(URLEncoder.encode("serviceKey", "UTF-8"));
             sb.append("=").append(URLEncoder.encode(key, "UTF-8")); //Service Key
@@ -145,55 +145,38 @@ public class StationEvRunnable implements Runnable{
         } catch(IOException e) {
             e.getLocalizedMessage();
         }
-
          */
-
         Call<EvStationModel> call = RetrofitClient.getIntance()
                 .getRetrofitApi()
-                .getEvStationInfo(encodingKey, 1, 100, 5, sidoCode);
+                .getEvStationInfo(encodingKey, 3, 9999, 5, sidoCode);
 
         call.enqueue(new Callback<EvStationModel>() {
             @Override
-            public void onResponse(@NonNull Call<EvStationModel> call, @NonNull Response<EvStationModel> response) {
+            public void onResponse(@NonNull Call<EvStationModel> call,
+                                   @NonNull Response<EvStationModel> response) {
                 EvStationModel model = response.body();
                 assert model != null;
-                Header header = model.header;
-                log.i("total count: %s, %s, %s", header.totalCount, header.pageNo, header.numOfRows);
-                int distance = 0;
-                List<Item> itemList = model.body.items.item;
-                //List<Item> itemList = model.items;
-                for(int i = itemList.size() - 1; i >= 0; i--) {
+
+                // Exclude an item if it is out of the distance or include an item within the distance
+                //List<Item> itemList = model.itemList;
+                //List<Item> itemList = model.itemList;
+                log.i("Items: %s", model.itemList.size());
+                for (int i = model.itemList.size() - 1; i >= 0; i--) {
                     float[] results = new float[3];
                     Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                            itemList.get(i).lat, itemList.get(i).lng, results);
-                    distance = (int)results[0];
-                    if(distance > 5000) itemList.remove(i);
-                    else itemList.get(i).setDistance(distance);
+                            model.itemList.get(i).lat, model.itemList.get(i).lng, results);
+                    int distance = (int) results[0];
+                    if (distance > 2500) model.itemList.remove(i);
+                    else model.itemList.get(i).setDistance(distance);
                 }
-
-                /*
-                for(Iterator<Item> it = itemList.iterator(); it.hasNext();) {
-                    float[] results = new float[3];
-                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                            it.next().lat, it.next().lng, results);
-
-                    distance = (int) results[0];
-                    if(distance > 5000) {
-                        log.i("distance: %s, %s", it.next().stdNm, distance);
-                        it.remove();
-                    } else it.next().setDistance(distance);
-                }
-
-                 */
 
                 // Sort EvList in the distance-descending order
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    Collections.sort(itemList, Comparator.comparingInt(t -> (int) t.getDistance()));
-                else Collections.sort(itemList, (t1, t2) ->
-                        Integer.compare((int)t1.getDistance(), (int)t2.getDistance()));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    Collections.sort(model.itemList, Comparator.comparingInt(t -> (int) t.getDistance()));
+                else Collections.sort(model.itemList, (t1, t2) ->
+                        Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
 
-
-                callback.setEvStationList(itemList);
+                callback.setEvStationList(model.itemList);
             }
 
             @Override
@@ -201,6 +184,7 @@ public class StationEvRunnable implements Runnable{
                 log.e("response failed: %s", t);
                 callback.notifyEvStationError(new Exception(t));
             }
+
         });
 
 
@@ -245,15 +229,15 @@ public class StationEvRunnable implements Runnable{
         }
     }
 
-    /*
-    @Xml
+
+    @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
-        List<Item> items;
+        List<Item> itemList;
     }
-    */
 
+    /*
     @Xml(name="response")
     static class EvStationModel {
         @Element Header header;
@@ -280,7 +264,7 @@ public class StationEvRunnable implements Runnable{
         @Element(name="item")
         List<Item> item;
     }
-
+    */
     @Xml
     public static class Item {
         @PropertyElement(name="statNm") String stdNm;

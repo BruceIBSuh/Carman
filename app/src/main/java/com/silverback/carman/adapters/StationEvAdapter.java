@@ -6,9 +6,12 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.silverback.carman.R;
@@ -44,6 +47,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
             binding = MainRecyclerviewEvBinding.bind(itemView);
         }
 
+        ImageView getChgrStatusView() { return binding.ivChgrStatus; }
         TextView getEvStationName() {
             return binding.tvEvName;
         }
@@ -65,17 +69,19 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+        if(evList.size() == 0) return;
+
         StationEvRunnable.Item info = evList.get(position);
         String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
         String charId = "_" + Integer.parseInt(info.getChgerId());
 
+        holder.getChgrStatusView().setImageDrawable(getStatusImage(info.getStat()));
         holder.getEvStationName().setText(info.getStdNm());
         holder.getChargerIdView().setText(charId);
         holder.getChargerStatus().setText(String.valueOf(info.getStat()));
         holder.getLimitDetailView().setText(limitDetail);
 
-        log.i("Distance: %s", info.getChgerType());
         holder.getDistanceView().setText(df.format(info.getDistance()));
         holder.getChargerTypeView().setText(info.getChgerType());
     }
@@ -85,22 +91,14 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         return evList.size();
     }
 
-    private void setStatusImage(int status) {
+    private Drawable getStatusImage(int status) {
+
         switch(status) {
-            case 1:
-                break;
-            case 2:
-
-                break;
-
-            case 3:
-                break;
-            case 4:
-                break;
-            case 5:
-                break;
-            case 9:
-                break;
+            case 1: return ContextCompat.getDrawable(context, android.R.drawable.presence_away);
+            case 2: return ContextCompat.getDrawable(context, android.R.drawable.presence_online);
+            case 3: return ContextCompat.getDrawable(context, android.R.drawable.presence_busy);
+            case 4: case 9: return ContextCompat.getDrawable(context, R.drawable.bg_circle_gray);
+            default: return null;
         }
     }
 
