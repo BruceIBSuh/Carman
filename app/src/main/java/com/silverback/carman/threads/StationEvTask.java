@@ -37,7 +37,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     }
 
     @Override
-    public void setEvStationList(List<StationEvRunnable.EvStationInfo> evList) {
+    public void setEvStationList(List<StationEvRunnable.Item> evList) {
         if(evList.size() > 0) viewModel.getEvStationList().postValue(evList);
     }
 

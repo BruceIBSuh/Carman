@@ -1,6 +1,8 @@
 package com.silverback.carman.adapters;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +25,12 @@ import java.util.Locale;
 public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.ViewHolder> {
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvAdapter.class);
 
-    private final List<StationEvRunnable.EvStationInfo> evList;
+    private final List<StationEvRunnable.Item> evList;
     private final DecimalFormat df;
     private Context context;
+    private Drawable drawable;
 
-    public StationEvAdapter(List<StationEvRunnable.EvStationInfo> evList) {
+    public StationEvAdapter(List<StationEvRunnable.Item> evList) {
         this.evList = evList;
         df = (DecimalFormat) NumberFormat.getInstance(Locale.getDefault());
         df.applyPattern("#,###");
@@ -62,19 +65,19 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        StationEvRunnable.EvStationInfo info = evList.get(position);
-        String limitDetail = (info.getLimitDetail() == null)?
+        StationEvRunnable.Item info = evList.get(position);
+        String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
-        String charId = "_" + Integer.parseInt(info.getChargerId());
+        String charId = "_" + Integer.parseInt(info.getChgerId());
 
-        holder.getEvStationName().setText(info.getEvName());
+        holder.getEvStationName().setText(info.getStdNm());
         holder.getChargerIdView().setText(charId);
-        holder.getChargerStatus().setText(info.getChargerStatus());
+        holder.getChargerStatus().setText(String.valueOf(info.getStat()));
         holder.getLimitDetailView().setText(limitDetail);
 
-        log.i("Distance: %s", info.getDistance());
+        log.i("Distance: %s", info.getChgerType());
         holder.getDistanceView().setText(df.format(info.getDistance()));
-        holder.getChargerTypeView().setText(info.getChargerType());
+        holder.getChargerTypeView().setText(info.getChgerType());
     }
 
     @Override
@@ -82,6 +85,23 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         return evList.size();
     }
 
+    private void setStatusImage(int status) {
+        switch(status) {
+            case 1:
+                break;
+            case 2:
 
+                break;
+
+            case 3:
+                break;
+            case 4:
+                break;
+            case 5:
+                break;
+            case 9:
+                break;
+        }
+    }
 
 }

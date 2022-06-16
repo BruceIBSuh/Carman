@@ -21,6 +21,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -504,9 +505,17 @@ public class MainActivity extends BaseActivity implements
 
                 progbtnList.get(2).stopProgress();
                 evTask = null;
-                binding.fab.setVisibility(View.GONE);
+
             }
         });
+
+        stationModel.getExceptionMessage().observe(this, err -> {
+            Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
+            progbtnList.get(2).resetProgress();
+            evTask = null;
+        });
+
+        binding.fab.setVisibility(View.GONE);
     }
 
     private void locateHydroStations(Location location) {

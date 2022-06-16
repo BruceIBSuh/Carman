@@ -24,7 +24,7 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<SparseBooleanArray> hasCarWash;
 
 
-    private MutableLiveData<List<StationEvRunnable.EvStationInfo>> evStationList;
+    private MutableLiveData<List<StationEvRunnable.Item>> evStationList;
     private MutableLiveData<List<StationHydroRunnable.HydroStationObj>> hydroStationList;
 
     private MutableLiveData<String> exceptionMessage;
@@ -54,7 +54,7 @@ public class StationListViewModel extends ViewModel {
         return hasCarWash;
     }
 
-    public MutableLiveData<List<StationEvRunnable.EvStationInfo>> getEvStationList() {
+    public MutableLiveData<List<StationEvRunnable.Item>> getEvStationList() {
         if(evStationList == null) evStationList = new MutableLiveData<>();
         return evStationList;
     }

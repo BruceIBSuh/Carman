@@ -108,15 +108,15 @@ dependencies {
     implementation "androidx.camera:camera-extensions:${camerax_version}"
 
 
-    // Retrofit2
-
+    // Retrofit2 w/ TikXml
     implementation "com.squareup.retrofit2:retrofit:2.9.0"
     implementation "com.squareup.retrofit2:adapter-rxjava2:2.9.0"
     //implementation("com.squreup.okhttp3:okhttp:3.6.0")
     implementation 'com.tickaroo.tikxml:annotation:0.8.13'
     implementation 'com.tickaroo.tikxml:core:0.8.13'
-    annotationProcessor 'com.tickaroo.tikxml:processor:0.8.13'
     implementation 'com.tickaroo.tikxml:retrofit-converter:0.8.13'
+    annotationProcessor 'com.tickaroo.tikxml:processor:0.8.13'
+    annotationProcessor 'com.tickaroo.tikxml:auto-value-tikxml:0.8.13'
 
 
 

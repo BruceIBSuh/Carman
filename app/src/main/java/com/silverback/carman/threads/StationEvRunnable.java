@@ -5,6 +5,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.os.Build;
 import android.os.Process;
 import android.util.Log;
 
@@ -26,6 +27,9 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -55,7 +59,7 @@ public class StationEvRunnable implements Runnable{
     public interface ElecStationCallback {
         void setElecStationTaskThread(Thread thread);
         Location getElecStationLocation();
-        void setEvStationList(List<EvStationInfo> evList);
+        void setEvStationList(List<Item> evList);
         void notifyEvStationError(Exception e);
     }
 
@@ -79,9 +83,10 @@ public class StationEvRunnable implements Runnable{
         */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
-        /*
+
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
+        /*
         StringBuilder sb = new StringBuilder(evInfo); //URL
 
         try {
@@ -143,22 +148,58 @@ public class StationEvRunnable implements Runnable{
 
          */
 
-        Call<EvStationModel> call = RetrofitClient.getIntance().getRetrofitApi().getEvStationInfo(encodingKey, 1, 25, 5, "11");
+        Call<EvStationModel> call = RetrofitClient.getIntance()
+                .getRetrofitApi()
+                .getEvStationInfo(encodingKey, 1, 100, 5, sidoCode);
+
         call.enqueue(new Callback<EvStationModel>() {
             @Override
             public void onResponse(@NonNull Call<EvStationModel> call, @NonNull Response<EvStationModel> response) {
                 EvStationModel model = response.body();
                 assert model != null;
-                log.i("model: %s", model.body.items);
+                Header header = model.header;
+                log.i("total count: %s, %s, %s", header.totalCount, header.pageNo, header.numOfRows);
+                int distance = 0;
                 List<Item> itemList = model.body.items.item;
-                for(Item item : itemList) {
-                    log.i("station: %s, %s", item.stdNm, item.addr);
+                //List<Item> itemList = model.items;
+                for(int i = itemList.size() - 1; i >= 0; i--) {
+                    float[] results = new float[3];
+                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                            itemList.get(i).lat, itemList.get(i).lng, results);
+                    distance = (int)results[0];
+                    if(distance > 5000) itemList.remove(i);
+                    else itemList.get(i).setDistance(distance);
                 }
+
+                /*
+                for(Iterator<Item> it = itemList.iterator(); it.hasNext();) {
+                    float[] results = new float[3];
+                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                            it.next().lat, it.next().lng, results);
+
+                    distance = (int) results[0];
+                    if(distance > 5000) {
+                        log.i("distance: %s, %s", it.next().stdNm, distance);
+                        it.remove();
+                    } else it.next().setDistance(distance);
+                }
+
+                 */
+
+                // Sort EvList in the distance-descending order
+                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                    Collections.sort(itemList, Comparator.comparingInt(t -> (int) t.getDistance()));
+                else Collections.sort(itemList, (t1, t2) ->
+                        Integer.compare((int)t1.getDistance(), (int)t2.getDistance()));
+
+
+                callback.setEvStationList(itemList);
             }
 
             @Override
             public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
                 log.e("response failed: %s", t);
+                callback.notifyEvStationError(new Exception(t));
             }
         });
 
@@ -204,12 +245,19 @@ public class StationEvRunnable implements Runnable{
         }
     }
 
+    /*
+    @Xml
+    public static class EvStationModel {
+        @Path("body/items")
+        @Element
+        List<Item> items;
+    }
+    */
+
     @Xml(name="response")
     static class EvStationModel {
         @Element Header header;
         @Element Body body;
-
-        public Body getBody() { return body; }
     }
 
     @Xml(name="header")
@@ -223,8 +271,8 @@ public class StationEvRunnable implements Runnable{
 
     @Xml(name="body")
     static class Body {
-        @Element(name="items") Items items;
-
+        @Element(name="items")
+        Items items;
     }
 
     @Xml
@@ -233,61 +281,151 @@ public class StationEvRunnable implements Runnable{
         List<Item> item;
     }
 
-
     @Xml
-    static class Item {
-        @PropertyElement(name="statNm")
-        String stdNm;
-        @PropertyElement(name="statId")
-        String stdId;
-        @PropertyElement(name="chgerId")
-        String chgerId;
-        @PropertyElement(name="chgerType")
-        String chgerType;
-        @PropertyElement(name="addr")
-        String addr;
-        @PropertyElement(name="location")
-        String location;
-        @PropertyElement(name="lat")
-        double lat;
-        @PropertyElement(name="lng")
-        double lng;
-        @PropertyElement(name="useTime")
-        String useTime;
-        @PropertyElement(name="busiId")
-        String busiId;
-        @PropertyElement(name="bnm")
-        String bnm;
-        @PropertyElement(name="busiNm")
-        String busiNm;
-        @PropertyElement(name="busiCall")
-        String busiCall;
-        @PropertyElement(name="stat")
-        int stat;
-        @PropertyElement(name="statUpdDt")
-        String statUpdDt;
-        @PropertyElement(name="lastTsdt")
-        String lastTsdt;
-        @PropertyElement(name="lastTedt")
-        String lastTedt;
-        @PropertyElement(name="nowTsdt")
-        String nowTsdt;
-        @PropertyElement(name="powerType")
-        String powerType;
-        @PropertyElement(name="output")
-        String output;
-        @PropertyElement(name="method")
-        String method;
-        @PropertyElement(name="zcode")
-        String zcode;
-        @PropertyElement(name="parkingFree")
-        boolean parkingFree;
-        @PropertyElement(name="note")
-        String node;
-        @PropertyElement(name="limitYn")
-        boolean limitYn;
-        @PropertyElement(name="limitDetail")
-        String limitDetail;
+    public static class Item {
+        @PropertyElement(name="statNm") String stdNm;
+        @PropertyElement(name="statId") String stdId;
+        @PropertyElement(name="chgerId") String chgerId;
+        @PropertyElement(name="chgerType") String chgerType;
+        @PropertyElement(name="addr") String addr;
+        @PropertyElement(name="location") String location;
+        @PropertyElement(name="lat") double lat;
+        @PropertyElement(name="lng") double lng;
+        @PropertyElement(name="useTime") String useTime;
+        @PropertyElement(name="busiId") String busiId;
+        @PropertyElement(name="bnm") String bnm;
+        @PropertyElement(name="busiNm") String busiNm;
+        @PropertyElement(name="busiCall") String busiCall;
+        @PropertyElement(name="stat") int stat;
+        @PropertyElement(name="statUpdDt") String statUpdDt;
+        @PropertyElement(name="lastTsdt") String lastTsdt;
+        @PropertyElement(name="lastTedt") String lastTedt;
+        @PropertyElement(name="nowTsdt") String nowTsdt;
+        @PropertyElement(name="powerType") String powerType;
+        @PropertyElement(name="output") String output;
+        @PropertyElement(name="method") String method;
+        @PropertyElement(name="zcode") String zcode;
+        @PropertyElement(name="parkingFree") boolean parkingFree;
+        @PropertyElement(name="note") String node;
+        @PropertyElement(name="limitYn") boolean limitYn;
+        @PropertyElement(name="limitDetail") String limitDetail;
+
+        public String getStdNm() {
+            return stdNm;
+        }
+
+        public String getStdId() {
+            return stdId;
+        }
+
+        public String getChgerId() {
+            return chgerId;
+        }
+
+        public String getChgerType() {
+            return convChargerType(chgerType);
+        }
+
+        public String getAddr() {
+            return addr;
+        }
+
+        public String getLocation() {
+            return location;
+        }
+
+        public double getLat() {
+            return lat;
+        }
+
+        public double getLng() {
+            return lng;
+        }
+
+        public String getUseTime() {
+            return useTime;
+        }
+
+        public String getBusiId() {
+            return busiId;
+        }
+
+        public String getBnm() {
+            return bnm;
+        }
+
+        public String getBusiNm() {
+            return busiNm;
+        }
+
+        public String getBusiCall() {
+            return busiCall;
+        }
+
+        public int getStat() {
+            return stat;
+        }
+
+        public String getStatUpdDt() {
+            return statUpdDt;
+        }
+
+        public String getLastTsdt() {
+            return lastTsdt;
+        }
+
+        public String getLastTedt() {
+            return lastTedt;
+        }
+
+        public String getNowTsdt() {
+            return nowTsdt;
+        }
+
+        public String getPowerType() {
+            return powerType;
+        }
+
+        public String getOutput() {
+            return output;
+        }
+
+        public String getMethod() {
+            return method;
+        }
+
+        public String getZcode() {
+            return zcode;
+        }
+
+        public boolean isParkingFree() {
+            return parkingFree;
+        }
+
+        public String getNode() {
+            return node;
+        }
+
+        public boolean isLimitYn() {
+            return limitYn;
+        }
+
+        public String getLimitDetail() {
+            return limitDetail;
+        }
+
+
+
+        public int getDistance() {
+            return distance;
+        }
+        public void setDistance(int distance) {
+            this.distance = distance;
+        }
+
+        private int distance;
+
+
     }
 
 
