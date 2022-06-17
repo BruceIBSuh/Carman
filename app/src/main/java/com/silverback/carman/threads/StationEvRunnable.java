@@ -1,5 +1,8 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_FAIL;
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_SUCCESS;
+
 import android.content.ClipData;
 import android.content.Context;
 import android.location.Address;
@@ -55,25 +58,29 @@ public class StationEvRunnable implements Runnable{
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
 
+    private int currentPage;
 
     // Interface
     public interface ElecStationCallback {
         void setElecStationTaskThread(Thread thread);
         Location getElecStationLocation();
+        //int getCurrentPage();
         void setEvStationList(List<Item> evList);
+        void handleTaskState(int state);
         void notifyEvStationError(Exception e);
     }
 
     public StationEvRunnable(Context context, ElecStationCallback callback) {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
+        //this.currentPage = callback.getCurrentPage();
+        log.i("current page: %s", currentPage);
     }
 
     @Override
     public void run() {
         callback.setElecStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
         Location location = callback.getElecStationLocation();
         /*
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
@@ -146,48 +153,49 @@ public class StationEvRunnable implements Runnable{
             e.getLocalizedMessage();
         }
          */
-        Call<EvStationModel> call = RetrofitClient.getIntance()
-                .getRetrofitApi()
-                .getEvStationInfo(encodingKey, 3, 9999, 5, sidoCode);
+        for(int page = 1; page <= 5; page++) {
+            //synchronized (this) {
+            Call<EvStationModel> call = RetrofitClient.getIntance()
+                    .getRetrofitApi()
+                    //.getEvStationInfo(encodingKey, page, 9999, 5, sidoCode);
+                    .getEvStationInfo(encodingKey, page, 9999, 5);
 
-        call.enqueue(new Callback<EvStationModel>() {
-            @Override
-            public void onResponse(@NonNull Call<EvStationModel> call,
-                                   @NonNull Response<EvStationModel> response) {
-                EvStationModel model = response.body();
-                assert model != null;
+            call.enqueue(new Callback<EvStationModel>() {
+                @Override
+                public void onResponse(@NonNull Call<EvStationModel> call,
+                                       @NonNull Response<EvStationModel> response) {
 
-                // Exclude an item if it is out of the distance or include an item within the distance
-                //List<Item> itemList = model.itemList;
-                //List<Item> itemList = model.itemList;
-                log.i("Items: %s", model.itemList.size());
-                for (int i = model.itemList.size() - 1; i >= 0; i--) {
-                    float[] results = new float[3];
-                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                            model.itemList.get(i).lat, model.itemList.get(i).lng, results);
-                    int distance = (int) results[0];
-                    if (distance > 2500) model.itemList.remove(i);
-                    else model.itemList.get(i).setDistance(distance);
+                    EvStationModel model = response.body();
+                    assert model != null;
+
+                    // Exclude an item if it is out of the distance or include an item within the distance
+                    List<Item> itemList = model.itemList;
+                    if(itemList != null && itemList.size() > 0) {
+                        log.i("ItemList: %s", model.itemList.size());
+                        for (int i = model.itemList.size() - 1; i >= 0; i--) {
+                            float[] results = new float[3];
+                            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                                    model.itemList.get(i).lat, model.itemList.get(i).lng, results);
+                            int distance = (int) results[0];
+                            if (distance > 5000) model.itemList.remove(i);
+                            else model.itemList.get(i).setDistance(distance);
+                        }
+                    }
+
+                    callback.setEvStationList(model.itemList);
+                    //callback.handleTaskState(EV_TASK_SUCCESS);
                 }
 
-                // Sort EvList in the distance-descending order
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    Collections.sort(model.itemList, Comparator.comparingInt(t -> (int) t.getDistance()));
-                else Collections.sort(model.itemList, (t1, t2) ->
-                        Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
+                @Override
+                public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
+                    log.e("response failed: %s", t);
+                    callback.notifyEvStationError(new Exception(t));
+                    //callback.handleTaskState(EV_TASK_FAIL);
+                }
 
-                callback.setEvStationList(model.itemList);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                log.e("response failed: %s", t);
-                callback.notifyEvStationError(new Exception(t));
-            }
-
-        });
-
-
+            });
+            //}
+        }
     }
 
     public interface RetrofitApi {
@@ -197,8 +205,8 @@ public class StationEvRunnable implements Runnable{
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period,
-                @Query(value="zcode", encoded=true) String sido
+                @Query(value="period", encoded=true) int period
+                //@Query(value="zcode", encoded=true) String sido
         );
     }
 
@@ -265,6 +273,15 @@ public class StationEvRunnable implements Runnable{
         List<Item> item;
     }
     */
+    @Xml(name="header")
+    static class Header {
+        @PropertyElement String resultCode;
+        @PropertyElement String resultMsg;
+        @PropertyElement int totalCount;
+        @PropertyElement int pageNo;
+        @PropertyElement int numOfRows;
+    }
+
     @Xml
     public static class Item {
         @PropertyElement(name="statNm") String stdNm;

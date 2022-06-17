@@ -494,7 +494,7 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
-            log.i("multiple invoke:%s, %s", count, evList.size());
+            //log.i("multiple invoke:%s, %s", count, evList.size());
             count++;
             //if(evList != null && evList.size() > 0) {
                 evListAdapter = new StationEvAdapter(evList);

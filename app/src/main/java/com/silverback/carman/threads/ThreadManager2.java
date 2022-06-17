@@ -122,6 +122,11 @@ public class ThreadManager2 {
                     recycleTask(task);
                 } else recycleTask(task);
 
+                if(task instanceof StationEvTask) {
+                    log.i("ev station task");
+                    recycleTask(task);
+                }
+
             }
         };
     }
@@ -166,6 +171,11 @@ public class ThreadManager2 {
             case FIRESTORE_STATION_SET_COMPLETED:
                 log.i("upload station info to Firestore");
                 msg.sendToTarget();
+                break;
+
+            case TASK_COMPLETE:
+            case TASK_FAIL:
+                if(task instanceof StationEvTask) msg.sendToTarget();
                 break;
 
             default: msg.sendToTarget();
@@ -292,10 +302,15 @@ public class ThreadManager2 {
     // Electric Charge Station
     public static StationEvTask startEVStatoinListTask(
             Context context, StationListViewModel model, Location location) {
-
         StationEvTask stationEvTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
+        /*
+        for(int page = 1; page <=5; page++) {
+            stationEvTask.setCurrentPage(page);
+            InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
+        }
 
+         */
         InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
         return stationEvTask;
     }
@@ -351,6 +366,9 @@ public class ThreadManager2 {
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
+        } else if(task instanceof StationEvTask) {
+            task.recycle();
+            mElecListTaskQueue.offer((StationEvTask)task);
         }
     }
 
