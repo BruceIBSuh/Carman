@@ -146,9 +146,10 @@ public class StationEvRunnable implements Runnable{
             e.getLocalizedMessage();
         }
          */
+
         Call<EvStationModel> call = RetrofitClient.getIntance()
                 .getRetrofitApi()
-                .getEvStationInfo(encodingKey, 3, 9999, 5, sidoCode);
+                .getEvStationInfo(encodingKey, 2, 9999, 5, sidoCode);
 
         call.enqueue(new Callback<EvStationModel>() {
             @Override
@@ -166,7 +167,7 @@ public class StationEvRunnable implements Runnable{
                     Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                             model.itemList.get(i).lat, model.itemList.get(i).lng, results);
                     int distance = (int) results[0];
-                    if (distance > 2500) model.itemList.remove(i);
+                    if (distance > 1000) model.itemList.remove(i);
                     else model.itemList.get(i).setDistance(distance);
                 }
 

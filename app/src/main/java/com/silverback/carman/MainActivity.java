@@ -496,17 +496,14 @@ public class MainActivity extends BaseActivity implements
         stationModel.getEvStationList().observe(this, evList -> {
             log.i("multiple invoke:%s, %s", count, evList.size());
             count++;
-            //if(evList != null && evList.size() > 0) {
-                evListAdapter = new StationEvAdapter(evList);
-                binding.recyclerStations.setAdapter(evListAdapter);
+            evListAdapter = new StationEvAdapter(evList);
+            binding.recyclerStations.setAdapter(evListAdapter);
 
-                binding.recyclerStations.setVisibility(View.VISIBLE);
-                binding.recyclerContents.setVisibility(View.GONE);
+            binding.recyclerStations.setVisibility(View.VISIBLE);
+            binding.recyclerContents.setVisibility(View.GONE);
 
-                progbtnList.get(2).stopProgress();
-                evTask = null;
-
-            //}
+            progbtnList.get(2).stopProgress();
+            evTask = null;
         });
 
         stationModel.getExceptionMessage().observe(this, err -> {
