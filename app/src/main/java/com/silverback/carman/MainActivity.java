@@ -489,24 +489,24 @@ public class MainActivity extends BaseActivity implements
     }
 
 
-    int count = 1;
     private void locateEvStations(Location location) {
         mPrevLocation = location;
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
+
         stationModel.getEvStationList().observe(this, evList -> {
-            //log.i("multiple invoke:%s, %s", count, evList.size());
-            count++;
-            //if(evList != null && evList.size() > 0) {
+            if(evList != null && evList.size() > 0) {
                 evListAdapter = new StationEvAdapter(evList);
                 binding.recyclerStations.setAdapter(evListAdapter);
 
                 binding.recyclerStations.setVisibility(View.VISIBLE);
                 binding.recyclerContents.setVisibility(View.GONE);
-
                 progbtnList.get(2).stopProgress();
-                evTask = null;
 
-            //}
+                binding.fab.setVisibility(View.GONE);
+                stationModel.getEvStationList().removeObservers(this);
+            }
+
+
         });
 
         stationModel.getExceptionMessage().observe(this, err -> {
@@ -516,11 +516,13 @@ public class MainActivity extends BaseActivity implements
         });
 
         binding.fab.setVisibility(View.GONE);
+
     }
 
     private void locateHydroStations(Location location) {
         mPrevLocation = location;
         hydroTask = ThreadManager2.startHydroStationListTask(this, stationModel, location);
+
         stationModel.getHydroStationList().observe(this, hydroList -> {
             if(hydroList != null && hydroList.size() > 0) {
                 log.i("hydrolist: %s, %s", hydroList.size(), hydroList.get(0).getName());
@@ -532,8 +534,7 @@ public class MainActivity extends BaseActivity implements
                 progbtnList.get(3).stopProgress();
 
                 binding.fab.setVisibility(View.GONE);
-
-
+                stationModel.getHydroStationList().removeObservers(this);
             }
 
         });

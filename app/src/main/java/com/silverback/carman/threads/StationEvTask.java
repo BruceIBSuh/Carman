@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Location;
 import android.os.Build;
 
+import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.StationListViewModel;
@@ -11,6 +12,7 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecStationCallback {
@@ -20,18 +22,16 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     static final int EV_TASK_SUCCESS = 1;
     static final int EV_TASK_FAIL = -1;
 
-    private final Runnable elecStationListRunnable;
     private final Location location;
-    private Context context;
-    private StationListViewModel viewModel;
+    private final Context context;
+    private final StationListViewModel viewModel;
     private Thread currentThread;
 
-    private List<StationEvRunnable.Item> evStationList;
-    private int index = 1;
-    private int page;
+    private final List<StationEvRunnable.Item> evStationList;
+    private int page = 1;
 
     public StationEvTask(Context context, StationListViewModel viewModel, Location location) {
-        elecStationListRunnable = new StationEvRunnable(context, this);
+        this.context = context;
         this.location = location;
         this.viewModel = viewModel;
 
@@ -39,13 +39,8 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     }
 
 
-    public void setCurrentPage(int page) {
-        log.i("current page as param: %s", page);
-        this.page = page;
-    }
-
-    public Runnable getElecStationListRunnable() {
-        return elecStationListRunnable;
+    public Runnable getElecStationListRunnable(int queryPage) {
+        return new StationEvRunnable(context, queryPage, this);
     }
 
     public void recycle(){
@@ -61,30 +56,29 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     public Location getElecStationLocation() {
         return location;
     }
-    /*
+
     @Override
     public int getCurrentPage() {
         return this.page;
     }
 
-     */
-
     @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         //if(index == 3)
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
-        if(index == 5){
-            log.i("total number: %s", evStationList.size());
+        if(page == 5){
             // Sort EvList in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
-            viewModel.getEvStationList().postValue(evStationList);
-        }
-        /*if(evList.size() > 0)*/
-        index++;
 
+            viewModel.getEvStationList().postValue(evStationList);
+            //viewModel.getEvStationList().removeObservers((MainActivity)context);
+            return;
+        }
+
+        page++;
     }
 
     @Override

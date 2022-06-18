@@ -60,7 +60,6 @@ public class ThreadManager2 {
     // Objects
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
-    private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<StationGasTask> mStnListTaskQueue;
     private final BlockingQueue<StationEvTask> mElecListTaskQueue;
     private final BlockingQueue<StationHydroTask> mHydroListTaskQueue;
@@ -90,7 +89,6 @@ public class ThreadManager2 {
     // Constructor private
     private ThreadManager2() {
         //super();
-        mThreadTaskQueue = new LinkedBlockingQueue<>();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
 
         mStnListTaskQueue = new LinkedBlockingQueue<>();
@@ -304,14 +302,13 @@ public class ThreadManager2 {
             Context context, StationListViewModel model, Location location) {
         StationEvTask stationEvTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
-        /*
-        for(int page = 1; page <=5; page++) {
-            stationEvTask.setCurrentPage(page);
-            InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
+
+        for(int page = 1; page <= 5; page++) {
+            Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page);
+            InnerClazz.sInstance.threadPoolExecutor.execute(elecRunnable);
         }
 
-         */
-        InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
+        //InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
         return stationEvTask;
     }
 
