@@ -81,15 +81,15 @@ public class StationEvRunnable implements Runnable{
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
 
-        //int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
-        //String sidoCode = String.valueOf(sido);
+        int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+        String sidoCode = String.valueOf(sido);
 
         //for(int page = 1; page <= 5; page++) {
         //synchronized (this) {
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    //.getEvStationInfo(encodingKey, page, 9999, 5, sidoCode);
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
             call.enqueue(new Callback<EvStationModel>() {
                 @Override
@@ -135,8 +135,8 @@ public class StationEvRunnable implements Runnable{
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period
-                //@Query(value="zcode", encoded=true) String sido
+                @Query(value="period", encoded=true) int period,
+                @Query(value="zcode", encoded=true) String sidoCode
         );
     }
 
@@ -564,14 +564,4 @@ public class StationEvRunnable implements Runnable{
             default: return "N/A";
         }
     }
-
-
-
-
-
-
-
-
-
-
 }

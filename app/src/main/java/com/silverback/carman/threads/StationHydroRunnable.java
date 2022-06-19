@@ -1,9 +1,14 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationHydroTask.HYDRO_STATE_FAIL;
+
 import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
 import android.os.Process;
+import android.text.TextUtils;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -11,6 +16,13 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ExcelToJsonUtil;
 
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -61,6 +73,7 @@ public class StationHydroRunnable implements Runnable {
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
         */
+
         mDB.collection("hydro_station").get().addOnSuccessListener(snapshots -> {
             if(snapshots != null && snapshots.size() > 0) {
                 float[] results = new float[3];
@@ -90,12 +103,11 @@ public class StationHydroRunnable implements Runnable {
 
                 callback.setFirebaseHydroList(hydroList);
             }
-
-
         }).addOnFailureListener(e -> {
             log.e("Hydro failed");
             e.printStackTrace();
         });
+
 
         /*
         //StringBuilder sb = new StringBuilder(baseUrl);
@@ -144,15 +156,11 @@ public class StationHydroRunnable implements Runnable {
                 });
             }
 
-
-
-
-
         } catch (IOException | InvalidFormatException e) {
             e.printStackTrace();
             callback.handleTaskState(HYDRO_STATE_FAIL);
         }
-        */
+
         /*
         try {
             URL url = new URL(baseUrl);
