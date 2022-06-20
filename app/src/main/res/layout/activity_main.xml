@@ -46,6 +46,7 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
+
     <FrameLayout
         android:id="@+id/frameLayout"
         android:layout_width="match_parent"
@@ -76,9 +77,26 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </FrameLayout>
 
+    <!--
     <include
-        android:id="@+id/pricebar"
+        android:id="@+id/statusbar"
         layout="@layout/main_collapsed_pricebar" />
+    -->
+    <!--
+    <ViewStub
+        android:id="@+id/statusbar"
+        android:inflatedId="@+id/inflatedId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+    -->
+
+    <FrameLayout
+        android:id="@+id/statusbar"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="30dp"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:background="@android:color/holo_blue_bright"/>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/view4"

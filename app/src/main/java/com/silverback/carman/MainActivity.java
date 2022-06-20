@@ -19,8 +19,11 @@ import android.text.style.ForegroundColorSpan;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewStub;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -42,6 +45,7 @@ import com.silverback.carman.adapters.StationGasAdapter;
 import com.silverback.carman.adapters.StationHydroAdapter;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityMainBinding;
+import com.silverback.carman.databinding.MainCollapsedPricebarBinding;
 import com.silverback.carman.fragments.FinishAppDialogFragment;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -181,9 +185,8 @@ public class MainActivity extends BaseActivity implements
         progbtnList.add(binding.progbtnHydro);
 
         // Event Handlers
-        //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
+        //binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedStatusBar(offset));
         binding.mainTopFrame.spinnerGas.setOnItemSelectedListener(this);
-        //binding.stationRecyclerView.getRecyclerView().addOnScrollListener(scrollListener);
         binding.recyclerStations.addOnScrollListener(scrollListener);
 
         imgResUtil = new ApplyImageResourceUtil(this);
@@ -294,8 +297,9 @@ public class MainActivity extends BaseActivity implements
 
         mainPricePagerAdapter.setFuelCode(gasCode);
         mainPricePagerAdapter.notifyItemRangeChanged(0, mainPricePagerAdapter.getItemCount() - 1, gasCode);
+
         // Update the average gas price and the hidden price bar.
-        setCollapsedPriceBar();
+        //createGasStatusBar();
 
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
@@ -352,13 +356,17 @@ public class MainActivity extends BaseActivity implements
 
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
-    private void showCollapsedPricebar(int offset) {
+    private void showCollapsedStatusBar(int offset) {
         if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
-            binding.pricebar.getRoot().setVisibility(View.VISIBLE);
-            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.pricebar.getRoot(), "alpha", 0, 1);
+            binding.statusbar.setVisibility(View.VISIBLE);
+            createGasStatusBar();
+
+            //ObjectAnimator anim = ObjectAnimator.ofFloat(binding.statusbar.getRoot(), "alpha", 0, 1);
+            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.statusbar, "alpha", 0, 1);
             anim.setDuration(500);
             anim.start();
-        } else binding.pricebar.getRoot().setVisibility(View.INVISIBLE);
+
+        } else binding.statusbar.setVisibility(View.INVISIBLE);
     }
 
 
@@ -451,10 +459,12 @@ public class MainActivity extends BaseActivity implements
                 //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
                 // Set the listener to handle the visibility of the price bar by scrolling.
-                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
+                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedStatusBar(offset));
 
                 if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
                 progbtnList.get(0).stopProgress();
+                binding.appbar.setExpanded(true, true);
+
 
             } else {
                 // No near stations post an message that contains the clickable span to link to the
@@ -504,6 +514,9 @@ public class MainActivity extends BaseActivity implements
 
                 binding.fab.setVisibility(View.GONE);
                 stationModel.getEvStationList().removeObservers(this);
+
+
+                binding.appbar.setExpanded(true, true);
             }
 
 
@@ -535,6 +548,7 @@ public class MainActivity extends BaseActivity implements
 
                 binding.fab.setVisibility(View.GONE);
                 stationModel.getHydroStationList().removeObservers(this);
+                binding.appbar.setExpanded(true, true);
             }
 
         });
@@ -787,40 +801,47 @@ public class MainActivity extends BaseActivity implements
     }
 
     // Get the price info saved in the cache and show them in the price bar.
-    private void setCollapsedPriceBar() {
+    private void createGasStatusBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        binding.pricebar.tvCollapsedAvgPrice.setText(avgPrice);
+
+        MainCollapsedPricebarBinding gasStatus = MainCollapsedPricebarBinding.inflate(getLayoutInflater());
+        gasStatus.tvCollapsedAvgPrice.setText(avgPrice);
+        log.i("avg price: %s", gasStatus.tvCollapsedAvgPrice.getText());
+
         // Set the sido and sigun price which is stored in the cache at an interval.
         for(String fName : arrFile) {
             File file = new File(getCacheDir(), fName);
             Uri uri = Uri.fromFile(file);
-            try(InputStream is = getContentResolver().openInputStream(uri);
-                ObjectInputStream ois = new ObjectInputStream(is)) {
+            try (InputStream is = getContentResolver().openInputStream(uri);
+                 ObjectInputStream ois = new ObjectInputStream(is)) {
                 Object obj = ois.readObject();
-                Iterable<?> itr = (Iterable<?>)obj;
-                for(Object x : itr) {
-                    switch(fName) {
+                Iterable<?> itr = (Iterable<?>) obj;
+                for (Object x : itr) {
+                    switch (fName) {
                         case Constants.FILE_CACHED_SIDO_PRICE:
-                            Opinet.SidoPrice sido = (Opinet.SidoPrice)x;
-                            if(sido.getProductCd().matches(gasCode)) {
-                                binding.pricebar.tvCollapsedSido.setText(sido.getSidoName());
-                                binding.pricebar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                            Opinet.SidoPrice sido = (Opinet.SidoPrice) x;
+                            if (sido.getProductCd().matches(gasCode)) {
+                                gasStatus.tvCollapsedSido.setText(sido.getSidoName());
+                                gasStatus.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
 
                         case Constants.FILE_CACHED_SIGUN_PRICE:
-                            Opinet.SigunPrice sigun = (Opinet.SigunPrice)x;
-                            if(sigun.getProductCd().matches(gasCode)) {
-                                binding.pricebar.tvCollapsedSigun.setText(sigun.getSigunName());
-                                binding.pricebar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                            Opinet.SigunPrice sigun = (Opinet.SigunPrice) x;
+                            if (sigun.getProductCd().matches(gasCode)) {
+                                gasStatus.tvCollapsedSigun.setText(sigun.getSigunName());
+                                gasStatus.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
                             }
                             break;
                     }
                 }
-
-            } catch (IOException | ClassNotFoundException e) { e.printStackTrace();}
+            } catch (IOException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
         }
+
+        binding.statusbar.addView(gasStatus.getRoot());
     }
 
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
@@ -851,7 +872,7 @@ public class MainActivity extends BaseActivity implements
                         mainPricePagerAdapter.notifyItemChanged(0, gasType);
                     }
 
-                    setCollapsedPriceBar();
+                    createGasStatusBar();
                     mainPricePagerAdapter.notifyItemRangeChanged(
                             0, mainPricePagerAdapter.getItemCount(), gasCode);
                 }
