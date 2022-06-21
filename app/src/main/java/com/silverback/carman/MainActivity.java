@@ -16,6 +16,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +25,7 @@ import android.view.ViewStub;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
@@ -38,6 +40,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationEvAdapter;
@@ -95,6 +98,7 @@ public class MainActivity extends BaseActivity implements
 
     // Objects
     private ActivityMainBinding binding;
+    private MainCollapsedPricebarBinding gasBinding;
 
     private LocationViewModel locationModel;
     private StationListViewModel stationModel;
@@ -195,7 +199,7 @@ public class MainActivity extends BaseActivity implements
         stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        observeViewModel(stationModel);
+
     }
 
     @Override
@@ -301,6 +305,7 @@ public class MainActivity extends BaseActivity implements
         // Update the average gas price and the hidden price bar.
         //createGasStatusBar();
 
+
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
@@ -356,17 +361,20 @@ public class MainActivity extends BaseActivity implements
 
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
-    private void showCollapsedStatusBar(int offset) {
-        if(Math.abs(offset) == binding.appbar.getTotalScrollRange()) {
-            binding.statusbar.setVisibility(View.VISIBLE);
-            createGasStatusBar();
+    private void showCollapsedStatusBar(View view) {
+        binding.appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if(Math.abs(verticalOffset) == binding.appbar.getTotalScrollRange()) {
+                    view.setVisibility(View.VISIBLE);
+                    ObjectAnimator anim = ObjectAnimator.ofFloat(view, "alpha", 0, 1);
+                    anim.setDuration(500);
+                    anim.start();
 
-            //ObjectAnimator anim = ObjectAnimator.ofFloat(binding.statusbar.getRoot(), "alpha", 0, 1);
-            ObjectAnimator anim = ObjectAnimator.ofFloat(binding.statusbar, "alpha", 0, 1);
-            anim.setDuration(500);
-            anim.start();
+                } else view.setVisibility(View.GONE);
+            }
+        });
 
-        } else binding.statusbar.setVisibility(View.INVISIBLE);
     }
 
 
@@ -390,9 +398,11 @@ public class MainActivity extends BaseActivity implements
 
     int prevButton = -1;
     public void locateStations(int activeButton, boolean isActive){
+        // Turn the previous button off if another button clicks
         if(prevButton != -1 && prevButton != activeButton) {
             progbtnList.get(prevButton).resetProgress();
             binding.recyclerStations.setVisibility(View.GONE);
+
             // Remove the observer to prevent invoking the previous progbtn as the current button
             // fetches a location.
             locationModel.getLocation().removeObservers(this);
@@ -440,8 +450,7 @@ public class MainActivity extends BaseActivity implements
             progbtnList.get(activeButton).resetProgress();
 
             // temp: test required
-            if(locationModel.getLocation() != null)
-                locationModel.getLocation().removeObservers(this);
+            if(locationModel.getLocation() != null) locationModel.getLocation().removeObservers(this);
         }
     }
 
@@ -449,21 +458,26 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         defaultParams[0] = gasCode;
         stationGasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
-
         stationModel.getNearStationList().observe(this, stnList -> {
-            log.i("station: %s", stnList);
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
                 stnListAdapter = new StationGasAdapter(mStationList, this);
                 //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                 //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
-                // Set the listener to handle the visibility of the price bar by scrolling.
-                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedStatusBar(offset));
-
                 if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
                 progbtnList.get(0).stopProgress();
                 binding.appbar.setExpanded(true, true);
+
+                // Set the listener to handle the visibility of the price bar by scrolling.
+                createGasStatusBar();
+                showCollapsedStatusBar(binding.gasStatusBar.getRoot());
+
+                /*
+                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
+                    showCollapsedStatusBar(binding.gasStatusBar.getRoot(), offset);
+                });
+                */
 
 
             } else {
@@ -515,8 +529,14 @@ public class MainActivity extends BaseActivity implements
                 binding.fab.setVisibility(View.GONE);
                 stationModel.getEvStationList().removeObservers(this);
 
-
                 binding.appbar.setExpanded(true, true);
+                showCollapsedStatusBar(binding.evStatusBar.getRoot());
+                /*
+                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
+                    showCollapsedStatusBar(binding.evStatusBar.getRoot(), offset);
+                });
+
+                 */
             }
 
 
@@ -527,6 +547,7 @@ public class MainActivity extends BaseActivity implements
             progbtnList.get(2).resetProgress();
             evTask = null;
         });
+
 
         binding.fab.setVisibility(View.GONE);
 
@@ -585,136 +606,6 @@ public class MainActivity extends BaseActivity implements
         } catch (IOException e) { e.printStackTrace();}
 
         return null;
-    }
-
-
-
-    // Method for implementing ViewModel callbacks to fetch a location and station list around
-    // the location.
-    private void observeViewModel(ViewModel model) {
-        /*
-        stationModel.getNearStationList().observe(this, stnList -> {
-            if (stnList != null && stnList.size() > 0) {
-                mStationList = stnList;
-                stnListAdapter = new StationGasAdapter(mStationList, this);
-                //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
-                //binding.stationRecyclerView.showStationRecyclerView();``
-                binding.recyclerStations.setAdapter(stnListAdapter);
-                // Set the listener to handle the visibility of the price bar by scrolling.
-                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> showCollapsedPricebar(offset));
-
-                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
-                progbtnList.get(0).stopProgress();
-
-            } else {
-                // No near stations post an message that contains the clickable span to link to the
-                // SettingPreferenceActivity for resetting the searching radius.
-                //SpannableString spannableString = handleStationListException();
-                //binding.stationRecyclerView.showSpannableTextView(spannableString);
-            }
-
-            isRadiusChanged = false;
-            isGasTypeChanged = false;
-            //binding.pbNearStns.setVisibility(View.GONE);
-            //binding.progbtnGas.setProgress(true);
-            binding.recyclerContents.setVisibility(View.GONE);
-            //binding.stationRecyclerView.setVisibility(View.VISIBLE);
-            binding.recyclerStations.setVisibility(View.VISIBLE);
-            progbtnList.get(0).stopProgress();
-        });
-
-        // Update the carwash info to StationList and notify the data change to Adapter.
-        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-        // e.g. when the view is not attached.
-        stationModel.getStationCarWashInfo().observe(this, sparseArray -> {
-            for(int i = 0; i < sparseArray.size(); i++) {
-                mStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
-            }
-            // To notify that fetching station list has completed.
-            hasStationInfo = true;
-        });
-        */
-        /*
-        if(model instanceof LocationViewModel) {
-            /*
-            locationModel.getLocation().observe(this, location -> {
-                // Location fetched or changed at a preset distance.
-                if(mPrevLocation == null || mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE ){
-                    //binding.pbNearStns.setVisibility(View.VISIBLE);
-                    mPrevLocation = location;
-                    defaultParams[0] = gasCode;
-                    stationGasTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
-
-                // Station default params changed from SettingPrefActivity.
-                } else if(isRadiusChanged || isGasTypeChanged) {
-                    log.i("params changed: %s, %s", defaultParams[0], defaultParams[1]);
-                    stationGasTask = ThreadManager2.startGasStationListTask(stnModel, location, defaultParams);
-
-                } else {
-                    //binding.pbNearStns.setVisibility(View.GONE);
-                    binding.recyclerContents.setVisibility(View.GONE);
-                    binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                    binding.fab.setVisibility(View.VISIBLE);
-                    binding.progbtnGas.setProgressColor(true);
-                }
-            });
-
-
-
-            locationModel.getLocationException().observe(this, exception -> {
-                log.i("Exception occurred while fetching location");
-                SpannableString spannableString = new SpannableString(getString(R.string.general_no_location));
-                //binding.pbNearStns.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                binding.stationRecyclerView.showSpannableTextView(spannableString);
-
-            });
-
-
-
-        } else if(model instanceof StationListViewModel) {
-            stnListModel.getNearStationList().observe(this, stnList -> {
-                binding.recyclerContents.setVisibility(View.GONE);
-                binding.stationRecyclerView.setVisibility(View.VISIBLE);
-                //binding.btnToggleStation.setChecked(true);
-                if (stnList != null && stnList.size() > 0) {
-                    log.i("near stations: %s", stnList.size());
-                    mStationList = stnList;
-                    stnListAdapter = new StationGasAdapter(mStationList, this);
-                    binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
-                    binding.stationRecyclerView.showStationRecyclerView();
-                    binding.fab.setVisibility(View.VISIBLE);
-
-
-                } else {
-                    // No near stations post an message that contains the clickable span to link to the
-                    // SettingPreferenceActivity for resetting the searching radius.
-                    SpannableString spannableString = handleStationListException();
-                    binding.stationRecyclerView.showSpannableTextView(spannableString);
-                }
-
-                isRadiusChanged = false;
-                isGasTypeChanged = false;
-                //binding.pbNearStns.setVisibility(View.GONE);
-                //binding.progbtnGas.setProgress(true);
-                progbtnList.get(0).stopProgress();
-            });
-
-            // Update the carwash info to StationList and notify the data change to Adapter.
-            // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-            // e.g. when the view is not attached.
-            stnListModel.getStationCarWashInfo().observe(this, sparseArray -> {
-                for(int i = 0; i < sparseArray.size(); i++) {
-                    mStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                    stnListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
-                }
-                // To notify that fetching station list has completed.
-                hasStationInfo = true;
-            });
-        }
-
-         */
     }
 
     private SpannableString handleStationListException(){
@@ -804,10 +695,7 @@ public class MainActivity extends BaseActivity implements
     private void createGasStatusBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-
-        MainCollapsedPricebarBinding gasStatus = MainCollapsedPricebarBinding.inflate(getLayoutInflater());
-        gasStatus.tvCollapsedAvgPrice.setText(avgPrice);
-        log.i("avg price: %s", gasStatus.tvCollapsedAvgPrice.getText());
+        binding.gasStatusBar.tvCollapsedAvgPrice.setText(avgPrice);
 
         // Set the sido and sigun price which is stored in the cache at an interval.
         for(String fName : arrFile) {
@@ -822,16 +710,16 @@ public class MainActivity extends BaseActivity implements
                         case Constants.FILE_CACHED_SIDO_PRICE:
                             Opinet.SidoPrice sido = (Opinet.SidoPrice) x;
                             if (sido.getProductCd().matches(gasCode)) {
-                                gasStatus.tvCollapsedSido.setText(sido.getSidoName());
-                                gasStatus.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                                binding.gasStatusBar.tvCollapsedSido.setText(sido.getSidoName());
+                                binding.gasStatusBar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
 
                         case Constants.FILE_CACHED_SIGUN_PRICE:
                             Opinet.SigunPrice sigun = (Opinet.SigunPrice) x;
                             if (sigun.getProductCd().matches(gasCode)) {
-                                gasStatus.tvCollapsedSigun.setText(sigun.getSigunName());
-                                gasStatus.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                                binding.gasStatusBar.tvCollapsedSigun.setText(sigun.getSigunName());
+                                binding.gasStatusBar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
                             }
                             break;
                     }
@@ -840,8 +728,6 @@ public class MainActivity extends BaseActivity implements
                 e.printStackTrace();
             }
         }
-
-        binding.statusbar.addView(gasStatus.getRoot());
     }
 
     // Implement ActivityResult callback, the result of which is sent from SettingPrefActivity.
