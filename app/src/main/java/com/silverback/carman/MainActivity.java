@@ -33,6 +33,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.databinding.ViewStubProxy;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
@@ -98,7 +99,7 @@ public class MainActivity extends BaseActivity implements
 
     // Objects
     private ActivityMainBinding binding;
-    private MainCollapsedPricebarBinding gasBinding;
+    private View inflatedView;
 
     private LocationViewModel locationModel;
     private StationListViewModel stationModel;
@@ -361,18 +362,18 @@ public class MainActivity extends BaseActivity implements
 
     // Ref: expand the station recyclerview up to wrap_content
     // Animate the visibility of the collapsed price bar.
-    private void showCollapsedStatusBar(View view) {
-        binding.appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
-            @Override
-            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
-                if(Math.abs(verticalOffset) == binding.appbar.getTotalScrollRange()) {
-                    view.setVisibility(View.VISIBLE);
-                    ObjectAnimator anim = ObjectAnimator.ofFloat(view, "alpha", 0, 1);
-                    anim.setDuration(500);
-                    anim.start();
+    private void showCollapsedStatusBar() {
+        binding.appbar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            if(Math.abs(verticalOffset) == binding.appbar.getTotalScrollRange()) {
+                log.i("appbar collapsed");
+                binding.statusView.setProgressButtonId("ev");
+                binding.statusView.setVisibility(View.VISIBLE);
 
-                } else view.setVisibility(View.GONE);
-            }
+                ObjectAnimator anim = ObjectAnimator.ofFloat(binding.statusView, "alpha", 0, 1);
+                anim.setDuration(500);
+                anim.start();
+
+            } else binding.statusView.setVisibility(View.GONE);
         });
 
     }
@@ -471,7 +472,7 @@ public class MainActivity extends BaseActivity implements
 
                 // Set the listener to handle the visibility of the price bar by scrolling.
                 createGasStatusBar();
-                showCollapsedStatusBar(binding.gasStatusBar.getRoot());
+                showCollapsedStatusBar();
 
                 /*
                 binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
@@ -530,7 +531,7 @@ public class MainActivity extends BaseActivity implements
                 stationModel.getEvStationList().removeObservers(this);
 
                 binding.appbar.setExpanded(true, true);
-                showCollapsedStatusBar(binding.evStatusBar.getRoot());
+                //showCollapsedStatusBar(binding.evStatusBar.getRoot());
                 /*
                 binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
                     showCollapsedStatusBar(binding.evStatusBar.getRoot(), offset);
@@ -695,7 +696,7 @@ public class MainActivity extends BaseActivity implements
     private void createGasStatusBar() {
         final String[] arrFile = {Constants.FILE_CACHED_SIDO_PRICE, Constants.FILE_CACHED_SIGUN_PRICE };
         String avgPrice = String.valueOf(binding.mainTopFrame.avgPriceView.getAvgGasPrice());
-        binding.gasStatusBar.tvCollapsedAvgPrice.setText(avgPrice);
+        //binding.gasStatusBar.tvCollapsedAvgPrice.setText(avgPrice);
 
         // Set the sido and sigun price which is stored in the cache at an interval.
         for(String fName : arrFile) {
@@ -710,16 +711,16 @@ public class MainActivity extends BaseActivity implements
                         case Constants.FILE_CACHED_SIDO_PRICE:
                             Opinet.SidoPrice sido = (Opinet.SidoPrice) x;
                             if (sido.getProductCd().matches(gasCode)) {
-                                binding.gasStatusBar.tvCollapsedSido.setText(sido.getSidoName());
-                                binding.gasStatusBar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
+                                //binding.gasStatusBar.tvCollapsedSido.setText(sido.getSidoName());
+                                //binding.gasStatusBar.tvCollapsedSidoPrice.setText(String.valueOf(sido.getPrice()));
                             }
                             break;
 
                         case Constants.FILE_CACHED_SIGUN_PRICE:
                             Opinet.SigunPrice sigun = (Opinet.SigunPrice) x;
                             if (sigun.getProductCd().matches(gasCode)) {
-                                binding.gasStatusBar.tvCollapsedSigun.setText(sigun.getSigunName());
-                                binding.gasStatusBar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
+                                //binding.gasStatusBar.tvCollapsedSigun.setText(sigun.getSigunName());
+                                //binding.gasStatusBar.tvCollapsedSigunPrice.setText(String.valueOf(sigun.getPrice()));
                             }
                             break;
                     }

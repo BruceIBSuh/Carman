@@ -67,6 +67,13 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </FrameLayout>
 
+    <com.silverback.carman.views.MainStatusView
+        android:id="@+id/statusView"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:progbtn="gas"/>
+    <!--
     <FrameLayout
         android:id="@+id/frame_statusbar"
         android:layout_width="match_parent"
@@ -80,7 +87,7 @@
             android:visibility="gone"
             layout="@layout/main_collapsed_pricebar" />
     </FrameLayout>
-
+    -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/view4"
         style="@style/Widget.AppCompat.Button.Borderless"
