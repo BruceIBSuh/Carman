@@ -16,7 +16,7 @@ public class MainStatusView extends LinearLayout {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainStatusView.class);
     private Context context;
-    private String progbtn;
+    private int progbtnId;
 
     public MainStatusView(Context context) {
         super(context);
@@ -37,10 +37,21 @@ public class MainStatusView extends LinearLayout {
         this.context = context;
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MainStatusView);
         try {
-            int progbtnId = typedArray.getInt(R.styleable.MainStatusView_progbtn, -1);
+            progbtnId = typedArray.getInt(R.styleable.MainStatusView_progbtn, -1);
             log.i("probtn: %s", progbtnId);
         } finally {
             typedArray.recycle();
+        }
+    }
+
+    public void setProgbtnId(String button) {
+        switch(button) {
+            case "gas":
+                LayoutInflater.from(context).inflate(R.layout.main_collapsed_pricebar, this, true);
+                break;
+            case "ev":
+                LayoutInflater.from(context).inflate(R.layout.main_collapsed_indication, this, true);
+                break;
         }
     }
 }

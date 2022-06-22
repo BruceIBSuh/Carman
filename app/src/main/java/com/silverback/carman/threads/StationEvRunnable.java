@@ -88,7 +88,7 @@ public class StationEvRunnable implements Runnable{
         //synchronized (this) {
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                    .getEvStationInfo(encodingKey, queryPage, 1000, 5, sidoCode);
                     //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
             call.enqueue(new Callback<EvStationModel>() {
@@ -142,7 +142,6 @@ public class StationEvRunnable implements Runnable{
 
     public static class RetrofitClient {
         private final RetrofitApi retrofitApi;
-
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("http://apis.data.go.kr/B552584/EvCharger/")

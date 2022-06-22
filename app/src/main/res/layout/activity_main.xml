@@ -67,27 +67,18 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
     </FrameLayout>
 
-    <com.silverback.carman.views.MainStatusView
-        android:id="@+id/statusView"
+    <ViewSwitcher
+        android:id="@+id/viewSwitcher"
         android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:progbtn="gas"/>
-    <!--
-    <FrameLayout
-        android:id="@+id/frame_statusbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:alpha="0">
         <include
-            android:id="@+id/evStatusBar"
-            android:visibility="gone"
-            layout="@layout/main_collapsed_indication" />
-        <include
-            android:id="@+id/gasStatusBar"
-            android:visibility="gone"
+            android:id="@+id/gasStatus"
             layout="@layout/main_collapsed_pricebar" />
-    </FrameLayout>
-    -->
+        <include layout="@layout/main_collapsed_indication" />
+    </ViewSwitcher>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/view4"
         style="@style/Widget.AppCompat.Button.Borderless"
