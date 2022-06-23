@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
 import com.silverback.carman.threads.StationHydroRunnable;
 

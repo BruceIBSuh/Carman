@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.tickaroo.tikxml.TikXml;
 import com.tickaroo.tikxml.annotation.Element;
 import com.tickaroo.tikxml.annotation.Path;
@@ -32,21 +33,23 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
-public class StationEvRunnable implements Runnable{
+public class StationEvRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
     private final String evUrl = "http://apis.data.go.kr/B552584/EvCharger";
 
     private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
-    private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
+    //private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
 
-    private EvStationModel model;
+    //private EvStationModel model;
     private final int queryPage;
+
 
     // Interface
     public interface ElecStationCallback {
@@ -82,58 +85,55 @@ public class StationEvRunnable implements Runnable{
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
 
-        //for(int page = 1; page <= 5; page++) {
-        //synchronized (this) {
-            Call<EvStationModel> call = RetrofitClient.getIntance()
-                    .getRetrofitApi()
-                    //.getEvStationInfo(encodingKey, queryPage, 100, 5, sidoCode);
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
+        Call<EvStationModel> call = RetrofitClient.getIntance()
+                .getRetrofitApi()
+                //.getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                .getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
-            call.enqueue(new Callback<EvStationModel>() {
-                @Override
-                public void onResponse(@NonNull Call<EvStationModel> call,
-                                       @NonNull Response<EvStationModel> response) {
+        call.enqueue(new Callback<EvStationModel>() {
+            @Override
+            public void onResponse(@NonNull Call<EvStationModel> call,
+                                   @NonNull Response<EvStationModel> response) {
 
-                    final EvStationModel model = response.body();
-                    assert model != null;
+                final EvStationModel model = response.body();
+                assert model != null;
 
-                    final Header header = model.header;
-                    int totalCount = header.totalCount;
-                    log.i("Total Count: %s", totalCount);
+                final Header header = model.header;
+                int totalCount = header.totalCount;
+                log.i("Total Count: %s", totalCount);
 
-                    // Exclude an item if it is out of the distance or include an item within the distance
-                    final List<Item> itemList = model.body.items.itemList;
-                    if(itemList != null && itemList.size() > 0) {
-                        log.i("ItemList: %s", itemList.size());
-                        for (int i = itemList.size() - 1; i >= 0; i--) {
-                            float[] results = new float[3];
-                            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                                    itemList.get(i).lat, itemList.get(i).lng, results);
-                            int distance = (int) results[0];
+                // Exclude an item if it is out of the distance or include an item within the distance
+                final List<Item> itemList = model.body.items.itemList;
+                float[] results = new float[3];
+                if(itemList != null && itemList.size() > 0) {
+                    log.i("ItemList: %s", itemList.size());
+                    for (int i = itemList.size() - 1; i >= 0; i--) {
+                        //float[] results = new float[3];
+                        Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                                itemList.get(i).lat, itemList.get(i).lng, results);
+                        int distance = (int) results[0];
 
-                            if (distance > 1000) itemList.remove(i);
-                            else itemList.get(i).setDistance(distance);
-                        }
+                        if (distance > 1000) itemList.remove(i);
+                        else itemList.get(i).setDistance(distance);
                     }
-
-                    callback.setEvStationList(itemList);
                 }
 
-                @Override
-                public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                    log.e("response failed: %s", t);
-                    callback.notifyEvStationError(new Exception(t));
-                    //callback.handleTaskState(EV_TASK_FAIL);
-                }
-            });
-        //}
+                callback.setEvStationList(itemList);
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
+                log.e("response failed: %s", t);
+                callback.notifyEvStationError(new Exception(t));
+                //callback.handleTaskState(EV_TASK_FAIL);
+            }
+        });
         //callback.handleTaskState(EV_TASK_SUCCESS);
     }
 
-
     private interface RetrofitApi {
         @GET("getChargerInfo")
-        //@Headers({"Accept:application/xml"})
+        @Headers({"Accept:application/xml"})
         Call<EvStationModel> getEvStationInfo (
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
@@ -170,7 +170,6 @@ public class StationEvRunnable implements Runnable{
         }
     }
 
-
     /*
     @Xml(name="response")
     public static class EvStationModel {
@@ -179,7 +178,6 @@ public class StationEvRunnable implements Runnable{
         List<Item> itemList;
     }
     */
-
 
     @Xml(name="response")
     public static class EvStationModel {
@@ -266,13 +264,7 @@ public class StationEvRunnable implements Runnable{
         public String getLimitDetail() { return limitDetail; }
         public int getDistance() { return distance; }
         public void setDistance(int distance) { this.distance = distance; }
-
-
-
-
     }
-
-
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
     // address done.
@@ -298,146 +290,6 @@ public class StationEvRunnable implements Runnable{
         } catch(IOException e) { e.printStackTrace(); }
 
         return sidoCode;
-    }
-
-    public static class XmlEvPullParserHandler {
-        public XmlEvPullParserHandler() {
-            //default constructor left empty
-        }
-        public List<EvStationInfo> parseEvStationInfo(InputStream is) {
-            List<EvStationInfo> evList = new ArrayList<>();
-            try (InputStream inputStream = is) {
-                XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-                XmlPullParser parser = factory.newPullParser();
-                parser.setInput(inputStream, "utf-8");
-                int eventType = parser.getEventType();
-
-                String tagName = "";
-                EvStationInfo evInfo = null;
-
-                while(eventType != XmlPullParser.END_DOCUMENT) {
-                    switch(eventType) {
-                        case XmlPullParser.START_TAG:
-                            tagName = parser.getName();
-                            if(tagName.equalsIgnoreCase("item")) evInfo = new EvStationInfo();
-                            break;
-
-                        case XmlPullParser.END_TAG:
-                            if(parser.getName().equalsIgnoreCase("item")) evList.add(evInfo);
-                            break;
-
-                        case XmlPullParser.TEXT:
-                            if(evInfo == null) break;
-                            switch(tagName) {
-                                case "statNm":
-                                    evInfo.setEvName(parser.getText());
-                                    break;
-                                case "lat":
-                                    evInfo.setLat(Double.parseDouble(parser.getText()));
-                                    break;
-                                case "lng":
-                                    evInfo.setLng(Double.parseDouble(parser.getText()));
-                                    break;
-                                case "chgerId":
-                                    evInfo.setChargerId(parser.getText());
-                                    break;
-                                case "chgerType":
-                                    evInfo.setChargerType(parser.getText());
-                                    break;
-                                case "stat":
-                                    evInfo.setChargerStatus(parser.getText());
-                                    break;
-                                case "limitYn":
-                                    evInfo.setIsPublic(parser.getText());
-                                    break;
-                                case "limitDetail":
-                                    evInfo.setLimitDetail(parser.getText());
-                                    break;
-                            }
-                            break;
-                    }
-
-                    eventType = parser.next();
-                }
-            } catch (XmlPullParserException | IOException e) { e.printStackTrace();}
-
-            return evList;
-        }
-    }
-
-    public static class EvStationInfo {
-        private String evName;
-        private String chargerId;
-        private double lat;
-        private double lng;
-        private int distance;
-        private String chargerType;
-        private String chargerStatus;
-        private String isPublic;
-        private String limitDetail;
-
-        public EvStationInfo() {}
-
-        public double getLat() {
-            return lat;
-        }
-        public void setLat(double lat) {
-            this.lat = lat;
-        }
-
-        public double getLng() {
-            return lng;
-        }
-        public void setLng(double lng) {
-            this.lng = lng;
-        }
-
-        public String getEvName() {
-            return evName;
-        }
-        public void setEvName(String evName) {
-            this.evName = evName;
-        }
-
-        public int getDistance() {return distance;}
-        public void setDistance(int distance) {this.distance = distance;}
-
-        public String getChargerId() {
-            return chargerId;
-        }
-        public void setChargerId(String chargerId) {
-            this.chargerId = chargerId;
-        }
-
-        public String getChargerType() {
-            return chargerType;
-        }
-        public void setChargerType(String chgrType) {
-            this.chargerType = convChargerType(chgrType);
-        }
-
-        public String getChargerStatus() {
-            return chargerStatus;
-        }
-        public void setChargerStatus(String code) {
-            this.chargerStatus = convChargerStatus(code);
-        }
-
-        public String getIsPublic() {
-            return isPublic;
-        }
-        public void setIsPublic(String isPublic) {
-            this.isPublic = isPublic;
-        }
-
-        public String getLimitDetail() {
-            log.i("getLimitDetail: %s", this.limitDetail);
-            return limitDetail;
-        }
-
-        public void setLimitDetail(String limitDetail) {
-            this.limitDetail = limitDetail;
-        }
     }
 
     private int convSidoCode(String sido) {

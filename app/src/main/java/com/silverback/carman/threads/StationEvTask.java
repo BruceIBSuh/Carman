@@ -7,6 +7,7 @@ import android.os.Build;
 import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         //if(index == 3)
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
+        log.i("EvStationList: %s", evStationList.size());
         if(page == 5){
             // Sort EvList in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)

@@ -18,6 +18,7 @@ import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainRecyclerviewEvBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
 
 import java.text.DecimalFormat;
