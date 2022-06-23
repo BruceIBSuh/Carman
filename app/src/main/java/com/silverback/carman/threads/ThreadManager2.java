@@ -60,7 +60,6 @@ public class ThreadManager2 {
     // Objects
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
-    private final Queue<ThreadTask> mThreadTaskQueue;
     private final BlockingQueue<StationGasTask> mStnListTaskQueue;
     private final BlockingQueue<StationEvTask> mElecListTaskQueue;
     private final BlockingQueue<StationHydroTask> mHydroListTaskQueue;
@@ -90,7 +89,6 @@ public class ThreadManager2 {
     // Constructor private
     private ThreadManager2() {
         //super();
-        mThreadTaskQueue = new LinkedBlockingQueue<>();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
 
         mStnListTaskQueue = new LinkedBlockingQueue<>();
@@ -121,6 +119,11 @@ public class ThreadManager2 {
                     log.i("upload compressed bitmap done");
                     recycleTask(task);
                 } else recycleTask(task);
+
+                if(task instanceof StationEvTask) {
+                    log.i("ev station task");
+                    recycleTask(task);
+                }
 
             }
         };
@@ -166,6 +169,11 @@ public class ThreadManager2 {
             case FIRESTORE_STATION_SET_COMPLETED:
                 log.i("upload station info to Firestore");
                 msg.sendToTarget();
+                break;
+
+            case TASK_COMPLETE:
+            case TASK_FAIL:
+                if(task instanceof StationEvTask) msg.sendToTarget();
                 break;
 
             default: msg.sendToTarget();
@@ -292,11 +300,15 @@ public class ThreadManager2 {
     // Electric Charge Station
     public static StationEvTask startEVStatoinListTask(
             Context context, StationListViewModel model, Location location) {
-
         StationEvTask stationEvTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
+        for(int page = 1; page <= 5; page++) {
+            Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page);
+            InnerClazz.sInstance.threadPoolExecutor.execute(elecRunnable);
+        }
+
+        //InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
         return stationEvTask;
     }
 
@@ -351,6 +363,9 @@ public class ThreadManager2 {
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
+        } else if(task instanceof StationEvTask) {
+            task.recycle();
+            mElecListTaskQueue.offer((StationEvTask)task);
         }
     }
 

@@ -1,78 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/view_collapsed_price"
-    android:visibility="invisible"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="?attr/actionBarSize"
-    android:background="@android:color/holo_blue_dark"
-    android:padding="8dp">
+<layout xmlns:android="http://schemas.android.com/apk/res/android" >
+    <data>
+        <variable name="viewmodel" type="com.silverback.carman.viewmodels.DataBindingViewModel" />
+    </data>
 
-    <TextView
-        android:id="@+id/tv_collapsed_avg"
-        android:layout_width="wrap_content"
+    <androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/view_collapsed_price"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/main_subtitle_collapsed"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="?attr/actionBarSize"
+        android:background="@android:color/holo_blue_dark"
+        android:padding="8dp">
 
-    <TextView
-        android:id="@+id/tv_collapsed_avg_price"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:textColor="@android:color/white"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sigun_price"
-        app:layout_constraintStart_toEndOf="@id/tv_collapsed_avg"
-        app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sigun_price"
-        tools:visibility="visible" />
+        <TextView
+            android:id="@+id/tv_collapsed_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/main_subtitle_collapsed"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_collapsed_sido"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@id/tv_collapsed_avg_price"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_avg"
-        app:layout_constraintTop_toTopOf="@+id/tv_collapsed_avg" />
+        <TextView
+            android:id="@+id/tv_collapsed_avg_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
 
-    <TextView
-        android:id="@+id/tv_collapsed_sido_price"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:textColor="@android:color/white"
-        app:layout_constraintStart_toEndOf="@id/tv_collapsed_sido"
-        app:layout_constraintBottom_toBottomOf="@id/tv_collapsed_sido"
-        app:layout_constraintTop_toTopOf="@id/tv_collapsed_sido" />
+            android:textColor="@android:color/white"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sigun_price"
+            app:layout_constraintStart_toEndOf="@id/tv_collapsed_avg"
+            app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sigun_price"
+            tools:visibility="visible" />
 
-    <TextView
-        android:id="@+id/tv_collapsed_sigun"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textColor="@android:color/white"
-        android:layout_marginStart="16dp"
-        app:layout_constraintStart_toEndOf="@id/tv_collapsed_sido_price"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sido_price"
-        app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sido_price" />
+        <TextView
+            android:id="@+id/tv_collapsed_sido"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
 
-    <TextView
-        android:id="@+id/tv_collapsed_sigun_price"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:textColor="@android:color/white"
-        app:layout_constraintStart_toEndOf="@id/tv_collapsed_sigun"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sigun"
-        app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sigun"
-        tools:layout_editor_absoluteX="8dp" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/tv_collapsed_avg_price"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_avg"
+            app:layout_constraintTop_toTopOf="@+id/tv_collapsed_avg" />
+
+        <TextView
+            android:id="@+id/tv_collapsed_sido_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+
+            android:textColor="@android:color/white"
+            app:layout_constraintStart_toEndOf="@id/tv_collapsed_sido"
+            app:layout_constraintBottom_toBottomOf="@id/tv_collapsed_sido"
+            app:layout_constraintTop_toTopOf="@id/tv_collapsed_sido" />
+
+        <TextView
+            android:id="@+id/tv_collapsed_sigun"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/tv_collapsed_sido_price"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sido_price"
+            app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sido_price" />
+
+        <TextView
+            android:id="@+id/tv_collapsed_sigun_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+
+            android:textColor="@android:color/white"
+            app:layout_constraintStart_toEndOf="@id/tv_collapsed_sigun"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_collapsed_sigun"
+            app:layout_constraintTop_toTopOf="@+id/tv_collapsed_sigun"
+            tools:layout_editor_absoluteX="8dp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+
+</layout>

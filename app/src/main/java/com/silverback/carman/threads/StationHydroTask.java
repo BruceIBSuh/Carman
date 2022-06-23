@@ -3,6 +3,7 @@ package com.silverback.carman.threads;
 import android.content.Context;
 import android.location.Location;
 
+import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.StationListViewModel;
@@ -52,8 +53,10 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
 
     @Override
     public void setFirebaseHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
-        log.i("hydroList: %s", hydroList.size());
-        if(hydroList.size() > 0) model.getHydroStationList().postValue(hydroList);
+        if(hydroList.size() > 0) {
+            model.getHydroStationList().postValue(hydroList);
+            //model.getHydroStationList().removeObservers((MainActivity)context);
+        }
     }
 
     @Override

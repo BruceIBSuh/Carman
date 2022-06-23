@@ -31,6 +31,16 @@
         </attr>
     </declare-styleable>
 
+    <declare-styleable name="MainStatusView">
+        <attr name="progbtn" format="enum">
+            <enum name="gas" value="0" />
+            <enum name="ev" value="2" />
+            <enum name="hydro" value="3" />
+        </attr>
+
+    </declare-styleable>
+
+
     <declare-styleable name="NearGasStationsView">
         <attr name="recyclerview" format="reference" />
         <attr name="textview" format="reference" />

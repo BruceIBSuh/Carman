@@ -1,13 +1,10 @@
 package com.silverback.carman.threads;
 
-import android.content.ClipData;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.os.Build;
 import android.os.Process;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -27,9 +24,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -37,11 +31,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.http.Body;
 import retrofit2.http.GET;
-import retrofit2.http.Header;
-import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
 public class StationEvRunnable implements Runnable{
@@ -55,25 +45,30 @@ public class StationEvRunnable implements Runnable{
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
 
+    private EvStationModel model;
+    private final int queryPage;
 
     // Interface
     public interface ElecStationCallback {
         void setElecStationTaskThread(Thread thread);
         Location getElecStationLocation();
+        int getCurrentPage();
         void setEvStationList(List<Item> evList);
+        void handleTaskState(int state);
         void notifyEvStationError(Exception e);
     }
 
-    public StationEvRunnable(Context context, ElecStationCallback callback) {
+    public StationEvRunnable(Context context, int queryPage, ElecStationCallback callback) {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
+        this.queryPage = queryPage;
+        log.i("current page: %s", this.queryPage);
     }
 
     @Override
     public void run() {
         callback.setElecStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-
         Location location = callback.getElecStationLocation();
         /*
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
@@ -84,134 +79,79 @@ public class StationEvRunnable implements Runnable{
         */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
-
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
-        /*
-        StringBuilder sb = new StringBuilder(evInfo); //URL
-        try {
-            sb.append("?").append(URLEncoder.encode("serviceKey", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode(key, "UTF-8")); //Service Key
-            sb.append("&").append(URLEncoder.encode("pageNo", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("1", "UTF-8")); //페이지 번호
-            sb.append("&").append(URLEncoder.encode("numOfRows", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("1000", "UTF-8")); //한 페이지 결과 수 (최소 10, 최대 9999)
-            sb.append("&").append(URLEncoder.encode("period", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode("5", "UTF-8")); //상태갱신 조회 범위(분) (기본값 5, 최소 1, 최대 10)
-            sb.append("&").append(URLEncoder.encode("zcode", "UTF-8"));
-            sb.append("=").append(URLEncoder.encode(sidoCode, "UTF-8")); //시도 코드 (행정구역코드 앞 2자리)
 
-            XmlEvPullParserHandler xmlHandler = new XmlEvPullParserHandler();
-            URL url = new URL(sb.toString());
-            log.i("EV url: %s", url);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setRequestMethod("GET");
-            //conn.setRequestProperty("Content-type", "application/json");
-            conn.setRequestProperty("Connection", "close");
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
-            conn.connect();
+        //for(int page = 1; page <= 5; page++) {
+        //synchronized (this) {
+            Call<EvStationModel> call = RetrofitClient.getIntance()
+                    .getRetrofitApi()
+                    //.getEvStationInfo(encodingKey, queryPage, 100, 5, sidoCode);
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
-            List<EvStationInfo> evStationList = new ArrayList<>();
-            try(InputStream is = new BufferedInputStream(conn.getInputStream())) {
-                for(EvStationInfo info : xmlHandler.parseEvStationInfo(is)) {
-                    float[] results = new float[3];
-                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                            info.getLat(), info.getLng(), results);
+            call.enqueue(new Callback<EvStationModel>() {
+                @Override
+                public void onResponse(@NonNull Call<EvStationModel> call,
+                                       @NonNull Response<EvStationModel> response) {
 
-                    int distance = (int) results[0];
-                    // Get EV stations within 3000m out of retrieved ones.
-                    if (distance < 1500) {
-                        info.setDistance(distance);
-                        evStationList.add(info);
+                    final EvStationModel model = response.body();
+                    assert model != null;
+
+                    final Header header = model.header;
+                    int totalCount = header.totalCount;
+                    log.i("Total Count: %s", totalCount);
+
+                    // Exclude an item if it is out of the distance or include an item within the distance
+                    final List<Item> itemList = model.body.items.itemList;
+                    if(itemList != null && itemList.size() > 0) {
+                        log.i("ItemList: %s", itemList.size());
+                        for (int i = itemList.size() - 1; i >= 0; i--) {
+                            float[] results = new float[3];
+                            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                                    itemList.get(i).lat, itemList.get(i).lng, results);
+                            int distance = (int) results[0];
+
+                            if (distance > 1000) itemList.remove(i);
+                            else itemList.get(i).setDistance(distance);
+                        }
                     }
+
+                    callback.setEvStationList(itemList);
                 }
 
-                // Sort EvList in the distance-descending order
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
-                else Collections.sort(evStationList, (t1, t2) ->
-                            Integer.compare((int)t1.getDistance(), (int)t2.getDistance()));
-
-                callback.setEvStationList(evStationList);
-
-            } catch(IOException e) {
-                log.i("EV exception: %s", e.getMessage());
-                callback.notifyEvStationError(e);
-                e.printStackTrace();
-
-            } finally {conn.disconnect();}
-
-        } catch(IOException e) {
-            e.getLocalizedMessage();
-        }
-         */
-
-        Call<EvStationModel> call = RetrofitClient.getIntance()
-                .getRetrofitApi()
-                .getEvStationInfo(encodingKey, 2, 9999, 5, sidoCode);
-
-        call.enqueue(new Callback<EvStationModel>() {
-            @Override
-            public void onResponse(@NonNull Call<EvStationModel> call,
-                                   @NonNull Response<EvStationModel> response) {
-                EvStationModel model = response.body();
-                assert model != null;
-
-                // Exclude an item if it is out of the distance or include an item within the distance
-                //List<Item> itemList = model.itemList;
-                //List<Item> itemList = model.itemList;
-                log.i("Items: %s", model.itemList.size());
-                for (int i = model.itemList.size() - 1; i >= 0; i--) {
-                    float[] results = new float[3];
-                    Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                            model.itemList.get(i).lat, model.itemList.get(i).lng, results);
-                    int distance = (int) results[0];
-                    if (distance > 1000) model.itemList.remove(i);
-                    else model.itemList.get(i).setDistance(distance);
+                @Override
+                public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
+                    log.e("response failed: %s", t);
+                    callback.notifyEvStationError(new Exception(t));
+                    //callback.handleTaskState(EV_TASK_FAIL);
                 }
-
-                // Sort EvList in the distance-descending order
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-                    Collections.sort(model.itemList, Comparator.comparingInt(t -> (int) t.getDistance()));
-                else Collections.sort(model.itemList, (t1, t2) ->
-                        Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
-
-                callback.setEvStationList(model.itemList);
-            }
-
-            @Override
-            public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                log.e("response failed: %s", t);
-                callback.notifyEvStationError(new Exception(t));
-            }
-
-        });
-
-
+            });
+        //}
+        //callback.handleTaskState(EV_TASK_SUCCESS);
     }
 
-    public interface RetrofitApi {
+
+    private interface RetrofitApi {
         @GET("getChargerInfo")
         //@Headers({"Accept:application/xml"})
         Call<EvStationModel> getEvStationInfo (
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period,
-                @Query(value="zcode", encoded=true) String sido
+                @Query(value="period", encoded=true) int period
+                //@Query(value="zcode", encoded=true) String sidoCode
         );
     }
 
-    public static class RetrofitClient {
+    private static class RetrofitClient {
         private final RetrofitApi retrofitApi;
-
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("http://apis.data.go.kr/B552584/EvCharger/")
                     //.addConverterFactory(GsonConverterFactory.create())
                     //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                    .addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
+                    .addConverterFactory(TikXmlConverterFactory.create(
+                            new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
 
             retrofitApi = retrofit.create(RetrofitApi.class);
@@ -231,16 +171,18 @@ public class StationEvRunnable implements Runnable{
     }
 
 
+    /*
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
         List<Item> itemList;
     }
+    */
 
-    /*
+
     @Xml(name="response")
-    static class EvStationModel {
+    public static class EvStationModel {
         @Element Header header;
         @Element Body body;
     }
@@ -263,9 +205,9 @@ public class StationEvRunnable implements Runnable{
     @Xml
     public static class Items {
         @Element(name="item")
-        List<Item> item;
+        List<Item> itemList;
     }
-    */
+
     @Xml
     public static class Item {
         @PropertyElement(name="statNm") String stdNm;
@@ -294,121 +236,38 @@ public class StationEvRunnable implements Runnable{
         @PropertyElement(name="note") String node;
         @PropertyElement(name="limitYn") boolean limitYn;
         @PropertyElement(name="limitDetail") String limitDetail;
-
-        public String getStdNm() {
-            return stdNm;
-        }
-
-        public String getStdId() {
-            return stdId;
-        }
-
-        public String getChgerId() {
-            return chgerId;
-        }
-
-        public String getChgerType() {
-            return convChargerType(chgerType);
-        }
-
-        public String getAddr() {
-            return addr;
-        }
-
-        public String getLocation() {
-            return location;
-        }
-
-        public double getLat() {
-            return lat;
-        }
-
-        public double getLng() {
-            return lng;
-        }
-
-        public String getUseTime() {
-            return useTime;
-        }
-
-        public String getBusiId() {
-            return busiId;
-        }
-
-        public String getBnm() {
-            return bnm;
-        }
-
-        public String getBusiNm() {
-            return busiNm;
-        }
-
-        public String getBusiCall() {
-            return busiCall;
-        }
-
-        public int getStat() {
-            return stat;
-        }
-
-        public String getStatUpdDt() {
-            return statUpdDt;
-        }
-
-        public String getLastTsdt() {
-            return lastTsdt;
-        }
-
-        public String getLastTedt() {
-            return lastTedt;
-        }
-
-        public String getNowTsdt() {
-            return nowTsdt;
-        }
-
-        public String getPowerType() {
-            return powerType;
-        }
-
-        public String getOutput() {
-            return output;
-        }
-
-        public String getMethod() {
-            return method;
-        }
-
-        public String getZcode() {
-            return zcode;
-        }
-
-        public boolean isParkingFree() {
-            return parkingFree;
-        }
-
-        public String getNode() {
-            return node;
-        }
-
-        public boolean isLimitYn() {
-            return limitYn;
-        }
-
-        public String getLimitDetail() {
-            return limitDetail;
-        }
-
-
-
-        public int getDistance() {
-            return distance;
-        }
-        public void setDistance(int distance) {
-            this.distance = distance;
-        }
-
         private int distance;
+
+        public String getStdNm() {return stdNm;}
+        public String getStdId() {return stdId;}
+        public String getChgerId() {return chgerId;}
+        public String getChgerType() {return convChargerType(chgerType);}
+        public String getAddr() {return addr;}
+        public String getLocation() { return location; }
+        public double getLat() {return lat;}
+        public double getLng() {return lng;}
+        public String getUseTime() {return useTime;}
+        public String getBusiId() {return busiId;}
+        public String getBnm() {return bnm;}
+        public String getBusiNm() { return busiNm; }
+        public String getBusiCall() { return busiCall; }
+        public int getStat() { return stat; }
+        public String getStatUpdDt() { return statUpdDt; }
+        public String getLastTsdt() { return lastTsdt; }
+        public String getLastTedt() { return lastTedt; }
+        public String getNowTsdt() { return nowTsdt; }
+        public String getPowerType() { return powerType; }
+        public String getOutput() { return output; }
+        public String getMethod() { return method; }
+        public String getZcode() { return zcode;}
+        public boolean isParkingFree() { return parkingFree; }
+        public String getNode() { return node; }
+        public boolean isLimitYn() { return limitYn; }
+        public String getLimitDetail() { return limitDetail; }
+        public int getDistance() { return distance; }
+        public void setDistance(int distance) { this.distance = distance; }
+
+
 
 
     }
@@ -617,14 +476,4 @@ public class StationEvRunnable implements Runnable{
             default: return "N/A";
         }
     }
-
-
-
-
-
-
-
-
-
-
 }

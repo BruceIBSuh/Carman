@@ -72,6 +72,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         if(evList.size() == 0) return;
 
         StationEvRunnable.Item info = evList.get(position);
+
         String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
         String charId = "_" + Integer.parseInt(info.getChgerId());

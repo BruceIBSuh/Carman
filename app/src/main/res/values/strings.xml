@@ -64,9 +64,14 @@
     <string name="main_hydro_close">운영중단</string>
     <string name="main_hydro_phone">연락처</string>
 
+    <string name="main_status_free">충전대기</string>
+    <string name="main_status_occupied">충전중</string>
+    <string name="main_status_no_signal">통신이상</string>
+
+
     <!-- MainActivity updated version-->
     <string name="main_subtitle_news">알립니다</string>
-    <string name="main_subtitle_expense">월 지출</string>
+    <string name="main_subtitle_expense">월 지출</string>상
     <string name="main_subtitle_exp_config">지출 구성</string>
     <string name="main_subtitle_gas">주유내역 </string>
     <string name="main_subtitle_wash">세차내역</string>
