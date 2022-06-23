@@ -406,7 +406,7 @@ public class MainActivity extends BaseActivity implements
         // Turn the previous button off if another button clicks
         if(prevButton != -1 && prevButton != activeButton) {
             progbtnList.get(prevButton).resetProgress();
-            binding.recyclerStations.setVisibility(View.GONE);
+            //binding.recyclerStations.setVisibility(View.GONE);
 
             // Remove the observer to prevent invoking the previous progbtn as the current button
             // fetches a location.

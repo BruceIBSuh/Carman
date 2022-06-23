@@ -46,8 +46,7 @@ public class StationEvRunnable implements Runnable{
     private final ElecStationCallback callback;
 
     private EvStationModel model;
-
-    private int queryPage;
+    private final int queryPage;
 
     // Interface
     public interface ElecStationCallback {
@@ -80,7 +79,6 @@ public class StationEvRunnable implements Runnable{
         */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
-
         int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
         String sidoCode = String.valueOf(sido);
 
@@ -88,8 +86,8 @@ public class StationEvRunnable implements Runnable{
         //synchronized (this) {
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    .getEvStationInfo(encodingKey, queryPage, 1000, 5, sidoCode);
-                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
+                    //.getEvStationInfo(encodingKey, queryPage, 100, 5, sidoCode);
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
             call.enqueue(new Callback<EvStationModel>() {
                 @Override
@@ -98,22 +96,27 @@ public class StationEvRunnable implements Runnable{
 
                     final EvStationModel model = response.body();
                     assert model != null;
+
+                    final Header header = model.header;
+                    int totalCount = header.totalCount;
+                    log.i("Total Count: %s", totalCount);
+
                     // Exclude an item if it is out of the distance or include an item within the distance
-                    List<Item> itemList = model.itemList;
+                    final List<Item> itemList = model.body.items.itemList;
                     if(itemList != null && itemList.size() > 0) {
-                        log.i("ItemList: %s", model.itemList.size());
-                        for (int i = model.itemList.size() - 1; i >= 0; i--) {
+                        log.i("ItemList: %s", itemList.size());
+                        for (int i = itemList.size() - 1; i >= 0; i--) {
                             float[] results = new float[3];
                             Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                                    model.itemList.get(i).lat, model.itemList.get(i).lng, results);
+                                    itemList.get(i).lat, itemList.get(i).lng, results);
                             int distance = (int) results[0];
 
-                            if (distance > 1000) model.itemList.remove(i);
-                            else model.itemList.get(i).setDistance(distance);
+                            if (distance > 1000) itemList.remove(i);
+                            else itemList.get(i).setDistance(distance);
                         }
                     }
 
-                    callback.setEvStationList(model.itemList);
+                    callback.setEvStationList(itemList);
                 }
 
                 @Override
@@ -128,19 +131,19 @@ public class StationEvRunnable implements Runnable{
     }
 
 
-    public interface RetrofitApi {
+    private interface RetrofitApi {
         @GET("getChargerInfo")
         //@Headers({"Accept:application/xml"})
         Call<EvStationModel> getEvStationInfo (
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period,
-                @Query(value="zcode", encoded=true) String sidoCode
+                @Query(value="period", encoded=true) int period
+                //@Query(value="zcode", encoded=true) String sidoCode
         );
     }
 
-    public static class RetrofitClient {
+    private static class RetrofitClient {
         private final RetrofitApi retrofitApi;
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder()
@@ -168,16 +171,18 @@ public class StationEvRunnable implements Runnable{
     }
 
 
+    /*
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
         List<Item> itemList;
     }
+    */
 
-    /*
+
     @Xml(name="response")
-    static class EvStationModel {
+    public static class EvStationModel {
         @Element Header header;
         @Element Body body;
     }
@@ -200,16 +205,7 @@ public class StationEvRunnable implements Runnable{
     @Xml
     public static class Items {
         @Element(name="item")
-        List<Item> item;
-    }
-    */
-    @Xml(name="header")
-    static class Header {
-        @PropertyElement String resultCode;
-        @PropertyElement String resultMsg;
-        @PropertyElement int totalCount;
-        @PropertyElement int pageNo;
-        @PropertyElement int numOfRows;
+        List<Item> itemList;
     }
 
     @Xml
@@ -240,121 +236,38 @@ public class StationEvRunnable implements Runnable{
         @PropertyElement(name="note") String node;
         @PropertyElement(name="limitYn") boolean limitYn;
         @PropertyElement(name="limitDetail") String limitDetail;
-
-        public String getStdNm() {
-            return stdNm;
-        }
-
-        public String getStdId() {
-            return stdId;
-        }
-
-        public String getChgerId() {
-            return chgerId;
-        }
-
-        public String getChgerType() {
-            return convChargerType(chgerType);
-        }
-
-        public String getAddr() {
-            return addr;
-        }
-
-        public String getLocation() {
-            return location;
-        }
-
-        public double getLat() {
-            return lat;
-        }
-
-        public double getLng() {
-            return lng;
-        }
-
-        public String getUseTime() {
-            return useTime;
-        }
-
-        public String getBusiId() {
-            return busiId;
-        }
-
-        public String getBnm() {
-            return bnm;
-        }
-
-        public String getBusiNm() {
-            return busiNm;
-        }
-
-        public String getBusiCall() {
-            return busiCall;
-        }
-
-        public int getStat() {
-            return stat;
-        }
-
-        public String getStatUpdDt() {
-            return statUpdDt;
-        }
-
-        public String getLastTsdt() {
-            return lastTsdt;
-        }
-
-        public String getLastTedt() {
-            return lastTedt;
-        }
-
-        public String getNowTsdt() {
-            return nowTsdt;
-        }
-
-        public String getPowerType() {
-            return powerType;
-        }
-
-        public String getOutput() {
-            return output;
-        }
-
-        public String getMethod() {
-            return method;
-        }
-
-        public String getZcode() {
-            return zcode;
-        }
-
-        public boolean isParkingFree() {
-            return parkingFree;
-        }
-
-        public String getNode() {
-            return node;
-        }
-
-        public boolean isLimitYn() {
-            return limitYn;
-        }
-
-        public String getLimitDetail() {
-            return limitDetail;
-        }
-
-
-
-        public int getDistance() {
-            return distance;
-        }
-        public void setDistance(int distance) {
-            this.distance = distance;
-        }
-
         private int distance;
+
+        public String getStdNm() {return stdNm;}
+        public String getStdId() {return stdId;}
+        public String getChgerId() {return chgerId;}
+        public String getChgerType() {return convChargerType(chgerType);}
+        public String getAddr() {return addr;}
+        public String getLocation() { return location; }
+        public double getLat() {return lat;}
+        public double getLng() {return lng;}
+        public String getUseTime() {return useTime;}
+        public String getBusiId() {return busiId;}
+        public String getBnm() {return bnm;}
+        public String getBusiNm() { return busiNm; }
+        public String getBusiCall() { return busiCall; }
+        public int getStat() { return stat; }
+        public String getStatUpdDt() { return statUpdDt; }
+        public String getLastTsdt() { return lastTsdt; }
+        public String getLastTedt() { return lastTedt; }
+        public String getNowTsdt() { return nowTsdt; }
+        public String getPowerType() { return powerType; }
+        public String getOutput() { return output; }
+        public String getMethod() { return method; }
+        public String getZcode() { return zcode;}
+        public boolean isParkingFree() { return parkingFree; }
+        public String getNode() { return node; }
+        public boolean isLimitYn() { return limitYn; }
+        public String getLimitDetail() { return limitDetail; }
+        public int getDistance() { return distance; }
+        public void setDistance(int distance) { this.distance = distance; }
+
+
 
 
     }
