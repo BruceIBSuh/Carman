@@ -28,7 +28,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
-import androidx.databinding.ObservableField;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -54,13 +53,14 @@ import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.RecyclerDividerUtil;
-import com.silverback.carman.viewmodels.DataBindingViewModel;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 import com.silverback.carman.views.ProgressButton;
+
+import org.json.JSONArray;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -118,12 +118,13 @@ public class MainActivity extends BaseActivity implements
 
     // Fields
     private List<ProgressButton> progbtnList;
-    private String[] arrGasCode;
-    private String[] defaultParams;
+    private String[] arrGasCode, arrSidoCode, defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
+    private int prevStation = -1;
+    private int activeStation;
 
     // The manual says that registerForActivityResult() is safe to call before a fragment or activity
     // is created
@@ -147,6 +148,7 @@ public class MainActivity extends BaseActivity implements
         // Set initial values to fields
         defaultParams = getNearStationParams();// 0:gas type 1:radius 2:order(distance or price)
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
+        arrSidoCode = getResources().getStringArray(R.array.sido_name);
         mPrevLocation = null;
 
         // MainContent RecyclerView to display main content feeds in the activity
@@ -158,10 +160,18 @@ public class MainActivity extends BaseActivity implements
 
         // AdapterView(Spinner) to select a gas type.
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(
-                this, R.array.spinner_fuel_name, R.layout.spinner_main_fuel);
-        spinnerAdapter.setDropDownViewResource(R.layout.spinner_main_dropdown);
+                this, R.array.spinner_fuel_name, R.layout.main_spinner_gas);
+        spinnerAdapter.setDropDownViewResource(R.layout.main_spinner_dropdown);
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         setGasSpinnerSelection(defaultParams[0]);
+
+        ArrayAdapter<CharSequence> spinnerAdapter2 = ArrayAdapter.createFromResource(
+                this, R.array.sido_name, R.layout.main_spinner_ev);
+        spinnerAdapter.setDropDownViewResource(R.layout.main_spinner_dropdown);
+        binding.evStatus.spinnerEv.setAdapter(spinnerAdapter2);
+
+        //JSONArray jsonArray = getDistrictJSONArray();
+
 
         // Create MainPricePagerAdapter which displays the graphs for the last 3 month total expense
         // and the expense configuration of this month. More pages should be added to analyze the
@@ -354,6 +364,10 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
+    private void setAltSpinnerSelection(String sidoName) {
+
+    }
+
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback to listen to the viewpager
     // changing a page.
@@ -401,11 +415,12 @@ public class MainActivity extends BaseActivity implements
         }
     };
 
-    int prevButton = -1;
-    public void locateStations(int activeButton, boolean isActive){
+    public void locateStations(int activeStation, boolean isActive){
         // Turn the previous button off if another button clicks
-        if(prevButton != -1 && prevButton != activeButton) {
-            progbtnList.get(prevButton).resetProgress();
+        this.activeStation = activeStation;
+
+        if(prevStation != -1 && prevStation != activeStation) {
+            progbtnList.get(prevStation).resetProgress();
             //binding.recyclerStations.setVisibility(View.GONE);
 
             // Remove the observer to prevent invoking the previous progbtn as the current button
@@ -418,10 +433,10 @@ public class MainActivity extends BaseActivity implements
             final String rationale = "permission required to use Fine Location";
             checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
                 locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-                progbtnList.get(activeButton).setProgress();
+                progbtnList.get(activeStation).setProgress();
                 locationModel.getLocation().observe(this, location -> {
-                    log.i("observe location:%s", activeButton);
-                    switch(activeButton) {
+                    log.i("observe location:%s", activeStation);
+                    switch(activeStation) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
                         case 2: locateEvStations(location); break;
@@ -440,19 +455,19 @@ public class MainActivity extends BaseActivity implements
                 stationModel.getExceptionMessage().observe(this, exception -> {
                     log.i("Exception occurred while getting station list");
                     locationTask = null;
-                    progbtnList.get(activeButton).stopProgress();
+                    progbtnList.get(activeStation).stopProgress();
 
                     //progbtnList.get(activeButton).stopProgress();
                 });
             });
 
-            prevButton = activeButton;
+            prevStation = activeStation;
 
         } else {
             binding.recyclerStations.setVisibility(View.GONE);
             binding.recyclerContents.setVisibility(View.VISIBLE);
             binding.fab.setVisibility(View.GONE);
-            progbtnList.get(activeButton).resetProgress();
+            progbtnList.get(activeStation).resetProgress();
 
             // temp: test required
             if(locationModel.getLocation() != null) locationModel.getLocation().removeObservers(this);
@@ -463,6 +478,7 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         defaultParams[0] = gasCode;
         stationGasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+
         stationModel.getNearStationList().observe(this, stnList -> {
             if (stnList != null && stnList.size() > 0) {
                 mStationList = stnList;
@@ -470,20 +486,13 @@ public class MainActivity extends BaseActivity implements
                 //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
                 //binding.stationRecyclerView.showStationRecyclerView();``
                 binding.recyclerStations.setAdapter(stnListAdapter);
-                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
+
                 progbtnList.get(0).stopProgress();
                 binding.appbar.setExpanded(true, true);
-
+                binding.fab.setVisibility(View.VISIBLE);
                 // Set the listener to handle the visibility of the price bar by scrolling.
                 //createGasStatusBar();
                 showCollapsedStatusBar(0);
-
-                /*
-                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
-                    showCollapsedStatusBar(binding.gasStatusBar.getRoot(), offset);
-                });
-                */
-
 
             } else {
                 // No near stations post an message that contains the clickable span to link to the
@@ -531,17 +540,13 @@ public class MainActivity extends BaseActivity implements
                 binding.recyclerContents.setVisibility(View.GONE);
                 progbtnList.get(2).stopProgress();
 
-                binding.fab.setVisibility(View.GONE);
+                //binding.fab.setVisibility(View.GONE);
                 stationModel.getEvStationList().removeObservers(this);
 
                 binding.appbar.setExpanded(true, true);
                 showCollapsedStatusBar(1);
-                /*
-                binding.appbar.addOnOffsetChangedListener((appbar, offset) -> {
-                    showCollapsedStatusBar(binding.evStatusBar.getRoot(), offset);
-                });
+                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
 
-                 */
             }
 
 
@@ -550,11 +555,12 @@ public class MainActivity extends BaseActivity implements
         stationModel.getExceptionMessage().observe(this, err -> {
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
             progbtnList.get(2).resetProgress();
+            binding.fab.setVisibility(View.GONE);
             evTask = null;
         });
 
 
-        binding.fab.setVisibility(View.GONE);
+        //binding.fab.setVisibility(View.GONE);
 
     }
 
@@ -572,10 +578,10 @@ public class MainActivity extends BaseActivity implements
                 binding.recyclerContents.setVisibility(View.GONE);
                 progbtnList.get(3).stopProgress();
 
-                binding.fab.setVisibility(View.GONE);
+                //binding.fab.setVisibility(View.GONE);
                 stationModel.getHydroStationList().removeObservers(this);
                 binding.appbar.setExpanded(true, true);
-
+                binding.fab.setVisibility(View.VISIBLE);
                 showCollapsedStatusBar(1);
             }
 
@@ -588,14 +594,21 @@ public class MainActivity extends BaseActivity implements
 
     // Reorder near station list according to the distance/price, which is called from the layout
     // file as well.
-    public void switchNearStationOrder(View view) {
+    public void onFabClicked(View view) {
+        if(activeStation != 0) {
+            log.i("alt station required to be handled");
+            return;
+        }
+
         bStnOrder = !bStnOrder;
         Uri uri = saveNearStationList(mStationList);
         if(uri == null) return;
         // Switch the FAB background.
         if(bStnOrder) binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_location));
         else binding.fab.setImageDrawable(AppCompatResources.getDrawable(this, R.drawable.bg_currency_won));
+
         mStationList = stnListAdapter.sortStationList(bStnOrder);
+
     }
 
     private Uri saveNearStationList(List<Opinet.GasStnParcelable> list) {

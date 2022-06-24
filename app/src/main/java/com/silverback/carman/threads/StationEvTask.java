@@ -65,9 +65,9 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
     @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
-        //if(index == 3)
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
-        log.i("EvStationList: %s", evStationList.size());
+        log.i("EvStationList: %s, %s", page, evStationList.size());
+
         if(page == 5){
             // Sort EvList in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
@@ -80,6 +80,12 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
             return;
         }
 
+        page++;
+    }
+
+    @Override
+    public void notifyEvStationError(Exception e) {
+        viewModel.getExceptionMessage().postValue(String.valueOf(e));
         page++;
     }
 
@@ -99,8 +105,5 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
         sThreadManager.handleState(this, outstate);
     }
 
-    @Override
-    public void notifyEvStationError(Exception e) {
-        viewModel.getExceptionMessage().postValue(String.valueOf(e));
-    }
+
 }

@@ -33,6 +33,8 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
     private final DecimalFormat df;
     private Context context;
     private Drawable drawable;
+    private String stnName;
+    private boolean isSameStation;
 
     public StationEvAdapter(List<StationEvRunnable.Item> evList) {
         this.evList = evList;
@@ -54,7 +56,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         }
         TextView getDistanceView() { return binding.tvDistance;}
         TextView getChargerIdView() { return binding.tvChgrId; }
-        TextView getChargerStatus() { return binding.tvChgrStatus; }
+        TextView getBizNameView() { return binding.tvBizName; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
         TextView getChargerTypeView() { return binding.tvChgrType;}
 
@@ -73,7 +75,6 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         if(evList.size() == 0) return;
 
         StationEvRunnable.Item info = evList.get(position);
-
         String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                 context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
         String charId = "_" + Integer.parseInt(info.getChgerId());
@@ -81,11 +82,17 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         holder.getChgrStatusView().setImageDrawable(getStatusImage(info.getStat()));
         holder.getEvStationName().setText(info.getStdNm());
         holder.getChargerIdView().setText(charId);
-        holder.getChargerStatus().setText(String.valueOf(info.getStat()));
+        //holder.getChargerStatus().setText(String.valueOf(info.getStat()));
+        holder.getBizNameView().setText(info.getBusiNm());
         holder.getLimitDetailView().setText(limitDetail);
 
         holder.getDistanceView().setText(df.format(info.getDistance()));
         holder.getChargerTypeView().setText(info.getChgerType());
+
+        if(stnName != null && stnName.matches(info.getStdNm())) {
+            log.i("same station:%s,  %s", stnName, info.getStdNm());
+            isSameStation = true;
+        }
     }
 
     @Override

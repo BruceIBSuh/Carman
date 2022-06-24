@@ -87,8 +87,8 @@ public class StationEvRunnable implements Runnable {
 
         Call<EvStationModel> call = RetrofitClient.getIntance()
                 .getRetrofitApi()
-                //.getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
-                .getEvStationInfo(encodingKey, queryPage, 9999, 5);
+                .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
         call.enqueue(new Callback<EvStationModel>() {
             @Override
@@ -138,8 +138,8 @@ public class StationEvRunnable implements Runnable {
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period
-                //@Query(value="zcode", encoded=true) String sidoCode
+                @Query(value="period", encoded=true) int period,
+                @Query(value="zcode", encoded=true) String sidoCode
         );
     }
 

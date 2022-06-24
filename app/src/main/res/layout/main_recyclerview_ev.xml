@@ -80,7 +80,7 @@
         app:layout_constraintTop_toTopOf="@+id/tv_label_charger" />
 
     <TextView
-        android:id="@+id/tv_chgr_status"
+        android:id="@+id/tv_biz_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"

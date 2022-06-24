@@ -76,7 +76,9 @@
         <include
             android:id="@+id/gasStatus"
             layout="@layout/main_collapsed_pricebar" />
-        <include layout="@layout/main_collapsed_indication" />
+        <include
+            android:id="@+id/evStatus"
+            layout="@layout/main_collapsed_indication" />
     </ViewSwitcher>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -157,7 +159,7 @@
         android:alpha="0.5"
         android:contentDescription="@null"
         android:src="@drawable/bg_currency_won"
-        android:onClick="switchNearStationOrder"
+        android:onClick="onFabClicked"
         app:backgroundTint="@android:color/holo_blue_dark"
         app:rippleColor="@color/colorPrimary"
         app:borderWidth="0dp"

@@ -100,10 +100,12 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationListHolder> {
     public List<Opinet.GasStnParcelable> sortStationList(boolean bStationOrder) {
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
         Uri uri = Uri.fromFile(file);
+        stationList.clear();
 
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
             List<?> listObj = (List<?>)ois.readObject();
+
             for(Object obj : listObj) stationList.add((Opinet.GasStnParcelable)obj);
             //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
 

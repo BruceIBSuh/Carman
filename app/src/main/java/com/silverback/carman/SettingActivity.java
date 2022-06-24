@@ -304,7 +304,6 @@ public class SettingActivity extends BaseActivity implements
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         switch(key) {
             case PREF_USERNAME:
-
                 String userName = mSettings.getString(key, null);
                 if(!TextUtils.isEmpty(userName)) resultIntent.putExtra("userName", userName);
                 break;

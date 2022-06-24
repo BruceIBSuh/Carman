@@ -43,6 +43,7 @@ public class OpinetSidoPriceView extends OpinetPriceView {
         LayoutInflater.from(context).inflate(R.layout.view_sido_price, this, true);
         tvSidoName = findViewById(R.id.tv_sido_name);
         tvSidoPrice = findViewById(R.id.tv_sido_price);
+
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.OpinetSidoPriceView);
         try {
             priceUpColor = typedArray.getColor(R.styleable.OpinetSidoPriceView_sidoPriceUp, 0);
@@ -54,7 +55,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
 
     }
 
-    //@SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
         File sidoFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIDO_PRICE);
         Uri uriSido = Uri.fromFile(sidoFile);
@@ -66,7 +66,6 @@ public class OpinetSidoPriceView extends OpinetPriceView {
             for(Object x : itr) {
                 Opinet.SidoPrice sido = (Opinet.SidoPrice) x;
                 if(sido.getProductCd().matches(fuelCode)) {
-                    log.i("sidoname: %s", sido.getSidoName());
                     String sidoName = sido.getSidoName();
                     float price = sido.getPrice();
                     float diff = sido.getDiff();
