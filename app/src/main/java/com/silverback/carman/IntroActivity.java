@@ -164,7 +164,6 @@ public class IntroActivity extends BaseActivity  {
     // retrieved from the Room database.
     private void regularInitProcess() {
         if(checkPriceUpdate()) {
-            log.i("price update");
             JSONArray json = getDistrictJSONArray();
             String distCode = (json == null) ? defaultDistrict[2] : json.optString(2);
 

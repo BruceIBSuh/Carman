@@ -10,6 +10,9 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,7 +34,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     private final List<StationEvRunnable.Item> evStationList;
     private int page = 1;
 
-    public StationEvTask(Context context, StationListViewModel viewModel, Location location) {
+    public StationEvTask(Context context, StationListViewModel viewModel, Location location){
         this.context = context;
         this.location = location;
         this.viewModel = viewModel;
@@ -59,15 +62,8 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     }
 
     @Override
-    public int getCurrentPage() {
-        return this.page;
-    }
-
-    @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
-        log.i("EvStationList: %s, %s", page, evStationList.size());
-
         if(page == 5){
             // Sort EvList in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
@@ -75,8 +71,32 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
 
+            File evFile = new File(context.getCacheDir(), "evStation");
+            evFile.deleteOnExit();
+            if(!evFile.exists()) {
+                try(FileOutputStream fos = new FileOutputStream(evFile)) {
+                    int bytesRead;
+                    byte[] dataBuffer = new byte[1024];
+
+                } catch (IOException e) { e.printStackTrace(); }
+
+            }
+
+            // Exclude chargers in the same station.
+            for(int i = 0; i < evStationList.size(); i++) {
+                String name = evStationList.get(i).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                int cntSame = 1;
+                for(int j = evStationList.size() - 1; j > i; j -- ) {
+                    String name2 = evStationList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                    if(name2.matches(name)) {
+                        evStationList.remove(j);
+                        cntSame++;
+                    }
+                }
+                evStationList.get(i).setCntCharger(cntSame);
+            }
+
             viewModel.getEvStationList().postValue(evStationList);
-            //viewModel.getEvStationList().removeObservers((MainActivity)context);
             return;
         }
 

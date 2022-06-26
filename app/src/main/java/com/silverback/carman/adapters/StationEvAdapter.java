@@ -32,9 +32,6 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
     private final List<StationEvRunnable.Item> evList;
     private final DecimalFormat df;
     private Context context;
-    private Drawable drawable;
-    private String stnName;
-    private boolean isSameStation;
 
     public StationEvAdapter(List<StationEvRunnable.Item> evList) {
         this.evList = evList;
@@ -80,19 +77,15 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         String charId = "_" + Integer.parseInt(info.getChgerId());
 
         holder.getChgrStatusView().setImageDrawable(getStatusImage(info.getStat()));
-        holder.getEvStationName().setText(info.getStdNm());
-        holder.getChargerIdView().setText(charId);
+        holder.getEvStationName().setText(info.getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", ""));
+        //holder.getChargerIdView().setText(charId);
         //holder.getChargerStatus().setText(String.valueOf(info.getStat()));
-        holder.getBizNameView().setText(info.getBusiNm());
+        //holder.getBizNameView().setText(info.getBusiNm());
+        holder.getBizNameView().setText(String.valueOf(info.getCntCharger()));
         holder.getLimitDetailView().setText(limitDetail);
 
         holder.getDistanceView().setText(df.format(info.getDistance()));
         holder.getChargerTypeView().setText(info.getChgerType());
-
-        if(stnName != null && stnName.matches(info.getStdNm())) {
-            log.i("same station:%s,  %s", stnName, info.getStdNm());
-            isSameStation = true;
-        }
     }
 
     @Override

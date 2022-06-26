@@ -61,6 +61,7 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import com.silverback.carman.views.ProgressButton;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -125,6 +126,7 @@ public class MainActivity extends BaseActivity implements
     private boolean bStnOrder = false; // false: distance true:price
     private int prevStation = -1;
     private int activeStation;
+    private String sidoName;
 
     // The manual says that registerForActivityResult() is safe to call before a fragment or activity
     // is created
@@ -165,14 +167,6 @@ public class MainActivity extends BaseActivity implements
         binding.mainTopFrame.spinnerGas.setAdapter(spinnerAdapter);
         setGasSpinnerSelection(defaultParams[0]);
 
-        ArrayAdapter<CharSequence> spinnerAdapter2 = ArrayAdapter.createFromResource(
-                this, R.array.sido_name, R.layout.main_spinner_ev);
-        spinnerAdapter.setDropDownViewResource(R.layout.main_spinner_dropdown);
-        binding.evStatus.spinnerEv.setAdapter(spinnerAdapter2);
-
-        //JSONArray jsonArray = getDistrictJSONArray();
-
-
         // Create MainPricePagerAdapter which displays the graphs for the last 3 month total expense
         // and the expense configuration of this month. More pages should be added to analyze the
         // user expense.
@@ -205,9 +199,6 @@ public class MainActivity extends BaseActivity implements
         stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        //bindingModel = new ViewModelProvider(this).get(DataBindingViewModel.class);
-
-
 
     }
 
@@ -314,8 +305,6 @@ public class MainActivity extends BaseActivity implements
         // Update the average gas price and the hidden price bar.
         createGasStatusBar();
 
-
-
         // As far as the near-station recyclerview is in the foreground, update the price info with
         // a new gas selected. refactor required: any station with a selected gas type does not
         // exist, indicate it in the view.
@@ -363,11 +352,6 @@ public class MainActivity extends BaseActivity implements
             }
         }
     }
-
-    private void setAltSpinnerSelection(String sidoName) {
-
-    }
-
 
     // Implement the abstract class of ViewPager2.OnPageChangeCallback to listen to the viewpager
     // changing a page.
@@ -558,9 +542,6 @@ public class MainActivity extends BaseActivity implements
             binding.fab.setVisibility(View.GONE);
             evTask = null;
         });
-
-
-        //binding.fab.setVisibility(View.GONE);
 
     }
 
@@ -774,7 +755,6 @@ public class MainActivity extends BaseActivity implements
         if(!TextUtils.isEmpty(district)) {
             GasPriceTask gasPriceTask = ThreadManager2.startGasPriceTask(this, opinetModel, district);
             opinetModel.distPriceComplete().observe(this, isDone -> {
-                log.i("viewmodel");
                 if(isDone) {
                     if(!TextUtils.isEmpty(gasType)) {
                         isGasTypeChanged = true;
@@ -834,6 +814,25 @@ public class MainActivity extends BaseActivity implements
         }
     }
 
-
+    private int getEvSidoCode() {
+        if(sidoName.matches(getString(R.string.pref_spinner_sido_seoul))) return 11;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_busan))) return 26;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_daegu))) return 27;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_incheon))) return 28;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gwangju))) return 29;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_daejeon))) return 30;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_ulsan))) return 31;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_sejong))) return 36;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyunggi))) return 41;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gwangwon))) return 42;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_choongbook))) return 43;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_choongnam))) return 44;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeonbook))) return 45;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeonnam))) return 46;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyungbook))) return 47;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyungnam))) return 48;
+        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeju))) return 50;
+        else return -1;
+    }
 }
 
