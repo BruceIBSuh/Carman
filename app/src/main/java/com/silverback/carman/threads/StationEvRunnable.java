@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.os.Process;
@@ -27,6 +28,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -205,7 +207,7 @@ public class StationEvRunnable implements Runnable {
     }
 
     @Xml
-    public static class Item implements Parcelable {
+    public static class Item implements Parcelable, Serializable {
         @PropertyElement(name="statNm") String stdNm;
         //@PropertyElement(name="statId") String stdId;
         @PropertyElement(name="chgerId") String chgerId;
@@ -268,6 +270,14 @@ public class StationEvRunnable implements Runnable {
         public void setCntCharger(int cnt) { this.cntCharger = cnt;}
         public int getCntCharger() { return cntCharger; }
 
+        private boolean isAnyChargerOpen;
+        public void setIsAnyChargerOpen(boolean isAnyChargerOpen) {
+            this.isAnyChargerOpen = isAnyChargerOpen;
+        }
+        public boolean getIsAnyChargerOpen() {
+            return isAnyChargerOpen;
+        }
+
         // Empty constructor
         public Item() {}
         // Parcelize the object
@@ -279,7 +289,6 @@ public class StationEvRunnable implements Runnable {
             location = in.readString();
             lat = in.readDouble();
             lng = in.readDouble();
-            location = in.readString();
             stat = in.readInt();
             zcode = in.readString();
             limitDetail = in.readString();
@@ -306,7 +315,18 @@ public class StationEvRunnable implements Runnable {
 
         @Override
         public void writeToParcel(Parcel parcel, int i) {
-
+            parcel.writeString(stdNm);
+            parcel.writeString(chgerId);
+            parcel.writeString(chgerType);
+            parcel.writeString(addr);
+            parcel.writeString(location);
+            parcel.writeDouble(lat);
+            parcel.writeDouble(lng);
+            parcel.writeInt(stat);
+            parcel.writeString(zcode);
+            parcel.writeString(limitDetail);
+            parcel.writeInt(distance);
+            parcel.writeInt(cntCharger);
         }
     }
 

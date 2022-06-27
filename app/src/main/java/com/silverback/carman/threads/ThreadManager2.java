@@ -118,9 +118,7 @@ public class ThreadManager2 {
                 if(task instanceof UploadBitmapTask) {
                     log.i("upload compressed bitmap done");
                     recycleTask(task);
-                } else recycleTask(task);
-
-                if(task instanceof StationEvTask) {
+                } else if(task instanceof StationEvTask) {
                     log.i("ev station task");
                     recycleTask(task);
                 }
@@ -172,6 +170,10 @@ public class ThreadManager2 {
                 break;
 
             case TASK_COMPLETE:
+                if(task instanceof StationEvTask) {
+                    Message evMessage = mMainHandler.obtainMessage(state, task);
+                    evMessage.sendToTarget();
+                }
             case TASK_FAIL:
                 if(task instanceof StationEvTask) msg.sendToTarget();
                 break;

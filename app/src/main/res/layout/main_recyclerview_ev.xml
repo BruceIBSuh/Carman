@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
@@ -104,6 +105,17 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_limit"
         app:layout_constraintStart_toEndOf="@+id/tv_label_limit"
         app:layout_constraintTop_toTopOf="@+id/tv_label_limit" />
+
+    <ImageView
+        android:id="@+id/imgview_expand"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:src="@drawable/main_ev_expand"
+        android:contentDescription="@null"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_limit"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_limit"
+        tools:srcCompat="@tools:sample/avatars" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -46,6 +46,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.LocationTask;
+import com.silverback.carman.threads.StationEvRunnable;
 import com.silverback.carman.threads.StationEvTask;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.StationHydroTask;
@@ -59,9 +60,6 @@ import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 import com.silverback.carman.viewmodels.StationListViewModel;
 import com.silverback.carman.views.ProgressButton;
-
-import org.json.JSONArray;
-import org.json.JSONException;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -79,6 +77,7 @@ public class MainActivity extends BaseActivity implements
         StationGasAdapter.OnRecyclerItemClickListener,
         FinishAppDialogFragment.NoticeDialogListener,
         MainContentAdapter.MainContentAdapterListener,
+        StationEvAdapter.OnExpandItemClicked,
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
@@ -119,6 +118,7 @@ public class MainActivity extends BaseActivity implements
 
     // Fields
     private List<ProgressButton> progbtnList;
+    private List<StationEvRunnable.Item> evExpandedList, evCollapsedList;
     private String[] arrGasCode, arrSidoCode, defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
@@ -152,6 +152,8 @@ public class MainActivity extends BaseActivity implements
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         arrSidoCode = getResources().getStringArray(R.array.sido_name);
         mPrevLocation = null;
+        evExpandedList = new ArrayList<>();
+        evCollapsedList = new ArrayList<>();
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
@@ -341,6 +343,22 @@ public class MainActivity extends BaseActivity implements
         boardIntent.putExtra("category", category);
         startActivity(boardIntent);
     }
+    // Implement StationEvAdapter.OnExpandItemClicked for expanding all chargers in the station.
+    @Override
+    public void onExpandIconClicked(int position, String name) {
+        log.i("expand icon clicked: %s, %s, %s", position, evExpandedList.size(), name);
+        int index = 1;
+        String stnName = evExpandedList.get(position).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+        for(int j = evExpandedList.size() - 1; j > position; j -- ) {
+            String name2 = evExpandedList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+            if(name2.matches(stnName)) {
+                evCollapsedList.add(evExpandedList.get(j));
+
+            }
+        }
+
+        evListAdapter.submitEvList(evCollapsedList);
+    }
 
     // Reset the default fuel code
     private void setGasSpinnerSelection(String gasCode) {
@@ -517,12 +535,34 @@ public class MainActivity extends BaseActivity implements
 
         stationModel.getEvStationList().observe(this, evList -> {
             if(evList != null && evList.size() > 0) {
-                evListAdapter = new StationEvAdapter(evList);
+                this.evExpandedList.addAll(evList);//retain the station items as it is.
+                for(int i = 0; i < evList.size(); i++) {
+                    String name = evList.get(i).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                    int cntSame = 1;
+                    boolean isAnyChargerOpen = evList.get(i).getStat() == 2;
+                    for(int j = evList.size() - 1; j > i; j -- ) {
+                        String name2 = evList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                        if(name2.matches(name)) {
+                            isAnyChargerOpen = evList.get(j).getStat() == 2;
+                            evList.remove(j);
+                            cntSame++;
+                        }
+                    }
+
+                    evList.get(i).setCntCharger(cntSame);
+                    if(isAnyChargerOpen) evList.get(i).setIsAnyChargerOpen(true);
+                }
+
+                evListAdapter = new StationEvAdapter(this);
                 binding.recyclerStations.setAdapter(evListAdapter);
 
                 binding.recyclerStations.setVisibility(View.VISIBLE);
                 binding.recyclerContents.setVisibility(View.GONE);
                 progbtnList.get(2).stopProgress();
+
+                evListAdapter.submitEvList(evList);
+                evCollapsedList.addAll(evList);
+
 
                 //binding.fab.setVisibility(View.GONE);
                 stationModel.getEvStationList().removeObservers(this);
@@ -530,11 +570,10 @@ public class MainActivity extends BaseActivity implements
                 binding.appbar.setExpanded(true, true);
                 showCollapsedStatusBar(1);
                 if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
-
             }
 
-
         });
+
 
         stationModel.getExceptionMessage().observe(this, err -> {
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
@@ -834,5 +873,7 @@ public class MainActivity extends BaseActivity implements
         else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeju))) return 50;
         else return -1;
     }
+
+
 }
 

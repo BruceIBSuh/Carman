@@ -11,8 +11,11 @@ import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,38 +67,13 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
+
         if(page == 5){
             // Sort EvList in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
-
-            File evFile = new File(context.getCacheDir(), "evStation");
-            evFile.deleteOnExit();
-            if(!evFile.exists()) {
-                try(FileOutputStream fos = new FileOutputStream(evFile)) {
-                    int bytesRead;
-                    byte[] dataBuffer = new byte[1024];
-
-                } catch (IOException e) { e.printStackTrace(); }
-
-            }
-
-            // Exclude chargers in the same station.
-            for(int i = 0; i < evStationList.size(); i++) {
-                String name = evStationList.get(i).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
-                int cntSame = 1;
-                for(int j = evStationList.size() - 1; j > i; j -- ) {
-                    String name2 = evStationList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
-                    if(name2.matches(name)) {
-                        evStationList.remove(j);
-                        cntSame++;
-                    }
-                }
-                evStationList.get(i).setCntCharger(cntSame);
-            }
-
             viewModel.getEvStationList().postValue(evStationList);
             return;
         }
@@ -124,6 +102,5 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
         sThreadManager.handleState(this, outstate);
     }
-
 
 }

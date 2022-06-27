@@ -46,6 +46,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation files('libs/poi-3.17.jar')
     implementation files('libs/poi-ooxml-3.17.jar')
+
     //implementation files('libs/commons-collections4-4.1.jar')
     //implementation files('libs/poi-ooxml-schemas-3.17.jar')
     //implementation group: 'javax.xml.stream', name: 'stax-api', version: '1.0-2'
@@ -72,6 +73,7 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
+    implementation 'androidx.recyclerview:recyclerview-selection:1.1.0'
     implementation 'androidx.cardview:cardview:1.0.0'
 
     annotationProcessor 'androidx.room:room-compiler:2.4.2' // For Kotlin, use kapt.
