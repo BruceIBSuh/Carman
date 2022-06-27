@@ -40,7 +40,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
     private Context context;
 
     public interface OnExpandItemClicked {
-        void onExpandIconClicked(int position, String name);
+        void onExpandIconClicked(String name, int position, int count);
     }
 
     public StationEvAdapter(OnExpandItemClicked callback) {
@@ -105,9 +105,10 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
         holder.getBizNameView().setText(String.valueOf(info.getCntCharger()));
         if(info.getCntCharger() > 1) {
             holder.getImageView().setVisibility(View.VISIBLE);
-            holder.getImageView().setOnClickListener(view -> callback.onExpandIconClicked(position, info.getStdNm()));
-        }
-        else holder.getImageView().setVisibility(View.GONE);
+            holder.getImageView().setOnClickListener(view -> callback.onExpandIconClicked(
+                    info.getStdNm(), holder.getBindingAdapterPosition(), info.getCntCharger()
+            ));
+        } else holder.getImageView().setVisibility(View.GONE);
 
         holder.getLimitDetailView().setText(limitDetail);
 
@@ -116,9 +117,26 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
     }
 
     @Override
+    public void onBindViewHolder(@NonNull ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        //holder.setIsRecyclable(false);
+        if (payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+        else {
+            log.i("partial binding: %s", payloads);
+            for(Object obj : payloads) {
+                if(obj instanceof StationEvRunnable.Item) {
+                    log.i("charger id: %s", ((StationEvRunnable.Item) obj).getChgerId());
+                    holder.getEvStationName().setText(((StationEvRunnable.Item) obj).getChgerId());
+                }
+
+            }
+        }
+    }
+
+
+    @Override
     public int getItemCount() {
         //return evList.size();
-        log.i("mDiffer size: %s", mDiffer.getCurrentList().size());
+        //log.i("mDiffer size: %s", mDiffer.getCurrentList().size());
         return mDiffer.getCurrentList().size();
     }
 

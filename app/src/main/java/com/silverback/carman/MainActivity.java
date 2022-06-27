@@ -89,7 +89,7 @@ public class MainActivity extends BaseActivity implements
     public static final int BANNER_AD_2 = 4;
     public static final int COMPANY_INFO = 5;
 
-
+    private final String regex = "\\d*\\([\\w\\s]*\\)";
     // Objects
     //private ActivityMainBinding binding;
     private ActivityMainBinding binding;
@@ -201,6 +201,8 @@ public class MainActivity extends BaseActivity implements
         stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
+
+
 
     }
 
@@ -344,20 +346,39 @@ public class MainActivity extends BaseActivity implements
         startActivity(boardIntent);
     }
     // Implement StationEvAdapter.OnExpandItemClicked for expanding all chargers in the station.
+    int expandedPos = -1;
     @Override
-    public void onExpandIconClicked(int position, String name) {
-        log.i("expand icon clicked: %s, %s, %s", position, evExpandedList.size(), name);
-        int index = 1;
-        String stnName = evExpandedList.get(position).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
-        for(int j = evExpandedList.size() - 1; j > position; j -- ) {
-            String name2 = evExpandedList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
-            if(name2.matches(stnName)) {
-                evCollapsedList.add(evExpandedList.get(j));
+    public void onExpandIconClicked(String name, int position, int count) {
+        if(position == expandedPos) {
+            if(position + count > position + 1) {
+                evCollapsedList.subList(position + 1, position + count).clear();
+            }
 
+            expandedPos = -1;
+            evListAdapter.submitEvList(evCollapsedList);
+            return;
+        }
+
+        int index = 0;
+        String stnName = evCollapsedList.get(position).getStdNm().replaceAll(regex, "");
+        //for(int j = evExpandedList.size() - 1; j > position; j -- ) {
+        for(int i = 0; i < evExpandedList.size(); i++) {
+            String name2 = evExpandedList.get(i).getStdNm().replaceAll(regex, "");
+            if(name2.matches(stnName)) {
+                expandedPos = position;
+                if(index > 0) evCollapsedList.add(position + index, evExpandedList.get(i));
+                index++;
             }
         }
 
         evListAdapter.submitEvList(evCollapsedList);
+
+        List<StationEvRunnable.Item> payloads = new ArrayList<>();
+        for(int i = position + 1; i < position + count; i++) {
+            payloads.add(evCollapsedList.get(i));
+        }
+
+        evListAdapter.notifyItemRangeChanged(position, count, payloads);
     }
 
     // Reset the default fuel code
