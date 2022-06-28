@@ -373,12 +373,11 @@ public class MainActivity extends BaseActivity implements
     public void onExpandIconClicked(String name, int position, int count) {
         log.i("position: %s, %s", oldEvPos, position);
         // Click the same button to make sub items collapsed.
-        if(oldEvPos == position) {
-            for(int i = oldEvPos + oldEvCount - 1; i > 0; i--) {
-                evSimpleList.remove(i);
-            }
-
-            return;
+        if(oldEvPos != -1) {
+            evSimpleList.subList(oldEvPos + 1, oldEvPos + 1 + oldEvCount).clear();
+            evListAdapter.submitEvList(evSimpleList);
+            oldEvPos = -1;
+            if(oldEvPos == position) return;
         }
 
         int index = 1;
@@ -467,6 +466,7 @@ public class MainActivity extends BaseActivity implements
         }
 
         if(!isActive) {
+            log.i("activate the station list");
             final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
             final String rationale = "permission required to use Fine Location";
             checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
@@ -569,12 +569,14 @@ public class MainActivity extends BaseActivity implements
         log.i("locate EV station");
         mPrevLocation = location;
 
-        evFullList.clear();
-        evSimpleList.clear();
+        if(evFullList.size() > 0) evFullList.clear();
+        if(evSimpleList.size() > 0) evSimpleList.clear();
+
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
 
         stationModel.getEvStationList().observe(this, evList -> {
             if(evList != null && evList.size() > 0) {
+                log.i("retrieve list");
                 this.evFullList.addAll(evList);//keep the full station list as it is.
                 // Remove duplicate items
                 for(int i = 0; i < evList.size(); i++) {
@@ -606,7 +608,8 @@ public class MainActivity extends BaseActivity implements
                 //evSimpleList.addAll(evList);
 
                 //binding.fab.setVisibility(View.GONE);
-                stationModel.getEvStationList().removeObservers(this);
+                //stationModel.getEvStationList().removeObservers(this);
+                evTask = null;
 
                 binding.appbar.setExpanded(true, true);
                 showCollapsedStatusBar(1);
