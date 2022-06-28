@@ -124,7 +124,6 @@ public class StationEvAdapter extends RecyclerView.Adapter<StationEvAdapter.View
             log.i("partial binding: %s", payloads);
             for(Object obj : payloads) {
                 if(obj instanceof StationEvRunnable.Item) {
-                    log.i("charger id: %s", ((StationEvRunnable.Item) obj).getChgerId());
                     holder.getEvStationName().setText(((StationEvRunnable.Item) obj).getChgerId());
                 }
 
