@@ -83,7 +83,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
     @Override
     public void notifyEvStationError(Exception e) {
-        viewModel.getExceptionMessage().postValue(String.valueOf(e));
+        viewModel.getExceptionMessage().postValue(String.valueOf(e.getLocalizedMessage()));
         page++;
     }
 

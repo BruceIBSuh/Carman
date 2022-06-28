@@ -8,9 +8,8 @@
 
     <ImageView
         android:id="@+id/iv_chgr_status"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_marginStart="3dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:contentDescription="@null"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
