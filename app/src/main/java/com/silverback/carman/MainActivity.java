@@ -1,6 +1,8 @@
 package com.silverback.carman;
 
 import static com.silverback.carman.SettingActivity.PREF_USER_IMAGE;
+import static com.silverback.carman.adapters.StationEvAdapter.VIEW_COLLAPSED;
+import static com.silverback.carman.adapters.StationEvAdapter.VIEW_EXPANDED;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
@@ -116,22 +118,42 @@ public class MainActivity extends BaseActivity implements
     private ApplyImageResourceUtil imgResUtil;
 
 
+
     // Fields
     private List<ProgressButton> progbtnList;
-    private List<StationEvRunnable.Item> evExpandedList, evCollapsedList;
+    private List<StationEvRunnable.Item> evFullList;
+    private List<MultiTypeEvItem> evSimpleList;
     private String[] arrGasCode, arrSidoCode, defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
     private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
-    private int prevStation = -1;
+
     private int activeStation;
     private String sidoName;
+    private int prevStation = -1;
+    private int oldEvPos = -1;
+    private int oldEvCount = -1;
 
     // The manual says that registerForActivityResult() is safe to call before a fragment or activity
     // is created
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
+
+
+    public static class MultiTypeEvItem {
+        StationEvRunnable.Item item;
+        int viewType;
+        public MultiTypeEvItem(StationEvRunnable.Item item, int viewType) {
+            this.item = item;
+            this.viewType = viewType;
+        }
+
+        public int getViewType() { return viewType;}
+        public StationEvRunnable.Item getItem() { return item;}
+        public String getItemId() { return item.getChgerId();}
+        public String getStatId() { return item.getStdId();}
+    }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -152,8 +174,7 @@ public class MainActivity extends BaseActivity implements
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         arrSidoCode = getResources().getStringArray(R.array.sido_name);
         mPrevLocation = null;
-        evExpandedList = new ArrayList<>();
-        evCollapsedList = new ArrayList<>();
+
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
@@ -202,7 +223,9 @@ public class MainActivity extends BaseActivity implements
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
-
+        // Create the full and simple Ev list
+        evFullList = new ArrayList<>();
+        evSimpleList = new ArrayList<>();
 
     }
 
@@ -346,39 +369,31 @@ public class MainActivity extends BaseActivity implements
         startActivity(boardIntent);
     }
     // Implement StationEvAdapter.OnExpandItemClicked for expanding all chargers in the station.
-    int expandedPos = -1;
     @Override
     public void onExpandIconClicked(String name, int position, int count) {
-        if(position == expandedPos) {
-            if(position + count > position + 1) {
-                evCollapsedList.subList(position + 1, position + count).clear();
+        log.i("position: %s, %s", oldEvPos, position);
+        // Click the same button to make sub items collapsed.
+        if(oldEvPos == position) {
+            for(int i = oldEvPos + oldEvCount - 1; i > 0; i--) {
+                evSimpleList.remove(i);
             }
 
-            expandedPos = -1;
-            evListAdapter.submitEvList(evCollapsedList);
             return;
         }
 
-        int index = 0;
-        String stnName = evCollapsedList.get(position).getStdNm().replaceAll(regex, "");
-        //for(int j = evExpandedList.size() - 1; j > position; j -- ) {
-        for(int i = 0; i < evExpandedList.size(); i++) {
-            String name2 = evExpandedList.get(i).getStdNm().replaceAll(regex, "");
-            if(name2.matches(stnName)) {
-                expandedPos = position;
-                if(index > 0) evCollapsedList.add(position + index, evExpandedList.get(i));
-                index++;
+        int index = 1;
+        for(int i = 0; i < evFullList.size(); i++) {
+            String name2 = evFullList.get(i).getStdNm().replaceAll(regex, "");
+            if(name.matches(name2)) {
+                evSimpleList.add(position + index, new MultiTypeEvItem(evFullList.get(i), VIEW_EXPANDED));
+                if(index < count) index++;
+                else break;
             }
         }
 
-        evListAdapter.submitEvList(evCollapsedList);
-
-        List<StationEvRunnable.Item> payloads = new ArrayList<>();
-        for(int i = position + 1; i < position + count; i++) {
-            payloads.add(evCollapsedList.get(i));
-        }
-
-        evListAdapter.notifyItemRangeChanged(position, count, payloads);
+        oldEvPos = position;
+        oldEvCount = count;
+        evListAdapter.submitEvList(evSimpleList);
     }
 
     // Reset the default fuel code
@@ -551,18 +566,23 @@ public class MainActivity extends BaseActivity implements
 
 
     private void locateEvStations(Location location) {
+        log.i("locate EV station");
         mPrevLocation = location;
+
+        evFullList.clear();
+        evSimpleList.clear();
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
 
         stationModel.getEvStationList().observe(this, evList -> {
             if(evList != null && evList.size() > 0) {
-                this.evExpandedList.addAll(evList);//retain the station items as it is.
+                this.evFullList.addAll(evList);//keep the full station list as it is.
+                // Remove duplicate items
                 for(int i = 0; i < evList.size(); i++) {
-                    String name = evList.get(i).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                    String name = evList.get(i).getStdNm().replaceAll(regex, "");
                     int cntSame = 1;
                     boolean isAnyChargerOpen = evList.get(i).getStat() == 2;
                     for(int j = evList.size() - 1; j > i; j -- ) {
-                        String name2 = evList.get(j).getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", "");
+                        String name2 = evList.get(j).getStdNm().replaceAll(regex, "");
                         if(name2.matches(name)) {
                             isAnyChargerOpen = evList.get(j).getStat() == 2;
                             evList.remove(j);
@@ -572,18 +592,18 @@ public class MainActivity extends BaseActivity implements
 
                     evList.get(i).setCntCharger(cntSame);
                     if(isAnyChargerOpen) evList.get(i).setIsAnyChargerOpen(true);
+
+                    evSimpleList.add(new MultiTypeEvItem(evList.get(i), VIEW_COLLAPSED));
                 }
 
                 evListAdapter = new StationEvAdapter(this);
                 binding.recyclerStations.setAdapter(evListAdapter);
-
                 binding.recyclerStations.setVisibility(View.VISIBLE);
                 binding.recyclerContents.setVisibility(View.GONE);
                 progbtnList.get(2).stopProgress();
 
-                evListAdapter.submitEvList(evList);
-                evCollapsedList.addAll(evList);
-
+                evListAdapter.submitEvList(evSimpleList);
+                //evSimpleList.addAll(evList);
 
                 //binding.fab.setVisibility(View.GONE);
                 stationModel.getEvStationList().removeObservers(this);
@@ -600,6 +620,8 @@ public class MainActivity extends BaseActivity implements
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
             progbtnList.get(2).resetProgress();
             binding.fab.setVisibility(View.GONE);
+            evSimpleList.clear();
+            evFullList.clear();
             evTask = null;
         });
 
@@ -872,27 +894,6 @@ public class MainActivity extends BaseActivity implements
             isRadiusChanged = true;
             defaultParams[1] = searchRadius;
         }
-    }
-
-    private int getEvSidoCode() {
-        if(sidoName.matches(getString(R.string.pref_spinner_sido_seoul))) return 11;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_busan))) return 26;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_daegu))) return 27;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_incheon))) return 28;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gwangju))) return 29;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_daejeon))) return 30;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_ulsan))) return 31;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_sejong))) return 36;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyunggi))) return 41;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gwangwon))) return 42;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_choongbook))) return 43;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_choongnam))) return 44;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeonbook))) return 45;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeonnam))) return 46;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyungbook))) return 47;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_gyungnam))) return 48;
-        else if(sidoName.matches(getString(R.string.pref_spinner_sido_jeju))) return 50;
-        else return -1;
     }
 
 

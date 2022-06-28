@@ -105,7 +105,7 @@ public class StationEvRunnable implements Runnable {
                 //int totalCount = header.totalCount;
 
                 // Exclude an item if it is out of the distance or include an item within the distance
-                final List<Item> itemList = model.body.items.itemList;
+                final List<Item> itemList = model.itemList;
                 float[] results = new float[3];
                 if(itemList != null && itemList.size() > 0) {
                     for (int i = itemList.size() - 1; i >= 0; i--) {
@@ -170,15 +170,15 @@ public class StationEvRunnable implements Runnable {
         }
     }
 
-    /*
+
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
         List<Item> itemList;
     }
-    */
 
+    /*
     @Xml(name="response")
     public static class EvStationModel {
         @Element Header header;
@@ -199,6 +199,7 @@ public class StationEvRunnable implements Runnable {
         @Element(name="items")
         Items items;
     }
+    */
 
     @Xml
     public static class Items {
@@ -207,9 +208,9 @@ public class StationEvRunnable implements Runnable {
     }
 
     @Xml
-    public static class Item implements Parcelable, Serializable {
+    public static class Item { //implements Parcelable, Serializable{
         @PropertyElement(name="statNm") String stdNm;
-        //@PropertyElement(name="statId") String stdId;
+        @PropertyElement(name="statId") String stdId;
         @PropertyElement(name="chgerId") String chgerId;
         @PropertyElement(name="chgerType") String chgerType;
         @PropertyElement(name="addr") String addr;
@@ -236,7 +237,8 @@ public class StationEvRunnable implements Runnable {
         @PropertyElement(name="limitDetail") String limitDetail;
 
         public String getStdNm() {return stdNm;}
-        //public String getStdId() {return stdId;}
+        public void setStdNm(String name) { this.stdNm = name; }
+        public String getStdId() {return stdId;}
         public String getChgerId() {return chgerId;}
         public String getChgerType() {return convChargerType(chgerType);}
         public String getAddr() {return addr;}
@@ -279,6 +281,7 @@ public class StationEvRunnable implements Runnable {
         }
 
         // Empty constructor
+        /*
         public Item() {}
         // Parcelize the object
         protected Item(Parcel in) {
@@ -295,6 +298,7 @@ public class StationEvRunnable implements Runnable {
             distance = in.readInt();
             cntCharger = in.readInt();
         }
+
 
         public static final Creator<Item> CREATOR = new Creator<Item>() {
             @Override
@@ -328,6 +332,8 @@ public class StationEvRunnable implements Runnable {
             parcel.writeInt(distance);
             parcel.writeInt(cntCharger);
         }
+
+         */
     }
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
