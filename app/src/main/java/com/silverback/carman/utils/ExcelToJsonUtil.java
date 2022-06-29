@@ -50,7 +50,6 @@ public class ExcelToJsonUtil {
             HydroStationObj obj = new HydroStationObj();
             if(currentRow.getRowNum() >= start) {
                 for(int i = 0; i < columnNames.size(); i++) { // exclude the last row due to no values in it
-
                     if(currentRow.getCell(i) != null) {
                         if (currentRow.getCell(i).getCellTypeEnum() == CellType.STRING) {
                             obj.setName(currentRow.getCell(0).getStringCellValue());

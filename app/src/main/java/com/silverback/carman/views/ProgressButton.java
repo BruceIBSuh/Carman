@@ -42,8 +42,7 @@ public class ProgressButton extends LinearLayout {
     }
 
     private void getAttribute(Context context, AttributeSet attrs) {
-        LayoutInflater inflater = LayoutInflater.from(context);
-        binding = ViewProgressButtonBinding.inflate(inflater, this, true);
+        binding = ViewProgressButtonBinding.inflate(LayoutInflater.from(context), this, true);
         this.context = context;
         this.isStatus = false;
         Drawable btnBgRef;
@@ -60,9 +59,9 @@ public class ProgressButton extends LinearLayout {
         binding.button.setOnClickListener(view -> {
             log.i("Status: %s, %s", buttonId, isStatus);
             //if(!isStatus) {
-                if(buttonId == 1) return; //temp code for excluding the svc station
-                if(!isStatus) setProgress();
-                ((MainActivity)context).locateStations(buttonId, isStatus);
+            if(buttonId == 1) return; //temp code for excluding the svc station
+            if(!isStatus) setProgress();
+            ((MainActivity)context).locateStations(buttonId);
 
             //} else resetProgress();
         });
@@ -97,14 +96,13 @@ public class ProgressButton extends LinearLayout {
     }
 
     public void resetProgress(){
-        log.i("resetButton");
         pbColorRef = ContextCompat.getColor(context, android.R.color.white);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
         isStatus = false;
     }
 
-    private void setProgButtonEvent(int type, boolean isActive){
+    private void setProgButtonEvent(int type){
         //exclude temporarily the service button
         if(type == 1) {
             String msg = context.getString(R.string.main_general_no_service);
@@ -112,7 +110,7 @@ public class ProgressButton extends LinearLayout {
             return;
         }
 
-        ((MainActivity)context).locateStations(type, isActive);
+        ((MainActivity)context).locateStations(type);
     }
 
 }

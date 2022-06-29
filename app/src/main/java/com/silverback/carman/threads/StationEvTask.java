@@ -74,6 +74,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
+            log.i("ev: %s", evStationList.size());
             viewModel.getEvStationList().postValue(evStationList);
             return;
         }

@@ -12,6 +12,7 @@ import android.text.TextUtils;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.PropertyName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ExcelToJsonUtil;
@@ -74,6 +75,7 @@ public class StationHydroRunnable implements Runnable {
         float y = (float) katec_pt.getY();
         */
 
+
         mDB.collection("hydro_station").get().addOnSuccessListener(snapshots -> {
             if(snapshots != null && snapshots.size() > 0) {
                 float[] results = new float[3];
@@ -109,26 +111,78 @@ public class StationHydroRunnable implements Runnable {
         });
 
 
-        /*
-        //StringBuilder sb = new StringBuilder(baseUrl);
+
+
+
+        /* Download from www.ev.or.kr as Excel file
         String baseUrl = "https://www.ev.or.kr/portal/monitor/h2Excel";
         File hydroFile = new File(context.getCacheDir(), "hydro.xls");
         hydroFile.deleteOnExit();
 
         if(!hydroFile.exists()) {
-            log.i("download hybrofile");
             try(BufferedInputStream bis = new BufferedInputStream(new URL(baseUrl).openStream());
                 FileOutputStream fos = new FileOutputStream(hydroFile)) {
+
                 int bytesRead;
                 byte[] dataBuffer = new byte[1024];
                 while((bytesRead = bis.read(dataBuffer)) != -1) {
                     fos.write(dataBuffer, 0, bytesRead);
                 }
-            } catch(IOException e) {
+
+                excelToJsonUtil.setExcelFile(hydroFile);
+                excelToJsonUtil.convExcelToList(0, 2, 3);
+
+                List<ExcelToJsonUtil.HydroStationObj> infoList = excelToJsonUtil.getHydroList();
+                //callback.setHydroList(infoList);
+
+                Geocoder geoCoder = new Geocoder(context);
+                List<Address> address;
+                float[] results = new float[3];
+                for(ExcelToJsonUtil.HydroStationObj obj : infoList) {
+                    if(!TextUtils.isEmpty(obj.getAddrs())) {
+                        try {
+                            address = geoCoder.getFromLocationName(obj.getAddrs(), 5);
+                            if (address.get(0) != null) {
+                                double lat = Math.round(address.get(0).getLatitude() * 1000000) / 1000000.0;
+                                double lng = Math.round(address.get(0).getLongitude() * 1000000) / 1000000.0;
+                                log.i("Location: %s, %s, %s", obj.getName(), lat, lng);
+                                obj.setLat(lat);
+                                obj.setLng(lng);
+
+                                Location.distanceBetween(
+                                        location.getLatitude(), location.getLongitude(),
+                                        lat, lng, results
+                                );
+
+                                int distance = (int) results[0];
+                                if (distance < 20000) {
+                                    hydroList.add(obj);
+                                }
+
+
+
+                            }
+
+                        } catch(IndexOutOfBoundsException e) { e.getLocalizedMessage(); }
+                    }
+
+
+                    mDB.collection("hydro_station").add(obj).addOnCompleteListener(task -> {
+                        if(task.isSuccessful()) log.i("Upload hytro done");
+                    });
+
+                                    }
+
+
+            } catch(IOException | InvalidFormatException e) {
                 e.printStackTrace();
+                e.printStackTrace();
+                callback.handleTaskState(HYDRO_STATE_FAIL);
             }
         }
+        */
 
+        /*
         try {
             excelToJsonUtil.setExcelFile(hydroFile);
             excelToJsonUtil.convExcelToList(0, 2, 3);
@@ -160,6 +214,8 @@ public class StationHydroRunnable implements Runnable {
             e.printStackTrace();
             callback.handleTaskState(HYDRO_STATE_FAIL);
         }
+
+         */
 
         /*
         try {
@@ -203,7 +259,7 @@ public class StationHydroRunnable implements Runnable {
          */
 
 
-        /*
+        /* REST api of data being downloaded from data.go.kr
         StringBuilder sb = new StringBuilder();
         try {
             sb.append("?").append(URLEncoder.encode("page", "UTF-8"));
@@ -238,15 +294,25 @@ public class StationHydroRunnable implements Runnable {
     }
 
     public static class HydroStationObj {
+        @PropertyName("name")
+
         private String name;
+        @PropertyName("addrs")
         private String addrs;
+        @PropertyName("phone")
         private String phone;
+        @PropertyName("price")
         private String price;
+        @PropertyName("bizhour")
         private String bizhour;
+        @PropertyName("charger")
         private int charger;
-        private int distance;
+        @PropertyName("lat")
         private double lat;
+        @PropertyName("lng")
         private double lng;
+
+        private int distance;
 
         public HydroStationObj(){}
         public HydroStationObj(String name, String addrs, String phone, String price, String bizhour,
@@ -286,10 +352,12 @@ public class StationHydroRunnable implements Runnable {
             return charger;
         }
 
+        public void setLat(double lat) { this.lat = lat; }
         public double getLat() {
             return lat;
         }
 
+        public void setLng(double lng) { this.lng = lng; }
         public double getLng() {
             return lng;
         }
@@ -302,6 +370,8 @@ public class StationHydroRunnable implements Runnable {
             return distance;
         }
     }
+
+
 
 
     /*

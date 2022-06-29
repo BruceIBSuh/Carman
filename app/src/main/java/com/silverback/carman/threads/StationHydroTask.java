@@ -6,6 +6,7 @@ import android.location.Location;
 import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.utils.ExcelToJsonUtil;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.List;
@@ -43,19 +44,20 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
         return location;
     }
 
+
     /*
     @Override
-    public void setHydroList(List<ExcelToJsonUtil.HydroStationObj> hydroList) {
+    public void setHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
         if(hydroList.size() > 0) model.getHydroStationList().postValue(hydroList);
     }
 
      */
 
+
     @Override
     public void setFirebaseHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
         if(hydroList.size() > 0) {
             model.getHydroStationList().postValue(hydroList);
-            //model.getHydroStationList().removeObservers((MainActivity)context);
         }
     }
 

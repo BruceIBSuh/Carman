@@ -52,7 +52,7 @@ public class StationEvRunnable implements Runnable {
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
 
-    //private EvStationModel model;
+    //private EvStationModel model
     private final int queryPage;
 
 
@@ -69,6 +69,7 @@ public class StationEvRunnable implements Runnable {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
         this.queryPage = queryPage;
+
         log.i("current page: %s", this.queryPage);
     }
 
@@ -105,7 +106,7 @@ public class StationEvRunnable implements Runnable {
                 //int totalCount = header.totalCount;
 
                 // Exclude an item if it is out of the distance or include an item within the distance
-                final List<Item> itemList = model.itemList;
+                List<Item> itemList = model.itemList;
                 float[] results = new float[3];
                 if(itemList != null && itemList.size() > 0) {
                     for (int i = itemList.size() - 1; i >= 0; i--) {
@@ -116,7 +117,10 @@ public class StationEvRunnable implements Runnable {
                         if (distance > 1000) itemList.remove(i);
                         else itemList.get(i).setDistance(distance);
                     }
+
+                    log.i("ev runnable itemList: %s", itemList.size());
                 }
+
 
                 callback.setEvStationList(itemList);
             }
