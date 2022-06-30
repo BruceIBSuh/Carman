@@ -46,13 +46,18 @@
         </com.google.android.material.appbar.CollapsingToolbarLayout>
     </com.google.android.material.appbar.AppBarLayout>
 
-
-    <FrameLayout
-        android:id="@+id/frameLayout"
+    <!--
+    android:animateLayoutChanges="true"
+    android:inAnimation="@android:anim/slide_in_left"
+    -->
+    <ViewFlipper
+        android:id="@+id/viewFlipper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginBottom="50dp"
-        android:animateLayoutChanges="true"
+        android:measureAllChildren="false"
+        android:inAnimation="@anim/slide_in_right"
+        android:outAnimation="@anim/sidle_out_left"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_contents"
@@ -61,11 +66,17 @@
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_stations"
-            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
-    </FrameLayout>
+        <TextView
+            android:id="@+id/tv_emptyview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="no stations exist"/>
+
+    </ViewFlipper>
 
     <ViewSwitcher
         android:id="@+id/viewSwitcher"

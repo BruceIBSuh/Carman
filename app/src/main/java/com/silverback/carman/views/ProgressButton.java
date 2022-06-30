@@ -61,6 +61,7 @@ public class ProgressButton extends LinearLayout {
             //if(!isStatus) {
             if(buttonId == 1) return; //temp code for excluding the svc station
             if(!isStatus) setProgress();
+
             ((MainActivity)context).locateStations(buttonId);
 
             //} else resetProgress();

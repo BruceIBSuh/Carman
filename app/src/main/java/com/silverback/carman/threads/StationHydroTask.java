@@ -44,19 +44,10 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
         return location;
     }
 
-
-    /*
-    @Override
-    public void setHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
-        if(hydroList.size() > 0) model.getHydroStationList().postValue(hydroList);
-    }
-
-     */
-
-
     @Override
     public void setFirebaseHydroList(List<StationHydroRunnable.HydroStationObj> hydroList) {
         if(hydroList.size() > 0) {
+            log.i("post hydro value");
             model.getHydroStationList().postValue(hydroList);
         }
     }

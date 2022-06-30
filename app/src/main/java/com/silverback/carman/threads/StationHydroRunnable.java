@@ -66,25 +66,17 @@ public class StationHydroRunnable implements Runnable {
         callback.setHydroStationThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-        Location location = callback.getHydroLocation();
-        /*
-        GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
-        GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);
-        GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
-        float x = (float) katec_pt.getX();
-        float y = (float) katec_pt.getY();
-        */
-
-
+        final Location location = callback.getHydroLocation();
         mDB.collection("hydro_station").get().addOnSuccessListener(snapshots -> {
             if(snapshots != null && snapshots.size() > 0) {
                 float[] results = new float[3];
                 for(DocumentSnapshot document : snapshots) {
                     Object objLat = document.get("lat");
                     Object objLng = document.get("lng");
-
+                    // Calculate the distance b/w the current and station location.
                     if(objLat != null && objLng != null) {
-                        Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                        Location.distanceBetween(
+                                location.getLatitude(), location.getLongitude(),
                                 (double)objLat, (double)objLng, results
                         );
                     }
@@ -111,9 +103,6 @@ public class StationHydroRunnable implements Runnable {
         });
 
 
-
-
-
         /* Download from www.ev.or.kr as Excel file
         String baseUrl = "https://www.ev.or.kr/portal/monitor/h2Excel";
         File hydroFile = new File(context.getCacheDir(), "hydro.xls");
@@ -122,7 +111,6 @@ public class StationHydroRunnable implements Runnable {
         if(!hydroFile.exists()) {
             try(BufferedInputStream bis = new BufferedInputStream(new URL(baseUrl).openStream());
                 FileOutputStream fos = new FileOutputStream(hydroFile)) {
-
                 int bytesRead;
                 byte[] dataBuffer = new byte[1024];
                 while((bytesRead = bis.read(dataBuffer)) != -1) {

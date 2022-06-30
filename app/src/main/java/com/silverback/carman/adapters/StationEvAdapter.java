@@ -125,15 +125,17 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 log.i("collapsed station status: %s", info.getIsAnyChargerOpen());
                 holder.getChgrStatusView().setImageDrawable(getCollapsedStatusImage(info.getIsAnyChargerOpen()));
 
-                holder.getEvStationName().setText(info.getStdNm().replaceAll("\\d*\\([\\w\\s]*\\)", ""));
+                String stnName = info.getStdNm().replaceAll(MainActivity.regexEvName, "");
+                holder.getEvStationName().setText(stnName);
                 //holder.getChargerIdView().setText(charId);
                 //holder.getChargerStatus().setText(String.valueOf(info.getStat()));
                 //holder.getBizNameView().setText(info.getBusiNm());
                 holder.getBizNameView().setText(String.valueOf(info.getCntCharger()));
                 if(info.getCntCharger() > 1) {
                     holder.getImageView().setVisibility(View.VISIBLE);
+                    log.i("name: %s", stnName);
                     holder.getImageView().setOnClickListener(view -> callback.onExpandIconClicked(
-                            info.getStdNm(), holder.getBindingAdapterPosition(), info.getCntCharger()
+                            stnName, holder.getBindingAdapterPosition(), info.getCntCharger()
                     ));
                 } else holder.getImageView().setVisibility(View.GONE);
 
