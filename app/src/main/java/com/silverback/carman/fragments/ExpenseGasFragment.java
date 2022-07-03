@@ -325,7 +325,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 stnName = curStn.getStnName();
                 stnId = curStn.getStnId();
                 binding.tvStationName.setText(stnName);
-                binding.etGasUnitPrice.setText(String.valueOf(curStn.getStnPrice()));
+                binding.etGasUnitPrice.setText(String.valueOf(curStn.getGasPrice()));
                 binding.etGasUnitPrice.setCursorVisible(false);
 
                 // Query Favorite with the fetched station name or station id to tell whether the station

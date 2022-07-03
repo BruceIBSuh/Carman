@@ -30,9 +30,7 @@ import java.util.List;
 import java.util.Locale;
 
 public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvAdapter.class);
-
     public static final int VIEW_COLLAPSED = 0;
     public static final int VIEW_EXPANDED = 1;
 

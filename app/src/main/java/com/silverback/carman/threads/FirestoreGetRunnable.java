@@ -20,11 +20,13 @@ public class FirestoreGetRunnable implements Runnable {
     // Objects
     private final FireStoreGetMethods mCallback;
     private FirebaseFirestore firestore;
-    private List<Opinet.GasStnParcelable> stnList;
+    //private List<Opinet.GasStnParcelable> stnList;
+    private List<StationGasRunnable.Item> stnList;
 
     // Interface
     public interface FireStoreGetMethods {
-        List<Opinet.GasStnParcelable> getStationList();
+        //List<Opinet.GasStnParcelable> getStationList();
+        List<StationGasRunnable.Item> getStationList();
         void setStationTaskThread(Thread thread);
         void setStationId(String stnId);
         void setCarWashInfo(int position, boolean isCarwash);
@@ -97,9 +99,12 @@ public class FirestoreGetRunnable implements Runnable {
         final String stnId = stnList.get(position).getStnId();
         Map<String, Object> stnData = new HashMap<>();
         stnData.put("stn_name", stnList.get(position).getStnName());
-        stnData.put("stn_code", stnList.get(position).getStnCode());
-        stnData.put("katec_x", stnList.get(position).getLongitude());
-        stnData.put("katec_y", stnList.get(position).getLatitude());
+        //stnData.put("stn_code", stnList.get(position).getStnCode());
+        //stnData.put("katec_x", stnList.get(position).getLongitude());
+        //stnData.put("katec_y", stnList.get(position).getLatitude());
+        stnData.put("stn_code", stnList.get(position).getStnCompany());
+        stnData.put("katec_x", stnList.get(position).getX());
+        stnData.put("katec_y", stnList.get(position).getY());
 
         firestore.collection("gas_station").document(stnId)
                 .set(stnData)

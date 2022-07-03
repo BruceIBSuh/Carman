@@ -9,6 +9,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
+import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.utils.ExcelToJsonUtil;
 
@@ -20,8 +21,11 @@ public class StationListViewModel extends ViewModel {
     private static final LoggingHelper log = LoggingHelperFactory.create(StationListViewModel.class);
 
     // Objects
-    private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
-    private MutableLiveData<Opinet.GasStnParcelable> currentStation;
+    //private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
+    private MutableLiveData<List<StationGasRunnable.Item>> stnList;
+
+    //private MutableLiveData<Opinet.GasStnParcelable> currentStation;
+    private MutableLiveData<StationGasRunnable.Item> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
     private MutableLiveData<SparseBooleanArray> hasCarWash;
 
@@ -32,7 +36,8 @@ public class StationListViewModel extends ViewModel {
     private MutableLiveData<String> exceptionMessage;
 
     // Get a station list stationos of which are located within a given radius conditions.
-    public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
+    //public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
+    public MutableLiveData<List<StationGasRunnable.Item>> getNearStationList() {
         if(stnList == null) {
             stnList = new MutableLiveData<>();
         }
@@ -41,7 +46,8 @@ public class StationListViewModel extends ViewModel {
     }
 
     // Get a current station which is located within MIN_RADIUS
-    public MutableLiveData<Opinet.GasStnParcelable> getCurrentStation() {
+    //public MutableLiveData<Opinet.GasStnParcelable> getCurrentStation() {
+    public MutableLiveData<StationGasRunnable.Item> getCurrentStation() {
         if(currentStation == null) {
             currentStation = new MutableLiveData<>();
         }

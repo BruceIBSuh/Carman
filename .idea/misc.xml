@@ -34,6 +34,7 @@
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_board_banner.xml" value="0.4256410256410256" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/cardview_gas_stations.xml" value="0.25" />
         <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/dialog_favorite_list.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/dialog_image_chooser.xml" value="0.24427083333333333" />

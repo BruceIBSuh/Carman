@@ -33,7 +33,8 @@ public class StationGasTask extends ThreadTask implements
     private final Runnable mStationListRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
-    private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
+    //private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
+    private List<StationGasRunnable.Item> mStationList; //used by StationGasRunnable
     private final SparseBooleanArray sparseBooleanArray;
 
     //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
@@ -82,7 +83,7 @@ public class StationGasTask extends ThreadTask implements
     public void setStationTaskThread(Thread thread) {
         setCurrentThread(thread);
     }
-
+    /*
     @Override
     public void setNearStationList(List<Opinet.GasStnParcelable> list) {
         log.i("viewmodel test: %s", list.size());
@@ -90,7 +91,11 @@ public class StationGasTask extends ThreadTask implements
         viewModel.getNearStationList().postValue(mStationList);
         //weakModelReference.get().getNearStationList().postValue(mStationList);
     }
-
+    */
+    public void setNearStationList(List<StationGasRunnable.Item> stationList) {
+        mStationList = stationList;
+        viewModel.getNearStationList().postValue(mStationList);
+    }
     @Override
     public void setStationId(String stnId) {
         this.stnId = stnId;
@@ -109,12 +114,17 @@ public class StationGasTask extends ThreadTask implements
         }
     }
 
-
+    /*
     @Override
     public void setCurrentStation(Opinet.GasStnParcelable station) {
         //postValue() used in worker thread. In UI thread, use setInputValue().
         viewModel.getCurrentStation().postValue(station);
-        //weakModelReference.get().getCurrentStation().postValue(station);
+    }
+
+     */
+    @Override
+    public void setCurrentStation(StationGasRunnable.Item station) {
+        viewModel.getCurrentStation().postValue(station);
     }
 
 
@@ -145,8 +155,15 @@ public class StationGasTask extends ThreadTask implements
     }
     // FirestoreGetRunnable invokes this for having the near stations retrieved by StationGasRunnable,
     // each of which is queried for whether it has the carwash or has been visited.
+    /*
     @Override
     public List<Opinet.GasStnParcelable> getStationList() {
+        return mStationList;
+    }
+     */
+
+    @Override
+    public List<StationGasRunnable.Item> getStationList() {
         return mStationList;
     }
 

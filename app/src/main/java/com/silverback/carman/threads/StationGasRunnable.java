@@ -54,8 +54,10 @@ public class StationGasRunnable implements Runnable{
         String[] getDefaultParam();
         Location getStationLocation();
         void setStationTaskThread(Thread thread);
-        void setNearStationList(List<Opinet.GasStnParcelable> list);
-        void setCurrentStation(Opinet.GasStnParcelable station);
+        //void setNearStationList(List<Opinet.GasStnParcelable> list);
+        //void setCurrentStation(Opinet.GasStnParcelable station);
+        void setNearStationList(List<Item> stationList);
+        void setCurrentStation(Item station);
         void notifyException(String msg);
         void handleTaskState(int state);
     }
@@ -150,22 +152,19 @@ public class StationGasRunnable implements Runnable{
                 assert model != null;
                 List<Item> itemList = model.result.oilList;
                 for(Item item: itemList) log.i("Item: %s", item.getStnName());
-                /*
-                if(mStationList.size() > 0) {
+                if(itemList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {
-                        mTask.setCurrentStation(mStationList.get(0));
+                        mTask.setCurrentStation(itemList.get(0));
                         mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION);
                     } else {
-                        mTask.setNearStationList(mStationList);
+                        mTask.setNearStationList(itemList);
                         mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS);
                     }
                 } else {
-                    if(radius.matches(Constants.MIN_RADIUS)) {
+                    if (radius.matches(Constants.MIN_RADIUS)) {
                         mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION_FAIL);
                     } else mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL);
                 }
-
-                 */
             }
 
             @Override
@@ -180,7 +179,6 @@ public class StationGasRunnable implements Runnable{
         String BASE_URL = "https://www.opinet.co.kr/api/";
         @GET("aroundAll.do")
         Call<StationAroundModel> getGasStationAroundModel (
-
                 @Query("code") String code,
                 @Query("x") float x,
                 @Query("y") float y,
@@ -188,33 +186,22 @@ public class StationGasRunnable implements Runnable{
                 @Query("sort") int sort,
                 @Query("prodcd") String prodCd,
                 @Query("out") String out
-                /*
-                @Query("code") String code,
-                @Query("prodcd") String prodcd,
-                @Query("out") String out
-
-                 */
         );
 
     }
 
     private static class RetrofitClient {
         private final RetrofitApi retrofitApi;
-
-
         private RetrofitClient() {
-            Gson gson = new GsonBuilder().setLenient().create();
+            Gson gson = new GsonBuilder().setLenient().create(); //make it less strict
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(RetrofitApi.BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
-
             retrofitApi = retrofit.create(RetrofitApi.class);
-
         }
-
         // Bill-Pugh Singleton instance
         private static class LazyHolder {
             private static final RetrofitClient sInstance = new RetrofitClient();
@@ -223,10 +210,12 @@ public class StationGasRunnable implements Runnable{
             return RetrofitClient.LazyHolder.sInstance;
         }
 
+
         public RetrofitApi getRetrofitApi() {
             return retrofitApi;
         }
     }
+
 
     public static class StationAroundModel {
         @SerializedName("RESULT")
@@ -243,9 +232,9 @@ public class StationGasRunnable implements Runnable{
 
     public static class Item {
         @SerializedName("UNI_ID")
-        @Expose
-        private String stnId;
-        @SerializedName("POLL_DIV_CO")
+        @Expose private
+        String stnId;
+        @SerializedName("POLL_DIV_CD")
         @Expose
         private String stnCompany;
         @SerializedName("OS_NM")
@@ -259,15 +248,15 @@ public class StationGasRunnable implements Runnable{
         private Float stnDistance;
         @SerializedName("GIS_X_COOR")
         @Expose
-        private Double xCoords;
+        private Double x;
         @SerializedName("GIS_Y_COOR")
         @Expose
-        private Double yCoords;
+        private Double y;
+
 
         public String getStnId() {
             return stnId;
         }
-
         public void setStnId(String stnId) {
             this.stnId = stnId;
         }
@@ -275,7 +264,6 @@ public class StationGasRunnable implements Runnable{
         public String getStnCompany() {
             return stnCompany;
         }
-
         public void setStnCompany(String stnCompany) {
             this.stnCompany = stnCompany;
         }
@@ -283,146 +271,46 @@ public class StationGasRunnable implements Runnable{
         public String getStnName() {
             return stnName;
         }
-
         public void setStnName(String stnName) {
             this.stnName = stnName;
         }
 
-        public Integer getGasPrice() {
+        public int getGasPrice() {
             return gasPrice;
         }
-
-        public void setGasPrice(Integer gasPrice) {
+        public void setGasPrice(int gasPrice) {
             this.gasPrice = gasPrice;
         }
 
-        public Float getStnDistance() {
+        public float getStnDistance() {
             return stnDistance;
         }
-
-        public void setStnDistance(Float stnDistance) {
+        public void setStnDistance(float stnDistance) {
             this.stnDistance = stnDistance;
         }
 
-        public Double getxCoords() {
-            return xCoords;
+        public double getX() {
+            return x;
+        }
+        public void setX(double x) {
+            this.x = x;
         }
 
-        public void setxCoords(Double xCoords) {
-            this.xCoords = xCoords;
+        public double getY() {
+            return y;
+        }
+        public void setY(double y) {
+            this.y = y;
         }
 
-        public Double getyCoords() {
-            return yCoords;
+        public boolean isCarWash;
+        public void setIsCarWash(boolean isCarWash) {
+            this.isCarWash = isCarWash;
         }
 
-        public void setyCoords(Double yCoords) {
-            this.yCoords = yCoords;
+        public boolean getIsCarWash() {
+            return isCarWash;
         }
-
-
-
-
-
     }
-
-
-    /*
-    private static class StationAroundModel {
-
-
-        @SerializedName("UNI_ID")
-        private String stnId;
-        @SerializedName("POLL_DIV_CO")
-        private String stnCompany;
-        @SerializedName("OS_NM")
-        private String stnName;
-        @SerializedName("PRICE")
-        private Integer gasPrice;
-
-        @SerializedName("DISTANCE")
-        private Float stnDistance;
-        @SerializedName("GIS_X_COOR")
-        private Double xCoords;
-        @SerializedName("GIS_Y_COOR")
-        private Double yCoords;
-
-        public void setResult(HashMap<String, Object> result) {
-            this.result = result;
-        }
-        public Object getResult() {
-            return result;
-        }
-
-
-        public void setOilList(HashMap<String, List<Object>> oilList) {
-            this.oilList = oilList;
-        }
-
-
-
-        public HashMap<String, List<Object>> getOiList() {
-            return oilList;
-        }
-
-        /*
-        public void setStnId(String stnId) {
-            this.stnId = stnId;
-        }
-
-        public void setStnCompany(String stnCompany) {
-            this.stnCompany = stnCompany;
-        }
-
-        public void setStnName(String stnName) {
-            this.stnName = stnName;
-        }
-
-        public void setGasPrice(Integer gasPrice) {
-            this.gasPrice = gasPrice;
-        }
-
-        public void setStnDistance(Float stnDistance) {
-            this.stnDistance = stnDistance;
-        }
-
-        public void setxCoords(Double xCoords) {
-            this.xCoords = xCoords;
-        }
-
-        public void setyCoords(Double yCoords) {
-            this.yCoords = yCoords;
-        }
-
-        public String getStnId() {
-            return stnId;
-        }
-
-        public String getStnCompany() {
-            return stnCompany;
-        }
-
-        public String getStnName() {
-            return stnName;
-        }
-
-        public Integer getGasPrice() {
-            return gasPrice;
-        }
-
-        public Float getStnDistance() {
-            return stnDistance;
-        }
-
-        public Double getxCoords() {
-            return xCoords;
-        }
-
-        public Double getyCoords() {
-            return yCoords;
-        }
-
-         */
-
 
 }

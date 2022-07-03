@@ -48,7 +48,8 @@
 
     <!--
     android:animateLayoutChanges="true"
-    android:inAnimation="@android:anim/slide_in_left"
+    android:inAnimation="@anim/slide_in_right"
+    android:outAnimation="@anim/sidle_out_left"
     -->
     <ViewFlipper
         android:id="@+id/viewFlipper"
@@ -56,9 +57,9 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="50dp"
         android:measureAllChildren="false"
-        android:inAnimation="@anim/slide_in_right"
-        android:outAnimation="@anim/sidle_out_left"
+        android:animateLayoutChanges="true"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_contents"
             android:layout_width="match_parent"
