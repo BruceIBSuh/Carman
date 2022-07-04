@@ -60,10 +60,14 @@ public class ThreadManager2 {
     // Objects
     //private static final InnerInstanceClazz sInstance; //Singleton instance of the class
     private final BlockingQueue<Runnable> mWorkerThreadQueue;
-    private final BlockingQueue<StationGasTask> mStnListTaskQueue;
-    private final BlockingQueue<StationEvTask> mElecListTaskQueue;
-    private final BlockingQueue<StationHydroTask> mHydroListTaskQueue;
-    private final BlockingQueue<LocationTask> mLocationTaskQueue;
+
+    private final BlockingQueue<ThreadTask> mThreadTaskQueue;
+
+    //private final BlockingQueue<LocationTask> mLocationTaskQueue;
+    //private final BlockingQueue<StationGasTask> mStnListTaskQueue;
+    //private final BlockingQueue<StationEvTask> mElecListTaskQueue;
+    //private final BlockingQueue<StationHydroTask> mHydroListTaskQueue;
+
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
@@ -91,10 +95,13 @@ public class ThreadManager2 {
         //super();
         mWorkerThreadQueue = new LinkedBlockingQueue<>();
 
-        mStnListTaskQueue = new LinkedBlockingQueue<>();
-        mElecListTaskQueue = new LinkedBlockingQueue<>();
-        mHydroListTaskQueue = new LinkedBlockingQueue<>();
-        mLocationTaskQueue = new LinkedBlockingQueue<>();
+        mThreadTaskQueue = new LinkedBlockingQueue<>();
+
+        //mLocationTaskQueue = new LinkedBlockingQueue<>();
+        //mStnListTaskQueue = new LinkedBlockingQueue<>();
+        //mElecListTaskQueue = new LinkedBlockingQueue<>();
+        //mHydroListTaskQueue = new LinkedBlockingQueue<>();
+
         mGeocoderReverseTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
@@ -126,7 +133,6 @@ public class ThreadManager2 {
             }
         };
     }
-
     // Singleton Initialization: LazyHolder type.
     private static class InnerClazz {
         private static final ThreadManager2 sInstance = new ThreadManager2();
@@ -153,15 +159,16 @@ public class ThreadManager2 {
             case DOWNLOAD_CURRENT_STATION:
                 break;
             case DOWNLOAD_NEAR_STATIONS:
+                //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).getFireStoreRunnable());
+                //log.i("station list: %s", ((StationGasTask)task).getStationList().size());
                 InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationGasTask)task).getFireStoreRunnable());
+                        ((StationGasTask)task).getStationInfoRunnable());
                 break;
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
                 log.i("upload station data: %s", task);
-                InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationGasTask)task).setFireStoreRunnalbe());
+                //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).setFireStoreRunnalbe());
                 break;
 
             case FIRESTORE_STATION_SET_COMPLETED:
@@ -275,7 +282,7 @@ public class ThreadManager2 {
 
 
     public static LocationTask fetchLocationTask(Context context, LocationViewModel model){
-        LocationTask locationTask = InnerClazz.sInstance.mLocationTaskQueue.poll();
+        LocationTask locationTask = (LocationTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
 
@@ -290,7 +297,7 @@ public class ThreadManager2 {
     public static StationGasTask startGasStationListTask(
             StationListViewModel model, Location location, String[] params) {
 
-        StationGasTask stationGasTask = InnerClazz.sInstance.mStnListTaskQueue.poll();
+        StationGasTask stationGasTask = (StationGasTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationGasTask == null) stationGasTask = new StationGasTask();
         stationGasTask.initStationTask(model, location, params);
         log.i("StationGasTask: %s", stationGasTask);
@@ -302,7 +309,8 @@ public class ThreadManager2 {
     // Electric Charge Station
     public static StationEvTask startEVStatoinListTask(
             Context context, StationListViewModel model, Location location) {
-        StationEvTask stationEvTask = InnerClazz.sInstance.mElecListTaskQueue.poll();
+
+        StationEvTask stationEvTask = (StationEvTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
         for(int page = 1; page <= 5; page++) {
@@ -317,7 +325,7 @@ public class ThreadManager2 {
     public static StationHydroTask startHydroStationListTask(
             Context context, StationListViewModel model, Location location) {
 
-        StationHydroTask hydroStationsTask = InnerClazz.sInstance.mHydroListTaskQueue.poll();
+        StationHydroTask hydroStationsTask = (StationHydroTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(hydroStationsTask == null) hydroStationsTask = new StationHydroTask(context, model, location);
         InnerClazz.sInstance.threadPoolExecutor.execute(hydroStationsTask.getHydroListRunnable());
         return hydroStationsTask;
@@ -353,21 +361,22 @@ public class ThreadManager2 {
 
 
     private void recycleTask(ThreadTask task) {
+        boolean b = mThreadTaskQueue.offer(task);
         if(task instanceof GasPriceTask) {
             task.recycle();
             mGasPriceTaskQueue.offer((GasPriceTask)task);
         } else if(task instanceof LocationTask) {
             task.recycle();
-            mLocationTaskQueue.offer((LocationTask)task);
+            //mLocationTaskQueue.offer((LocationTask)task);
         } else if(task instanceof StationGasTask) {
             task.recycle();
-            mStnListTaskQueue.offer((StationGasTask)task);
+            //mStnListTaskQueue.offer((StationGasTask)task);
         } else if(task instanceof UploadBitmapTask) {
             task.recycle();
             mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
         } else if(task instanceof StationEvTask) {
             task.recycle();
-            mElecListTaskQueue.offer((StationEvTask)task);
+            //mElecListTaskQueue.offer((StationEvTask)task);
         }
     }
 

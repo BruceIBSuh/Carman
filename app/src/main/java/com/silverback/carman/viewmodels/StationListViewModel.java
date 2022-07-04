@@ -11,6 +11,7 @@ import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
 import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationHydroRunnable;
+import com.silverback.carman.threads.StationInfoRunnable;
 import com.silverback.carman.utils.ExcelToJsonUtil;
 
 import java.util.List;
@@ -23,11 +24,13 @@ public class StationListViewModel extends ViewModel {
     // Objects
     //private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<List<StationGasRunnable.Item>> stnList;
+    private MutableLiveData<List<StationInfoRunnable.Info>> stationInfo;
 
     //private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<StationGasRunnable.Item> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
     private MutableLiveData<SparseBooleanArray> hasCarWash;
+
 
 
     private MutableLiveData<List<StationEvRunnable.Item>> evStationList;
@@ -60,6 +63,11 @@ public class StationListViewModel extends ViewModel {
             hasCarWash = new MutableLiveData<>();
         }
         return hasCarWash;
+    }
+
+    public MutableLiveData<List<StationInfoRunnable.Info>> getStationInfoList() {
+        if(stationInfo == null) stationInfo = new MutableLiveData<>();
+        return stationInfo;
     }
 
     public MutableLiveData<List<StationEvRunnable.Item>> getEvStationList() {

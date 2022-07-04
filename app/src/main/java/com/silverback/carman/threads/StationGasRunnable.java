@@ -232,7 +232,7 @@ public class StationGasRunnable implements Runnable{
 
     public static class Item {
         @SerializedName("UNI_ID")
-        @Expose private
+        @Expose
         String stnId;
         @SerializedName("POLL_DIV_CD")
         @Expose

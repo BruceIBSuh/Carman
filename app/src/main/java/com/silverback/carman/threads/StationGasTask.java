@@ -10,7 +10,7 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import java.util.List;
 
 public class StationGasTask extends ThreadTask implements
-        StationGasRunnable.StationListMethod,
+        StationGasRunnable.StationListMethod, StationInfoRunnable.StationInfoMethods,
         FirestoreGetRunnable.FireStoreGetMethods,
         FirestoreSetRunnable.FireStoreSetMethods {
 
@@ -31,6 +31,7 @@ public class StationGasTask extends ThreadTask implements
     private StationListViewModel viewModel;
     //private WeakReference<StationListViewModel> weakModelReference;
     private final Runnable mStationListRunnable;
+    private final Runnable mStationInfoRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
     //private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
@@ -47,6 +48,7 @@ public class StationGasTask extends ThreadTask implements
     StationGasTask() {
         super();
         mStationListRunnable = new StationGasRunnable(this);
+        mStationInfoRunnable = new StationInfoRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
         sparseBooleanArray = new SparseBooleanArray();
@@ -64,6 +66,7 @@ public class StationGasTask extends ThreadTask implements
 
     // Get Runnables to be called in ThreadPool.executor()
     Runnable getStationListRunnable() { return mStationListRunnable; }
+    Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
     Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
@@ -83,27 +86,49 @@ public class StationGasTask extends ThreadTask implements
     public void setStationTaskThread(Thread thread) {
         setCurrentThread(thread);
     }
-    /*
-    @Override
-    public void setNearStationList(List<Opinet.GasStnParcelable> list) {
-        log.i("viewmodel test: %s", list.size());
-        mStationList = list;
-        viewModel.getNearStationList().postValue(mStationList);
-        //weakModelReference.get().getNearStationList().postValue(mStationList);
-    }
-    */
-    public void setNearStationList(List<StationGasRunnable.Item> stationList) {
-        mStationList = stationList;
-        viewModel.getNearStationList().postValue(mStationList);
-    }
+
     @Override
     public void setStationId(String stnId) {
         this.stnId = stnId;
     }
 
+    /*
+   @Override
+   public void setNearStationList(List<Opinet.GasStnParcelable> list) {
+       log.i("viewmodel test: %s", list.size());
+       mStationList = list;
+       viewModel.getNearStationList().postValue(mStationList);
+       //weakModelReference.get().getNearStationList().postValue(mStationList);
+   }
+   */
+    @Override
+    public void setNearStationList(List<StationGasRunnable.Item> stationList) {
+        mStationList = stationList;
+        viewModel.getNearStationList().postValue(mStationList);
+    }
+
+    @Override
+    public List<StationGasRunnable.Item> getNearStationList() {
+        return mStationList;
+    }
+
+
+
+    @Override
+    public void setStationInfoList(List<StationInfoRunnable.Info> infoList) {
+        viewModel.getStationInfoList().postValue(infoList);
+    }
+
+
+
+
+
     @Override
     public void setCarWashInfo(int position, boolean isWash) {
-        log.i("SparseArray: %s, %s", sparseBooleanArray, mStationList);
+        log.i("SparseArray: %s, %s", position, isWash);
+        sparseBooleanArray.put(position, isWash);
+        viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
+        /*
         sparseBooleanArray.put(position, isWash);
         // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
         // incur a unexpectable result.
@@ -112,7 +137,10 @@ public class StationGasTask extends ThreadTask implements
             viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
             //weakModelReference.get().getStationCarWashInfo().postValue(sparseBooleanArray);
         }
+
+         */
     }
+
 
     /*
     @Override

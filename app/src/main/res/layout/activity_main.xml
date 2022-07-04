@@ -58,6 +58,8 @@
         android:layout_marginBottom="50dp"
         android:measureAllChildren="false"
         android:animateLayoutChanges="true"
+        android:inAnimation="@android:anim/slide_in_left"
+        android:outAnimation="@android:anim/slide_out_right"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <androidx.recyclerview.widget.RecyclerView

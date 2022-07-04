@@ -1,7 +1,6 @@
 package com.silverback.carman.adapters;
 
 import android.content.Context;
-import android.net.Uri;
 import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,19 +17,13 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.common.collect.Lists;
 import com.silverback.carman.BaseActivity;
-import com.silverback.carman.MainActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainRecyclerGasBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.StationGasRunnable;
-import com.silverback.carman.utils.Constants;
-import com.silverback.carman.utils.MultiTypePostingItem;
+import com.silverback.carman.threads.StationInfoRunnable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.Comparator;
@@ -126,9 +119,10 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.
             for(Object obj : payloads) {
-                String msg = ((boolean)obj)?
-                        context.getString(R.string.general_carwash_yes):
-                        context.getString(R.string.general_carwash_no);
+                if(obj instanceof StationInfoRunnable.Info) {
+                    log.i("partial binding");
+                }
+                //String msg = ((boolean)obj)? context.getString(R.string.general_carwash_yes): context.getString(R.string.general_carwash_no);
                 // Update the car wash value.
                 //holder.getCarWashView().setText(msg);
             }

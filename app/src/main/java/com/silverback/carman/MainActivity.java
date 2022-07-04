@@ -38,6 +38,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationEvAdapter;
@@ -56,6 +57,7 @@ import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationHydroTask;
+import com.silverback.carman.threads.StationInfoRunnable;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -565,16 +567,21 @@ public class MainActivity extends BaseActivity implements
 
     private void locateGasStations(Location location) {
         log.i("Locate Gas: %s", location);
-        mPrevLocation = location;
+        //if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
+            mPrevLocation = location;
+            gasListAdapter = new StationGasAdapter(this);
+            binding.recyclerStations.setAdapter(gasListAdapter);
 
-        if(gasStationList.size() > 0) gasStationList.clear();
+            defaultParams[0] = gasCode;
+            locationModel.getLocation().removeObserver(locationObserver);
+            stationGasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+        /*
+        } else {
+            final String msg = getString(R.string.general_snackkbar_inbounds);
+            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+        }
 
-        gasListAdapter = new StationGasAdapter(this);
-        binding.recyclerStations.setAdapter(gasListAdapter);
-
-        defaultParams[0] = gasCode;
-        locationModel.getLocation().removeObserver(locationObserver);
-        stationGasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+         */
 
         //gasObserver = new Observer<List<Opinet.GasStnParcelable>>() {
         gasObserver = new Observer<List<StationGasRunnable.Item>>() {
@@ -659,6 +666,10 @@ public class MainActivity extends BaseActivity implements
             hasStationInfo = true;
         });
          */
+        stationModel.getStationInfoList().observe(this, stationInfoList -> {
+            for(StationInfoRunnable.Info info : stationInfoList)  log.i("info: %s", info.getCarWashYN());
+            gasListAdapter.notifyItemRangeChanged(0, stationInfoList.size(), stationInfoList);
+        });
     }
 
 
