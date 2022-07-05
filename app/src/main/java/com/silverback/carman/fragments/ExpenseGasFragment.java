@@ -34,7 +34,7 @@ import com.silverback.carman.database.GasManagerEntity;
 import com.silverback.carman.databinding.FragmentGasManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.FavoritePriceTask;
+import com.silverback.carman.threads.FavStationTaskk;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.ThreadManager2;
@@ -76,7 +76,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
     private FavoriteGeofenceHelper geofenceHelper;
     private LocationTask locationTask;
     private StationGasTask stnListTask;
-    private FavoritePriceTask favPriceTask;
+    private FavStationTaskk favPriceTask;
     private SharedPreferences mSettings;
     private SimpleDateFormat sdf;
     private DecimalFormat df;
@@ -89,7 +89,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
     private String dateFormat;
     private String stnName, stnId;// stnCode, stnAddrs;
     private String date;
-    private String userName;
+    private String userName, userId;
     private String geoStnName, geoStnId;
     private long geoTime;
     private boolean isGeofenceIntent, isFavoriteGas;
@@ -108,7 +108,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // Argument(s) from the parent activity which ExpenseTabPagerTask has set to notify the defaults.
         if(getArguments() != null) {
             //defaultParams = getArguments().getStringArray("defaultParams");
-            //userId = getArguments().getString("userId");
+            userId = getArguments().getString("userId");
         }
 
         // The parent activity gets started by tabbing the Geofence notification w/ the pendingintent
@@ -271,14 +271,14 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // the user can have the favorite station list when clicking the favorite button.
         // In doing so, this fragment communicates w/ FavoriteListFragment to retrieve a favorite
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
-        // FavoritePriceTask gets started to have the gas price.
+        // FavStationTaskk gets started to have the gas price.
         fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), data -> {
             binding.tvStationName.setText(data.providerName);
             binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             stnId = data.providerId;
             isFavoriteGas = true;
 
-            favPriceTask = ThreadManager2.startFavoritePriceTask(
+            favPriceTask = ThreadManager2.startFavoriteStationTask(
                     requireActivity(), opinetViewModel, data.providerId, false);
 
         });
@@ -444,6 +444,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         if(!TextUtils.isEmpty(binding.etGasComment.getText())) {
             Map<String, Object> commentData = new HashMap<>();
             commentData.put("timestamp", FieldValue.serverTimestamp());
+            commentData.put("userId", userId);
             commentData.put("name", userName);
             commentData.put("comments", binding.etGasComment.getText().toString());
             commentData.put("rating", binding.rbGasStation.getRating());
@@ -525,7 +526,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
-                favPriceTask = ThreadManager2.startFavoritePriceTask(
+                favPriceTask = ThreadManager2.startFavoriteStationTask(
                         requireActivity(), opinetViewModel, stnId, false);
                 break;
             case Constants.SVC:

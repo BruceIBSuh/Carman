@@ -19,7 +19,6 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -70,7 +69,7 @@ public class ThreadManager2 {
 
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
-    private final BlockingQueue<FavoritePriceTask> mFavoritePriceTaskQueue;
+    private final BlockingQueue<FavStationTaskk> mFavStationTaskkQueue;
     private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     
@@ -104,7 +103,7 @@ public class ThreadManager2 {
 
         mGeocoderReverseTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
-        mFavoritePriceTaskQueue = new LinkedBlockingQueue<>();
+        mFavStationTaskkQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
 
@@ -269,15 +268,15 @@ public class ThreadManager2 {
         return gasPriceTask;
     }
 
-    public static FavoritePriceTask startFavoritePriceTask(
+    public static FavStationTaskk startFavoriteStationTask(
             Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
 
-        FavoritePriceTask favPriceTask = InnerClazz.sInstance.mFavoritePriceTaskQueue.poll();
-        if(favPriceTask == null) favPriceTask = new FavoritePriceTask(context);
-        favPriceTask.initTask(model, stnId, isFirst);
+        FavStationTaskk favStationTask = (FavStationTaskk) InnerClazz.sInstance.mThreadTaskQueue.poll();
+        if(favStationTask == null) favStationTask = new FavStationTaskk(context);
+        favStationTask.initTask(model, stnId, isFirst);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(favPriceTask.getPriceRunnableStation());
-        return favPriceTask;
+        InnerClazz.sInstance.threadPoolExecutor.execute(favStationTask.getPriceRunnableStation());
+        return favStationTask;
     }
 
 

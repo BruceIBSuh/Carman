@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:padding="8dp">
@@ -45,6 +45,7 @@
         android:text="@string/general_station_price"
         app:layout_constraintEnd_toStartOf="@+id/tv_value_price"
         app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toEndOf="@+id/img_logo"
         app:layout_constraintStart_toStartOf="@+id/tv_stn_name"
         app:layout_constraintTop_toBottomOf="@+id/tv_stn_name" />
@@ -64,7 +65,7 @@
         android:id="@+id/tv_label_distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="16dp"
         android:text="@string/general_station_distance"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_value_price"
         app:layout_constraintEnd_toStartOf="@+id/tv_value_distance"
@@ -86,22 +87,45 @@
         android:id="@+id/expense_tv_label_carwash"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:text="@string/general_carwash"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="64dp"
+        android:text="@string/main_station_facility"
         app:layout_constraintBaseline_toBaselineOf="@+id/tv_value_distance"
-        app:layout_constraintEnd_toStartOf="@+id/tv_value_carwash"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_value_distance" />
 
-    <TextView
-        android:id="@+id/tv_value_carwash"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:minWidth="40dp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/expense_tv_label_carwash"
+    <ImageView
+        android:id="@+id/imgview_cvs"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="@null"
+        android:src="@drawable/main_facility_cvs"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
+        app:layout_constraintEnd_toStartOf="@+id/imgview_svc"
+        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
+
+    <ImageView
+        android:id="@+id/imgview_svc"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="@null"
+        android:src="@drawable/main_facility_svc"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
+        app:layout_constraintEnd_toStartOf="@+id/imgview_carwash"
+        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
+
+    <ImageView
+        android:id="@+id/imgview_carwash"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:contentDescription="@null"
+        android:src="@drawable/main_facility_carwash"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/expense_tv_label_carwash" />
+        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

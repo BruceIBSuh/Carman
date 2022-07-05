@@ -72,12 +72,7 @@ public class StationGasTask extends ThreadTask implements
 
     // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
-        /*
-        if(weakModelReference != null) {
-            weakModelReference.clear();
-            weakModelReference = null;
-        }
-         */
+        mStationList.clear();
     }
 
     // Callback invoked by StationGasRunnable and StationInfoRunnable as well to set the current
@@ -104,7 +99,7 @@ public class StationGasTask extends ThreadTask implements
     @Override
     public void setNearStationList(List<StationGasRunnable.Item> stationList) {
         mStationList = stationList;
-        viewModel.getNearStationList().postValue(mStationList);
+        //viewModel.getNearStationList().postValue(mStationList);
     }
 
     @Override
@@ -115,11 +110,9 @@ public class StationGasTask extends ThreadTask implements
 
 
     @Override
-    public void setStationInfoList(List<StationInfoRunnable.Info> infoList) {
-        viewModel.getStationInfoList().postValue(infoList);
+    public void setStationInfoList(List<StationGasRunnable.Item> stationList) {
+        viewModel.getNearStationList().postValue(mStationList);
     }
-
-
 
 
 

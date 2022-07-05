@@ -77,8 +77,9 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
         TextView getNameView() { return binding.tvStnName; }
         TextView getPriceView() { return binding.tvValuePrice; }
         TextView getDistanceView() { return binding.tvValueDistance; }
-        TextView getCarWashView() { return binding.tvValueCarwash; }
-
+        ImageView getCarWashView() { return binding.imgviewCarwash; }
+        ImageView getCvSView() { return binding.imgviewCvs; }
+        ImageView getSvcView() { return binding.imgviewSvc; }
 
     }
 
@@ -97,17 +98,24 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
         String stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
         int resLogo = getGasStationImage(data.getStnCompany());
         String carwash = (data.getIsCarWash())?context.getString(R.string.general_carwash_yes):context.getString(R.string.general_carwash_no);
+        log.i("car wash: %s", carwash);
 
         holder.getLogoImageView().setImageDrawable(ContextCompat.getDrawable(context, resLogo));
         holder.getNameView().setText(data.getStnName());
-        holder.getPriceView().setText(String.format("%s%2s", df.format(data.getGasPrice()), context.getString(R.string.unit_won)));
-        holder.getDistanceView().setText(String.format("%s%4s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
-        holder.getCarWashView().setText(carwash);
+        holder.getPriceView().setText(String.format("%s%s", df.format(data.getGasPrice()), context.getString(R.string.unit_won)));
+        holder.getDistanceView().setText(String.format("%s%s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
+        
+        // Set the visibility of the facility icons.
+        if(data.getIsCarWash()) holder.getCarWashView().setVisibility(View.VISIBLE);
+        if(data.getIsCVS()) holder.getCvSView().setVisibility(View.VISIBLE);
+        if(data.getIsService()) holder.getSvcView().setVisibility(View.VISIBLE);
 
         holder.itemView.setOnClickListener(view -> {
             if(mListener != null) mListener.onItemClicked(position);
         });
     }
+
+
 
 
     @Override

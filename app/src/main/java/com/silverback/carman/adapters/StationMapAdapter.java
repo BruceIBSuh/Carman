@@ -1,9 +1,6 @@
 package com.silverback.carman.adapters;
 
-import android.content.ClipData;
 import android.content.Context;
-import android.net.Uri;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,60 +9,75 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
-import androidx.core.graphics.drawable.RoundedBitmapDrawable;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.request.RequestOptions;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.silverback.carman.R;
-import com.silverback.carman.databinding.CardviewCommentsBinding;
-import com.silverback.carman.databinding.InclMapStninfoBinding;
+import com.silverback.carman.databinding.MapStationCommentBinding;
+import com.silverback.carman.databinding.MapStationDetailBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-
-import org.w3c.dom.Document;
+import com.silverback.carman.threads.StationGasRunnable;
 
 import java.util.List;
+import java.util.Objects;
 
-public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+public class StationMapAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationCommentAdapter.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationMapAdapter.class);
 
     // Define Types
     private final int TYPE_HEADER = 0;
     private final int TYPE_ITEM = 1;
     private final int TYPE_FOOTER = 2;
 
-
-    // Objects
-    private Context context;
-    private final DocumentReference docRef;
+    //private final DocumentReference docRef;
     private final List<DocumentSnapshot> snapshotList;
-    private InclMapStninfoBinding stnBinding;
-    private CardviewCommentsBinding commentBinding;
+    private final StationGasRunnable.Item stationDetail;
 
-    public StationCommentAdapter(String stnId, List<DocumentSnapshot> snapshotList) {
+
+    /*
+    public StationMapAdapter(String stnId, List<DocumentSnapshot> snapshotList) {
         this.snapshotList = snapshotList;
         docRef = FirebaseFirestore.getInstance().collection("gas_station").document(stnId);
     }
 
+     */
+    public StationMapAdapter(StationGasRunnable.Item item, List<DocumentSnapshot> snapshots) {
+        this.snapshotList = snapshots;
+        this.stationDetail = item;
+    }
+
     // ViewHolder
-    public static class ItemViewHolder extends RecyclerView.ViewHolder {
-        public ItemViewHolder(View itemView) {
+    public static class CommentViewHolder extends RecyclerView.ViewHolder {
+        private final MapStationCommentBinding binding;
+        public CommentViewHolder(View itemView) {
             super(itemView);
+            binding =MapStationCommentBinding.bind(itemView);
         }
+
+        ImageView getUserImageView() { return binding.imgUserpic; }
+        TextView getUserNameView() { return binding.tvNickname; }
+        TextView getTimeView() { return binding.tvCommentTimestamp; }
+        TextView getCommentView() { return binding.tvComments; }
+        RatingBar getCommentRatingView() { return binding.rbCommentsRating; }
     }
 
     public static class HeaderViewHolder extends RecyclerView.ViewHolder {
+        private final MapStationDetailBinding binding;
         public HeaderViewHolder(View headerView){
             super(headerView);
+            binding = MapStationDetailBinding.bind(headerView);
         }
+
+        TextView getStationNameView() { return binding.tvStnName; }
+        TextView getStationAddrsView() { return binding.tvStnAddrs; }
+        TextView getCarWashView() { return binding.tvWash; }
+        TextView getCvsView() { return binding.tvCvs; }
+        TextView getServiceView() { return binding.tvService; }
+        ImageView getStationImageView() { return binding.imgStation; }
     }
 
 
@@ -76,11 +88,25 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
 
+
+
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        this.context = parent.getContext();
+        // Objects
+        Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
+        switch(viewType) {
+            case TYPE_HEADER:
+                View headerView = inflater.inflate(R.layout.map_station_detail, parent, false);
+                return new HeaderViewHolder(headerView);
+            case TYPE_ITEM:
+            default:
+                View commentView = inflater.inflate(R.layout.map_station_comment, parent, false);
+                return new CommentViewHolder(commentView);
+        }
+
+        /*
         RecyclerView.ViewHolder holder;
 
         if(viewType == TYPE_HEADER) {
@@ -95,11 +121,34 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
 
         return holder;
-
+        */
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
+
+        switch(position) {
+            case TYPE_HEADER:
+                HeaderViewHolder header = (HeaderViewHolder)holder;
+                header.getStationNameView().setText(stationDetail.getStnName());
+                header.getStationAddrsView().setText(stationDetail.getAddrsNew());
+                header.getCarWashView().setText(String.valueOf(stationDetail.isCarWash));
+                header.getCvsView().setText(String.valueOf(stationDetail.isCVS));
+                header.getServiceView().setText(String.valueOf(stationDetail.isService));
+                break;
+            case TYPE_FOOTER:
+                break;
+            default:
+                CommentViewHolder comment = (CommentViewHolder)holder;
+                DocumentSnapshot doc = snapshotList.get(position - 1);
+                comment.getUserNameView().setText(doc.getString("name"));
+                comment.getTimeView().setText(Objects.requireNonNull(doc.getTimestamp("timestamp")).toDate().toString());
+                comment.getCommentView().setText(doc.getString("comments"));
+                Long rating = doc.getLong("rating");
+                if(rating != null) comment.getCommentRatingView().setRating((float)rating);
+
+                break;
+        }
         /*
         if(position == 0) dispStationInfo();
         else bindCommentToView(snapshotList.get(position));
@@ -114,16 +163,19 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
         holder.bindToComments(snapshotList.get(position));
 
-         */
-
         if(holder instanceof HeaderViewHolder) dispStationInfo();
         //else if(holder instanceof FooterViewHolder) dispStationInfo();
         else bindCommentToView(snapshotList.get(position - 1));
+
+         */
     }
 
     @Override
     public void onBindViewHolder(
             @NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
+
+        /*
         if(holder instanceof HeaderViewHolder) {
             dispStationInfo();
         } else if(holder instanceof ItemViewHolder) {
@@ -137,6 +189,8 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 }
             }
         }
+
+         */
     }
 
     @Override
@@ -195,6 +249,7 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     }
 
      */
+    /*
     @SuppressWarnings("ConstantConditions")
     private void bindCommentToView(DocumentSnapshot doc) {
         log.i("bind comment");
@@ -203,7 +258,7 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         commentBinding.tvCommentTimestamp.setText(doc.getTimestamp("timestamp").toDate().toString());
         float rating = (float)doc.getLong("rating");
         commentBinding.rbCommentsRating.setRating(rating);
-        /*
+
         final String userId = snapshotList.get(position).getId();
         firestore.collection("users").document(userId).get().addOnSuccessListener(snapshot -> {
             if(snapshot != null && snapshot.exists()) {
@@ -220,11 +275,12 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 }
             }
         }).addOnFailureListener(e -> {});
-
-         */
     }
 
-    @SuppressWarnings("ConstantConditions")
+     */
+
+    //@SuppressWarnings("ConstantConditions")
+    /*
     private void dispStationInfo() throws NullPointerException {
         docRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
@@ -242,9 +298,7 @@ public class StationCommentAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 stnBinding.tvCvs.setText(svc);
             }
         });
-
-
-
-
     }
+
+     */
 }

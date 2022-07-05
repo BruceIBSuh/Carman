@@ -18,6 +18,7 @@ import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,19 +36,20 @@ public class StationInfoRunnable implements Runnable {
    private final StationInfoMethods callback;
    private List<StationGasRunnable.Item> mStationList;
    private List<Info> stationInfoList;
-   private int index = 0;
+   private SparseBooleanArray sparseArray;
 
 
 
    public interface StationInfoMethods {
       void setStationTaskThread(Thread thread);
       List<StationGasRunnable.Item> getNearStationList();
-      void setStationInfoList(List<Info> infoList);
+      void setStationInfoList(List<StationGasRunnable.Item> infoList);
    }
 
    public StationInfoRunnable(StationInfoMethods callback) {
       this.callback = callback;
       stationInfoList = new ArrayList<>();
+      sparseArray = new SparseBooleanArray();
    }
 
    @Override
@@ -55,36 +57,44 @@ public class StationInfoRunnable implements Runnable {
       callback.setStationTaskThread(Thread.currentThread());
       android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
-      mStationList = callback.getNearStationList();
-      for(int i = 0; i < mStationList.size(); i++) {
+      try {
+         if (Thread.interrupted()) throw new InterruptedException();
+         mStationList = callback.getNearStationList();
+         for (int i = 0; i < mStationList.size(); i++) {
+            Call<StationInfoModel> call = RetrofitClient.getIntance()
+                    .getRetrofitApi()
+                    .getStationInfoModel("F186170711", mStationList.get(i).getStnId(), "json");
 
-         Call<StationInfoModel> call = RetrofitClient.getIntance()
-                 .getRetrofitApi()
-                 .getStationInfoModel("F186170711", mStationList.get(i).getStnId(), "json");
 
+            int index = i;
+            call.enqueue(new Callback<StationInfoModel>() {
+               @Override
+               public void onResponse(@NonNull Call<StationInfoModel> call,
+                                      @NonNull Response<StationInfoModel> response) {
 
-         call.enqueue(new Callback<StationInfoModel>() {
-            @Override
-            public void onResponse(@NonNull Call<StationInfoModel> call,
-                                   @NonNull Response<StationInfoModel> response) {
+                  StationInfoModel model = response.body();
+                  assert model != null;
+                  Info info = model.result.info.get(0);
 
-               StationInfoModel model = response.body();
-               assert model != null;
-               //log.i("model: %s", model.result);
-               //List<Info> detailList = model.result.detail;
-               stationInfoList.add(model.result.info.get(0));
-            }
+                  mStationList.get(index).setAddrsNew(info.addrsNew);
+                  mStationList.get(index).setAddrsOld(info.addrsOld);
+                  mStationList.get(index).setIsCarWash(Objects.equals(info.carWashYN, "Y"));
+                  mStationList.get(index).setIsCVS(Objects.equals(info.cvsYN, "Y"));
+                  mStationList.get(index).setIsService(Objects.equals(info.maintYN, "Y"));
+               }
 
-            @Override
-            public void onFailure(@NonNull Call<StationInfoModel> call,
-                                  @NonNull Throwable t) {
-               log.i("call failed: %s", t);
-            }
-         });
+               @Override
+               public void onFailure(@NonNull Call<StationInfoModel> call,
+                                     @NonNull Throwable t) {
+                  log.i("call failed: %s", t);
+               }
+            });
 
-      }
+         }
 
-      callback.setStationInfoList(stationInfoList);
+      } catch (InterruptedException e) { e.getLocalizedMessage(); }
+
+      callback.setStationInfoList(mStationList);
 
    }
 
@@ -140,12 +150,22 @@ public class StationInfoRunnable implements Runnable {
    }
 
    public static class Info {
+      @SerializedName("VAN_ADR")
+      @Expose
+      private String addrsOld;
+
+      @SerializedName("NEW_ADR")
+      @Expose
+      private String addrsNew;
+
       @SerializedName("CAR_WASH_YN")
       private String carWashYN;
 
-      public String getCarWashYN() {
-         return carWashYN;
-      }
+      @SerializedName("CVS_YN")
+      private String cvsYN;
+
+      @SerializedName("MAINT_YN")
+      private String maintYN;
    }
 
 

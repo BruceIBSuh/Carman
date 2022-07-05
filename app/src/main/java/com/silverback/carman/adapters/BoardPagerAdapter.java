@@ -33,9 +33,8 @@ public class BoardPagerAdapter extends FragmentStateAdapter {
     private final ArrayList<String> autofilter;
     private final List<BoardPagerFragment> fragmentList;
 
-    public BoardPagerAdapter(
-            @NonNull FragmentManager fm, @NonNull Lifecycle lifecycle,
-            String userId, ArrayList<String> autofilter) {
+    public BoardPagerAdapter(@NonNull FragmentManager fm, @NonNull Lifecycle lifecycle,
+                             String userId, ArrayList<String> autofilter) {
         super(fm, lifecycle);
         this.userId = userId;
         this.autofilter = autofilter;

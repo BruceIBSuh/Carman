@@ -57,8 +57,7 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     }
 
     @Override
-    public void onBindViewHolder(
-            @NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
+    public void onBindViewHolder(@NonNull FragmentViewHolder holder, int position, @NonNull List<Object> payloads){
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {

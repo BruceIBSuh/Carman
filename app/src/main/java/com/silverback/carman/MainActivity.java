@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.provider.Settings;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -89,6 +90,7 @@ public class MainActivity extends BaseActivity implements
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
+    public static final String regexEvName = "\\d*\\([\\w\\s]*\\)";
 
     public static final int NOTIFICATION = 0;
     public static final int BANNER_AD_1 = 1;
@@ -97,7 +99,7 @@ public class MainActivity extends BaseActivity implements
     public static final int BANNER_AD_2 = 4;
     public static final int COMPANY_INFO = 5;
 
-    public static final String regexEvName = "\\d*\\([\\w\\s]*\\)";
+
     // Objects
     //private ActivityMainBinding binding;
     private ActivityMainBinding binding;
@@ -139,7 +141,7 @@ public class MainActivity extends BaseActivity implements
     private String[] arrGasCode, arrSidoCode, defaultParams;
     private String gasCode;
     private boolean isRadiusChanged, isGasTypeChanged, isStnViewOn;
-    private boolean hasStationInfo = false;
+    //private boolean hasStationInfo = false;
     private boolean bStnOrder = false; // false: distance true:price
 
     private int statusbar;
@@ -305,12 +307,16 @@ public class MainActivity extends BaseActivity implements
         if(item.getItemId() == R.id.action_garage) {
             // Result back to MainExpensePagerFragment to update the expense in the feed.
             Intent expenseIntent = new Intent(this, ExpenseActivity.class);
+            expenseIntent.putExtra("userId", userId);
             expenseIntent.putExtra("caller", Constants.REQUEST_MAIN_EXPENSE_TOTAL);
             activityResultLauncher.launch(expenseIntent);
+
         } else if(item.getItemId() == R.id.action_board) {
             startActivity(new Intent(this, BoardActivity.class));
+
         } else if(item.getItemId() == R.id.action_login) {
             log.i("login process required");
+
         } else if(item.getItemId() == R.id.action_setting) {
             // Results back to MainActivity to update the user settings
             Intent settingIntent = new Intent(this, SettingActivity.class);
@@ -331,13 +337,17 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void onItemClicked(final int pos) {
         // Disable click until any data has been downloaded from Firestore.
+        /*
         if(!hasStationInfo) {
             log.i("wait a sec"); // Check if necessary!!!
             return;
         }
 
+         */
+
         Intent intent = new Intent(this, StationMapActivity.class);
-        intent.putExtra("gasStationId", gasStationList.get(pos).getStnId());
+        intent.putExtra("stationDetail", (Parcelable)gasStationList.get(pos));
+        //intent.putExtra("gasStationId", gasStationList.get(pos).getStnId());
         activityResultLauncher.launch(intent);
     }
 
@@ -589,7 +599,7 @@ public class MainActivity extends BaseActivity implements
             public void onChanged(List<StationGasRunnable.Item> stnList) {
                 if (stnList != null && stnList.size() > 0) {
                     log.i("gas station list: %s", stnList.size());
-                    stationModel.getNearStationList().removeObserver(this);
+                    gasStationList = stnList;
 
                     binding.viewFlipper.setDisplayedChild(1);
                     progbtnList.get(0).stopProgress();
@@ -598,6 +608,7 @@ public class MainActivity extends BaseActivity implements
                     statusbar = 0;
 
                     gasListAdapter.submitGasList(stnList);
+                    stationModel.getNearStationList().removeObserver(this);
 
                 } else {
                     binding.viewFlipper.setDisplayedChild(2);
@@ -606,6 +617,7 @@ public class MainActivity extends BaseActivity implements
 
                 isRadiusChanged = false;
                 isGasTypeChanged = false;
+
                 //binding.pbNearStns.setVisibility(View.GONE);
                 //binding.progbtnGas.setProgress(true);
                 //binding.recyclerContents.setVisibility(View.GONE);
@@ -666,10 +678,13 @@ public class MainActivity extends BaseActivity implements
             hasStationInfo = true;
         });
          */
+        /*
         stationModel.getStationInfoList().observe(this, stationInfoList -> {
             for(StationInfoRunnable.Info info : stationInfoList)  log.i("info: %s", info.getCarWashYN());
             gasListAdapter.notifyItemRangeChanged(0, stationInfoList.size(), stationInfoList);
         });
+
+         */
     }
 
 
@@ -958,6 +973,7 @@ public class MainActivity extends BaseActivity implements
     private void getActivityResult(ActivityResult result) {
         // If the station reyelcerview is in the visible state, it should be gone
         //isStnViewOn = binding.stationRecyclerView.getVisibility() == View.VISIBLE;
+        /*
         isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             //binding.stationRecyclerView.setVisibility(View.GONE);
@@ -968,6 +984,8 @@ public class MainActivity extends BaseActivity implements
             //binding.progbtnGas.setProgress(isStnViewOn);
             progbtnList.get(0).stopProgress();
         }
+
+         */
 
         Intent resultIntent = result.getData();
         if(resultIntent == null) return;

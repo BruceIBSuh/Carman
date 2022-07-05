@@ -96,7 +96,7 @@
         app:layout_constraintTop_toTopOf="@+id/textView18" />
 
     <ImageView
-        android:id="@+id/imageView4"
+        android:id="@+id/img_station"
         android:layout_width="120dp"
         android:layout_height="80dp"
         android:contentDescription="@null"

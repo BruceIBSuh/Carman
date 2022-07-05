@@ -1,39 +1,43 @@
 package com.silverback.carman.threads;
 
+
+import static com.silverback.carman.threads.FavStationRunnable.RetrofitApi.BASE_URL;
+
 import android.content.Context;
-import android.net.Uri;
 import android.os.Process;
 
+import androidx.annotation.NonNull;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.XmlPullParserHandler;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.Buffer;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
-public class FavoritePriceRunnable implements Runnable {
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.GET;
+import retrofit2.http.Query;
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePriceRunnable.class);
+public class FavStationRunnable implements Runnable {
 
-    private static final String API_KEY = "F186170711";
-    private static final String OPINET = "https://www.opinet.co.kr/api/";
-    private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavStationRunnable.class);
+
+    //private static final String API_KEY = "F186170711";
+    //private static final String OPINET = "https://www.opinet.co.kr/api/";
+    //private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
 
     // Objects
     private final Context mContext;
@@ -50,7 +54,7 @@ public class FavoritePriceRunnable implements Runnable {
     }
 
     // Constructor
-    FavoritePriceRunnable(Context context, StationPriceMethods callback) {
+    FavStationRunnable(Context context, StationPriceMethods callback) {
         mContext = context;
         mCallback = callback;
         xmlHandler = new XmlPullParserHandler();
@@ -60,10 +64,35 @@ public class FavoritePriceRunnable implements Runnable {
     public void run() {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
         mCallback.setStnPriceThread(Thread.currentThread());
-        String stationId = mCallback.getStationId();
 
+        final String stationId = mCallback.getStationId();
         try {
             if(Thread.interrupted()) throw new InterruptedException();
+            if(mCallback.getIsFirst()) {
+                Call<FavStationModel> call = RetrofitClient.getIntance()
+                        .getRetrofitApi()
+                        .getStationInfoModel("F186170711", stationId, "json");
+                call.enqueue(new Callback<FavStationModel>() {
+                    @Override
+                    public void onResponse(@NonNull Call<FavStationModel> call,
+                                           @NonNull Response<FavStationModel> response) {
+
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<FavStationModel> call,
+                                          @NonNull Throwable t) {
+                        log.i("call failed: %s", t);
+                    }
+                });
+
+            } else {
+
+            }
+
+
+
+            /*
             URL url = new URL(URLStn + stationId);
             HttpURLConnection conn = (HttpURLConnection)url.openConnection();
             try(InputStream in = conn.getInputStream()) {
@@ -113,7 +142,78 @@ public class FavoritePriceRunnable implements Runnable {
 
             } finally { if(conn != null) conn.disconnect(); }
 
-        } catch(IOException | InterruptedException e){e.printStackTrace(); }
+             */
+
+        } catch(InterruptedException e){e.printStackTrace(); }
+    }
+
+    public interface RetrofitApi {
+        String BASE_URL = "https://www.opinet.co.kr/api/";
+        @GET("detailById.do")
+        Call<FavStationModel> getStationInfoModel (
+                @Query("code") String code,
+                @Query("id") String id,
+                @Query("out") String out
+        );
+
+    }
+
+    private static class RetrofitClient {
+        private final RetrofitApi retrofitApi;
+        private RetrofitClient() {
+            Gson gson = new GsonBuilder().setLenient().create(); //make it less strict
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
+                    .build();
+            retrofitApi = retrofit.create(RetrofitApi.class);
+        }
+
+        // Bill-Pugh Singleton instance
+        private static class LazyHolder {
+            private static final RetrofitClient sInstance = new RetrofitClient();
+        }
+        public static RetrofitClient getIntance() {
+            return RetrofitClient.LazyHolder.sInstance;
+        }
+
+        public RetrofitApi getRetrofitApi() {
+            return retrofitApi;
+        }
+    }
+
+    private static class FavStationModel {
+        @SerializedName("RESULT")
+        @Expose
+        public Result result;
+    }
+
+    public static class Result {
+        @SerializedName("OIL")
+        @Expose
+        public List<StationInfoRunnable.Info> info;
+
+    }
+
+    public static class Info {
+        @SerializedName("VAN_ADR")
+        @Expose
+        private String addrsOld;
+
+        @SerializedName("NEW_ADR")
+        @Expose
+        private String addrsNew;
+
+        @SerializedName("CAR_WASH_YN")
+        private String carWashYN;
+
+        @SerializedName("CVS_YN")
+        private String cvsYN;
+
+        @SerializedName("MAINT_YN")
+        private String maintYN;
     }
 
     private void savePriceInfo(File file, Object obj) {

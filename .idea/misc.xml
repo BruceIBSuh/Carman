@@ -33,6 +33,7 @@
         <entry key="app/src/main/res/layout/board_read_post.xml" value="0.23854166666666668" />
         <entry key="app/src/main/res/layout/board_recyclerview_post.xml" value="0.33" />
         <entry key="app/src/main/res/layout/cardview_board_banner.xml" value="0.4256410256410256" />
+        <entry key="app/src/main/res/layout/cardview_comments.xml" value="0.23385416666666667" />
         <entry key="app/src/main/res/layout/cardview_expense_stmts.xml" value="0.1" />
         <entry key="app/src/main/res/layout/cardview_gas_stations.xml" value="0.25" />
         <entry key="app/src/main/res/layout/dialog_alert_general.xml" value="0.24427083333333333" />
@@ -53,6 +54,7 @@
         <entry key="app/src/main/res/layout/fragment_gas_manager.xml" value="0.25" />
         <entry key="app/src/main/res/layout/fragment_pager_expense.xml" value="0.5" />
         <entry key="app/src/main/res/layout/fragment_service_manager.xml" value="0.5" />
+        <entry key="app/src/main/res/layout/incl_map_stninfo.xml" value="0.23385416666666667" />
         <entry key="app/src/main/res/layout/itemview_board_comment.xml" value="0.25" />
         <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.22" />
         <entry key="app/src/main/res/layout/main_collapsed_indication.xml" value="0.33" />
@@ -69,6 +71,7 @@
         <entry key="app/src/main/res/layout/main_pager_station_price.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_recycler_ev_collapsed.xml" value="0.4256410256410256" />
         <entry key="app/src/main/res/layout/main_recycler_ev_expanded.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/main_recycler_gas.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_recycler_hydro.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_recyclerview_ev.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_spinner_ev.xml" value="0.23385416666666667" />

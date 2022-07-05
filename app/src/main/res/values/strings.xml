@@ -48,7 +48,7 @@
     <string name="general_no_station">주유소 없습니다</string>
     <string name="general_station_price">가격</string>
     <string name="general_station_distance">거리</string>
-    <string name="general_carwash">세차</string>
+    <string name="main_station_facility">편의시설</string>
     <string name="general_snackkbar_inbounds">같은 구역입니다. 잠시 후 다시 확인하여 주세요</string>
     <string name="general_carwash_yes">가능</string>
     <string name="general_carwash_no">불가</string>

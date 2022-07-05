@@ -2,19 +2,15 @@ package com.silverback.carman;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
@@ -28,10 +24,11 @@ import com.naver.maps.map.NaverMapOptions;
 import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.overlay.Marker;
 import com.naver.maps.map.util.FusedLocationSource;
-import com.silverback.carman.adapters.StationCommentAdapter;
+import com.silverback.carman.adapters.StationMapAdapter;
 import com.silverback.carman.databinding.ActivityStationMapBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.StationGasRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,12 +44,13 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
 //    };
 
     // Objects
+    private StationGasRunnable.Item stnDetail;
     private ActivityStationMapBinding binding;
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private DocumentSnapshot document;
     private FusedLocationSource fusedLocationSource;
     private NaverMap naverMap;
-    private StationCommentAdapter commentAdapter;
+    private StationMapAdapter commentAdapter;
     private String stnName;
     private String stnId;
 
@@ -64,7 +62,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         View rootView = binding.getRoot();
         setContentView(rootView);
         // Intent data from MainActivity
-        stnId = getIntent().getStringExtra("gasStationId");
+        //stnId = getIntent().getStringExtra("gasStationId");
         log.i("station id: %s", stnId);
 
         // Set ToolBar as ActionBar and attach Home Button and title on it.
@@ -72,12 +70,16 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         ActionBar ab = getSupportActionBar();
         if(ab != null) ab.setDisplayHomeAsUpEnabled(true);
 
+        if(getIntent() != null) {
+            stnDetail = getIntent().getParcelableExtra("stationDetail");
+        }
+
         // Call Naver map to MapFragment. Select alternatively either MapFragment or MapView.
         // When using MapView instead, the activity lifecycle should be considered.
         createNaverMap();
 
         // Instantiate Objects
-        firestore = FirebaseFirestore.getInstance();
+        mDB = FirebaseFirestore.getInstance();
         fusedLocationSource = new FusedLocationSource(this, 100);//Naver api for getting the current position
 
         // Create RecyclerView for displayimg comments
@@ -85,8 +87,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         binding.recyclerComments.setItemViewCacheSize(20);
         binding.recyclerComments.setDrawingCacheEnabled(true);
 
-
         // Retrieve the station data from Firestore.
+        /*
         DocumentReference docRef = firestore.collection("gas_station").document(stnId);
         docRef.get().addOnCompleteListener(task -> {
             if(task.isSuccessful()) {
@@ -95,8 +97,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                 //if(document.exists()) dispStationInfo();
             }
         });
-
-        Query queryComment = firestore.collection("gas_eval").document(stnId).collection("comments")
+        */
+        final String stnId = stnDetail.getStnId();
+        Query queryComment = mDB.collection("gas_eval").document(stnId).collection("comments")
                 .orderBy("timestamp", Query.Direction.DESCENDING);
         queryComment.get().addOnCompleteListener(querySnapshot -> {
             if(querySnapshot.isSuccessful()) {
@@ -105,7 +108,8 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                     snapshotList.add(document);
                 }
                 log.i("snaplist: %s", snapshotList.size());
-                commentAdapter = new StationCommentAdapter(stnId, snapshotList);
+                //commentAdapter = new StationMapAdapter(stnId, snapshotList);
+                commentAdapter = new StationMapAdapter(stnDetail, snapshotList);
                 binding.recyclerComments.setAdapter(commentAdapter);
             }
         });
@@ -121,7 +125,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
                             snapshotList.add(document);
                         }
 
-                        commentAdapter = new StationCommentAdapter(snapshotList);
+                        commentAdapter = new StationMapAdapter(snapshotList);
                         binding.recyclerComments.setAdapter(commentAdapter);
                     }
                 }).addOnFailureListener(e -> {});
@@ -205,8 +209,6 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         );
          */
 
-
-
     }
 
     @Override
@@ -259,7 +261,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
      */
 
 
-    @SuppressWarnings("ConstantConditions")
+    //@SuppressWarnings("ConstantConditions")
     @Override
     public void onMapReady(@NonNull NaverMap naverMap) {
         this.naverMap = naverMap;
@@ -268,11 +270,15 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         final String rationale = "permission required to access location";
         checkRuntimePermission(binding.getRoot(), perm, rationale, () -> {
             naverMap.setLocationTrackingMode(LocationTrackingMode.Follow);
+
+            //double x = document.getDouble("katec_x");
+            //double y = document.getDouble("katec_y");
+            double x = stnDetail.getX();
+            double y = stnDetail.getY();
+            if(x != -1 || y != -1)  displayMap(x, y);
         });
 
-        double x = document.getDouble("katec_x");
-        double y = document.getDouble("katec_y");
-        if(x != -1 || y != -1)  displayMap(x, y);
+
     }
 
     /*
@@ -293,7 +299,9 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         binding.inclStnInfo.tvService.setText(cvs);
         binding.inclStnInfo.tvCvs.setText(svc);
     }
-    */
+
+     */
+
 
     private void createNaverMap() {
         FragmentManager fm = getSupportFragmentManager();

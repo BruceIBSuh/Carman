@@ -1,6 +1,8 @@
 package com.silverback.carman.threads;
 
 import android.location.Location;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.Process;
 
 import androidx.annotation.NonNull;
@@ -16,21 +18,15 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.Opinet;
-import com.squareup.okhttp.OkHttpClient;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import java.util.HashMap;
+import java.io.Serializable;
 import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava2.Result;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Field;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
 
@@ -230,29 +226,28 @@ public class StationGasRunnable implements Runnable{
         public List<Item> oilList;
     }
 
-    public static class Item {
+    public static class Item implements Serializable, Parcelable {
         @SerializedName("UNI_ID")
         @Expose
         String stnId;
-        @SerializedName("POLL_DIV_CD")
-        @Expose
-        private String stnCompany;
         @SerializedName("OS_NM")
         @Expose
         private String stnName;
+        @SerializedName("POLL_DIV_CD")
+        @Expose
+        private String stnCompany;
         @SerializedName("PRICE")
         @Expose
-        private Integer gasPrice;
+        private int gasPrice;
         @SerializedName("DISTANCE")
         @Expose
-        private Float stnDistance;
+        private float distance;
         @SerializedName("GIS_X_COOR")
         @Expose
-        private Double x;
+        private double x;
         @SerializedName("GIS_Y_COOR")
         @Expose
-        private Double y;
-
+        private double y;
 
         public String getStnId() {
             return stnId;
@@ -283,10 +278,10 @@ public class StationGasRunnable implements Runnable{
         }
 
         public float getStnDistance() {
-            return stnDistance;
+            return distance;
         }
         public void setStnDistance(float stnDistance) {
-            this.stnDistance = stnDistance;
+            this.distance = stnDistance;
         }
 
         public double getX() {
@@ -307,9 +302,74 @@ public class StationGasRunnable implements Runnable{
         public void setIsCarWash(boolean isCarWash) {
             this.isCarWash = isCarWash;
         }
-
         public boolean getIsCarWash() {
             return isCarWash;
+        }
+
+        public boolean isCVS;
+        public void setIsCVS(boolean isCVS) { this.isCVS = isCVS; }
+        public boolean getIsCVS() { return isCVS; }
+
+        public boolean isService;
+        public void setIsService(boolean isService) { this.isService = isService; }
+        public boolean getIsService() { return isService; }
+
+        public String addrsNew;
+        public String getAddrsNew() { return addrsNew; }
+        public void setAddrsNew(String addrsNew) { this.addrsNew = addrsNew;}
+
+        public String addrsOld;
+        public String getAddrsOld() { return addrsOld; }
+        public void setAddrsOld(String addrsNew) { this.addrsOld = addrsOld;}
+
+        // Parcelize
+        protected Item(Parcel in) {
+            stnId = in.readString();
+            stnName = in.readString();
+            stnCompany = in.readString();
+            gasPrice = in.readInt();
+            distance = in.readFloat();
+            x = in.readDouble();
+            y = in.readDouble();
+            isCarWash = in.readByte() != 0;
+            isCVS = in.readByte() != 0;
+            isService = in.readByte() != 0;
+            addrsNew = in.readString();
+            addrsOld = in.readString();
+        }
+
+        public static final Creator<Item> CREATOR = new Creator<Item>() {
+            @Override
+            public Item createFromParcel(Parcel in) {
+                return new Item(in);
+            }
+
+            @Override
+            public Item[] newArray(int size) {
+                return new Item[size];
+            }
+        };
+
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel parcel, int i) {
+            parcel.writeString(stnId);
+            parcel.writeString(stnName);
+            parcel.writeString(stnCompany);
+            parcel.writeInt(gasPrice);
+            parcel.writeFloat(distance);
+            parcel.writeDouble(x);
+            parcel.writeDouble(y);
+            parcel.writeByte((byte)(isCarWash?1:0));
+            parcel.writeByte((byte)(isCVS?1:0));
+            parcel.writeByte((byte)(isService?1:0));
+            parcel.writeString(addrsNew);
+            parcel.writeString(addrsOld);
         }
     }
 

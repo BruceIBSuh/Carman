@@ -15,8 +15,7 @@ import com.silverback.carman.databinding.MainPagerDistrictPriceBinding;
 import com.silverback.carman.databinding.MainPagerStationPriceBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.FavoritePriceTask;
-import com.silverback.carman.threads.ThreadManager2;
+import com.silverback.carman.threads.FavStationTaskk;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
@@ -34,7 +33,7 @@ public class MainPricePagerFragment extends Fragment {
     private CarmanDatabase mDB;
     private MainPagerDistrictPriceBinding distBinding;
     private MainPagerStationPriceBinding stnBinding;
-    private FavoritePriceTask favPriceTask;
+    private FavStationTaskk favPriceTask;
     private OpinetViewModel opinetModel;
     private int page;
     private String fuelCode;
@@ -86,7 +85,7 @@ public class MainPricePagerFragment extends Fragment {
                     if(TextUtils.isEmpty(id)) {
                         stnBinding.stnPriceView.removePriceView("No Favorite Station exists");
                     } else {
-                        favPriceTask = ThreadManager2.startFavoritePriceTask(getContext(), opinetModel, id, true);
+                        //favPriceTask = ThreadManager2.startFavoritePriceTask(getContext(), opinetModel, id, true);
                         opinetModel.favoritePriceComplete().observe(getViewLifecycleOwner(), isDone ->
                             stnBinding.stnPriceView.addPriceView(fuelCode)
                         );

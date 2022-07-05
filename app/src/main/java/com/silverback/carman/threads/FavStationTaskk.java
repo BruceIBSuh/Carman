@@ -9,9 +9,9 @@ import com.silverback.carman.viewmodels.OpinetViewModel;
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnable.StationPriceMethods {
+public class FavStationTaskk extends ThreadTask implements FavStationRunnable.StationPriceMethods {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavoritePriceTask.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(FavStationTaskk.class);
 
     // Objects
     private OpinetViewModel viewModel;
@@ -20,9 +20,9 @@ public class FavoritePriceTask extends ThreadTask implements FavoritePriceRunnab
     private String stnId;
     private boolean isFirst;
 
-    FavoritePriceTask(Context context) {
+    FavStationTaskk(Context context) {
         super();
-        mPriceRunnableStation = new FavoritePriceRunnable(context, this);
+        mPriceRunnableStation = new FavStationRunnable(context, this);
     }
 
     void initTask(OpinetViewModel model, String stnId, boolean isFirst) {

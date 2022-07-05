@@ -22,7 +22,7 @@ import com.silverback.carman.database.FavoriteProviderEntity;
 import com.silverback.carman.databinding.FragmentSettingFavoriteBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.FavoritePriceTask;
+import com.silverback.carman.threads.FavStationTaskk;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.ItemTouchHelperCallback;
 
@@ -38,7 +38,7 @@ import java.util.List;
  *
  * The callbacks of the interface are overrided in SettingFavAdapter, invoking onDragItem() and
  * onDeleteItem(), notify the adapter of which item moves up and down or is deleted. The adapter, in
- * turn, notifies this fragment of initiating FavoritePriceTask to get the price data or
+ * turn, notifies this fragment of initiating FavStationTaskk to get the price data or
  */
 public class SettingFavorGasFragment extends Fragment implements
         SettingFavAdapter.OnFavoriteAdapterListener{
@@ -52,7 +52,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private SettingFavAdapter mAdapter;
     private SparseArray<DocumentSnapshot> sparseSnapshotArray;
-    private FavoritePriceTask favoritePriceTask;
+    private FavStationTaskk favStationTaskk;
     private List<FavoriteProviderEntity> favList;
 
     // Constructor
@@ -113,7 +113,7 @@ public class SettingFavorGasFragment extends Fragment implements
     @Override
     public void onPause() {
         super.onPause();
-        if(favoritePriceTask != null) favoritePriceTask = null;
+        if(favStationTaskk != null) favStationTaskk = null;
     }
 
 
@@ -144,7 +144,7 @@ public class SettingFavorGasFragment extends Fragment implements
     public void setFirstPlaceholder(int category, String stnId) {
         if(category == Constants.GAS && !stnId.isEmpty()) {
             log.i("The favorite changed: %s", stnId);
-            //favoritePriceTask = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
+            //favStationTaskk = ThreadManager.startFavoritePriceTask(getContext(), null, stnId, true);
         }
     }
 
