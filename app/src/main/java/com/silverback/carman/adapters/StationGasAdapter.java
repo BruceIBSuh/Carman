@@ -15,7 +15,6 @@ import androidx.recyclerview.widget.AsyncListDiffer;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.common.collect.Lists;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainRecyclerGasBinding;
@@ -38,8 +37,8 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
     // Objects
     private Context context;
     //private List<Opinet.GasStnParcelable> stationList;
-    private List<StationGasRunnable.Item> gasStationList;
-    private final AsyncListDiffer<StationGasRunnable.Item> mDiffer;
+    private List<StationGasRunnable.Item> stationList;
+    //private final AsyncListDiffer<StationGasRunnable.Item> mDiffer;
     private AdapterListUpdateCallback updateCallback;
     private final OnItemClickCallback mListener;
     private final DecimalFormat df;
@@ -54,16 +53,22 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
     public StationGasAdapter(OnItemClickCallback listener) {
         super();
         mListener = listener;
-        mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_GAS);
+        //mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_GAS);
         df = BaseActivity.getDecimalFormatInstance();
-        updateCallback = new AdapterListUpdateCallback(this);
+        //updateCallback = new AdapterListUpdateCallback(this);
     }
 
+    public void setStationList(List<StationGasRunnable.Item> stationList) {
+        this.stationList = stationList;
+    }
+
+    /*
     public void submitGasList(List<StationGasRunnable.Item> gasStationList) {
         this.gasStationList = gasStationList;
-        //mDiffer.submitList(Lists.newArrayList(gasStationList)/*, postingAdapterCallback::onSubmitPostingListDone*/);
-        mDiffer.submitList(Lists.newArrayList(gasStationList), () -> updateCallback.onChanged(0, 2, ""));
+        mDiffer.submitList(Lists.newArrayList(gasStationList)//, postingAdapterCallback::onSubmitPostingListDone);
+        //mDiffer.submitList(Lists.newArrayList(gasStationList), () -> updateCallback.onChanged(0, 2, ""));
     }
+    */
 
 
     protected static class ViewHolder extends RecyclerView.ViewHolder {
@@ -93,12 +98,11 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
 
     @Override
     public void onBindViewHolder(@NonNull StationGasAdapter.ViewHolder holder, int position) {
-        //final StationGasRunnable.Item data = stationList.get(position);
-        StationGasRunnable.Item data = mDiffer.getCurrentList().get(position);
+        final StationGasRunnable.Item data = stationList.get(position);
+        //StationGasRunnable.Item data = mDiffer.getCurrentList().get(position);
         String stnId = data.getStnId(); // Pass Station ID when clicking a cardview item.
         int resLogo = getGasStationImage(data.getStnCompany());
         String carwash = (data.getIsCarWash())?context.getString(R.string.general_carwash_yes):context.getString(R.string.general_carwash_no);
-        log.i("car wash: %s", carwash);
 
         holder.getLogoImageView().setImageDrawable(ContextCompat.getDrawable(context, resLogo));
         holder.getNameView().setText(data.getStnName());
@@ -114,9 +118,6 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
             if(mListener != null) mListener.onItemClicked(position);
         });
     }
-
-
-
 
     @Override
     public void onBindViewHolder(@NonNull StationGasAdapter.ViewHolder holder, int position,
@@ -139,8 +140,8 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
 
     @Override
     public int getItemCount() {
-        //return stationList.size();
-        return mDiffer.getCurrentList().size();
+        return stationList.size();
+        //return mDiffer.getCurrentList().size();
     }
     /*
      * Sorts the already saved station list  from the Opinet by price and distance
@@ -151,55 +152,47 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
     //@SuppressWarnings("unchecked")
     //public List<StationGasRunnable.Item> sortStationList(boolean bStationOrder) {
     public List<StationGasRunnable.Item> sortStationList(boolean isPriceOrder) {
-        log.i("Listing order: distance or price");
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            if(isPriceOrder) {
-                Collections.sort(gasStationList, Comparator.comparingInt(t -> (int) t.getGasPrice()));
+            if (isPriceOrder) {
+                Collections.sort(stationList, Comparator.comparingInt(t -> (int) t.getGasPrice()));
             } else {
-                Collections.sort(gasStationList, Comparator.comparingInt(t -> (int) t.getStnDistance()));
+                Collections.sort(stationList, Comparator.comparingInt(t -> (int) t.getStnDistance()));
             }
 
         else {
-            if(isPriceOrder) {
-                Collections.sort(gasStationList, (t1, t2) ->
+            if (isPriceOrder) {
+                Collections.sort(stationList, (t1, t2) ->
                         Integer.compare((int) t1.getGasPrice(), (int) t2.getGasPrice()));
             } else {
-                Collections.sort(gasStationList, (t1, t2) ->
-                        Integer.compare((int)t2.getStnDistance(), (int)t1.getStnDistance()));
+                Collections.sort(stationList, (t1, t2) ->
+                        Integer.compare((int) t2.getStnDistance(), (int) t1.getStnDistance()));
             }
         }
 
-        return gasStationList;
+        return stationList;
         /*
         File file = new File(context.getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
         Uri uri = Uri.fromFile(file);
         stationList.clear();
-
         try(InputStream is = context.getContentResolver().openInputStream(uri);
             ObjectInputStream ois = new ObjectInputStream(is)) {
             List<?> listObj = (List<?>)ois.readObject();
-
             for(Object obj : listObj) stationList.add((StationGasRunnable.Item)obj);
             //stationList = (List<Opinet.GasStnParcelable>)ois.readObject();
-
             if(bStationOrder) Collections.sort(stationList, new PriceAscCompare()); // Price Ascending order
             else Collections.sort(stationList, new DistanceDescCompare()); // Distance Ascending order
-
             //notifyDataSetChanged();
             notifyItemRangeChanged(0, stationList.size());
-
             return stationList;
-
         } catch (IOException | ClassNotFoundException | ClassCastException e) {
             log.e("Error occurred while sorting: %s", e.getMessage());
         }
-
-        return null;
          */
-
 
     }
 
+
+    /*
     private static final DiffUtil.ItemCallback<StationGasRunnable.Item> DIFF_CALLBACK_GAS =
             new DiffUtil.ItemCallback<StationGasRunnable.Item>() {
                 @Override
@@ -221,7 +214,7 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
                     return super.getChangePayload(oldItem, newItem);
                 }
             };
-
+    */
     // Class for sorting the list by ascending price or descending distance, implementing Comparator<T>
     private static class PriceAscCompare implements Comparator<StationGasRunnable.Item> {
         @SuppressWarnings("all")

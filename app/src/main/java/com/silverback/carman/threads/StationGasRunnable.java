@@ -86,7 +86,6 @@ public class StationGasRunnable implements Runnable{
         GeoPoint katec_pt = GeoTrans.convert(GeoTrans.TM, GeoTrans.KATEC, tm_pt);
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
-
         /*
         // Complete the OPINET_ARUND URL w/ the given requests
         final String OPINET_AROUND = OPINET
@@ -95,7 +94,6 @@ public class StationGasRunnable implements Runnable{
                 + "&radius=" + radius
                 + "&sort=" + sort // 1: price 2: distance
                 + "&prodcd=" + fuelCode;
-
         try {
             if(Thread.interrupted()) throw new InterruptedException();
 
@@ -143,11 +141,12 @@ public class StationGasRunnable implements Runnable{
             @Override
             public void onResponse(@NonNull Call<StationAroundModel> call,
                                    @NonNull Response<StationAroundModel> response) {
-
                 StationAroundModel model = response.body();
                 assert model != null;
                 List<Item> itemList = model.result.oilList;
+                log.i("ItemList: %s", itemList.size());
                 for(Item item: itemList) log.i("Item: %s", item.getStnName());
+
                 if(itemList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {
                         mTask.setCurrentStation(itemList.get(0));
@@ -157,6 +156,7 @@ public class StationGasRunnable implements Runnable{
                         mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS);
                     }
                 } else {
+                    log.i("no station around");
                     if (radius.matches(Constants.MIN_RADIUS)) {
                         mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION_FAIL);
                     } else mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL);
@@ -196,6 +196,7 @@ public class StationGasRunnable implements Runnable{
                     //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
+
             retrofitApi = retrofit.create(RetrofitApi.class);
         }
         // Bill-Pugh Singleton instance
@@ -205,8 +206,6 @@ public class StationGasRunnable implements Runnable{
         public static RetrofitClient getIntance() {
             return RetrofitClient.LazyHolder.sInstance;
         }
-
-
         public RetrofitApi getRetrofitApi() {
             return retrofitApi;
         }

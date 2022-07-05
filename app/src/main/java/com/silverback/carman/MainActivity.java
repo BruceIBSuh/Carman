@@ -598,8 +598,8 @@ public class MainActivity extends BaseActivity implements
             @Override
             public void onChanged(List<StationGasRunnable.Item> stnList) {
                 if (stnList != null && stnList.size() > 0) {
-                    log.i("gas station list: %s", stnList.size());
                     gasStationList = stnList;
+                    gasListAdapter.setStationList(stnList);
 
                     binding.viewFlipper.setDisplayedChild(1);
                     progbtnList.get(0).stopProgress();
@@ -607,7 +607,7 @@ public class MainActivity extends BaseActivity implements
                     binding.fab.setVisibility(View.VISIBLE);
                     statusbar = 0;
 
-                    gasListAdapter.submitGasList(stnList);
+                    //gasListAdapter.submitGasList(stnList);
                     stationModel.getNearStationList().removeObserver(this);
 
                 } else {
@@ -887,7 +887,9 @@ public class MainActivity extends BaseActivity implements
         int res = (bStnOrder) ? R.drawable.bg_location : R.drawable.bg_currency_won;
         binding.fab.setImageDrawable(ContextCompat.getDrawable(this, res));
         gasStationList = gasListAdapter.sortStationList(bStnOrder);
-        gasListAdapter.submitGasList(gasStationList);
+        gasListAdapter.setStationList(gasStationList);
+        gasListAdapter.notifyItemRangeChanged(0, gasStationList.size());
+        //gasListAdapter.submitGasList(gasStationList);
 
         binding.appbar.setExpanded(true, true);
         binding.recyclerStations.smoothScrollToPosition(0);
