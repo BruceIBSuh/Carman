@@ -38,6 +38,10 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     public MainPricePagerAdapter(FragmentActivity fa) {
         super(fa);
     }
+    // Invoked when the spinner changes the value or users reset the top priority gas station.
+    public void setFuelCode(String fuelCode) {
+        this.fuelCode = fuelCode;
+    }
 
     @NonNull
     @Override
@@ -47,7 +51,7 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
                 log.i("first district fragment:%s", getItemId(position));
                 return districtFragment = MainPricePagerFragment.getInstance(fuelCode, 0);
             case 1:
-                log.i("second station fragment:%s", getItemId(position));
+                log.i("second fav station fragment:%s", getItemId(position));
                 return favStationFragment = MainPricePagerFragment.getInstance(fuelCode, 1);
             default:
                 log.i("default");
@@ -74,10 +78,7 @@ public class MainPricePagerAdapter extends FragmentStateAdapter {
     }
 
 
-    // Invoked when the spinner changes the value or users reset the top priority gas station.
-    public void setFuelCode(String fuelCode) {
-        this.fuelCode = fuelCode;
-    }
+
 
 
 }

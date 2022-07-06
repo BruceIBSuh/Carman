@@ -9,6 +9,7 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
+import com.silverback.carman.threads.StationFavRunnable;
 import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationInfoRunnable;
@@ -25,6 +26,7 @@ public class StationListViewModel extends ViewModel {
     //private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<List<StationGasRunnable.Item>> stnList;
     private MutableLiveData<List<StationInfoRunnable.Info>> stationInfo;
+    private MutableLiveData<StationFavRunnable.Info> favStationInfo;
 
     //private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<StationGasRunnable.Item> currentStation;
@@ -68,6 +70,11 @@ public class StationListViewModel extends ViewModel {
     public MutableLiveData<List<StationInfoRunnable.Info>> getStationInfoList() {
         if(stationInfo == null) stationInfo = new MutableLiveData<>();
         return stationInfo;
+    }
+
+    public MutableLiveData<StationFavRunnable.Info> getFavStationInfo() {
+        if(favStationInfo ==  null) favStationInfo = new MutableLiveData<>();
+        return favStationInfo;
     }
 
     public MutableLiveData<List<StationEvRunnable.Item>> getEvStationList() {

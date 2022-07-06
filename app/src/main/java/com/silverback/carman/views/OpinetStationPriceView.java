@@ -2,8 +2,6 @@ package com.silverback.carman.views;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.net.Uri;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.TextView;
@@ -11,13 +9,8 @@ import android.widget.TextView;
 import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.Opinet;
-import com.silverback.carman.utils.Constants;
+import com.silverback.carman.threads.StationFavRunnable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.util.Map;
 
 /**
@@ -30,6 +23,7 @@ public class OpinetStationPriceView extends OpinetPriceView {
     private static final LoggingHelper log = LoggingHelperFactory.create(OpinetStationPriceView.class);
 
     // UIs
+    private StationFavRunnable.Info favInfo;
     private TextView tvStnName, tvStnPrice;
 
     // Constructors of 3 different types. Here, it mainly uses the second one.
@@ -60,9 +54,25 @@ public class OpinetStationPriceView extends OpinetPriceView {
 
     }
 
+    public void setFavStaationInfo(StationFavRunnable.Info info) {
+        this.favInfo = info;
+    }
+
     public void addPriceView(String fuelCode) {
+        tvStnName.setText(favInfo.getStationName());
+        for(StationFavRunnable.OilPrice price : favInfo.getOliPriceList()) {
+            if(price.getOilCode().matches(fuelCode)) {
+                Object priceDiff = favInfo.getPriceDiff().get(fuelCode);
+                float diff = (priceDiff != null)? (float)priceDiff : 0;
+                setColoredTextView(tvStnPrice, price.getPrice(), diff);
+                break;
+            }
+        }
+
+        /*
         File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
         Uri stnUri = Uri.fromFile(stnFile);
+
         Float price = null;
         Float diff = null;
         try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
@@ -85,6 +95,8 @@ public class OpinetStationPriceView extends OpinetPriceView {
             else if(diff == null) setColoredTextView(tvStnPrice, price, 0);
             e.printStackTrace();
         }
+
+         */
     }
 
     // Set the station price views to be void when the favorite is left empty.

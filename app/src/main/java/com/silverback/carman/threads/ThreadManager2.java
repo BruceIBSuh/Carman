@@ -69,7 +69,7 @@ public class ThreadManager2 {
 
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
-    private final BlockingQueue<FavStationTaskk> mFavStationTaskkQueue;
+    private final BlockingQueue<StationFavTask> mStationFavTaskQueue;
     private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     
@@ -103,7 +103,7 @@ public class ThreadManager2 {
 
         mGeocoderReverseTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
-        mFavStationTaskkQueue = new LinkedBlockingQueue<>();
+        mStationFavTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
         mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
 
@@ -268,11 +268,11 @@ public class ThreadManager2 {
         return gasPriceTask;
     }
 
-    public static FavStationTaskk startFavoriteStationTask(
-            Context context, @Nullable OpinetViewModel model, String stnId, boolean isFirst) {
+    public static StationFavTask startFavStationTask(
+            Context context, @Nullable StationListViewModel model, String stnId, boolean isFirst) {
 
-        FavStationTaskk favStationTask = (FavStationTaskk) InnerClazz.sInstance.mThreadTaskQueue.poll();
-        if(favStationTask == null) favStationTask = new FavStationTaskk(context);
+        StationFavTask favStationTask = (StationFavTask) InnerClazz.sInstance.mThreadTaskQueue.poll();
+        if(favStationTask == null) favStationTask = new StationFavTask(context);
         favStationTask.initTask(model, stnId, isFirst);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(favStationTask.getPriceRunnableStation());

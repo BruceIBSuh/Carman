@@ -34,7 +34,7 @@ import com.silverback.carman.database.GasManagerEntity;
 import com.silverback.carman.databinding.FragmentGasManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.FavStationTaskk;
+import com.silverback.carman.threads.StationFavTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.ThreadManager2;
@@ -76,7 +76,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
     private FavoriteGeofenceHelper geofenceHelper;
     private LocationTask locationTask;
     private StationGasTask stnListTask;
-    private FavStationTaskk favPriceTask;
+    private StationFavTask favPriceTask;
     private SharedPreferences mSettings;
     private SimpleDateFormat sdf;
     private DecimalFormat df;
@@ -271,24 +271,27 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // the user can have the favorite station list when clicking the favorite button.
         // In doing so, this fragment communicates w/ FavoriteListFragment to retrieve a favorite
         // station picked out of FavoriteListFragment using FragmentSharedModel. With the station id,
-        // FavStationTaskk gets started to have the gas price.
+        // StationFavTask gets started to have the gas price.
         fragmentModel.getFavoriteGasEntity().observe(getViewLifecycleOwner(), data -> {
             binding.tvStationName.setText(data.providerName);
             binding.btnGasFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
             stnId = data.providerId;
             isFavoriteGas = true;
 
-            favPriceTask = ThreadManager2.startFavoriteStationTask(
-                    requireActivity(), opinetViewModel, data.providerId, false);
+            favPriceTask = ThreadManager2.startFavStationTask(
+                    requireActivity(), stnListModel, data.providerId, false);
 
         });
 
         // Fetch the price info of a favorite gas station selected from FavoriteListFragment.
-        opinetViewModel.getFavoritePriceData().observe(getViewLifecycleOwner(), data -> {
+        /*
+        stnListModel.getFavoritePriceData().observe(getViewLifecycleOwner(), data -> {
             String fuelCode = mSettings.getString(Constants.FUEL, "B027");
             binding.etGasUnitPrice.setText(String.valueOf(data.get(fuelCode)));
             binding.etGasUnitPrice.setCursorVisible(false);
         });
+
+         */
     }
 
     @Override
@@ -526,8 +529,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 //btnChangeDate.setVisibility(View.GONE);
 
                 // Task to fetch the gas price of a station with the station ID.
-                favPriceTask = ThreadManager2.startFavoriteStationTask(
-                        requireActivity(), opinetViewModel, stnId, false);
+                favPriceTask = ThreadManager2.startFavStationTask(requireActivity(), stnListModel, stnId, false);
                 break;
             case Constants.SVC:
                 binding.pbSearchStation.setVisibility(View.GONE);

@@ -22,7 +22,7 @@ import com.silverback.carman.database.FavoriteProviderEntity;
 import com.silverback.carman.databinding.FragmentSettingFavoriteBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.FavStationTaskk;
+import com.silverback.carman.threads.StationFavTask;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.ItemTouchHelperCallback;
 
@@ -38,7 +38,7 @@ import java.util.List;
  *
  * The callbacks of the interface are overrided in SettingFavAdapter, invoking onDragItem() and
  * onDeleteItem(), notify the adapter of which item moves up and down or is deleted. The adapter, in
- * turn, notifies this fragment of initiating FavStationTaskk to get the price data or
+ * turn, notifies this fragment of initiating StationFavTask to get the price data or
  */
 public class SettingFavorGasFragment extends Fragment implements
         SettingFavAdapter.OnFavoriteAdapterListener{
@@ -52,7 +52,7 @@ public class SettingFavorGasFragment extends Fragment implements
     private FirebaseFirestore firestore;
     private SettingFavAdapter mAdapter;
     private SparseArray<DocumentSnapshot> sparseSnapshotArray;
-    private FavStationTaskk favStationTaskk;
+    private StationFavTask favStationTaskk;
     private List<FavoriteProviderEntity> favList;
 
     // Constructor

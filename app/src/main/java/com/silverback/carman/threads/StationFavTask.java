@@ -4,36 +4,35 @@ import android.content.Context;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.OpinetViewModel;
+import com.silverback.carman.viewmodels.StationListViewModel;
 
-import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public class FavStationTaskk extends ThreadTask implements FavStationRunnable.StationPriceMethods {
+public class StationFavTask extends ThreadTask implements StationFavRunnable.StationPriceMethods {
 
-    private static final LoggingHelper log = LoggingHelperFactory.create(FavStationTaskk.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationFavTask.class);
 
     // Objects
-    private OpinetViewModel viewModel;
-    private WeakReference<OpinetViewModel> weakModelReference;
-    private final Runnable mPriceRunnableStation;
+    private StationListViewModel viewModel;
+    //private WeakReference<OpinetViewModel> weakModelReference;
+    private final Runnable mFavStationRunnable;
     private String stnId;
     private boolean isFirst;
 
-    FavStationTaskk(Context context) {
+    StationFavTask(Context context) {
         super();
-        mPriceRunnableStation = new FavStationRunnable(context, this);
+        mFavStationRunnable = new StationFavRunnable(context, this);
     }
 
-    void initTask(OpinetViewModel model, String stnId, boolean isFirst) {
-        //viewModel = model;
-        weakModelReference = new WeakReference<>(model);
+    void initTask(StationListViewModel model, String stnId, boolean isFirst) {
+        this.viewModel = model;
+        //weakModelReference = new WeakReference<>(model);
         this.stnId = stnId;
         this.isFirst = isFirst;//check whether it is the firstholder or a station in the list.
     }
 
     Runnable getPriceRunnableStation() {
-        return mPriceRunnableStation;
+        return mFavStationRunnable;
     }
 
     @Override
@@ -56,18 +55,21 @@ public class FavStationTaskk extends ThreadTask implements FavStationRunnable.St
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
         //viewModel.getFavoritePriceData().postValue(data);
-        weakModelReference.get().getFavoritePriceData().postValue(data);
+        //weakModelReference.get().getFavoritePriceData().postValue(data);
     }
 
     @Override
+    public void setFavStationInfo(StationFavRunnable.Info info) {
+        viewModel.getFavStationInfo().postValue(info);
+    }
+
+
+    @Override
     public void savePriceDiff() {
-        weakModelReference.get().favoritePriceComplete().postValue(true);
+        //weakModelReference.get().favoritePriceComplete().postValue(true);
     }
 
     public void recycle() {
-        if(weakModelReference != null) {
-            weakModelReference.clear();
-            weakModelReference = null;
-        }
+
     }
 }
