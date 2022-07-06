@@ -11,21 +11,29 @@
         android:layout_width="35dp"
         android:layout_height="35dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
         android:layout_marginBottom="8dp"
         android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/guideline10"
-        app:layout_constraintHorizontal_bias="0.18"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.875" />
+        app:layout_constraintVertical_bias="1.0" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_begin="48dp" />
+
 
     <TextView
         android:id="@+id/tv_stn_name"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:layout_marginEnd="8dp"
         android:textSize="@dimen/subtitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/guideline10"
@@ -37,7 +45,7 @@
         android:layout_height="18dp"
         android:layout_marginTop="8dp"
         android:text="@string/general_station_price"
-        app:layout_constraintEnd_toStartOf="@+id/tv_value_price"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="@+id/guideline10"
         app:layout_constraintTop_toBottomOf="@+id/tv_stn_name" />
@@ -48,10 +56,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:minWidth="40dp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_label_price"
-        app:layout_constraintEnd_toStartOf="@+id/tv_label_distance"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_price" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_price"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_price"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_price" />
 
     <TextView
         android:id="@+id/tv_label_distance"
@@ -59,10 +66,9 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:text="@string/general_station_distance"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_value_price"
-        app:layout_constraintEnd_toStartOf="@+id/tv_value_distance"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_value_price" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_value_price"
+        app:layout_constraintStart_toEndOf="@+id/tv_value_price"
+        app:layout_constraintTop_toTopOf="@+id/tv_value_price" />
 
     <TextView
         android:id="@+id/tv_value_distance"
@@ -70,61 +76,58 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:minWidth="40dp"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_label_distance"
-        app:layout_constraintEnd_toStartOf="@+id/expense_tv_label_carwash"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_distance" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_distance"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_distance"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_distance" />
 
     <TextView
         android:id="@+id/expense_tv_label_carwash"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginStart="72dp"
         android:text="@string/main_station_facility"
-        app:layout_constraintBaseline_toBaselineOf="@+id/tv_value_distance"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_value_distance" />
+        app:layout_constraintBottom_toBottomOf="@+id/tv_value_distance"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_distance"
+        app:layout_constraintTop_toTopOf="@+id/tv_value_distance" />
 
     <ImageView
         android:id="@+id/imgview_cvs"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:visibility="gone"
         android:contentDescription="@null"
         android:src="@drawable/main_facility_cvs"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
         app:layout_constraintEnd_toStartOf="@+id/imgview_svc"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/expense_tv_label_carwash"
         app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
 
     <ImageView
         android:id="@+id/imgview_svc"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:contentDescription="@null"
         android:src="@drawable/main_facility_svc"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
+        app:layout_constraintBottom_toBottomOf="@+id/imgview_cvs"
         app:layout_constraintEnd_toStartOf="@+id/imgview_carwash"
-        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/imgview_cvs"
+        app:layout_constraintTop_toTopOf="@+id/imgview_cvs" />
 
     <ImageView
         android:id="@+id/imgview_carwash"
-        android:layout_width="20dp"
-        android:layout_height="20dp"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
         android:contentDescription="@null"
-        android:src="@drawable/main_facility_carwash"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/expense_tv_label_carwash"
+        android:src="@drawable/main_facility_carwash"
+        app:layout_constraintBottom_toBottomOf="@+id/imgview_svc"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/expense_tv_label_carwash" />
+        app:layout_constraintStart_toEndOf="@+id/imgview_svc"
+        app:layout_constraintTop_toTopOf="@+id/imgview_svc" />
 
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/guideline10"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_begin="48dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

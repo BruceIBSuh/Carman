@@ -632,65 +632,6 @@ public class MainActivity extends BaseActivity implements
             }
         };
         stationModel.getNearStationList().observe(this, gasObserver);
-        /*
-        stationModel.getNearStationList().observe(this, stnList -> {
-            if (stnList != null && stnList.size() > 0) {
-                gasStationList = stnList;
-                gasListAdapter = new StationGasAdapter(gasStationList, this);
-                //binding.stationRecyclerView.getRecyclerView().setAdapter(stnListAdapter);
-                //binding.stationRecyclerView.showStationRecyclerView();``
-                binding.recyclerStations.setAdapter(gasListAdapter);
-
-                progbtnList.get(0).stopProgress();
-                binding.appbar.setExpanded(true, true);
-
-                statusbar = 0;
-
-
-            } else {
-                progbtnList.get(0).stopProgress();
-                progbtnList.get(0).resetProgress();
-                binding.viewFlipper.setDisplayedChild(2);
-                // No near stations post an message that contains the clickable span to link to the
-                // SettingPreferenceActivity for resetting the searching radius.
-                //SpannableString spannableString = handleStationListException();
-                //binding.stationRecyclerView.showSpannableTextView(spannableString);
-            }
-
-            isRadiusChanged = false;
-            isGasTypeChanged = false;
-            //binding.pbNearStns.setVisibility(View.GONE);
-            //binding.progbtnGas.setProgress(true);
-
-            //binding.recyclerContents.setVisibility(View.GONE);
-            //binding.recyclerStations.setVisibility(View.VISIBLE);
-            //binding.stationRecyclerView.setVisibility(View.VISIBLE);
-            //progbtnList.get(0).stopProgress();
-        });
-        */
-        // Update the carwash info to StationList and notify the data change to Adapter.
-        // Adapter should not assume that the payload will always be passed to onBindViewHolder()
-        // e.g. when the view is not attached.
-
-        /* Temporarily suspended
-        stationModel.getStationCarWashInfo().observe(this, sparseArray -> {
-            for(int i = 0; i < sparseArray.size(); i++) {
-                //gasStationList.get(i).setIsWash(sparseArray.valueAt(i));
-                gasListAdapter.notifyItemChanged(sparseArray.keyAt(i), sparseArray.valueAt(i));
-            }
-            // To notify that fetching station list has completed.
-            binding.viewFlipper.setDisplayedChild(1);
-            binding.fab.setVisibility(View.VISIBLE);
-            hasStationInfo = true;
-        });
-         */
-        /*
-        stationModel.getStationInfoList().observe(this, stationInfoList -> {
-            for(StationInfoRunnable.Info info : stationInfoList)  log.i("info: %s", info.getCarWashYN());
-            gasListAdapter.notifyItemRangeChanged(0, stationInfoList.size(), stationInfoList);
-        });
-
-         */
     }
 
 
@@ -701,18 +642,8 @@ public class MainActivity extends BaseActivity implements
 
         evListAdapter = new StationEvAdapter(this);
         binding.recyclerStations.setAdapter(evListAdapter);
-        /*
-        if(evTask != null) {
-            evListAdapter.submitEvList(evSimpleList);
-            binding.frameLayout.setDisplayedChild(1);
-            statusbar = 1;
-            progbtnList.get(2).stopProgress();
-            return;
 
-        } else
-         */
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
-
         evObserver = new Observer<List<StationEvRunnable.Item>>() {
             @Override
             public void onChanged(List<StationEvRunnable.Item> itemList) {
@@ -758,50 +689,6 @@ public class MainActivity extends BaseActivity implements
         };
 
         stationModel.getEvStationList().observe(this, evObserver);
-        /*
-        stationModel.getEvStationList().observe(this, evList -> {
-            if(evList != null && evList.size() > 0) {
-                log.i("retrieve list");
-                evFullList.addAll(evList);//keep the full station list as it is.
-
-                // Remove duplicate items
-                for(int i = 0; i < evList.size(); i++) {
-                    String name = evList.get(i).getStdNm().replaceAll(regexEvName, "");
-                    int cntSame = 1;
-                    boolean isAnyChargerOpen = evList.get(i).getStat() == 2;
-                    for(int j = evList.size() - 1; j > i; j -- ) {
-                        String name2 = evList.get(j).getStdNm().replaceAll(regexEvName, "");
-                        if(name2.matches(name)) {
-                            isAnyChargerOpen = evList.get(j).getStat() == 2;
-                            evList.remove(j);
-                            cntSame++;
-                        }
-                    }
-
-                    evList.get(i).setCntCharger(cntSame);
-                    if(isAnyChargerOpen) evList.get(i).setIsAnyChargerOpen(true);
-
-
-                    evSimpleList.add(new MultiTypeEvItem(evList.get(i), VIEW_COLLAPSED));
-                }
-
-                //evListAdapter = new StationEvAdapter(this);
-                //binding.recyclerStations.setAdapter(evListAdapter);
-                //binding.recyclerStations.setVisibility(View.VISIBLE);
-                //binding.recyclerContents.setVisibility(View.GONE);
-                progbtnList.get(2).stopProgress();
-                evListAdapter.submitEvList(evSimpleList);
-                //evSimpleList.addAll(evList);
-
-                //binding.fab.setVisibility(View.GONE);
-                //stationModel.getEvStationList().removeObservers(this);
-                binding.appbar.setExpanded(true, true);
-                showCollapsedStatusBar(1);
-                if(binding.fab.getVisibility() == View.GONE) binding.fab.setVisibility(View.VISIBLE);
-
-            }
-        });
-        */
 
         stationModel.getExceptionMessage().observe(this, err -> {
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
@@ -846,29 +733,6 @@ public class MainActivity extends BaseActivity implements
         };
 
         stationModel.getHydroStationList().observe(this, hydroObserver);
-
-        /*
-        stationModel.getHydroStationList().observe(this, hydroList -> {
-            if(hydroList != null && hydroList.size() > 0) {
-                log.i("hydrolist: %s, %s", hydroList.size(), hydroList.get(0).getName());
-                hydroAdapter = new StationHydroAdapter(hydroList);
-                binding.recyclerStations.setAdapter(hydroAdapter);
-
-                binding.recyclerStations.setVisibility(View.VISIBLE);
-                binding.recyclerContents.setVisibility(View.GONE);
-                progbtnList.get(3).stopProgress();
-
-                //binding.fab.setVisibility(View.GONE);
-                stationModel.getHydroStationList().removeObservers(this);
-                binding.appbar.setExpanded(true, true);
-                binding.fab.setVisibility(View.VISIBLE);
-                //showCollapsedStatusBar(1);
-                statusbar = 1;
-            }
-
-        });
-
-         */
     }
 
     private void locateSvcStations(Location location) {
@@ -878,20 +742,11 @@ public class MainActivity extends BaseActivity implements
     // Reorder near station list according to the distance/price, which is called from the layout
     // file as well.
     public void onFabClicked(View view) {
-        /*
-        if(activeStation != 0) {
-            log.i("alt station required to be handled");
-            return;
-        }
-         */
         bStnOrder = !bStnOrder;
-        /*
-        Uri uri = saveNearStationList(gasStationList);
-        if(uri == null) return;
-         */
         // Switch the FAB background.
         int res = (bStnOrder) ? R.drawable.bg_location : R.drawable.bg_currency_won;
         binding.fab.setImageDrawable(ContextCompat.getDrawable(this, res));
+
         gasStationList = gasListAdapter.sortStationList(bStnOrder);
         gasListAdapter.setStationList(gasStationList);
         gasListAdapter.notifyItemRangeChanged(0, gasStationList.size());
@@ -899,28 +754,7 @@ public class MainActivity extends BaseActivity implements
 
         binding.appbar.setExpanded(true, true);
         binding.recyclerStations.smoothScrollToPosition(0);
-
     }
-
-    /*
-    private Uri saveNearStationList(List<StationGasRunnable.Item> list) {
-        File file = new File(getCacheDir(), Constants.FILE_CACHED_NEAR_STATIONS);
-        // Delete the file before saving a new list.
-        if(file.exists()) {
-            boolean delete = file.delete();
-            if(delete) log.i("cache cleared");
-        }
-
-        try(FileOutputStream fos = new FileOutputStream(file);
-            ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(list);
-            return Uri.fromFile(file);
-        } catch (IOException e) { e.printStackTrace();}
-
-        return null;
-    }
-
-     */
 
     private SpannableString handleStationListException(){
         SpannableString spannableString;

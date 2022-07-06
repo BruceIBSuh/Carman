@@ -11,7 +11,6 @@ import androidx.room.PrimaryKey;
  */
 @Entity
 public class FavoriteProviderEntity {
-
     @PrimaryKey(autoGenerate = true)
     public int _id;
 

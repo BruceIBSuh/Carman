@@ -34,7 +34,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public static final int VIEW_COLLAPSED = 0;
     public static final int VIEW_EXPANDED = 1;
 
-    private OnExpandItemClicked callback;
+    private final OnExpandItemClicked callback;
     private final AsyncListDiffer<MainActivity.MultiTypeEvItem> mDiffer;
     private final DecimalFormat df;
     private Context context;
@@ -46,7 +46,6 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     public StationEvAdapter(OnExpandItemClicked callback) {
         this.callback = callback;
         mDiffer = new AsyncListDiffer<>(this, DIFF_CALLBACK_EV);
-
         df = (DecimalFormat) NumberFormat.getInstance(Locale.getDefault());
         df.applyPattern("#,###");
         df.setDecimalSeparatorAlwaysShown(false);
@@ -156,7 +155,8 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position,
+                                 @NonNull List<Object> payloads) {
         //holder.setIsRecyclable(false);
         if (payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
