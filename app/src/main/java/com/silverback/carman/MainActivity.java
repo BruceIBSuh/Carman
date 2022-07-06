@@ -211,6 +211,12 @@ public class MainActivity extends BaseActivity implements
         // Create MainPricePagerAdapter which displays the graphs for the last 3 month total expense
         // and the expense configuration of this month. More pages should be added to analyze the
         // user expense.
+        binding.mainTopFrame.viewpagerPrice.setOffscreenPageLimit(1);
+        binding.mainTopFrame.viewpagerPrice.setPageTransformer((page, position) -> {
+            log.i("page transformer: %s, %s", page, position);
+            page.setTranslationX(position * -15);
+        });
+
         mainPricePagerAdapter = new MainPricePagerAdapter(this);
         mainPricePagerAdapter.setFuelCode(defaultParams[0]);
         binding.mainTopFrame.viewpagerPrice.setAdapter(mainPricePagerAdapter);

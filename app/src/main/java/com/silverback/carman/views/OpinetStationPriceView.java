@@ -60,43 +60,16 @@ public class OpinetStationPriceView extends OpinetPriceView {
 
     public void addPriceView(String fuelCode) {
         tvStnName.setText(favInfo.getStationName());
+        log.i("favorite: %s, %s", favInfo.getStationName(), favInfo.getPriceDiff());
+
         for(StationFavRunnable.OilPrice price : favInfo.getOliPriceList()) {
             if(price.getOilCode().matches(fuelCode)) {
-                Object priceDiff = favInfo.getPriceDiff().get(fuelCode);
-                float diff = (priceDiff != null)? (float)priceDiff : 0;
-                setColoredTextView(tvStnPrice, price.getPrice(), diff);
+                //Object priceDiff = favInfo.getPriceDiff().get(fuelCode);
+                //float diff = (priceDiff != null)? (float)priceDiff : 0;
+                setColoredTextView(tvStnPrice, price.getPrice(), 0);
                 break;
             }
         }
-
-        /*
-        File stnFile = new File(getContext().getFilesDir(), Constants.FILE_FAVORITE_PRICE);
-        Uri stnUri = Uri.fromFile(stnFile);
-
-        Float price = null;
-        Float diff = null;
-        try(InputStream is = getContext().getContentResolver().openInputStream(stnUri);
-            ObjectInputStream ois = new ObjectInputStream(is)){
-            Opinet.StationPrice stnPrice = (Opinet.StationPrice)ois.readObject();
-
-            String stnName = stnPrice.getStnName();
-            tvStnName.setText(stnName);
-
-            Map<String, Float> mapPrice = stnPrice.getStnPrice();
-            Map<String, Float> mapDiff = stnPrice.getPriceDiff();
-            price = mapPrice.get(fuelCode);
-            diff = mapDiff.get(fuelCode);
-
-            if(price == null || diff == null) throw new NullPointerException();
-            else setColoredTextView(tvStnPrice, price, diff);
-
-        } catch(IOException | ClassNotFoundException | NullPointerException e) {
-            if(price == null) setColoredTextView(tvStnPrice, 0, 0);
-            else if(diff == null) setColoredTextView(tvStnPrice, price, 0);
-            e.printStackTrace();
-        }
-
-         */
     }
 
     // Set the station price views to be void when the favorite is left empty.

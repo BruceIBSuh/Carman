@@ -40,31 +40,24 @@ public class StationFavRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationFavRunnable.class);
 
-    //private static final String API_KEY = "F186170711";
-    //private static final String OPINET = "https://www.opinet.co.kr/api/";
-    //private static final String URLStn = OPINET + "detailById.do?out=xml&code="+ API_KEY + "&id=";
-
     // Objects
     private final Context mContext;
     private final StationPriceMethods mCallback;
     private String stnId;
-    //private final XmlPullParserHandler xmlHandler;
+
 
     // Interface
     interface StationPriceMethods {
         String getStationId();
         boolean getIsFirst();//if true, the station will be viewed in MainActivity w/ the price.
         void setStnPriceThread(Thread thread);
-        void setFavoritePrice(Map<String, Float> data);
         void setFavStationInfo(Info info);
-        void savePriceDiff();
     }
 
     // Constructor
     StationFavRunnable(Context context, StationPriceMethods callback) {
         mContext = context;
         mCallback = callback;
-        //xmlHandler = new XmlPullParserHandler();
     }
 
     @Override
@@ -92,75 +85,25 @@ public class StationFavRunnable implements Runnable {
                         assert model != null;
 
                         Info info = model.result.info.get(0);
-                        //List<OilPrice> oilPriceList = model.result.info.get(0).oilPriceList;
-                        calculatePriceDiff(info);
+                        //calculatePriceDiff(info);
                         mCallback.setFavStationInfo(info);
                     }
 
                     @Override
                     public void onFailure(@NonNull Call<FavStationModel> call,
                                           @NonNull Throwable t) {
-                        log.i("call failed: %s", t);
+                        // Exception handling required.
                     }
                 });
 
 
             } else {
-
+                // Other favorite stations
             }
-            /*
-            URL url = new URL(URLStn + stationId);
-            HttpURLConnection conn = (HttpURLConnection)url.openConnection();
-            try(InputStream in = conn.getInputStream()) {
-                Opinet.StationPrice currentStation = xmlHandler.parseStationPrice(in);
-                final String stnName = currentStation.getStnName();
-                if(mCallback.getIsFirst()) {
-                    final File file = new File(mContext.getFilesDir(), Constants.FILE_FAVORITE_PRICE);
-                    if(!file.exists()) {
-                        log.i("favorite station file not exists");
-                        savePriceInfo(file, currentStation);
-                        return;
-                    }
-                    // Read the saved station and compare the saved price w/ the current price if
-                    Uri uri = Uri.fromFile(file);
-                    try(InputStream is = mContext.getContentResolver().openInputStream(uri);
-                        ObjectInputStream ois = new ObjectInputStream(is)) {
-                        Opinet.StationPrice savedStation = (Opinet.StationPrice)ois.readObject();
-                        log.i("compare price: %s, %s", savedStation.getStnName(), stnName);
-                        if(Objects.equals(savedStation.getStnName(), stnName)){
-                            log.i("get the price difference");
-                            Map<String, Float> current = currentStation.getStnPrice();
-                            Map<String, Float> prev = savedStation.getStnPrice();
-                            Map<String, Float> diffPrice = new HashMap<>();
 
-                            for (String key : current.keySet()) {
-                                log.i("price key: %s", key);
-                                Float currentPrice = current.get(key);
-                                Float savedPrice = prev.get(key);
-                                if (currentPrice == null) throw new NullPointerException();
-                                if (savedPrice == null) throw new NullPointerException();
-                                diffPrice.put(key, currentPrice - savedPrice);
-                                log.i("price diff: %s",  currentPrice - savedPrice);
-                                currentStation.setPriceDiff(diffPrice);
-                            }
-                        }
-
-                        savePriceInfo(file, currentStation);
-
-                    } catch(IOException | ClassNotFoundException | NullPointerException e) {
-                        e.printStackTrace();
-                    }
-
-                } else {
-                    log.i("favorite station price: %s", currentStation.getStnPrice());
-                    mCallback.setFavoritePrice(currentStation.getStnPrice());
-                }
-
-            } finally { if(conn != null) conn.disconnect(); }
-
-             */
-
-        } catch(InterruptedException e){e.printStackTrace(); }
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
     }
 
     public interface RetrofitApi {
@@ -181,8 +124,6 @@ public class StationFavRunnable implements Runnable {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create(gson))
-                    //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                    //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
             retrofitApi = retrofit.create(RetrofitApi.class);
         }
@@ -234,9 +175,8 @@ public class StationFavRunnable implements Runnable {
         private String maintYN;
         @SerializedName("OIL_PRICE")
         private List<OilPrice> oilPriceList;
-
         @Expose
-        private Map<String, Float> priceDiff;
+        private Map<String, Integer> priceDiff;
 
         public String getStationid() { return stationid; }
         public String getStationName() { return stationName; }
@@ -244,10 +184,10 @@ public class StationFavRunnable implements Runnable {
         public List<OilPrice> getOliPriceList() { return oilPriceList; }
 
 
-        public void setPriceDiff(Map<String, Float> priceDiff) {
+        public void setPriceDiff(Map<String, Integer> priceDiff) {
             this.priceDiff = priceDiff;
         }
-        public Map<String, Float> getPriceDiff() {
+        public Map<String, Integer> getPriceDiff() {
             return priceDiff;
         }
     }
@@ -256,17 +196,16 @@ public class StationFavRunnable implements Runnable {
         @SerializedName("PRODCD")
         private String oilCode;
         @SerializedName("PRICE")
-        private float price;
+        private int price;
         @SerializedName("TRADE_DT")
         private String tradeDate;
         @SerializedName("TRADE_TM")
         private String tradeTime;
 
         public String getOilCode() { return oilCode; }
-        public float getPrice() { return price; }
+        public int getPrice() { return price; }
         public String getTradeDate() { return tradeDate; }
         public String getTradeTime() { return tradeTime; }
-
     }
 
 
@@ -283,18 +222,23 @@ public class StationFavRunnable implements Runnable {
             Uri uri = Uri.fromFile(file);
             try(InputStream is = mContext.getContentResolver().openInputStream(uri);
                 ObjectInputStream ois = new ObjectInputStream(is)) {
-                final Info savedInfo = (Info)ois.readObject();
+                Info savedInfo = (Info)ois.readObject();
+                if(savedInfo == null) {
+                    log.i("saved info null");
+                    return;
+                }
 
                 if(stnId.matches(savedInfo.getStationid())) {
-                    Map<String, Float> priceDiff = new HashMap<>();
+                    Map<String, Integer> priceDiff = new HashMap<>();
                     Info currentInfo = (Info)obj;
                     for(OilPrice newInfo : currentInfo.oilPriceList) {
-                        for(OilPrice oldInfo : savedInfo.oilPriceList) {
+                        for(OilPrice oldInfo :savedInfo.oilPriceList) {
                             if(newInfo.oilCode.matches(oldInfo.oilCode)) {
                                priceDiff.put(newInfo.oilCode, (newInfo.price - oldInfo.price));
                             }
                         }
                     }
+
                     currentInfo.setPriceDiff(priceDiff);
 
                 } else {

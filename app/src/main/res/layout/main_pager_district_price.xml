@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/content"
+    android:id="@+id/main_pager_district"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="match_parent"
+    android:background="#C5E1A5" >
 
     <com.silverback.carman.views.OpinetSidoPriceView
         android:id="@+id/sidoPriceView"
@@ -12,12 +13,9 @@
         android:layout_height="match_parent"
         android:layout_marginStart="8dp"
         android:gravity="center_vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/sigunPriceView"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintHorizontal_chainStyle="spread_inside"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:sidoPriceDown="@color/priceDown"
         app:sidoPriceUp="@color/priceUp" />
 
@@ -25,15 +23,14 @@
         android:id="@+id/sigunPriceView"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_marginStart="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/img_arrow"
-        app:layout_constraintHorizontal_bias="0.5"
+        android:layout_marginStart="24dp"
         app:layout_constraintStart_toEndOf="@+id/sidoPriceView"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:sigunPriceDown="@color/priceDown"
         app:sigunPriceUp="@color/priceUp" />
 
+    <!--
     <ImageView
         android:id="@+id/img_arrow"
         android:layout_width="8dp"
@@ -45,5 +42,6 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/sigunPriceView"
         app:layout_constraintTop_toTopOf="parent" />
+    -->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

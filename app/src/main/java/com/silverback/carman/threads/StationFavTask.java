@@ -52,21 +52,17 @@ public class StationFavTask extends ThreadTask implements StationFavRunnable.Sta
 
     // OpinetViewModel LiveData having price data of a favroite gas station in the favorite list
     // which pops up by clicking the fav button in ExpenseGasFragment
+    /*
     @Override
     public void setFavoritePrice(Map<String, Float> data) {
         //viewModel.getFavoritePriceData().postValue(data);
         //weakModelReference.get().getFavoritePriceData().postValue(data);
     }
+     */
 
     @Override
     public void setFavStationInfo(StationFavRunnable.Info info) {
         viewModel.getFavStationInfo().postValue(info);
-    }
-
-
-    @Override
-    public void savePriceDiff() {
-        //weakModelReference.get().favoritePriceComplete().postValue(true);
     }
 
     public void recycle() {
