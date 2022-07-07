@@ -93,15 +93,15 @@ public class GeofenceJobIntentService extends JobIntentService {
                 geoTime = System.currentTimeMillis();
 
                 for(FavoriteProviderEntity entity : entities) {
-                    log.i("FavoriteEntity: %s", entity.providerName);
+                    log.i("FavoriteEntity: %s", entity.stationName);
                     favLocation.setLongitude(entity.longitude);
                     favLocation.setLatitude(entity.latitude);
 
                     if(geofenceLocation.distanceTo(favLocation) < Constants.GEOFENCE_RADIUS) {
                         final int notiId = createID();
-                        final String name = entity.providerName;
-                        final String id = entity.providerId;
-                        final String addrs = entity.address;
+                        final String name = entity.stationName;
+                        final String id = entity.stationId;
+                        final String addrs = entity.addrsNew;
                         final int category = entity.category;
 
                         createNotification(notiId, id, name, addrs, category);

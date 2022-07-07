@@ -58,8 +58,8 @@ public class FavoriteListAdapter extends BaseAdapter {
 
         } else viewHolder = (ListViewHolder)convertView.getTag();
 
-        viewHolder.tvFavoriteName.setText(favoriteList.get(position).providerName);
-        viewHolder.tvFavoriteAddrs.setText(favoriteList.get(position).address);
+        viewHolder.tvFavoriteName.setText(favoriteList.get(position).stationName);
+        viewHolder.tvFavoriteAddrs.setText(favoriteList.get(position).addrsNew);
 
         return convertView;
     }

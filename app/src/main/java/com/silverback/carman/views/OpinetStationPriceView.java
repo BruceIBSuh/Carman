@@ -60,7 +60,6 @@ public class OpinetStationPriceView extends OpinetPriceView {
 
     public void addPriceView(String fuelCode) {
         tvStnName.setText(favInfo.getStationName());
-        log.i("favorite: %s, %s", favInfo.getStationName(), favInfo.getPriceDiff());
 
         for(StationFavRunnable.OilPrice price : favInfo.getOliPriceList()) {
             if(price.getOilCode().matches(fuelCode)) {

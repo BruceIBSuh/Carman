@@ -42,11 +42,10 @@ public class FavoriteItemHolder extends RecyclerView.ViewHolder {
     }
 
     public void bindToFavorite(FavoriteProviderEntity favorite) {
-
-        tvName.setText(favorite.providerName);
-        tvAddress.setText(favorite.address);
-        if(favorite.providerCode != null) {
-            int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
+        tvName.setText(favorite.stationName);
+        tvAddress.setText(favorite.addrsNew);
+        if(favorite.company != null) {
+            int imgResource = BaseActivity.getGasStationImage(favorite.company);
             if (imgResource != -1) imgLogo.setImageResource(imgResource);
         }
 

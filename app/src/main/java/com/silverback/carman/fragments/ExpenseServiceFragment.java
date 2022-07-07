@@ -299,8 +299,8 @@ public class ExpenseServiceFragment extends Fragment implements
 
             // Get the params for removeGeofence() which are passed from FavroiteListFragment
             fragmentModel.getFavoriteSvcEntity().observe(getViewLifecycleOwner(), entity -> {
-                svcName = entity.providerName;
-                svcId = entity.providerId;
+                svcName = entity.stationName;
+                svcId = entity.stationId;
                 //etServiceName.setText(svcName);
                 binding.etServiceProvider.setText(svcName);
                 binding.btnSvcFavorite.setBackgroundResource(R.drawable.btn_favorite_selected);
@@ -418,6 +418,7 @@ public class ExpenseServiceFragment extends Fragment implements
                 } else {
                     // Query the data of a station from Firestore and pass the data to FavoriteGeofenceHelper
                     // for adding the favoirte list to the local db and Firestore as well.
+                    /*
                     firestore.collection("svc_station").document(svcId).get().addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             DocumentSnapshot snapshot = task.getResult();
@@ -427,6 +428,8 @@ public class ExpenseServiceFragment extends Fragment implements
                             }
                         }
                     });
+
+                     */
 
                 }
             }

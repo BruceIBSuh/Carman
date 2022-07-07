@@ -69,7 +69,7 @@ public class SettingFavorSvcFragment extends Fragment implements
 
         mDB.favoriteModel().queryFavoriteProviders(Constants.SVC).observe(getViewLifecycleOwner(), favoriteList -> {
             for(int i = 0; i < favoriteList.size(); i++) {
-                log.i("Favorite: %s, %s", favoriteList.get(i).providerName, favoriteList.get(i).address);
+                log.i("Favorite: %s, %s", favoriteList.get(i).stationName, favoriteList.get(i).addrsNew);
             }
 
             favoriteEntityList = favoriteList;
@@ -84,7 +84,7 @@ public class SettingFavorSvcFragment extends Fragment implements
             for(int i = 0; i < favoriteList.size(); i++) {
 
                 final int pos = i;
-                final String stnId = favoriteList.get(pos).providerId;
+                final String stnId = favoriteList.get(pos).stationId;
                 log.i("Station ID: %s", stnId);
 
                 firestore.collection("svc_eval").document(stnId).get().addOnCompleteListener(task -> {
@@ -134,7 +134,7 @@ public class SettingFavorSvcFragment extends Fragment implements
 
     @Override
     public void deleteFavorite(int category, int position) {
-        log.i("Listener: delete Favorite - %s", favoriteEntityList.get(position).providerName);
+        log.i("Listener: delete Favorite - %s", favoriteEntityList.get(position).stationName);
         mDB.favoriteModel().deleteProvider(favoriteEntityList.get(position));
     }
 }

@@ -55,10 +55,10 @@ public class SettingFavAdapter extends RecyclerView.Adapter<SettingFavAdapter.Vi
         }
 
         void bindToFavorite(FavoriteProviderEntity favorite) {
-            binding.tvProviderName.setText(favorite.providerName);
-            binding.tvProviderAddrs.setText(favorite.address);
-            if(favorite.providerCode != null) {
-                int imgResource = BaseActivity.getGasStationImage(favorite.providerCode);
+            binding.tvProviderName.setText(favorite.stationName);
+            binding.tvProviderAddrs.setText(favorite.addrsNew);
+            if(favorite.company != null) {
+                int imgResource = BaseActivity.getGasStationImage(favorite.company);
                 if (imgResource != -1) binding.imgLogo.setImageResource(imgResource);
             }
 
@@ -184,8 +184,8 @@ public class SettingFavAdapter extends RecyclerView.Adapter<SettingFavAdapter.Vi
         // If an item is dragged up to the first place in the list, it is notified that a new favorite
         // is set up to the first placeholder, ready to display the price in MainActivity.
         if(to == 0) {
-            log.i("First set favorite: %s", favoriteList.get(to).providerId);
-            mListener.setFirstPlaceholder(Constants.GAS, favoriteList.get(to).providerId);
+            log.i("First set favorite: %s", favoriteList.get(to).stationId);
+            mListener.setFirstPlaceholder(Constants.GAS, favoriteList.get(to).stationId);
         }
     }
 

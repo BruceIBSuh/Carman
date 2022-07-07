@@ -91,7 +91,7 @@ public class SettingFavorGasFragment extends Fragment implements
             // SparseArray, then make the partial binding of recyclerview items.
             for(int i = 0; i < favList.size(); i++) {
                 final int pos = i;
-                final String stnId = favList.get(pos).providerId;
+                final String stnId = favList.get(pos).stationId;
 
                 firestore.collection("gas_eval").document(stnId).get().addOnCompleteListener(task -> {
                     if(task.isSuccessful()) {
@@ -128,7 +128,7 @@ public class SettingFavorGasFragment extends Fragment implements
             // the edited fasvorte list.
             int position = 0;
             for(FavoriteProviderEntity entity : favList) {
-                log.i("Favorite placeholder: %s, %s", entity.providerName, entity.placeHolder);
+                log.i("Favorite placeholder: %s, %s", entity.stationName, entity.placeHolder);
                 entity.placeHolder = position;
                 position++;
             }

@@ -545,7 +545,6 @@ public class MainActivity extends BaseActivity implements
         checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
             locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
             progbtnList.get(progbtnId).setProgress();
-
             locationObserver = new Observer<Location>() {
                 @Override
                 public void onChanged(Location location) {

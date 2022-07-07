@@ -120,8 +120,6 @@ public class IntroActivity extends BaseActivity  {
                 //userData.put("auto_data", null);
                 //userData.put("cnt_warning", 0);
                 //userData.put("reg_date", new ArrayList<Date>());
-
-
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
                     try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
                         fos.write(mAuth.getUid().getBytes());
@@ -142,7 +140,7 @@ public class IntroActivity extends BaseActivity  {
                 // Initiate DistrictCodeTask to get the district codes provided by Opinet and save
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
-                distCodeTask = sThreadManager.saveDistrictCodeTask(this, opinetModel);
+                distCodeTask = ThreadManager2.saveDistrictCodeTask(this, opinetModel);
                 // Notified of having the district codes(sigun codes) complete, which was running in the
                 // background by DistrictCodeTask only during firstInitProcess().
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
@@ -173,6 +171,7 @@ public class IntroActivity extends BaseActivity  {
             // favorite, if any, fetched from the Opinet by GasPriceTask, saving the current time in
             // SharedPreferences to check whether the price should be updated for the next initiation.
             opinetModel.distPriceComplete().observe(this, isDone -> {
+                log.i("district price done");
                 mSettings.edit().putLong(Constants.OPINET_LAST_UPDATE, System.currentTimeMillis()).apply();
                 startActivity(new Intent(this, MainActivity.class));
                 binding.pbIntro.setVisibility(View.GONE);

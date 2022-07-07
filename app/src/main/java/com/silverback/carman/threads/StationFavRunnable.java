@@ -13,6 +13,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
+import com.silverback.carman.database.CarmanDatabase;
+import com.silverback.carman.database.FavoriteProviderDao;
+import com.silverback.carman.database.FavoriteProviderEntity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
@@ -24,6 +28,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +73,10 @@ public class StationFavRunnable implements Runnable {
         stnId = mCallback.getStationId();
         try {
             if(Thread.interrupted()) throw new InterruptedException();
-
             // Fetch the first favorite station, the price info of which is shown in the price
             // viewpager in the main activity. Otherwise, just fetch the price info and show
             // it in the gas manager fragment in the expense activity.
-            if(mCallback.getIsFirst()) {
+            //if(mCallback.getIsFirst()) {
                 Call<FavStationModel> call = RetrofitClient.getIntance()
                         .getRetrofitApi()
                         .getStationInfoModel("F186170711", stnId, "json");
@@ -83,9 +87,13 @@ public class StationFavRunnable implements Runnable {
 
                         FavStationModel model = response.body();
                         assert model != null;
-
                         Info info = model.result.info.get(0);
-                        //calculatePriceDiff(info);
+                        // Save the data in the room to compare the prices.
+                        if(mCallback.getIsFirst()) {
+                            CarmanDatabase room = CarmanDatabase.getDatabaseInstance(mContext);
+                            room.favoriteModel().insertFavoriteProvider(saveFirstFavInfo(info));
+                        }
+
                         mCallback.setFavStationInfo(info);
                     }
 
@@ -96,10 +104,9 @@ public class StationFavRunnable implements Runnable {
                     }
                 });
 
-
-            } else {
+            //} else {
                 // Other favorite stations
-            }
+            //}
 
         } catch(InterruptedException e){
             e.printStackTrace();
@@ -151,16 +158,15 @@ public class StationFavRunnable implements Runnable {
         @SerializedName("OIL")
         @Expose
         public List<Info> info;
-
     }
 
-    public static class Info implements Serializable {
+    public static class Info {
         @SerializedName("UNI_ID")
         private String stationid;
         @SerializedName("OS_NM")
         private String stationName;
         @SerializedName("POLL_DIV_CD")
-        private String company;
+        private String companyCode;
         @SerializedName("VAN_ADR")
         @Expose
         private String addrsOld;
@@ -173,23 +179,32 @@ public class StationFavRunnable implements Runnable {
         private String cvsYN;
         @SerializedName("MAINT_YN")
         private String maintYN;
+        @SerializedName("GIS_X_COOR")
+        public double x;
+        @SerializedName("GIS_Y_COOR")
+        public double y;
+
         @SerializedName("OIL_PRICE")
         private List<OilPrice> oilPriceList;
-        @Expose
-        private Map<String, Integer> priceDiff;
+        //@Expose
+        //private Map<String, Integer> priceDiff;
 
         public String getStationid() { return stationid; }
         public String getStationName() { return stationName; }
-        public String getCompany() { return company; }
+        public String getCompanyCode() { return companyCode; }
+        public String getAddrsOld() { return addrsOld; }
+        public String getAddrsNew() { return addrsNew; }
         public List<OilPrice> getOliPriceList() { return oilPriceList; }
 
-
+        /*
         public void setPriceDiff(Map<String, Integer> priceDiff) {
             this.priceDiff = priceDiff;
         }
         public Map<String, Integer> getPriceDiff() {
             return priceDiff;
         }
+
+         */
     }
 
     public static class OilPrice implements Serializable {
@@ -208,6 +223,18 @@ public class StationFavRunnable implements Runnable {
         public String getTradeTime() { return tradeTime; }
     }
 
+    private FavoriteProviderEntity saveFirstFavInfo(Info info) {
+        FavoriteProviderEntity entity = new FavoriteProviderEntity();
+        entity.stationId = info.stationid;
+        entity.stationName = info.stationName;
+        entity.category = Constants.GAS;
+
+        Gson gson = new Gson();
+        Type type = new TypeToken<List<OilPrice>>(){}.getType();
+        entity.oilPrices = gson.toJson(info.oilPriceList, type);;
+
+        return entity;
+    }
 
 
     private void calculatePriceDiff(Object obj) {
@@ -239,7 +266,7 @@ public class StationFavRunnable implements Runnable {
                         }
                     }
 
-                    currentInfo.setPriceDiff(priceDiff);
+                    //currentInfo.setPriceDiff(priceDiff);
 
                 } else {
                     try(FileOutputStream fos = new FileOutputStream(file);

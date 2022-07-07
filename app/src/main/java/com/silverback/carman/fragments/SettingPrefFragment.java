@@ -14,12 +14,9 @@ import static com.silverback.carman.SettingActivity.PREF_USERNAME;
 import static com.silverback.carman.SettingActivity.REQUEST_CODE_CROP;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.InputType;
@@ -27,8 +24,6 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.ImageView;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -44,8 +39,6 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceManager;
 import androidx.preference.SwitchPreferenceCompat;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -58,7 +51,6 @@ import com.google.firebase.storage.UploadTask;
 import com.silverback.carman.BaseActivity;
 import com.silverback.carman.CropImageActivity;
 import com.silverback.carman.R;
-import com.silverback.carman.SettingActivity;
 import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.FavoriteProviderDao;
 import com.silverback.carman.logs.LoggingHelper;
@@ -66,7 +58,6 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.views.AutoDataPreference;
 import com.silverback.carman.views.UserImagePreference;
 
@@ -74,10 +65,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -240,8 +227,8 @@ public class SettingPrefFragment extends SettingBaseFragment {
         // Retrieve the favorite gas station and the service station which are both set the placeholder
         // to 0 as the designated provider.
         favorite = findPreference(PREF_FAVORITE);
-        CarmanDatabase sqlite = CarmanDatabase.getDatabaseInstance(getContext());
-        sqlite.favoriteModel().queryFirstSetFavorite().observe(this, data -> {
+        CarmanDatabase room = CarmanDatabase.getDatabaseInstance(getContext());
+        room.favoriteModel().queryFirstFav().observe(this, data -> {
             String favoriteStn = getString(R.string.pref_no_favorite);
             String favoriteSvc = getString(R.string.pref_no_favorite);
             for(FavoriteProviderDao.FirstSetFavorite provider : data) {
