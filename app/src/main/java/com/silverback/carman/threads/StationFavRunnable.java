@@ -68,7 +68,6 @@ public class StationFavRunnable implements Runnable {
         stnId = mCallback.getStationId();
         try {
             if(Thread.interrupted()) throw new InterruptedException();
-
             // Fetch the first favorite station, the price info of which is shown in the price
             // viewpager in the main activity. Otherwise, just fetch the price info and show
             // it in the gas manager fragment in the expense activity.
