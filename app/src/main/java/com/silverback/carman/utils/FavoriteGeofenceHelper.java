@@ -22,6 +22,7 @@ import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.database.FavoriteProviderEntity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
+import com.silverback.carman.threads.StationFavRunnable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -112,8 +113,8 @@ public class FavoriteGeofenceHelper {
      * @param category Service provier b/w Constants.GAS and Constants.SVC.
      */
     @SuppressWarnings("ConstantConditions")
-    public void addFavoriteGeofence(DocumentSnapshot snapshot, int placeHolder, int category) {
-        final String providerId = snapshot.getId();
+    public void addFavoriteGeofence(StationFavRunnable.Info data, int placeHolder, int category) {
+        final String providerId = data.getStationid();
         String providerName;
         String providerCode;
         String address;
@@ -123,12 +124,11 @@ public class FavoriteGeofenceHelper {
                 // Get the location data saved as KATEC which is provided by Opinet and convert it
                 // to GeoPoint b/c Google map is used to display the station. At a later time when
                 // a local map is used, KATEC coords should be applied.
-                GeoPoint katecPoint = new GeoPoint((double)snapshot.get("katec_x"), (double)snapshot.get("katec_y"));
+                GeoPoint katecPoint = new GeoPoint(data.x, data.y);
                 geoPoint = GeoTrans.convert(GeoTrans.KATEC, GeoTrans.GEO, katecPoint);
-                providerName = snapshot.getString("stn_name");
-                providerCode = snapshot.getString("stn_code");
-                address = TextUtils.isEmpty(snapshot.getString("new_addrs"))?
-                        snapshot.getString("old_addrs"):snapshot.getString("new_addrs");
+                providerName = data.getStationName();
+                providerCode = data.getCompanyCode();
+                address = TextUtils.isEmpty(data.getAddrsNew())? data.getAddrsOld():data.getAddrsNew();
                 evalReference = firestore.collection("gas_eval").document(providerId);
 
                 log.i("Geofence: %s, %s, %s, %s, %s, %s", providerId,  providerName, providerCode, address, geoPoint.getX(), geoPoint.getY());
@@ -138,6 +138,7 @@ public class FavoriteGeofenceHelper {
                 // Service location data should be accumulated on users' own activity and save the
                 // data in Firestore, the type of loation data is the geo point, different from the
                 // Katec.
+                /*
                 if(snapshot.getGeoPoint("geopoint") != null) {
                     double latitude = snapshot.getGeoPoint("geopoint").getLatitude();
                     double longitude = snapshot.getGeoPoint("geopoint").getLongitude();
@@ -149,6 +150,8 @@ public class FavoriteGeofenceHelper {
                 address = snapshot.getString("address");
 
                 evalReference = firestore.collection("svc_eval").document(providerId);
+
+                 */
                 break;
 
             default:
@@ -168,14 +171,14 @@ public class FavoriteGeofenceHelper {
         );
 
         // Set the fields of FavoriteProviderEntity with the snapshot data.
-        favoriteModel.providerName = providerName;
+        favoriteModel.stationName = data.getStationName();
         favoriteModel.category = category;
-        favoriteModel.providerId = providerId;
-        favoriteModel.providerCode = providerCode;
-        favoriteModel.address = address;
+        favoriteModel.stationId = providerId;
+        favoriteModel.company = data.getCompanyCode();
+        favoriteModel.addrsNew = data.getAddrsNew();
         favoriteModel.placeHolder = placeHolder;
-        favoriteModel.longitude = geoPoint.getX();
-        favoriteModel.latitude = geoPoint.getY();
+        favoriteModel.longitude = data.x;
+        favoriteModel.latitude = data.y;
 
 
         // Add geofences using addGoefences() which has GeofencingRequest and PendingIntent as parasms.

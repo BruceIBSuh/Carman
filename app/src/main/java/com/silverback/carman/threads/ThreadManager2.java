@@ -218,11 +218,12 @@ public class ThreadManager2 {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
         //DistCodeDownloadTask distCodeTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        if(distCodeTask == null) distCodeTask = new DistCodeDownloadTask(context, model);
-        InnerClazz.sInstance.threadPoolExecutor.execute(distCodeTask.getOpinetDistCodeRunnable());
-        return distCodeTask;
+        DistCodeDownloadTask districtTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        if(districtTask == null) districtTask = new DistCodeDownloadTask(context, model);
+        InnerClazz.sInstance.threadPoolExecutor.execute(districtTask.getOpinetDistCodeRunnable());
+        return districtTask;
     }
 
     public GeocoderTask startGeocoderTask(Context context, LocationViewModel model, String addrs) {

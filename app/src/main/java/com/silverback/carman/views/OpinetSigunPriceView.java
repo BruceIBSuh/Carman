@@ -55,7 +55,6 @@ public class OpinetSigunPriceView extends OpinetPriceView {
 
     }
 
-    //@SuppressWarnings("unchecked")
     public void addPriceView(String fuelCode) {
         File sigunFile = new File(getContext().getCacheDir(), Constants.FILE_CACHED_SIGUN_PRICE);
         Uri sigunUri = Uri.fromFile(sigunFile);

@@ -51,7 +51,6 @@ public class StationListViewModel extends ViewModel {
     }
 
     // Get a current station which is located within MIN_RADIUS
-    //public MutableLiveData<Opinet.GasStnParcelable> getCurrentStation() {
     public MutableLiveData<StationGasRunnable.Item> getCurrentStation() {
         if(currentStation == null) {
             currentStation = new MutableLiveData<>();

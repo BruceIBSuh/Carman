@@ -111,11 +111,14 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
         else {
             // On receiving car wash values, set the progressbar to be View.GONE and set the message
             // to the textview.
+            /*
             for(Object obj : payloads) {
                 if(obj instanceof StationInfoRunnable.Info) {
                     log.i("partial binding");
                 }
             }
+
+             */
         }
     }
 

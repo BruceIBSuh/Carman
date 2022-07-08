@@ -68,9 +68,9 @@ public class GeofenceResetWorker extends Worker {
         // Registered geofences have been saved in the FavoriteProviderEntity of the Room database,
         // thus, retrieve the geofences, put them in the list and add it in the geofencingclient.
         for (FavoriteProviderEntity entity : favoriteList) {
-            log.i("Favorite: %s, %s, %s", entity.providerName, entity.category, entity.providerId);
+            log.i("Favorite: %s, %s, %s", entity.stationName, entity.category, entity.stationId);
             geofenceList.add(new Geofence.Builder()
-                    .setRequestId(entity.providerId)
+                    .setRequestId(entity.stationId)
                     .setCircularRegion(entity.latitude, entity.longitude, Constants.GEOFENCE_RADIUS)
                     .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
                     .setExpirationDuration(Geofence.NEVER_EXPIRE)
