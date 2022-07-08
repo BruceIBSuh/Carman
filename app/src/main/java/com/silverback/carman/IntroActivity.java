@@ -74,7 +74,7 @@ public class IntroActivity extends BaseActivity  {
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
         firestore = FirebaseFirestore.getInstance();
-        CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
+        //CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
         // Retrieve resources.
@@ -121,7 +121,7 @@ public class IntroActivity extends BaseActivity  {
                 //userData.put("cnt_warning", 0);
                 //userData.put("reg_date", new ArrayList<Date>());
                 firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
-                    try (FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
+                    try(FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
                         fos.write(mAuth.getUid().getBytes());
                     } catch (IOException e) { e.printStackTrace();}
                 }).addOnFailureListener(Exception::printStackTrace);

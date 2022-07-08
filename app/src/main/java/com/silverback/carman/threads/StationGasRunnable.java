@@ -150,8 +150,6 @@ public class StationGasRunnable implements Runnable{
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(RetrofitApi.BASE_URL)
                     .addConverterFactory(GsonConverterFactory.create(gson))
-                    //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                    //.addConverterFactory(TikXmlConverterFactory.create(new TikXml.Builder().exceptionOnUnreadXml(false).build()))
                     .build();
 
             retrofitApi = retrofit.create(RetrofitApi.class);
@@ -173,7 +171,6 @@ public class StationGasRunnable implements Runnable{
         @SerializedName("RESULT")
         @Expose
         public Result result;
-
     }
 
     public static class Result {
