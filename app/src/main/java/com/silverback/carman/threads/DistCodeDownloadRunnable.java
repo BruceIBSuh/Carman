@@ -1,9 +1,19 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.DistCodeDownloadRunnable.RetrofitApi.BASE_URL;
+
 import android.content.Context;
 import android.os.Process;
 
+import androidx.annotation.NonNull;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 import com.silverback.carman.R;
+import com.silverback.carman.logs.LoggingHelper;
+import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.XmlPullParserHandler;
@@ -18,6 +28,14 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.GET;
+import retrofit2.http.Query;
+
 /*
  * This class is to get the Sigun codes based on the Sido code defined in the string-array from the
  * Opinet. Once downloading the Sigun codes completes, it will be saved in the internal storage.
@@ -25,7 +43,7 @@ import java.util.List;
 public class DistCodeDownloadRunnable implements Runnable {
 
     // Logging
-    //private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadRunnable.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadRunnable.class);
 
     static final int TASK_COMPLETE = 1;
     static final int TASK_FAIL = -1;
@@ -59,6 +77,10 @@ public class DistCodeDownloadRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         final String[] sido = context.getResources().getStringArray(R.array.sido_code);
+
+
+
+        /*
         HttpURLConnection conn = null;
         BufferedInputStream bis = null;
         List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
@@ -97,10 +119,99 @@ public class DistCodeDownloadRunnable implements Runnable {
             catch(IOException e) { e.printStackTrace();}
             if(conn != null) conn.disconnect();
         }
+
+         */
+        List<Area> areaList = new ArrayList<>();
+        for(String sidocode : sido){
+            Call<AreaCodeModel> call = RetrofitClient.getIntance()
+                    .getRetrofitApi()
+                    .getAreaCodeModel("F186170711", sidocode, "json");
+
+            call.enqueue(new Callback<AreaCodeModel>() {
+                @Override
+                public void onResponse(@NonNull Call<AreaCodeModel> call,
+                                       @NonNull Response<AreaCodeModel> response) {
+                   AreaCodeModel model = response.body();
+                   assert model != null;
+                   areaList.addAll(model.result.areaList);
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<AreaCodeModel> call, @NonNull Throwable t) {
+
+                }
+            });
+        }
+
+        for(Area area : areaList) {
+            log.i("area: %s, %s", area.areaCd, area.areaName);
+        }
+        if(areaList.size() > 0) {
+            boolean isSaved = saveDistCode(areaList);
+            mTask.hasDistCodeSaved(isSaved);
+            int state = (isSaved)? TASK_COMPLETE : TASK_FAIL;
+            mTask.handleDistCodeTask(state);
+        } else {
+            mTask.hasDistCodeSaved(false);
+            mTask.handleDistCodeTask(TASK_FAIL);
+        }
+
+
     }
 
+    // Retrofit API.
+    public interface RetrofitApi {
+        String BASE_URL = "https://www.opinet.co.kr/api/";
+        @GET("areaCode.do")
+        Call<AreaCodeModel> getAreaCodeModel (
+                @Query("code") String code,
+                @Query("area") String area,
+                @Query("out") String out
+        );
+
+    }
+
+    private static class RetrofitClient {
+        private final RetrofitApi retrofitApi;
+        private RetrofitClient() {
+            Gson gson = new GsonBuilder().setLenient().create(); //make it less strict
+            Retrofit retrofit = new Retrofit.Builder()
+                    .baseUrl(BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .build();
+
+            retrofitApi = retrofit.create(RetrofitApi.class);
+        }
+        // Bill-Pugh Singleton instance
+        private static class LazyHolder {
+            private static final RetrofitClient sInstance = new RetrofitClient();
+        }
+        public static RetrofitClient getIntance() {
+            return RetrofitClient.LazyHolder.sInstance;
+        }
+        public RetrofitApi getRetrofitApi() {
+            return retrofitApi;
+        }
+    }
+
+    private static class AreaCodeModel {
+        @SerializedName("RESULT")
+        public Result result;
+    }
+
+    private static class Result {
+        @SerializedName("OIL")
+        public List<Area> areaList;
+    }
+
+    private static class Area {
+        @SerializedName("AREA_CD")
+        public String areaCd;
+        @SerializedName("AREA_NM")
+        public String areaName;
+    }
     // Method to save the district code downloaded from the Opinet in the internal storage
-    private boolean saveDistCode(List<Opinet.DistrictCode> list) {
+    private boolean saveDistCode(List<Area> list) {
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         try(FileOutputStream fos = new FileOutputStream(file);
             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
