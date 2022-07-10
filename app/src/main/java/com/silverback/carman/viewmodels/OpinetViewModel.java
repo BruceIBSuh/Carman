@@ -3,6 +3,8 @@ package com.silverback.carman.viewmodels;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.silverback.carman.threads.DistDownloadRunnable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +18,7 @@ public class OpinetViewModel extends ViewModel {
     private MutableLiveData<Boolean> districtPrice;
     private MutableLiveData<Boolean> favoritePrice;
     private MutableLiveData<Map<String, Float>> favoritePriceData;
-    private MutableLiveData<List<Opinet.DistrictCode>> spinnerList;
+    private MutableLiveData<List<DistDownloadRunnable.Area>> spinnerList;
 
 
     public MutableLiveData<Boolean> distCodeComplete() {
@@ -40,9 +42,9 @@ public class OpinetViewModel extends ViewModel {
         return favoritePriceData;
     }
 
-    // DistCodeSpinnerTask notifies RegisterDialogFragment or SettingSpinnerDlgFragment of receiving
+    // DistSpinnerTask notifies RegisterDialogFragment or SettingSpinnerDlgFragment of receiving
     // the district code list from the internal storage.
-    public MutableLiveData<List<Opinet.DistrictCode>> getSpinnerDataList() {
+    public MutableLiveData<List<DistDownloadRunnable.Area>> getSpinnerDataList() {
         if(spinnerList == null) spinnerList = new MutableLiveData<>();
         return spinnerList;
     }

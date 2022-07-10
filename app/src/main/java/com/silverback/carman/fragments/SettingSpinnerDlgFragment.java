@@ -3,12 +3,10 @@ package com.silverback.carman.fragments;
 
 import android.app.Dialog;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -16,22 +14,19 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
-import com.google.firebase.firestore.util.Assert;
 import com.silverback.carman.R;
 import com.silverback.carman.adapters.SigunSpinnerAdapter;
 import com.silverback.carman.databinding.DialogSettingSpinnerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.DistCodeSpinnerTask;
+import com.silverback.carman.threads.DistDownloadRunnable;
+import com.silverback.carman.threads.DistSpinnerTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
-import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.views.SpinnerDialogPreference;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -50,7 +45,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     // Objects
     private DialogSettingSpinnerBinding binding;
     private OpinetViewModel opinetModel;
-    private DistCodeSpinnerTask spinnerTask;
+    private DistSpinnerTask spinnerTask;
     private ArrayAdapter<CharSequence> sidoAdapter;
     private SigunSpinnerAdapter sigunAdapter;
     private FragmentSharedModel fragmentModel;
@@ -121,8 +116,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
             if(mSidoItemPos != tmpSidoPos) mSigunItemPos = 0;
             else {
                 int position = 0;
-                for(Opinet.DistrictCode code :  sigunList) {
-                    if (code.getDistrictCode().equals(districtCode)) mSigunItemPos = position;
+                for(DistDownloadRunnable.Area code :  sigunList) {
+                    if (code.getAreaCd().equals(districtCode)) mSigunItemPos = position;
                     position++;
                 }
             }
@@ -143,7 +138,7 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         if(parent == binding.spinnerSido) {
             // Retrieve a new Sigun code list with the Sido given by by the Sido spinner.
-            spinnerTask = ThreadManager2.getInstance().loadDistrictSpinnerTask(getContext(), opinetModel, position);
+            spinnerTask = ThreadManager2.getInstance().loadDistSpinnerTask(getContext(), opinetModel, position);
             // The Sigun spinner is set to the first position if the Sido spinner changes.
             if(mSidoItemPos != position) mSigunItemPos = 0;
             tmpSidoPos = position;
@@ -161,8 +156,8 @@ public class SettingSpinnerDlgFragment extends PreferenceDialogFragmentCompat im
 
             List<String> defaults = new ArrayList<>();
             defaults.add((String)sidoAdapter.getItem(mSidoItemPos));
-            defaults.add(sigunAdapter.getItem(mSigunItemPos).getDistrictName());
-            defaults.add(sigunAdapter.getItem(mSigunItemPos).getDistrictCode());
+            defaults.add(sigunAdapter.getItem(mSigunItemPos).getAreaName());
+            defaults.add(sigunAdapter.getItem(mSigunItemPos).getAreaCd());
 
             // Share the district names with SettingPreferenceFragemnt to display the names in
             // the summary of the District preference.

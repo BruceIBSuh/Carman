@@ -118,8 +118,8 @@ public abstract class BaseActivity extends AppCompatActivity {
         isNetworkConnected = notifyNetworkConnected(this);
     }
 
-    public void checkRuntimePermission(
-            View rootView, String perm, String rationale, PermissionCallback callback){
+    public void checkRuntimePermission(View rootView, String perm, String rationale,
+                                       PermissionCallback callback){
         if(ContextCompat.checkSelfPermission(this, perm) == PackageManager.PERMISSION_GRANTED) {
             callback.performAction();
         } else if(ActivityCompat.shouldShowRequestPermissionRationale(this, perm)) {
@@ -128,7 +128,7 @@ public abstract class BaseActivity extends AppCompatActivity {
                     .show();
         } else reqPermissionLauncher.launch(perm);
     }
-    // Abstract method to get a permission result in each activity which extends this BaseActivity.
+    // Abstract method to get a permission result in each activity which extends BaseActivity.
     public abstract void getPermissionResult(Boolean isPermitted);
 
     // Check a state of the network

@@ -70,7 +70,7 @@ public class ThreadManager2 {
     private final BlockingQueue<GeocoderReverseTask> mGeocoderReverseTaskQueue;
     private final BlockingQueue<GasPriceTask> mGasPriceTaskQueue;
     private final BlockingQueue<StationFavTask> mStationFavTaskQueue;
-    private final BlockingQueue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
+    private final BlockingQueue<DistSpinnerTask> mDistSpinnerTaskQueue;
     private final BlockingQueue<UploadBitmapTask> mUploadBitmapTaskQueue;
     
 
@@ -80,10 +80,10 @@ public class ThreadManager2 {
     private final Handler mMainHandler;
 
     private ThreadTask threadTask;
-    private DistCodeDownloadTask distCodeTask;
+    private DistDownloadTask distCodeTask;
     private GeocoderTask geocoderTask;
     private GeocoderReverseTask geocoderReverseTask;
-    private DistCodeSpinnerTask distSpinnerTak;
+    private DistSpinnerTask distSpinnerTak;
     private GasPriceTask gasPriceTask;
     private LocationTask locationTask;
     private StationGasTask stnListTask;
@@ -105,7 +105,7 @@ public class ThreadManager2 {
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mStationFavTaskQueue = new LinkedBlockingQueue<>();
         mUploadBitmapTaskQueue = new LinkedBlockingQueue<>();
-        mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
+        mDistSpinnerTaskQueue = new LinkedBlockingQueue<>();
 
         mUploadPostTaskQueue2 = new LinkedBlockingQueue<>();
 
@@ -218,10 +218,10 @@ public class ThreadManager2 {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
-        //DistCodeDownloadTask distCodeTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        DistCodeDownloadTask districtTask = (DistCodeDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
-        if(districtTask == null) districtTask = new DistCodeDownloadTask(context, model);
+    public static DistDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+        //DistDownloadTask distCodeTask = (DistDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        DistDownloadTask districtTask = (DistDownloadTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        if(districtTask == null) districtTask = new DistDownloadTask(context, model);
         InnerClazz.sInstance.threadPoolExecutor.execute(districtTask.getOpinetDistCodeRunnable());
         return districtTask;
     }
@@ -245,13 +245,13 @@ public class ThreadManager2 {
         return geocoderReverseTask;
     }
 
-    public static DistCodeSpinnerTask loadDistrictSpinnerTask(Context context, OpinetViewModel model, int code) {
-        DistCodeSpinnerTask districtSpinnerTask = InnerClazz.sInstance.mDistCodeSpinnerTaskQueue.poll();
-        if(districtSpinnerTask == null) districtSpinnerTask = new DistCodeSpinnerTask(context);
-        districtSpinnerTask.initSpinnerDistCodeTask(model, code);
-        InnerClazz.sInstance.threadPoolExecutor.execute(districtSpinnerTask.getDistCodeSpinnerRunnable());
+    public static DistSpinnerTask loadDistSpinnerTask(Context context, OpinetViewModel model, int code) {
+        DistSpinnerTask dispSpinnerTask = (DistSpinnerTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
+        if(dispSpinnerTask == null) dispSpinnerTask = new DistSpinnerTask(context);
+        dispSpinnerTask.initSpinnerDistCodeTask(model, code);
+        InnerClazz.sInstance.threadPoolExecutor.execute(dispSpinnerTask.getDistCodeSpinnerRunnable());
 
-        return districtSpinnerTask;
+        return dispSpinnerTask;
     }
 
     // Downloads the average, Sido, and Sigun price from the opinet and saves them in the specified

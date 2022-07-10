@@ -290,10 +290,7 @@ public class MainActivity extends BaseActivity implements
 
     }
 
-    @Override
-    public void getPermissionResult(Boolean isPermitted) {
 
-    }
 
     @Override
     public void onStop() {
@@ -447,6 +444,20 @@ public class MainActivity extends BaseActivity implements
         evListAdapter.submitEvList(evSimpleList);
     }
 
+    // Implement the abstract method defined in BaseActivity to handle the location permission
+    @Override
+    public void getPermissionResult(Boolean isPermitted) {
+        log.i("permission result:%s", isPermitted);
+        final int multiButtonId = oldProgbtnId;
+        if(isPermitted) {
+            //locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
+            //progbtnList.get(multiButtonId).setProgress();
+        } else {
+            //progbtnList.get(multiButtonId).stopProgress();
+            //progbtnList.get(multiButtonId).resetProgress();
+        }
+    }
+
     // Reset the default fuel code
     private void setGasSpinnerSelection(String gasCode) {
         for(int i = 0; i < arrGasCode.length; i++) {
@@ -519,13 +530,9 @@ public class MainActivity extends BaseActivity implements
 
     public void locateStations(int progbtnId){
         log.i("multi button: %s, %s", oldProgbtnId, progbtnId);
+        // In case a button has been clicked and in the state of stop.
         if(oldProgbtnId != -1) {
             progbtnList.get(oldProgbtnId).resetProgress();
-            /*
-            stationModel.getEvStationList().removeObserver(evObserver);
-            stationModel.getHydroStationList().removeObserver(hydroObserver);
-            stationModel.getNearStationList().removeObserver(gasObserver);
-            */
             if(oldProgbtnId == progbtnId) {
                 binding.viewFlipper.setDisplayedChild(0);
                 //binding.recyclerStations.setVisibility(View.GONE);
@@ -538,13 +545,15 @@ public class MainActivity extends BaseActivity implements
                 return;
 
             } //else locationModel.getLocation().removeObserver(locationObserver);
-        }
+
+        } else oldProgbtnId = progbtnId;
 
         final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
         final String rationale = "permission required to use Fine Location";
         checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
             locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
             progbtnList.get(progbtnId).setProgress();
+
             locationObserver = new Observer<Location>() {
                 @Override
                 public void onChanged(Location location) {
@@ -558,6 +567,7 @@ public class MainActivity extends BaseActivity implements
                     locationModel.getLocation().removeObserver(this);
                 }
             };
+
             locationModel.getLocation().observe(this, locationObserver);
 
             locationModel.getLocationException().observe(this, exception -> {

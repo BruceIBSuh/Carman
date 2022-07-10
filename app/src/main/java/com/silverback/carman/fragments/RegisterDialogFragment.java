@@ -35,7 +35,7 @@ import com.silverback.carman.adapters.SigunSpinnerAdapter;
 import com.silverback.carman.databinding.DialogRegisterProviderBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.DistCodeSpinnerTask;
+import com.silverback.carman.threads.DistSpinnerTask;
 import com.silverback.carman.threads.GeocoderReverseTask;
 import com.silverback.carman.threads.GeocoderTask;
 import com.silverback.carman.threads.ThreadManager2;
@@ -62,7 +62,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     private SharedPreferences mSettings;
     private FirebaseFirestore firestore;
     private FragmentSharedModel fragmentModel;
-    private DistCodeSpinnerTask spinnerTask;
+    private DistSpinnerTask spinnerTask;
     private GeocoderReverseTask geoReverseTask;
     private GeocoderTask geocoderTask;
     private ThreadTask locationTask;
@@ -179,7 +179,7 @@ public class RegisterDialogFragment extends DialogFragment implements
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
         if(parent == binding.spinnerSido) {
-            spinnerTask = ThreadManager2.loadDistrictSpinnerTask(getContext(), opinetModel, pos);
+            spinnerTask = ThreadManager2.loadDistSpinnerTask(getContext(), opinetModel, pos);
             if(pos != mSidoItemPos) mSigunItemPos = 0;
         } else tmpSigunPos = pos;
     }
@@ -271,7 +271,7 @@ public class RegisterDialogFragment extends DialogFragment implements
             registerService();
         } else {
             mAddress = binding.spinnerSido.getSelectedItem() + " "
-                    + sigunAdapter.getItem(tmpSigunPos).getDistrictName() + " "
+                    + sigunAdapter.getItem(tmpSigunPos).getAreaName() + " "
                     + binding.etAddrsDetail.getText();
             // Initiate Geocoder to fetch Location based upon a given address name, the reuslt
             // of which is to be sent to getGeocoderLocation of LocationViewModel as a LiveData.

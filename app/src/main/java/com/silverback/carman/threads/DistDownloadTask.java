@@ -6,21 +6,21 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.OpinetViewModel;
 
-public class DistCodeDownloadTask extends ThreadTask
-        implements DistCodeDownloadRunnable.OpinetDistCodeMethods {
+public class DistDownloadTask extends ThreadTask
+        implements DistDownloadRunnable.OpinetDistCodeMethods {
 
     // Logging
-    private final LoggingHelper log = LoggingHelperFactory.create(DistCodeDownloadTask.class);
+    private final LoggingHelper log = LoggingHelperFactory.create(DistDownloadTask.class);
 
     // Objects
     private final OpinetViewModel model;
     private final Runnable opinetDistCodeRunnable;
 
     // Constructor
-    public DistCodeDownloadTask(Context context, OpinetViewModel model) {
+    public DistDownloadTask(Context context, OpinetViewModel model) {
         super(); // ThreadTask
         this.model = model;
-        opinetDistCodeRunnable = new DistCodeDownloadRunnable(context, this);
+        opinetDistCodeRunnable = new DistDownloadRunnable(context, this);
     }
 
     // Getter for the Runnable invoked by startGasPriceTask() in ThreadManager
@@ -28,7 +28,6 @@ public class DistCodeDownloadTask extends ThreadTask
         return opinetDistCodeRunnable;
     }
 
-    @Override
     protected void recycle() {
         log.i("override recycler method in child task");
     }
@@ -40,19 +39,19 @@ public class DistCodeDownloadTask extends ThreadTask
 
     @Override
     public void hasDistCodeSaved(boolean b) {
+        log.i("DistDownloadTask done: %s", b);
         model.distCodeComplete().postValue(b);
     }
 
     @Override
     public void handleDistCodeTask(int state) {
-        //handleTaskState(this, state);
         int outstate = -1;
         switch(state) {
-            case DistCodeDownloadRunnable.TASK_COMPLETE:
+            case DistDownloadRunnable.TASK_COMPLETE:
                 outstate = ThreadManager2.DISTCODE_COMPLETED;
                 break;
 
-            case DistCodeDownloadRunnable.TASK_FAIL:
+            case DistDownloadRunnable.TASK_FAIL:
                 outstate = ThreadManager2.DISTCODE_FAILED;
                 break;
         }

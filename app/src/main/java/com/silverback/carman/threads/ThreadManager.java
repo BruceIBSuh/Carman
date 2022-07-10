@@ -97,9 +97,9 @@ public class ThreadManager {
     // A queue of tasks. Tasks are handed to a ThreadPool.
     //private final Queue<ThreadTask> mThreadTaskWorkQueue;
     private final Queue<ThreadTask> mTaskWorkQueue;
-    private final Queue<DistCodeDownloadTask> mDistrictCodeTaskQueue;
+    private final Queue<DistDownloadTask> mDistrictCodeTaskQueue;
     private final Queue<GasPriceTask> mGasPriceTaskQueue;
-    private final Queue<DistCodeSpinnerTask> mDistCodeSpinnerTaskQueue;
+    private final Queue<DistSpinnerTask> mDistSpinnerTaskQueue;
     private final Queue<StationFavTask> mStationFavTaskQueue;
     private final Queue<ExpenseTabPagerTask> mExpenseTabPagerTaskQueue;
     private final Queue<StationGasTask> mStationGasTaskQueue;
@@ -133,7 +133,7 @@ public class ThreadManager {
         mTaskWorkQueue = new LinkedBlockingQueue<>();
         //mFirestoreResQueue = new LinkedBlockingQueue<>();
         mDistrictCodeTaskQueue = new LinkedBlockingQueue<>();
-        mDistCodeSpinnerTaskQueue = new LinkedBlockingQueue<>();
+        mDistSpinnerTaskQueue = new LinkedBlockingQueue<>();
         mGasPriceTaskQueue = new LinkedBlockingQueue<>();
         mExpenseTabPagerTaskQueue = new LinkedBlockingQueue<>();
         mStationFavTaskQueue = new LinkedBlockingQueue<>();
@@ -245,10 +245,10 @@ public class ThreadManager {
 
     // Download the district code from Opinet, which is fulfilled only once when the app runs first
     // time.
-    public static DistCodeDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
+    public static DistDownloadTask saveDistrictCodeTask(Context context, OpinetViewModel model) {
 
-        DistCodeDownloadTask task = sInstance.mDistrictCodeTaskQueue.poll();
-        if(task == null) task = new DistCodeDownloadTask(context, model);
+        DistDownloadTask task = sInstance.mDistrictCodeTaskQueue.poll();
+        if(task == null) task = new DistDownloadTask(context, model);
 
         sInstance.mDownloadThreadPool.execute(task.getOpinetDistCodeRunnable());
         return task;
@@ -258,11 +258,11 @@ public class ThreadManager {
     // Bugs: no guarantee to coincide the position with the code. For example, Daegu is positioned
     // at 12, whereas the Sido code is 14.
     /*
-    public static DistCodeSpinnerTask loadDistCodeSpinnerTask(
+    public static DistSpinnerTask loadDistCodeSpinnerTask(
             Context context, OpinetViewModel model, int position) {
 
-        DistCodeSpinnerTask task = sInstance.mDistCodeSpinnerTaskQueue.poll();
-        if(task == null) task = new DistCodeSpinnerTask(context);
+        DistSpinnerTask task = sInstance.mDistSpinnerTaskQueue.poll();
+        if(task == null) task = new DistSpinnerTask(context);
 
         task.initSpinnerDistCodeTask(model, position);
         sInstance.mDecodeThreadPool.execute(task.getDistCodeSpinnerRunnable());
@@ -484,9 +484,9 @@ public class ThreadManager {
         } else if(task instanceof DownloadImageTask) {
             mTaskWorkQueue.offer(task);
 
-        } else if(task instanceof DistCodeSpinnerTask) {
-            ((DistCodeSpinnerTask)task).recycle();
-            mDistCodeSpinnerTaskQueue.offer((DistCodeSpinnerTask)task);
+        } else if(task instanceof DistSpinnerTask) {
+            ((DistSpinnerTask)task).recycle();
+            mDistSpinnerTaskQueue.offer((DistSpinnerTask)task);
         }
 
         // Interrupt the current thread if it is of no use.

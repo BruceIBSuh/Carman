@@ -6,7 +6,6 @@ import android.net.Uri;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.Opinet;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +14,10 @@ import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistCodeSpinnerRunnable implements Runnable {
+public class DistSpinnerRunnable implements Runnable {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(DistCodeSpinnerRunnable.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(DistSpinnerRunnable.class);
 
     // Constants
     static final int SPINNER_DIST_CODE_COMPLETE = 1;
@@ -30,12 +29,12 @@ public class DistCodeSpinnerRunnable implements Runnable {
 
     public interface DistCodeMethods {
         int getSidoCode();
-        void setSigunCode(List<Opinet.DistrictCode> distCode);
+        void setSigunCode(List<DistDownloadRunnable.Area> distCode);
         void setSpinnerDistCodeThread(Thread currentThread);
         void handleDistCodeSpinnerTask(int state);
     }
 
-    DistCodeSpinnerRunnable(Context context, DistCodeMethods task) {
+    DistSpinnerRunnable(Context context, DistCodeMethods task) {
         this.context = context;
         this.task = task;
     }
@@ -47,7 +46,7 @@ public class DistCodeSpinnerRunnable implements Runnable {
 
         // Make int position to String sidoCode
         final String sidoCode = convertCode(code);
-        List<Opinet.DistrictCode> distCodeList = new ArrayList<>();
+        List<DistDownloadRunnable.Area> distCodeList = new ArrayList<>();
 
         File file = new File(context.getFilesDir(), Constants.FILE_DISTRICT_CODE);
         Uri uri = Uri.fromFile(file);
@@ -58,10 +57,9 @@ public class DistCodeSpinnerRunnable implements Runnable {
             Object objList = ois.readObject();
             if(objList instanceof ArrayList<?>) {
                 for(Object distcode : (ArrayList<?>)objList) {
-                    if(distcode instanceof Opinet.DistrictCode) {
-                        if(((Opinet.DistrictCode) distcode).getDistrictCode().substring(0, 2).equals(sidoCode)){
-                            distCodeList.add((Opinet.DistrictCode) distcode);
-                        }
+                    if(distcode instanceof DistDownloadRunnable.Area) {
+                        DistDownloadRunnable.Area area = (DistDownloadRunnable.Area)distcode;
+                        if(area.getAreaCd().substring(0, 2).equals(sidoCode)) distCodeList.add(area);
                     }
                 }
             }

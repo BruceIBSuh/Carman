@@ -11,11 +11,10 @@ import androidx.lifecycle.ViewModelProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.silverback.carman.database.CarmanDatabase;
 import com.silverback.carman.databinding.ActivityIntroBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.DistCodeDownloadTask;
+import com.silverback.carman.threads.DistDownloadTask;
 import com.silverback.carman.threads.GasPriceTask;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
@@ -26,11 +25,8 @@ import org.json.JSONArray;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /*
@@ -59,9 +55,9 @@ public class IntroActivity extends BaseActivity  {
     // Objects
     private ActivityIntroBinding binding;
     private FirebaseAuth mAuth;
-    private FirebaseFirestore firestore;
+    private FirebaseFirestore mDB;
     private GasPriceTask gasPriceTask;
-    private DistCodeDownloadTask distCodeTask;
+    private DistDownloadTask distCodeTask;
     private OpinetViewModel opinetModel;
     private String[] defaultDistrict;
 
@@ -73,7 +69,7 @@ public class IntroActivity extends BaseActivity  {
 
         // Instantiate objects.
         mAuth = FirebaseAuth.getInstance();
-        firestore = FirebaseFirestore.getInstance();
+        mDB = FirebaseFirestore.getInstance();
         //CarmanDatabase mDB = CarmanDatabase.getDatabaseInstance(this); // going to be replace with sDB in BaseActivity
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
@@ -97,8 +93,10 @@ public class IntroActivity extends BaseActivity  {
         if(gasPriceTask != null) gasPriceTask = null;
     }
 
+
     @Override
     public void getPermissionResult(Boolean isPermitted) {}
+
 
     // Invoked when and only when the application runs for the first time, authenticating the user
     // in Firebase.Auth. Once authenticated, upload the user to the "user" collection with data null
@@ -115,16 +113,13 @@ public class IntroActivity extends BaseActivity  {
                 // Refactor: field names should be renamed.
                 Map<String, Object> userData = new HashMap<>();
                 userData.put("install_date", FieldValue.serverTimestamp());
-                //userData.put("user_name", new ArrayList<String>());
-                //userData.put("user_pic", null);
-                //userData.put("auto_data", null);
-                //userData.put("cnt_warning", 0);
-                //userData.put("reg_date", new ArrayList<Date>());
-                firestore.collection("users").document(mAuth.getUid()).set(userData).addOnSuccessListener(aVoid -> {
-                    try(FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)) {
-                        fos.write(mAuth.getUid().getBytes());
-                    } catch (IOException e) { e.printStackTrace();}
-                }).addOnFailureListener(Exception::printStackTrace);
+                mDB.collection("users").document(mAuth.getUid()).set(userData)
+                        .addOnSuccessListener(aVoid -> {
+                            try(FileOutputStream fos = openFileOutput("userId", Context.MODE_PRIVATE)){
+                                fos.write(mAuth.getUid().getBytes());
+                            } catch (IOException e) { e.printStackTrace();}
+                        })
+                        .addOnFailureListener(Exception::printStackTrace);
 
                 // Retrieve the default district values of sido, sigun and sigun code from resources,
                 // then save them in SharedPreferences.

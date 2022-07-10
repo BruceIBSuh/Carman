@@ -10,7 +10,7 @@ import android.widget.TextView;
 import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.Opinet;
+import com.silverback.carman.threads.DistDownloadRunnable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,24 +25,24 @@ public class SigunSpinnerAdapter extends BaseAdapter {
     private static final LoggingHelper log = LoggingHelperFactory.create(SigunSpinnerAdapter.class);
 
     // Object references
-    private List<Opinet.DistrictCode> mDistrictCodeList;
+    private List<DistDownloadRunnable.Area> mDistCodeList;
     private final LayoutInflater inflater;
     private SpinnerViewHolder viewHolder;
 
     // Constructor
     public SigunSpinnerAdapter(Context context){
-        mDistrictCodeList = new ArrayList<>();
+        mDistCodeList = new ArrayList<>();
         inflater = LayoutInflater.from(context);
     }
 
     @Override
     public int getCount() {
-        return mDistrictCodeList.size();
+        return mDistCodeList.size();
     }
 
     @Override
-    public Opinet.DistrictCode getItem(int position) {
-        return mDistrictCodeList.get(position);
+    public DistDownloadRunnable.Area getItem(int position) {
+        return mDistCodeList.get(position);
     }
 
     @Override
@@ -59,7 +59,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
             convertView.setTag(viewHolder);
         } else viewHolder = (SpinnerViewHolder)convertView.getTag();
 
-        viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());
+        viewHolder.distName.setText(mDistCodeList.get(position).getAreaName());
         return convertView;
     }
 
@@ -72,7 +72,7 @@ public class SigunSpinnerAdapter extends BaseAdapter {
             dropdownView.setTag(viewHolder);
         } else viewHolder = (SpinnerViewHolder)dropdownView.getTag();
 
-        viewHolder.distName.setText(mDistrictCodeList.get(position).getDistrictName());
+        viewHolder.distName.setText(mDistCodeList.get(position).getAreaName());
         return dropdownView;
     }
 
@@ -83,11 +83,11 @@ public class SigunSpinnerAdapter extends BaseAdapter {
 
     // The following methods are invoked by the parent fragment of SettingSpinnerDlgFragment or
     // RegisterDialogFragment as well.
-    public void addSigunList(List<Opinet.DistrictCode> sigunList) {
-        mDistrictCodeList = sigunList;
+    public void addSigunList(List<DistDownloadRunnable.Area> sigunList) {
+        mDistCodeList = sigunList;
     }
     public void removeAll() {
-        mDistrictCodeList.clear();
+        mDistCodeList.clear();
     }
 
 }
