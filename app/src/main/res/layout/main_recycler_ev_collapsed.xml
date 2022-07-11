@@ -6,23 +6,46 @@
     android:layout_height="wrap_content"
     android:padding="8dp">
 
-    <ImageView
-        android:id="@+id/iv_chgr_status"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:contentDescription="@null"
+    <FrameLayout
+        android:id="@+id/frame_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@android:drawable/presence_online" />
+        app:layout_constraintTop_toTopOf="parent" >
+
+        <ImageView
+            android:id="@+id/iv_chgr_status"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:contentDescription="@null"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:drawable/presence_online" />
+
+        <TextView
+            android:id="@+id/tv_cnt_open"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:gravity="center"
+            android:text="1"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_chgr_status"
+            app:layout_constraintEnd_toEndOf="@+id/iv_chgr_status"
+            app:layout_constraintStart_toStartOf="@+id/iv_chgr_status"
+            app:layout_constraintTop_toTopOf="@+id/iv_chgr_status" />
+
+    </FrameLayout>
+
 
     <TextView
         android:id="@+id/tv_evName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        app:layout_constraintBottom_toBottomOf="@+id/iv_chgr_status"
-        app:layout_constraintStart_toEndOf="@+id/iv_chgr_status"
-        app:layout_constraintTop_toTopOf="@+id/iv_chgr_status" />
+        app:layout_constraintBottom_toBottomOf="@+id/frame_indicator"
+        app:layout_constraintStart_toEndOf="@+id/frame_indicator"
+        app:layout_constraintTop_toTopOf="@+id/frame_indicator" />
 
     <TextView
         android:id="@+id/tv_chgrId"
@@ -115,6 +138,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_label_limit"
         tools:srcCompat="@tools:sample/avatars" />
+
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

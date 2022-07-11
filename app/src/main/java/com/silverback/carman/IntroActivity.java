@@ -136,8 +136,6 @@ public class IntroActivity extends BaseActivity  {
                 // them in the internal storage. It may be replaced by downloading it from the server
                 // every time the app starts for decreasing the app size
                 distCodeTask = ThreadManager2.saveDistrictCodeTask(this, opinetModel);
-                // Notified of having the district codes(sigun codes) complete, which was running in the
-                // background by DistrictCodeTask only during firstInitProcess().
                 opinetModel.distCodeComplete().observe(this, isComplete -> {
                     try {
                         if (isComplete) {

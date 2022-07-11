@@ -46,8 +46,8 @@ public class StationEvRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
     private static final String endPoint = "http://apis.data.go.kr/B552584/EvCharger/";
-    private final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
-    //private final String key ="Wd/kK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3/Y11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA+FuCXzqm8pWu/Q==";
+    private static final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25" +
+            "VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
@@ -69,8 +69,6 @@ public class StationEvRunnable implements Runnable {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
         this.queryPage = queryPage;
-
-        log.i("current page: %s", this.queryPage);
     }
 
     @Override
@@ -113,15 +111,10 @@ public class StationEvRunnable implements Runnable {
                         Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                                 itemList.get(i).lat, itemList.get(i).lng, results);
                         int distance = (int) results[0];
-
                         if (distance > 1000) itemList.remove(i);
                         else itemList.get(i).setDistance(distance);
                     }
-
-                    log.i("ev runnable itemList: %s", itemList.size());
                 }
-
-
                 callback.setEvStationList(itemList);
             }
 
@@ -277,12 +270,15 @@ public class StationEvRunnable implements Runnable {
         public int getCntCharger() { return cntCharger; }
 
         private boolean isAnyChargerOpen;
-        public void setIsAnyChargerOpen(boolean isAnyChargerOpen) {
-            this.isAnyChargerOpen = isAnyChargerOpen;
-        }
+        public void setIsAnyChargerOpen(boolean isAnyChargerOpen) {this.isAnyChargerOpen = isAnyChargerOpen;}
         public boolean getIsAnyChargerOpen() {
             return isAnyChargerOpen;
         }
+
+        private int cntOpen;
+        public int getCntOpen() {return cntOpen;}
+        public void setCntOpen(int cntOpen) {this.cntOpen = cntOpen;}
+
 
         // Empty constructor
         /*

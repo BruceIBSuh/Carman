@@ -63,6 +63,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         }
 
         ImageView getChgrStatusView() { return binding.ivChgrStatus; }
+        TextView getOpenChgrCountView() { return binding.tvCntOpen; }
         TextView getEvStationName() {
             return binding.tvEvName;
         }
@@ -117,10 +118,10 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 CollapsedViewHolder holder = (CollapsedViewHolder)viewHolder;
                 String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                         context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
-                String charId = "_" + Integer.parseInt(info.getChgerId());
-
-                log.i("collapsed station status: %s", info.getIsAnyChargerOpen());
-                holder.getChgrStatusView().setImageDrawable(getCollapsedStatusImage(info.getIsAnyChargerOpen()));
+                //String charId = "_" + Integer.parseInt(info.getChgerId());
+                boolean isChgrOpen = info.getCntOpen() > 0;
+                holder.getChgrStatusView().setImageDrawable(getCollapsedStatusImage(isChgrOpen));
+                if(isChgrOpen) holder.getOpenChgrCountView().setText(String.valueOf(info.getCntOpen()));
 
                 String stnName = info.getStdNm().replaceAll(MainActivity.regexEvName, "");
                 holder.getEvStationName().setText(stnName);

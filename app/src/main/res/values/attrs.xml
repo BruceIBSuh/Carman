@@ -22,7 +22,6 @@
 
     <declare-styleable name="ProgressButton">
         <attr name="btnBg" format="reference" />
-        <attr name="pbColor" format="color|reference" />
         <attr name="btnId" format="enum">
             <enum name="gas" value="0" />
             <enum name="svc" value="1" />

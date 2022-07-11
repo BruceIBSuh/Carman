@@ -13,14 +13,13 @@
         android:layout_height="30dp"
         android:padding="8dp" />
 
-    <ProgressBar
-        style="?android:attr/progressBarStyleHorizontal"
+    <ProgressBar style="?android:attr/progressBarStyleHorizontal"
         android:id="@+id/progressBar"
         android:layout_width="30dp"
         android:layout_height="5dp"
         android:layout_marginTop="3dp"
         android:indeterminateOnly="false"
         android:indeterminateTint="@android:color/holo_red_light"
-        android:indeterminateTintMode="src_in"/>
+        android:indeterminateTintMode="src_in" />
 
 </LinearLayout>

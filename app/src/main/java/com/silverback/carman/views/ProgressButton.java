@@ -49,18 +49,18 @@ public class ProgressButton extends LinearLayout {
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.ProgressButton);
         try {
-            pbColorRef = typedArray.getColor(R.styleable.ProgressButton_pbColor, 0);
+            //pbColorRef = typedArray.getColor(R.styleable.ProgressButton_pbColor, 0);
             btnBgRef = typedArray.getDrawable(R.styleable.ProgressButton_btnBg);
             buttonId = typedArray.getInt(R.styleable.ProgressButton_btnId, -1);
         } finally { typedArray.recycle();}
 
-        binding.progressBar.setBackgroundColor(pbColorRef);
+        //binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(btnBgRef);
         binding.button.setOnClickListener(view -> {
-            log.i("Status: %s, %s", buttonId, isStatus);
+
             //if(!isStatus) {
             if(buttonId == 1) return; //temp code for excluding the svc station
-            if(!isStatus) setProgress();
+            //if(!isStatus) setProgress();
 
             ((MainActivity)context).locateStations(buttonId);
 
@@ -86,20 +86,21 @@ public class ProgressButton extends LinearLayout {
     }
 
     public void stopProgress() {
-        log.i("stopProress: %s", isStatus);
         binding.progressBar.setIndeterminate(false);
         pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
 
-        isStatus = true;
         binding.button.setClickable(true);
+        isStatus = true;
     }
 
     public void resetProgress(){
         pbColorRef = ContextCompat.getColor(context, android.R.color.white);
+        binding.progressBar.setIndeterminate(false);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
+        binding.button.setClickable(true);
         isStatus = false;
     }
 

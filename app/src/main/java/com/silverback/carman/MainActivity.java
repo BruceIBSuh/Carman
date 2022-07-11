@@ -30,7 +30,6 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.lifecycle.Observer;
@@ -39,7 +38,6 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationEvAdapter;
@@ -58,7 +56,6 @@ import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationHydroTask;
-import com.silverback.carman.threads.StationInfoRunnable;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -71,11 +68,9 @@ import com.silverback.carman.viewmodels.StationListViewModel;
 import com.silverback.carman.views.ProgressButton;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -146,10 +141,10 @@ public class MainActivity extends BaseActivity implements
 
     private int statusbar;
     private String sidoName;
-    //private int activeStation;
-    private int oldProgbtnId = -1;
-    private int oldEvPos = -1;
-    private int oldEvCount = -1;
+    private int prevProgbtnId = -1;
+    private int prevEvPos = -1;
+    private int prevEvCount = -1;
+    private boolean isLocationPermitted;
 
     // The manual says that registerForActivityResult() is safe to call before a fragment or activity
     // is created
@@ -280,14 +275,7 @@ public class MainActivity extends BaseActivity implements
         if(evTask != null) evTask = null;
         if(hydroTask != null) hydroTask = null;
 
-        // Reset the progress buttoons
-        for(ProgressButton btn : progbtnList) {
-            log.i("btn reset");
-            btn.resetProgress();
-        }
-
         binding.mainTopFrame.viewpagerPrice.unregisterOnPageChangeCallback(pagerCallback);
-
     }
 
 
@@ -413,18 +401,18 @@ public class MainActivity extends BaseActivity implements
     // SubItems has a different view type
     @Override
     public void onExpandIconClicked(String name, int position, int count) {
-        log.i("position: %s, %s, %s, %s", name, oldEvPos, position, count);
+        log.i("position: %s, %s, %s, %s", name, prevEvPos, position, count);
         // Collapse expanded items and reset the item position if it follows the old position
-        if(oldEvPos != -1) {
+        if(prevEvPos != -1) {
             try {
-                evSimpleList.subList(oldEvPos + 1, oldEvPos + 1 + oldEvCount).clear();
+                evSimpleList.subList(prevEvPos + 1, prevEvPos + 1 + prevEvCount).clear();
                 evListAdapter.submitEvList(evSimpleList);
             } catch(IndexOutOfBoundsException e) { e.printStackTrace();}
 
-            if(oldEvPos == position) {
-                oldEvPos = -1;
+            if(prevEvPos == position) {
+                prevEvPos = -1;
                 return;
-            } else if(oldEvPos < position) position -= oldEvCount;
+            } else if(prevEvPos < position) position -= prevEvCount;
         }
 
         int index = 1;
@@ -437,25 +425,17 @@ public class MainActivity extends BaseActivity implements
             }
         }
 
-
-        oldEvPos = position;
-        oldEvCount = count;
-
+        prevEvPos = position;
+        prevEvCount = count;
         evListAdapter.submitEvList(evSimpleList);
     }
 
     // Implement the abstract method defined in BaseActivity to handle the location permission
     @Override
-    public void getPermissionResult(Boolean isPermitted) {
-        log.i("permission result:%s", isPermitted);
-        final int multiButtonId = oldProgbtnId;
-        if(isPermitted) {
-            //locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
-            //progbtnList.get(multiButtonId).setProgress();
-        } else {
-            //progbtnList.get(multiButtonId).stopProgress();
-            //progbtnList.get(multiButtonId).resetProgress();
-        }
+    public void getPermissionResult(Boolean isLocationPermitted) {
+        progbtnList.get(prevProgbtnId).resetProgress();;
+        this.isLocationPermitted = isLocationPermitted;
+        if(isLocationPermitted) locateStations(prevProgbtnId);
     }
 
     // Reset the default fuel code
@@ -529,24 +509,19 @@ public class MainActivity extends BaseActivity implements
     };
 
     public void locateStations(int progbtnId){
-        log.i("multi button: %s, %s", oldProgbtnId, progbtnId);
-        // In case a button has been clicked and in the state of stop.
-        if(oldProgbtnId != -1) {
-            progbtnList.get(oldProgbtnId).resetProgress();
-            if(oldProgbtnId == progbtnId) {
+        if(prevProgbtnId != -1) {
+            progbtnList.get(prevProgbtnId).resetProgress();
+            // Turn off the same button
+            if(prevProgbtnId == progbtnId) {
+                statusbar = 0;
+                prevProgbtnId = -1;
                 binding.viewFlipper.setDisplayedChild(0);
-                //binding.recyclerStations.setVisibility(View.GONE);
-                //binding.recyclerContents.setVisibility(View.VISIBLE);
                 binding.fab.setVisibility(View.GONE);
                 binding.appbar.setExpanded(true, true);
-
-                statusbar = 0;
-                oldProgbtnId = -1;
                 return;
-
-            } //else locationModel.getLocation().removeObserver(locationObserver);
-
-        } else oldProgbtnId = progbtnId;
+            }
+        // Click a multi-button initially.
+        } else prevProgbtnId = progbtnId;
 
         final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
         final String rationale = "permission required to use Fine Location";
@@ -557,7 +532,6 @@ public class MainActivity extends BaseActivity implements
             locationObserver = new Observer<Location>() {
                 @Override
                 public void onChanged(Location location) {
-                    log.i("observe location:%s", progbtnId);
                     switch(progbtnId) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
@@ -582,12 +556,10 @@ public class MainActivity extends BaseActivity implements
                 log.i("Exception occurred while getting station list");
                 locationTask = null;
                 progbtnList.get(progbtnId).stopProgress();
-
                 //progbtnList.get(activeButton).stopProgress();
             });
         });
 
-        oldProgbtnId = progbtnId;
     }
 
     private void locateGasStations(Location location) {
@@ -608,7 +580,31 @@ public class MainActivity extends BaseActivity implements
 
          */
 
-        //gasObserver = new Observer<List<Opinet.GasStnParcelable>>() {
+        stationModel.getNearStationList().observe(this, stnList -> {
+            if (stnList != null && stnList.size() > 0) {
+                gasStationList = stnList;
+                gasListAdapter.setStationList(stnList);
+
+                binding.viewFlipper.setDisplayedChild(1);
+                progbtnList.get(0).stopProgress();
+                binding.appbar.setExpanded(true, true);
+                binding.fab.setVisibility(View.VISIBLE);
+                statusbar = 0;
+
+                //gasListAdapter.submitGasList(stnList);
+                //stationModel.getNearStationList().removeObserver(this);
+
+            } else {
+                binding.viewFlipper.setDisplayedChild(2);
+                progbtnList.get(0).resetProgress();
+            }
+
+            isRadiusChanged = false;
+            isGasTypeChanged = false;
+
+        });
+
+        /*
         gasObserver = new Observer<List<StationGasRunnable.Item>>() {
             @Override
             public void onChanged(List<StationGasRunnable.Item> stnList) {
@@ -641,11 +637,11 @@ public class MainActivity extends BaseActivity implements
             }
         };
         stationModel.getNearStationList().observe(this, gasObserver);
+         */
     }
 
 
     private void locateEvStations(Location location) {
-        log.i("locate ev: %s", location);
         mPrevLocation = location;
         locationModel.getLocation().removeObserver(locationObserver);
 
@@ -653,6 +649,50 @@ public class MainActivity extends BaseActivity implements
         binding.recyclerStations.setAdapter(evListAdapter);
 
         evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
+        stationModel.getEvStationList().observe(this, evList -> {
+            if(evList.size() > 0) {
+                evFullList.addAll(evList);
+                for(int i = 0; i < evList.size(); i++) {
+                    String name = evList.get(i).getStdNm().replaceAll(regexEvName, "");
+                    int cntSame = 1;
+                    int cntOpen = 0;
+                    if(evList.get(i).getStat() == 2) cntOpen++;
+                    //boolean isAnyChargerOpen = evList.get(i).getStat() == 2;
+
+                    for(int j = evList.size() - 1; j > i; j-- ) {
+                        String name2 = evList.get(j).getStdNm().replaceAll(regexEvName, "");
+                        if(name.matches(name2)) {
+                            //isAnyChargerOpen = evList.get(j).getStat() == 2;
+                            if(evList.get(j).getStat() == 2) cntOpen++;
+                            evList.remove(j);
+                            cntSame++;
+                        }
+                    }
+
+                    evList.get(i).setCntCharger(cntSame);
+                    evList.get(i).setCntOpen(cntOpen);
+                    //if(cntOpen > 0) evList.get(i).setIsAnyChargerOpen(true);
+                    //if(isAnyChargerOpen) evList.get(i).setIsAnyChargerOpen(true);
+
+                    evSimpleList.add(new MultiTypeEvItem(evList.get(i), VIEW_COLLAPSED));
+                }
+
+                evListAdapter.submitEvList(evSimpleList);
+                progbtnList.get(2).stopProgress();
+                binding.viewFlipper.setDisplayedChild(1);
+
+            } else {
+                binding.viewFlipper.setDisplayedChild(2);
+                //progbtnList.get(2).stopProgress();
+                progbtnList.get(2).resetProgress();
+            }
+
+            //binding.fab.setVisibility(View.GONE);
+            binding.appbar.setExpanded(true, true);
+            statusbar = 1;
+        });
+
+        /*
         evObserver = new Observer<List<StationEvRunnable.Item>>() {
             @Override
             public void onChanged(List<StationEvRunnable.Item> itemList) {
@@ -696,8 +736,8 @@ public class MainActivity extends BaseActivity implements
                 statusbar = 1;
             }
         };
-
         stationModel.getEvStationList().observe(this, evObserver);
+         */
 
         stationModel.getExceptionMessage().observe(this, err -> {
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
@@ -711,12 +751,30 @@ public class MainActivity extends BaseActivity implements
     }
 
     private void locateHydroStations(Location location) {
-        log.i("Hydro invokded by location");
         mPrevLocation = location;
 
         locationModel.getLocation().removeObserver(locationObserver);
         hydroTask = ThreadManager2.startHydroStationListTask(this, stationModel, location);
 
+        stationModel.getHydroStationList().observe(this, hydroList -> {
+            if(hydroList != null && hydroList.size() > 0) {
+                hydroAdapter = new StationHydroAdapter(hydroList);
+                binding.recyclerStations.setAdapter(hydroAdapter);
+
+                binding.viewFlipper.setDisplayedChild(1);
+                //binding.recyclerStations.setVisibility(View.VISIBLE);
+                //binding.recyclerContents.setVisibility(View.GONE);
+                progbtnList.get(3).stopProgress();
+            }
+
+            //binding.fab.setVisibility(View.GONE);
+            binding.appbar.setExpanded(true, true);
+            //binding.fab.setVisibility(View.VISIBLE);
+            //showCollapsedStatusBar(1);
+            statusbar = 0;
+        });
+
+        /*
         hydroObserver = new Observer<List<StationHydroRunnable.HydroStationObj>>() {
             @Override
             public void onChanged(List<StationHydroRunnable.HydroStationObj> hydroList) {
@@ -730,9 +788,7 @@ public class MainActivity extends BaseActivity implements
                     //binding.recyclerContents.setVisibility(View.GONE);
                     progbtnList.get(3).stopProgress();
                     stationModel.getHydroStationList().removeObserver(this);
-
                 }
-
                 //binding.fab.setVisibility(View.GONE);
                 binding.appbar.setExpanded(true, true);
                 //binding.fab.setVisibility(View.VISIBLE);
@@ -740,8 +796,9 @@ public class MainActivity extends BaseActivity implements
                 statusbar = 0;
             }
         };
-
         stationModel.getHydroStationList().observe(this, hydroObserver);
+
+         */
     }
 
     private void locateSvcStations(Location location) {
