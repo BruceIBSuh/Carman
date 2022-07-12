@@ -82,7 +82,7 @@ public class StationHydroRunnable implements Runnable {
                     }
 
                     int distance = (int) results[0];
-                    if (distance < 20000) {
+                    if (distance < 30000) {
                         HydroStationObj obj = document.toObject(HydroStationObj.class);
                         if(obj != null) obj.setDistance(distance);
                         hydroList.add(obj);
@@ -146,9 +146,6 @@ public class StationHydroRunnable implements Runnable {
                                 if (distance < 20000) {
                                     hydroList.add(obj);
                                 }
-
-
-
                             }
 
                         } catch(IndexOutOfBoundsException e) { e.getLocalizedMessage(); }
@@ -158,9 +155,6 @@ public class StationHydroRunnable implements Runnable {
                     mDB.collection("hydro_station").add(obj).addOnCompleteListener(task -> {
                         if(task.isSuccessful()) log.i("Upload hytro done");
                     });
-
-                                    }
-
 
             } catch(IOException | InvalidFormatException e) {
                 e.printStackTrace();

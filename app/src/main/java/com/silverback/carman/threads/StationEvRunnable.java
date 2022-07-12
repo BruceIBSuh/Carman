@@ -1,5 +1,8 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_FAIL;
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_SUCCESS;
+
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -85,47 +88,54 @@ public class StationEvRunnable implements Runnable {
         */
         // Get the sido code based on the current location using reverse Geocoding to narrow the
         // querying scope.
-        int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
-        String sidoCode = String.valueOf(sido);
+        try {
+            if(Thread.interrupted()) throw new InterruptedException();
+            int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+            String sidoCode = String.valueOf(sido);
 
-        Call<EvStationModel> call = RetrofitClient.getIntance()
-                .getRetrofitApi()
-                .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
-                //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
+            Call<EvStationModel> call = RetrofitClient.getIntance()
+                    .getRetrofitApi()
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+            //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
 
-        call.enqueue(new Callback<EvStationModel>() {
-            @Override
-            public void onResponse(@NonNull Call<EvStationModel> call,
-                                   @NonNull Response<EvStationModel> response) {
+            call.enqueue(new Callback<EvStationModel>() {
+                @Override
+                public void onResponse(@NonNull Call<EvStationModel> call,
+                                       @NonNull Response<EvStationModel> response) {
 
-                final EvStationModel model = response.body();
-                assert model != null;
-                //final Header header = model.header;
-                //int totalCount = header.totalCount;
+                    final EvStationModel model = response.body();
+                    assert model != null;
+                    //final Header header = model.header;
+                    //int totalCount = header.totalCount;
 
-                // Exclude an item if it is out of the distance or include an item within the distance
-                List<Item> itemList = model.itemList;
-                float[] results = new float[3];
-                if(itemList != null && itemList.size() > 0) {
-                    for (int i = itemList.size() - 1; i >= 0; i--) {
-                        Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                                itemList.get(i).lat, itemList.get(i).lng, results);
-                        int distance = (int) results[0];
-                        if (distance > 1000) itemList.remove(i);
-                        else itemList.get(i).setDistance(distance);
+                    // Exclude an item if it is out of the distance or include an item within the distance
+                    List<Item> itemList = model.itemList;
+                    float[] results = new float[3];
+                    if(itemList != null && itemList.size() > 0) {
+                        for (int i = itemList.size() - 1; i >= 0; i--) {
+                            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
+                                    itemList.get(i).lat, itemList.get(i).lng, results);
+                            int distance = (int) results[0];
+                            if (distance > 1000) itemList.remove(i);
+                            else itemList.get(i).setDistance(distance);
+                        }
                     }
-                }
-                callback.setEvStationList(itemList);
-            }
 
-            @Override
-            public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                log.e("response failed: %s", t);
-                callback.notifyEvStationError(new Exception(t));
-                //callback.handleTaskState(EV_TASK_FAIL);
-            }
-        });
-        //callback.handleTaskState(EV_TASK_SUCCESS);
+                    callback.setEvStationList(itemList);
+                    //callback.handleTaskState(EV_TASK_SUCCESS);
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
+                    log.e("response failed: %s", t);
+                    callback.notifyEvStationError(new Exception(t));
+                    //callback.handleTaskState(EV_TASK_FAIL);
+                }
+            });
+            //callback.handleTaskState(EV_TASK_SUCCESS);
+        } catch (InterruptedException e) { e.printStackTrace(); }
+
+
     }
 
     private interface RetrofitApi {

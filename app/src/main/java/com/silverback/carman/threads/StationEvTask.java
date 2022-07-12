@@ -4,27 +4,19 @@ import android.content.Context;
 import android.location.Location;
 import android.os.Build;
 
-import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.viewmodels.StationListViewModel;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
 public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecStationCallback {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvTask.class);
+    private static final String regexEvName = "\\d*\\([\\w\\s]*\\)";
 
     static final int EV_TASK_SUCCESS = 1;
     static final int EV_TASK_FAIL = -1;
@@ -73,7 +65,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
-            log.i("ev: %s", evStationList.size());
+            log.i("evStationList: %s", evStationList.size());
             viewModel.getEvStationList().postValue(evStationList);
             return;
         }

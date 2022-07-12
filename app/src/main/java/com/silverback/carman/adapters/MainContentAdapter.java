@@ -33,6 +33,10 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
+    public enum Content {
+        NOTIFICATION, BANNER_AD_1, VIEWPAGER_EXPENSE, CARLIFE, BANNDER_AD_2, COMPANY_INFO
+    }
+
     //private static final int RECENT = 0;
     //private static final int NOTIFICATION = 3;
     private static final int NUM_CONTENTS = 6;

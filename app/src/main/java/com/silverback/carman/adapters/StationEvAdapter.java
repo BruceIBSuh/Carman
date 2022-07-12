@@ -40,7 +40,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
     private Context context;
 
     public interface OnExpandItemClicked {
-        void onExpandIconClicked(String name, int position, int count);
+        void onEvExpandIconClicked(String name, int position, int count);
     }
 
     public StationEvAdapter(OnExpandItemClicked callback) {
@@ -68,8 +68,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             return binding.tvEvName;
         }
         TextView getDistanceView() { return binding.tvDistance;}
-        //TextView getChargerIdView() { return binding.tvChgrId; }
-        TextView getBizNameView() { return binding.tvBizName; }
+        TextView getBizNameView() { return binding.tvCntChgr; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
         TextView getChargerTypeView() { return binding.tvChgrType;}
         ImageView getImageView() { return binding.imgviewExpand; }
@@ -132,7 +131,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 if(info.getCntCharger() > 1) {
                     holder.getImageView().setVisibility(View.VISIBLE);
                     log.i("name: %s", stnName);
-                    holder.getImageView().setOnClickListener(view -> callback.onExpandIconClicked(
+                    holder.getImageView().setOnClickListener(view -> callback.onEvExpandIconClicked(
                             stnName, holder.getBindingAdapterPosition(), info.getCntCharger()
                     ));
                 } else holder.getImageView().setVisibility(View.GONE);

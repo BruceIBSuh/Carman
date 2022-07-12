@@ -286,7 +286,6 @@ public class ThreadManager2 {
         if(locationTask == null) locationTask = new LocationTask(context);
         locationTask.initLocationTask(model);
 
-        log.i("LocationTasK %s", locationTask);
         InnerClazz.sInstance.threadPoolExecutor.execute(locationTask.getLocationRunnable());
         return locationTask;
     }

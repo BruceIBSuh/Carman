@@ -59,7 +59,7 @@
     <string name="main_ev_chgrtype">타입:</string>
     <string name="main_ev_access_limt">이용제한:</string>
     <string name="main_ev_no_limit">없음</string>
-    <string name="main_hydro_chgr_num">보유충전기</string>
+    <string name="main_hydro_chgr_num">충전기</string>
     <string name="main_hydro_bizhour">운영시간</string>
     <string name="main_hydro_close">운영중단</string>
     <string name="main_hydro_phone">연락처</string>

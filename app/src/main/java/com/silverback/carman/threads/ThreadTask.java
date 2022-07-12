@@ -32,7 +32,7 @@ public class ThreadTask {
      * Thread object reference is stored in the Thread object itself, and that object can be
      * changed by processes outside of this app.
      */
-    protected Thread getCurrentThread() {
+    public Thread getCurrentThread() {
         log.d("ThreadTask current Thread: %s", mCurrentThread);
         return mCurrentThread;
     }

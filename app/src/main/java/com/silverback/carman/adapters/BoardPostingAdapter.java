@@ -249,7 +249,6 @@ public class BoardPostingAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     private void setPostUserProfile(String userId, TextView textView, ImageView imageView) {
-        if(TextUtils.isEmpty(userId)) return;
         mDB.collection("users").document(userId).get().addOnSuccessListener(user -> {
             List<?> names = (List<?>)user.get("user_names");
             assert names != null;

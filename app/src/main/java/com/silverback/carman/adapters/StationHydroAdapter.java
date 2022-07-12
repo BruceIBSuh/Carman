@@ -31,6 +31,7 @@ public class StationHydroAdapter extends RecyclerView.Adapter<StationHydroAdapte
     public StationHydroAdapter(List<StationHydroRunnable.HydroStationObj>  hydroList) {
         this.hydroList = hydroList;
         this.df = (DecimalFormat) DecimalFormat.getInstance();
+
     }
 
     protected static class ViewHolder extends RecyclerView.ViewHolder {
@@ -53,7 +54,7 @@ public class StationHydroAdapter extends RecyclerView.Adapter<StationHydroAdapte
     @Override
     public StationHydroAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         this.context = parent.getContext();
-        distUnit = context.getString(R.string.unit_km);
+        this.distUnit = context.getString(R.string.unit_km);
         View view = LayoutInflater.from(context).inflate(R.layout.main_recycler_hydro, parent, false);
         return new StationHydroAdapter.ViewHolder(view);
 
@@ -65,12 +66,14 @@ public class StationHydroAdapter extends RecyclerView.Adapter<StationHydroAdapte
         String addrs = obj.getAddrs();
         if(TextUtils.isEmpty(addrs)) addrs = context.getString(R.string.main_hydro_close);
 
+        float distance = Math.round((float)obj.getDistance()/100) / 10f;
+
         holder.getHydroNameView().setText(obj.getName());
         holder.getHydroAddrsView().setText(addrs);
         holder.getHydroPriceView().setText(obj.getPrice());
         holder.getHydroChgrNumView().setText(String.valueOf(obj.getCharger()));
         holder.getHydroBizhourView().setText(obj.getBizhour());
-        holder.getHydroPhone().setText(df.format(obj.getDistance()/1000.0).concat(distUnit));
+        holder.getHydroPhone().setText(df.format(distance).concat(distUnit));
     }
 
     @Override

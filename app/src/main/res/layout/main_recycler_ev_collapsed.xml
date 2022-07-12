@@ -12,31 +12,47 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" >
-
         <ImageView
             android:id="@+id/iv_chgr_status"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:contentDescription="@null"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@android:drawable/presence_online" />
 
+            app:srcCompat="@android:drawable/presence_online" />
         <TextView
             android:id="@+id/tv_cnt_open"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:gravity="center"
-            android:text="1"
             android:textColor="@android:color/white"
-            android:textSize="11sp"
-            app:layout_constraintBottom_toBottomOf="@+id/iv_chgr_status"
-            app:layout_constraintEnd_toEndOf="@+id/iv_chgr_status"
-            app:layout_constraintStart_toStartOf="@+id/iv_chgr_status"
-            app:layout_constraintTop_toTopOf="@+id/iv_chgr_status" />
-
+            android:textSize="11sp" />
     </FrameLayout>
 
+    <FrameLayout
+        android:id="@+id/frame_expand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/frame_indicator"
+        app:layout_constraintTop_toTopOf="@id/frame_indicator">
+        <ImageView
+            android:id="@+id/imgview_expand"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/main_ev_expand" />
+
+        <TextView
+            android:id="@+id/tv_cnt_chgr"
+            android:layout_width="18dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center|end"
+            android:background="#778899"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="11sp" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/tv_evName"
@@ -103,14 +119,6 @@
         app:layout_constraintTop_toTopOf="@+id/tv_label_charger" />
 
     <TextView
-        android:id="@+id/tv_biz_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
         android:id="@+id/tv_label_limit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -127,17 +135,6 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_limit"
         app:layout_constraintStart_toEndOf="@+id/tv_label_limit"
         app:layout_constraintTop_toTopOf="@+id/tv_label_limit" />
-
-    <ImageView
-        android:id="@+id/imgview_expand"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
-        android:src="@drawable/main_ev_expand"
-        android:contentDescription="@null"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_label_limit"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tv_label_limit"
-        tools:srcCompat="@tools:sample/avatars" />
 
 
 
