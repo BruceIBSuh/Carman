@@ -354,7 +354,7 @@ public class ThreadManager {
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public static StationGasTask startStationListTask(
-            StationListViewModel model, Location location, String[] params) {
+            StationViewModel model, Location location, String[] params) {
 
         StationGasTask stationListTask = sInstance.mStationGasTaskQueue.poll();
 

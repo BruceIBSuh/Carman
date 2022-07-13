@@ -1,7 +1,12 @@
 package com.silverback.carman.adapters;
 
+import static android.media.CamcorderProfile.get;
+
+import static org.apache.poi.sl.usermodel.PresetColor.Info;
+
 import android.content.Context;
 import android.os.Build;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -106,20 +111,7 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull StationGasAdapter.ViewHolder holder, int position,
                                  @NonNull List<Object> payloads) {
-
-        if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
-        else {
-            // On receiving car wash values, set the progressbar to be View.GONE and set the message
-            // to the textview.
-            /*
-            for(Object obj : payloads) {
-                if(obj instanceof StationInfoRunnable.Info) {
-                    log.i("partial binding");
-                }
-            }
-
-             */
-        }
+        super.onBindViewHolder(holder, position, payloads);
     }
 
     @Override

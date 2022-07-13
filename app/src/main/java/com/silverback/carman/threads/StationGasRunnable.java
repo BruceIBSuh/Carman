@@ -77,7 +77,9 @@ public class StationGasRunnable implements Runnable{
         // Get the default params and location passed over here from MainActivity
         String fuelCode = defaultParams[0];
         String radius = defaultParams[1];
-        String sort = defaultParams[2];
+        //String sort = defaultParams[2];
+        int rad = Integer.parseInt(defaultParams[1]);
+        int order = Integer.parseInt(defaultParams[2]);
 
         // Convert longitute and latitude-based location to TM(Transverse Mercator), then again to
         // Katec location using the coords package, which is distributed over internet^^.
@@ -87,8 +89,6 @@ public class StationGasRunnable implements Runnable{
         float x = (float) katec_pt.getX();
         float y = (float) katec_pt.getY();
 
-        int rad = Integer.parseInt(defaultParams[1]);
-        int order = Integer.parseInt(defaultParams[2]);
         Call<StationAroundModel> call = RetrofitClient.getIntance()
                 .getRetrofitApi()
                 //.getGasStationAroundModel("F186170711", "B027", "json");

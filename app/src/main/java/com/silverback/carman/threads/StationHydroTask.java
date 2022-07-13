@@ -3,11 +3,9 @@ package com.silverback.carman.threads;
 import android.content.Context;
 import android.location.Location;
 
-import com.silverback.carman.MainActivity;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.utils.ExcelToJsonUtil;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.util.List;
 
@@ -20,10 +18,10 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
 
     public Context context;
     public Runnable hydroStationListRunnable;
-    public StationListViewModel model;
+    public StationViewModel model;
     public Location location;
 
-    public StationHydroTask(Context context, StationListViewModel model, Location location) {
+    public StationHydroTask(Context context, StationViewModel model, Location location) {
         hydroStationListRunnable = new StationHydroRunnable(context, this);
         this.context = context;
         this.model = model;

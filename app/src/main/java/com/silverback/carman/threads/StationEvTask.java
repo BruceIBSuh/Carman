@@ -6,7 +6,7 @@ import android.os.Build;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,13 +23,13 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
     private final Location location;
     private final Context context;
-    private final StationListViewModel viewModel;
+    private final StationViewModel viewModel;
     private Thread currentThread;
 
     private final List<StationEvRunnable.Item> evStationList;
     private int page = 1;
 
-    public StationEvTask(Context context, StationListViewModel viewModel, Location location){
+    public StationEvTask(Context context, StationViewModel viewModel, Location location){
         this.context = context;
         this.location = location;
         this.viewModel = viewModel;

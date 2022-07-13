@@ -72,7 +72,7 @@ public class ExpenseServiceFragment extends Fragment implements
     //private PagerAdapterViewModel pagerAdapterModel;
     //private LocationViewModel locationModel;
     //private ServiceCenterViewModel svcCenterModel;
-    //private StationListViewModel stationModel;
+    //private StationViewModel stationModel;
     //private ServiceCenterTask serviceCenterTask;
     //private Location location;
     private FavoriteGeofenceHelper geofenceHelper;
@@ -135,7 +135,7 @@ public class ExpenseServiceFragment extends Fragment implements
         //svcCenterModel = new ViewModelProvider(this).get(ServiceCenterViewModel.class);
         //pagerAdapterModel = new ViewModelProvider(requireActivity()).get(PagerAdapterViewModel.class);
         //locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
-        //stationModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
+        //stationModel = new ViewModelProvider(requireActivity()).get(StationViewModel.class);
 
         // Attach the listener which implements the following callback methods when a location is added
         // to or removed from the favorite provider as well as geofence list.

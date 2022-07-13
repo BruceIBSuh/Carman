@@ -142,7 +142,7 @@ public class StationMapActivity extends BaseActivity implements OnMapReadyCallba
         );
         */
 
-        //StationListViewModel stnListModel = ViewModelProviders.of(this).get(StationListViewModel.class);
+        //StationViewModel stnListModel = ViewModelProviders.of(this).get(StationViewModel.class);
 
         /*
          * Handling task results

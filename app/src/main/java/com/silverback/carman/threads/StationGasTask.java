@@ -1,11 +1,11 @@
 package com.silverback.carman.threads;
 
 import android.location.Location;
+import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.Opinet;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.util.List;
 
@@ -28,10 +28,10 @@ public class StationGasTask extends ThreadTask implements
     static final int FIRESTORE_SET_FAIL = -4;
 
     // Objects
-    private StationListViewModel viewModel;
-    //private WeakReference<StationListViewModel> weakModelReference;
-    private final Runnable mStationListRunnable;
-    private final Runnable mStationInfoRunnable;
+    private StationViewModel viewModel;
+    //private WeakReference<StationViewModel> weakModelReference;
+    private final Runnable mStnListRunnable;
+    private final Runnable mStnInfoRunnable;
     private final Runnable mFireStoreSetRunnable;
     private final Runnable mFireStoreGetRunnable;
     //private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
@@ -47,15 +47,15 @@ public class StationGasTask extends ThreadTask implements
     // Constructor
     StationGasTask() {
         super();
-        mStationListRunnable = new StationGasRunnable(this);
-        mStationInfoRunnable = new StationInfoRunnable(this);
+        mStnListRunnable = new StationGasRunnable(this);
+        mStnInfoRunnable = new StationInfoRunnable(this);
         mFireStoreGetRunnable = new FirestoreGetRunnable(this);
         mFireStoreSetRunnable = new FirestoreSetRunnable(this);
         sparseBooleanArray = new SparseBooleanArray();
 
     }
 
-    void initStationTask(StationListViewModel viewModel, Location location, String[] params) {
+    void initStationTask(StationViewModel viewModel, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
         this.viewModel = viewModel;
@@ -65,8 +65,8 @@ public class StationGasTask extends ThreadTask implements
     }
 
     // Get Runnables to be called in ThreadPool.executor()
-    Runnable getStationListRunnable() { return mStationListRunnable; }
-    Runnable getStationInfoRunnable() { return mStationInfoRunnable; }
+    Runnable getStnListRunnable() { return mStnListRunnable; }
+    Runnable getStnInfoRunnable() { return mStnInfoRunnable; }
     Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
     Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
 
@@ -82,10 +82,16 @@ public class StationGasTask extends ThreadTask implements
         setCurrentThread(thread);
     }
 
+
+
+
     @Override
     public void setStationId(String stnId) {
         this.stnId = stnId;
     }
+
+    @Override
+    public void setCarWashInfo(int position, boolean isCarwash) {}
 
     /*
    @Override
@@ -99,7 +105,7 @@ public class StationGasTask extends ThreadTask implements
     @Override
     public void setNearStationList(List<StationGasRunnable.Item> stationList) {
         mStationList = stationList;
-        //viewModel.getNearStationList().postValue(mStationList);
+        viewModel.getNearStationList().postValue(mStationList);
     }
 
     @Override
@@ -107,33 +113,16 @@ public class StationGasTask extends ThreadTask implements
         return mStationList;
     }
 
-
+    @Override
+    public void setStationInfoArray(SparseArray<StationInfoRunnable.Info> sparseArray) {
+        viewModel.getStationInfo().postValue(sparseArray);
+    }
 
     @Override
     public void setStationInfoList(List<StationGasRunnable.Item> stationList) {
-        viewModel.getNearStationList().postValue(mStationList);
+        mStationList = stationList;
+        //viewModel.getNearStationList().postValue(stationList);
     }
-
-
-
-    @Override
-    public void setCarWashInfo(int position, boolean isWash) {
-        log.i("SparseArray: %s, %s", position, isWash);
-        sparseBooleanArray.put(position, isWash);
-        viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
-        /*
-        sparseBooleanArray.put(position, isWash);
-        // Check if the SparseBooleanArray size always equals to StationList size. Otherwise, it will
-        // incur a unexpectable result.
-        if(sparseBooleanArray.size() == mStationList.size()) {
-            log.i("Invoke CarWash viewmodel");
-            viewModel.getStationCarWashInfo().postValue(sparseBooleanArray);
-            //weakModelReference.get().getStationCarWashInfo().postValue(sparseBooleanArray);
-        }
-
-         */
-    }
-
 
     /*
     @Override

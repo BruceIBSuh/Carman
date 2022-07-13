@@ -56,6 +56,7 @@ import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationHydroTask;
+import com.silverback.carman.threads.StationInfoRunnable;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -64,7 +65,7 @@ import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.Opinet;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 import com.silverback.carman.views.ProgressButton;
 
 import java.io.File;
@@ -83,14 +84,10 @@ public class MainActivity extends BaseActivity implements
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
+
+
     public static final String regexEvName = "\\d*\\([\\w\\s]*\\)";
 
-    public static final int NOTIFICATION = 0;
-    public static final int BANNER_AD_1 = 1;
-    public static final int VIEWPAGER_EXPENSE = 2;
-    public static final int CARLIFE = 3;
-    public static final int BANNER_AD_2 = 4;
-    public static final int COMPANY_INFO = 5;
 
 
     // Objects
@@ -98,7 +95,7 @@ public class MainActivity extends BaseActivity implements
     private ActivityMainBinding binding;
 
     private LocationViewModel locationModel;
-    private StationListViewModel stationModel;
+    private StationViewModel stationModel;
     private ImageViewModel imgModel;
     private OpinetViewModel opinetModel;
     //private DataBindingViewModel bindingModel;
@@ -126,7 +123,6 @@ public class MainActivity extends BaseActivity implements
     private Observer<List<StationEvRunnable.Item>> evObserver;
     private Observer<List<StationHydroRunnable.HydroStationObj>> hydroObserver;
 
-
     // Fields
     private List<ProgressButton> progbtnList;
     private List<StationEvRunnable.Item> evFullList;
@@ -148,7 +144,7 @@ public class MainActivity extends BaseActivity implements
     private final ActivityResultLauncher<Intent> activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(), this::getActivityResult);
 
-
+    // EV station list displays in the multi-type RecyclerView.
     public static class MultiTypeEvItem {
         StationEvRunnable.Item item;
         int viewType;
@@ -237,7 +233,7 @@ public class MainActivity extends BaseActivity implements
         imgResUtil = new ApplyImageResourceUtil(this);
         // ViewModels
         locationModel = new ViewModelProvider(this).get(LocationViewModel.class);
-        stationModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        stationModel = new ViewModelProvider(this).get(StationViewModel.class);
         imgModel = new ViewModelProvider(this).get(ImageViewModel.class);
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
 
@@ -362,7 +358,7 @@ public class MainActivity extends BaseActivity implements
         isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            gasTask = ThreadManager2.startGasStationListTask(stationModel, mPrevLocation, defaultParams);
+            gasTask = ThreadManager2.startGasStnListTask(stationModel, mPrevLocation, defaultParams);
         }
     }
     @Override
@@ -429,7 +425,9 @@ public class MainActivity extends BaseActivity implements
         evListAdapter.submitEvList(evSimpleList);
     }
 
-    // Implement the abstract method defined in BaseActivity to handle the location permission
+    // Implement the abstract callback method of ActivityResultLauncher to check the location
+    // permissiion, which is invoked in checkRuntimePermission(). Both methods are defined in
+    // BaseActivity.
     @Override
     public void getPermissionResult(Boolean isLocationPermitted) {
         log.i("permission result");
@@ -571,7 +569,7 @@ public class MainActivity extends BaseActivity implements
         defaultParams[0] = gasCode;
 
 
-        if(gasTask == null) gasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+        if(gasTask == null) gasTask = ThreadManager2.startGasStnListTask(stationModel, location, defaultParams);
         /*
         } else {
             final String msg = getString(R.string.general_snackkbar_inbounds);
@@ -605,6 +603,19 @@ public class MainActivity extends BaseActivity implements
             isRadiusChanged = false;
             isGasTypeChanged = false;
 
+        });
+
+        stationModel.getStationInfo().observe(this, sparseArray -> {
+            StationInfoRunnable.Info info = sparseArray.get(0);
+            log.i("sparse array: %s", sparseArray.size());
+
+            /*
+            for(int i = 0; i < sparseArray.size(); i++) {
+                StationInfoRunnable.Info info = sparseArray.valueAt(i);
+                log.i("sparse info array: %s", info.stnName);
+            }
+
+             */
         });
 
         /*
@@ -899,7 +910,8 @@ public class MainActivity extends BaseActivity implements
         switch(result.getResultCode()) {
             case Constants.REQUEST_MAIN_EXPENSE_TOTAL: // ExpenseActivity result
                 int total = resultIntent.getIntExtra("expense", 0);
-                mainContentAdapter.notifyItemChanged(VIEWPAGER_EXPENSE, total);
+                int content = MainContentAdapter.ContentType.VIEWPAGER_EXPENSE.ordinal();
+                mainContentAdapter.notifyItemChanged(content, total);
                 break;
 
             case Constants.REQUEST_MAIN_SETTING_GENERAL:

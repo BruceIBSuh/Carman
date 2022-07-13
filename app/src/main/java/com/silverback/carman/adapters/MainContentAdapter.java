@@ -1,12 +1,5 @@
 package com.silverback.carman.adapters;
 
-import static com.silverback.carman.MainActivity.BANNER_AD_1;
-import static com.silverback.carman.MainActivity.BANNER_AD_2;
-import static com.silverback.carman.MainActivity.CARLIFE;
-import static com.silverback.carman.MainActivity.COMPANY_INFO;
-import static com.silverback.carman.MainActivity.NOTIFICATION;
-import static com.silverback.carman.MainActivity.VIEWPAGER_EXPENSE;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.silverback.carman.MainActivity;
 import com.silverback.carman.R;
 import com.silverback.carman.databinding.MainContentAdsBinding;
 import com.silverback.carman.databinding.MainContentCarlifeBinding;
@@ -33,13 +27,16 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     private static final LoggingHelper log = LoggingHelperFactory.create(MainContentAdapter.class);
 
-    public enum Content {
-        NOTIFICATION, BANNER_AD_1, VIEWPAGER_EXPENSE, CARLIFE, BANNDER_AD_2, COMPANY_INFO
+    // Main content components which is displayed in RecyclerView based on Enum, which makes add or
+    // remove a component enabled in MainActivity.
+    public enum ContentType {
+        NOTIFICATION,
+        BANNER_AD_1,
+        VIEWPAGER_EXPENSE,
+        CARLIFE,
+        BANNDER_AD_2,
+        COMPANY_INFO
     }
-
-    //private static final int RECENT = 0;
-    //private static final int NOTIFICATION = 3;
-    private static final int NUM_CONTENTS = 6;
 
     // Objects
     private final MainContentAdapterListener mListener;
@@ -76,11 +73,14 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        switch(viewType) {
+        ContentType contentType = ContentType.values()[viewType];
+
+        //switch(viewType) {
+        switch(contentType) {
             case NOTIFICATION:
                 notiBinding = MainContentNotificationBinding.inflate(inflater, parent, false);
                 notiBinding.imgbtnNotification.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(NOTIFICATION)
+                    mListener.onClickPostingIcon(contentType.ordinal())
                 );
                 return new ViewHolder(notiBinding.getRoot());
 
@@ -91,11 +91,11 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
             case CARLIFE:
                 carlifeBinding = MainContentCarlifeBinding.inflate(inflater, parent, false);
                 carlifeBinding.imgbtnCarlife.setOnClickListener(view ->
-                    mListener.onClickPostingIcon(CARLIFE)
+                    mListener.onClickPostingIcon(contentType.ordinal())
                 );
                 return new ViewHolder(carlifeBinding.getRoot());
 
-            case BANNER_AD_1: case BANNER_AD_2:
+            case BANNER_AD_1: case BANNDER_AD_2:
                 adsBinding = MainContentAdsBinding.inflate(inflater, parent, false);
                 return new ViewHolder(adsBinding.getRoot());
 
@@ -110,7 +110,8 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        switch(position) {
+        ContentType contentType = ContentType.values()[position];
+        switch(contentType) {
             case NOTIFICATION:
                 firestore.collection("admin_post").orderBy("timestamp", Query.Direction.DESCENDING)
                         .limit(3)
@@ -139,7 +140,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_ioniq5);
                 break;
 
-            case BANNER_AD_2:
+            case BANNDER_AD_2:
                 adsBinding.imgviewAd.setImageResource(R.drawable.ad_insurance);
                 break;
         }
@@ -150,7 +151,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
         if(payloads.isEmpty()) {
             super.onBindViewHolder(holder, position, payloads);
         } else {
-            if(position == VIEWPAGER_EXPENSE) {
+            if(position ==ContentType.values()[position].ordinal()) {
                 if((Integer)payloads.get(0) > 0) {
                     expBinding.mainPagerExpense.setAdapter(mainExpPagerAdapter);
                     //final int total = (Integer)obj;
@@ -162,11 +163,13 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
 
     @Override
     public int getItemCount() {
-        return NUM_CONTENTS;
+        return ContentType.values().length;
     }
 
     @Override
     public int getItemViewType(int position) {
+        return ContentType.values()[position].ordinal();
+        /*
         switch(position) {
             case 0: return NOTIFICATION;
             case 1: return BANNER_AD_1;
@@ -176,5 +179,7 @@ public class MainContentAdapter extends RecyclerView.Adapter<MainContentAdapter.
             case 5: return COMPANY_INFO;
             default: return -1;
         }
+
+         */
     }
 }
