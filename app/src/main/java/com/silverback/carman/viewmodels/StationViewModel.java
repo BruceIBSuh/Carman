@@ -1,37 +1,35 @@
 package com.silverback.carman.viewmodels;
 
-import android.util.SparseBooleanArray;
+import android.util.SparseArray;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.rest.EvRetrofitTikXml;
 import com.silverback.carman.threads.StationEvRunnable;
 import com.silverback.carman.threads.StationFavRunnable;
 import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationInfoRunnable;
-import com.silverback.carman.utils.ExcelToJsonUtil;
 
 import java.util.List;
 
-public class StationListViewModel extends ViewModel {
+public class StationViewModel extends ViewModel {
 
     // Logging
-    private static final LoggingHelper log = LoggingHelperFactory.create(StationListViewModel.class);
+    private static final LoggingHelper log = LoggingHelperFactory.create(StationViewModel.class);
 
     // Objects
     //private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<List<StationGasRunnable.Item>> stnList;
-    private MutableLiveData<List<StationInfoRunnable.Info>> stationInfo;
+    private MutableLiveData<SparseArray<StationInfoRunnable.Info>> stationInfoList;
     private MutableLiveData<StationFavRunnable.Info> favStationInfo;
 
     //private MutableLiveData<Opinet.GasStnParcelable> currentStation;
     private MutableLiveData<StationGasRunnable.Item> currentStation;
     private MutableLiveData<Opinet.GasStationInfo> stnInfo;
-    private MutableLiveData<SparseBooleanArray> hasCarWash;
+
 
 
 
@@ -58,17 +56,10 @@ public class StationListViewModel extends ViewModel {
         return currentStation;
     }
 
-    public MutableLiveData<SparseBooleanArray> getStationCarWashInfo() {
-        log.i("getStationCarWashInfo");
-        if(hasCarWash == null) {
-            hasCarWash = new MutableLiveData<>();
-        }
-        return hasCarWash;
-    }
 
-    public MutableLiveData<List<StationInfoRunnable.Info>> getStationInfoList() {
-        if(stationInfo == null) stationInfo = new MutableLiveData<>();
-        return stationInfo;
+    public MutableLiveData<SparseArray<StationInfoRunnable.Info>> getStationInfoArray() {
+        if(stationInfoList == null) stationInfoList = new MutableLiveData<>();
+        return stationInfoList;
     }
 
     public MutableLiveData<StationFavRunnable.Info> getFavStationInfo() {

@@ -1,7 +1,12 @@
 package com.silverback.carman.adapters;
 
+import static android.media.CamcorderProfile.get;
+
+import static org.apache.poi.sl.usermodel.PresetColor.Info;
+
 import android.content.Context;
 import android.os.Build;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,9 +99,13 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
         holder.getDistanceView().setText(String.format("%s%2s", df.format(data.getStnDistance()), context.getString(R.string.unit_meter)));
         
         // Set the visibility of the facility icons.
-        if(data.getIsCarWash()) holder.getCarWashView().setVisibility(View.VISIBLE);
-        if(data.getIsCVS()) holder.getCvSView().setVisibility(View.VISIBLE);
-        if(data.getIsService()) holder.getSvcView().setVisibility(View.VISIBLE);
+        int washVisible = (data.getIsCarWash())? View.VISIBLE : View.GONE;
+        int cvsVisible = (data.getIsCVS())? View.VISIBLE : View.GONE;
+        int svcVisible = (data.getIsService())? View.VISIBLE : View.GONE;
+
+        holder.getCarWashView().setVisibility(washVisible);
+        holder.getCvSView().setVisibility(cvsVisible);
+        holder.getSvcView().setVisibility(svcVisible);
 
         holder.itemView.setOnClickListener(view -> {
             if(mListener != null) mListener.onItemClicked(position);
@@ -106,19 +115,17 @@ public class StationGasAdapter extends RecyclerView.Adapter<StationGasAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull StationGasAdapter.ViewHolder holder, int position,
                                  @NonNull List<Object> payloads) {
-
         if(payloads.isEmpty()) super.onBindViewHolder(holder, position, payloads);
         else {
-            // On receiving car wash values, set the progressbar to be View.GONE and set the message
-            // to the textview.
-            /*
-            for(Object obj : payloads) {
-                if(obj instanceof StationInfoRunnable.Info) {
-                    log.i("partial binding");
+            for(Object payload : payloads) {
+                if(payload instanceof SparseArray){
+                    Object obj = ((SparseArray<?>)payload).valueAt(position);
+                    StationInfoRunnable.Info info = (StationInfoRunnable.Info)obj;
+                    if(info.carWashYN.matches("Y")) holder.getCarWashView().setVisibility(View.VISIBLE);
+                    if(info.maintYN.matches("Y")) holder.getSvcView().setVisibility(View.VISIBLE);
+                    if(info.cvsYN.matches("Y")) holder.getCvSView().setVisibility(View.VISIBLE);
                 }
             }
-
-             */
         }
     }
 

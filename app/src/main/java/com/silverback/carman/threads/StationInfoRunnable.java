@@ -1,9 +1,11 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationGasTask.DOWNLOAD_STATION_INFO;
+import static com.silverback.carman.threads.StationGasTask.TASK_FAILED;
 import static com.silverback.carman.threads.StationInfoRunnable.RetrofitApi.BASE_URL;
+import static com.silverback.carman.threads.ThreadTask.TASK_FAIL;
 
 import android.os.Process;
-import android.util.SparseBooleanArray;
 
 import androidx.annotation.NonNull;
 
@@ -13,8 +15,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-
-import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,68 +34,68 @@ public class StationInfoRunnable implements Runnable {
    private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoRunnable.class);
 
    private final StationInfoMethods callback;
-   private List<StationGasRunnable.Item> mStationList;
-   private List<Info> stationInfoList;
-   private SparseBooleanArray sparseArray;
+   private final StationGasRunnable.Item gasStation;
+   private final int index;
 
 
 
    public interface StationInfoMethods {
       void setStationTaskThread(Thread thread);
-      List<StationGasRunnable.Item> getNearStationList();
-      void setStationInfoList(List<StationGasRunnable.Item> infoList);
+      void setStationInfo(int index, Info info);
+      void handleTaskState(int state);
+
    }
 
-   public StationInfoRunnable(StationInfoMethods callback) {
+   public StationInfoRunnable(int index, StationGasRunnable.Item station, StationInfoMethods callback) {
       this.callback = callback;
-      stationInfoList = new ArrayList<>();
-      sparseArray = new SparseBooleanArray();
+      this.index = index;
+      this.gasStation = station;
    }
 
    @Override
    public void run() {
+      log.i("station info thread: %s", Thread.currentThread());
       callback.setStationTaskThread(Thread.currentThread());
       android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
       try {
          if (Thread.interrupted()) throw new InterruptedException();
-         mStationList = callback.getNearStationList();
-         for (int i = 0; i < mStationList.size(); i++) {
+         //mStationList = callback.getNearStationList();
+         log.i("index: %s", index);
+         //for (int i = 0; i < mStationList.size(); i++) {
+            //index = i;
             Call<StationInfoModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    .getStationInfoModel("F186170711", mStationList.get(i).getStnId(), "json");
-
-
-            int index = i;
+                    .getStationInfoModel("F186170711", gasStation.getStnId(), "json");
             call.enqueue(new Callback<StationInfoModel>() {
                @Override
                public void onResponse(@NonNull Call<StationInfoModel> call,
                                       @NonNull Response<StationInfoModel> response) {
-
                   StationInfoModel model = response.body();
                   assert model != null;
                   Info info = model.result.info.get(0);
+                  callback.setStationInfo(index, info);
 
-                  mStationList.get(index).setAddrsNew(info.addrsNew);
-                  mStationList.get(index).setAddrsOld(info.addrsOld);
-                  mStationList.get(index).setIsCarWash(Objects.equals(info.carWashYN, "Y"));
-                  mStationList.get(index).setIsCVS(Objects.equals(info.cvsYN, "Y"));
-                  mStationList.get(index).setIsService(Objects.equals(info.maintYN, "Y"));
+                  log.i("station info: %s ,%s, %s, %s, %s:", index, info.stnName, info.carWashYN, info.cvsYN, info.maintYN);
+
+                  gasStation.setAddrsNew(info.addrsNew);
+                  gasStation.setAddrsOld(info.addrsOld);
+                  gasStation.setIsCarWash(Objects.equals(info.carWashYN, "Y"));
+                  gasStation.setIsCVS(Objects.equals(info.cvsYN, "Y"));
+                  gasStation.setIsService(Objects.equals(info.maintYN, "Y"));
+
+                  callback.handleTaskState(DOWNLOAD_STATION_INFO);
                }
 
                @Override
-               public void onFailure(@NonNull Call<StationInfoModel> call,
-                                     @NonNull Throwable t) {
+               public void onFailure(@NonNull Call<StationInfoModel> call, @NonNull Throwable t) {
                   log.i("call failed: %s", t);
+                  callback.handleTaskState(TASK_FAILED);
                }
             });
-
-         }
+         //}
 
       } catch (InterruptedException e) { e.getLocalizedMessage(); }
-
-      callback.setStationInfoList(mStationList);
-
    }
 
    public interface RetrofitApi {
@@ -129,8 +129,6 @@ public class StationInfoRunnable implements Runnable {
       public static RetrofitClient getIntance() {
          return RetrofitClient.LazyHolder.sInstance;
       }
-
-
       public RetrofitApi getRetrofitApi() {
          return retrofitApi;
       }
@@ -150,22 +148,24 @@ public class StationInfoRunnable implements Runnable {
    }
 
    public static class Info {
+      @SerializedName("OS_NM")
+      public String stnName;
       @SerializedName("VAN_ADR")
       @Expose
-      private String addrsOld;
+      public String addrsOld;
 
       @SerializedName("NEW_ADR")
       @Expose
-      private String addrsNew;
+      public String addrsNew;
 
       @SerializedName("CAR_WASH_YN")
-      private String carWashYN;
+      public String carWashYN;
 
       @SerializedName("CVS_YN")
-      private String cvsYN;
+      public String cvsYN;
 
       @SerializedName("MAINT_YN")
-      private String maintYN;
+      public String maintYN;
    }
 
 

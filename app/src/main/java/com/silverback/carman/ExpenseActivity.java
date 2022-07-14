@@ -51,7 +51,7 @@ import com.silverback.carman.utils.Constants;
 import com.silverback.carman.utils.DatePickerFragment;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.lang.ref.WeakReference;
 import java.util.Objects;
@@ -72,7 +72,7 @@ import java.util.Objects;
  * at the top.
  *
  * At the same time, LocationTask is initiated to have the current location, with which GeneralFragment
- * starts StationGasTask to fetch the current station via StationListViewModel when the task completes.
+ * starts StationGasTask to fetch the current station via StationViewModel when the task completes.
  *
  * On the other hand, separate process should be made if the activity gets started by tabbing the
  * geofence notification. In particular, be careful of the notification that contains the intent of
@@ -475,8 +475,8 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 mPrevLocation = location;
                 String[] defaults = getNearStationParams();
                 defaults[1] = Constants.MIN_RADIUS;
-                StationListViewModel stnListModel = new ViewModelProvider(this).get(StationListViewModel.class);
-                stationGasTask = sThreadManager.startGasStationListTask(stnListModel, location, defaults);
+                StationViewModel stnListModel = new ViewModelProvider(this).get(StationViewModel.class);
+                stationGasTask = sThreadManager.startGasStnListTask(stnListModel, location, defaults);
             }
         });
     }

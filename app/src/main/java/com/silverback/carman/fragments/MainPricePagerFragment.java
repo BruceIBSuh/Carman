@@ -15,14 +15,10 @@ import com.silverback.carman.databinding.MainPagerDistrictPriceBinding;
 import com.silverback.carman.databinding.MainPagerStationPriceBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.StationFavRunnable;
 import com.silverback.carman.threads.StationFavTask;
-import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.Constants;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
-
-import java.util.List;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 /**
  * This fragment is to display the gas prices of the district and the favorite station.
@@ -40,7 +36,7 @@ public class MainPricePagerFragment extends Fragment {
     private MainPagerStationPriceBinding stnBinding;
     private StationFavTask favPriceTask;
     private OpinetViewModel opinetModel;
-    private StationListViewModel stnModel;
+    private StationViewModel stnModel;
     private int page;
     private String fuelCode;
 
@@ -66,7 +62,7 @@ public class MainPricePagerFragment extends Fragment {
         super.onCreate(savedInstanceState);
         room = CarmanDatabase.getDatabaseInstance(getContext());
         opinetModel = new ViewModelProvider(this).get(OpinetViewModel.class);
-        stnModel = new ViewModelProvider(this).get(StationListViewModel.class);
+        stnModel = new ViewModelProvider(this).get(StationViewModel.class);
 
         if(getArguments() != null) {
             page = getArguments().getInt("page");

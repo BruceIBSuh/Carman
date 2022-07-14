@@ -193,14 +193,14 @@ public class ThreadManager {
             // Continuously, FireStoreSetRunnable downloads the additional data of the station(s)
             // from the Opinet and update other fields including the carwash field in Firestore.
             case DOWNLOAD_NEAR_STATIONS_COMPLETED:
-                mDownloadThreadPool.execute(((StationGasTask)task).getFireStoreRunnable());
+                //mDownloadThreadPool.execute(((StationGasTask)task).getFireStoreRunnable());
                 //msg.sendToTarget();
                 break;
 
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
-                mDownloadThreadPool.execute(((StationGasTask) task).setFireStoreRunnalbe());
+                //mDownloadThreadPool.execute(((StationGasTask) task).setFireStoreRunnalbe());
                 //msg.sendToTarget();
                 break;
             /*
@@ -354,7 +354,7 @@ public class ThreadManager {
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
     public static StationGasTask startStationListTask(
-            StationListViewModel model, Location location, String[] params) {
+            StationViewModel model, Location location, String[] params) {
 
         StationGasTask stationListTask = sInstance.mStationGasTaskQueue.poll();
 

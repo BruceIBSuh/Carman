@@ -4,16 +4,14 @@ import android.content.Context;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.viewmodels.StationListViewModel;
-
-import java.util.Map;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 public class StationFavTask extends ThreadTask implements StationFavRunnable.StationPriceMethods {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationFavTask.class);
 
     // Objects
-    private StationListViewModel viewModel;
+    private StationViewModel viewModel;
     //private WeakReference<OpinetViewModel> weakModelReference;
     private final Runnable mFavStationRunnable;
     private String stnId;
@@ -24,7 +22,7 @@ public class StationFavTask extends ThreadTask implements StationFavRunnable.Sta
         mFavStationRunnable = new StationFavRunnable(context, this);
     }
 
-    void initTask(StationListViewModel model, String stnId, boolean isFirst) {
+    void initTask(StationViewModel model, String stnId, boolean isFirst) {
         this.viewModel = model;
         //weakModelReference = new WeakReference<>(model);
         this.stnId = stnId;

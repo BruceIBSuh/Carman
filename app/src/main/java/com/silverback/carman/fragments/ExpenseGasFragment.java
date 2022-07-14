@@ -21,7 +21,6 @@ import androidx.preference.PreferenceManager;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
@@ -34,7 +33,6 @@ import com.silverback.carman.database.GasManagerEntity;
 import com.silverback.carman.databinding.FragmentGasManagerBinding;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.threads.StationFavRunnable;
 import com.silverback.carman.threads.StationFavTask;
 import com.silverback.carman.threads.LocationTask;
 import com.silverback.carman.threads.StationGasTask;
@@ -45,7 +43,7 @@ import com.silverback.carman.utils.NumberTextWatcher;
 import com.silverback.carman.viewmodels.FragmentSharedModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -69,7 +67,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
     private CarmanDatabase room;
     private FirebaseFirestore firestore;
 
-    private StationListViewModel stnListModel;
+    private StationViewModel stnListModel;
     private LocationViewModel locationModel;
     private FragmentSharedModel fragmentModel;
     private OpinetViewModel opinetViewModel;
@@ -136,7 +134,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
         // ViewModels: reconsider why  models shouldn't reference the ones defined in the parent
         // activity. it would rather  be better to redefine.
         fragmentModel = new ViewModelProvider(requireActivity()).get(FragmentSharedModel.class);
-        stnListModel = new ViewModelProvider(requireActivity()).get(StationListViewModel.class);
+        stnListModel = new ViewModelProvider(requireActivity()).get(StationViewModel.class);
         opinetViewModel = new ViewModelProvider(requireActivity()).get(OpinetViewModel.class);
         locationModel = new ViewModelProvider(requireActivity()).get(LocationViewModel.class);
 
@@ -247,7 +245,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 defaultParams[1] = Constants.MIN_RADIUS;
                 mPrevLocation = location;
                 // Fetch the station within the radius.
-                stnListTask = ThreadManager2.startGasStationListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager2.startGasStnListTask(stnListModel, location, defaultParams);
                 setCurrentStation();
             } else {
                 binding.pbSearchStation.setVisibility(View.GONE);

@@ -15,7 +15,7 @@ import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.viewmodels.ImageViewModel;
 import com.silverback.carman.viewmodels.LocationViewModel;
 import com.silverback.carman.viewmodels.OpinetViewModel;
-import com.silverback.carman.viewmodels.StationListViewModel;
+import com.silverback.carman.viewmodels.StationViewModel;
 
 import java.util.List;
 import java.util.Map;
@@ -121,14 +121,8 @@ public class ThreadManager2 {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask) msg.obj;
-                if(task instanceof UploadBitmapTask) {
-                    log.i("upload compressed bitmap done");
-                    recycleTask(task);
-                } else if(task instanceof StationEvTask) {
-                    log.i("ev station task");
-                    recycleTask(task);
-                }
-
+                task.recycle();
+                //boolean b = mThreadTaskQueue.offer(task);
             }
         };
     }
@@ -159,10 +153,14 @@ public class ThreadManager2 {
                 break;
             case DOWNLOAD_NEAR_STATIONS:
                 //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).getFireStoreRunnable());
-                //log.i("station list: %s", ((StationGasTask)task).getStationList().size());
-                InnerClazz.sInstance.threadPoolExecutor.execute(
-                        ((StationGasTask)task).getStationInfoRunnable());
+                log.i("station list: %s", ((StationGasTask)task).getStationList().size());
+                List<StationGasRunnable.Item> stationList = ((StationGasTask)task).getStationList();
+                for(int i = 0; i < stationList.size(); i++) {
+                    InnerClazz.sInstance.threadPoolExecutor.execute(
+                            ((StationGasTask)task).getStnInfoRunnable(i));
+                }
                 break;
+            /*
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
@@ -174,11 +172,14 @@ public class ThreadManager2 {
                 log.i("upload station info to Firestore");
                 msg.sendToTarget();
                 break;
-
+            */
             case TASK_COMPLETE:
                 if(task instanceof StationEvTask) {
                     Message evMessage = mMainHandler.obtainMessage(state, task);
                     evMessage.sendToTarget();
+                } else if(task instanceof StationGasTask) {
+                    Message gasMessage = mMainHandler.obtainMessage(state, task);
+                    gasMessage.sendToTarget();
                 }
             case TASK_FAIL:
                 if(task instanceof StationEvTask) msg.sendToTarget();
@@ -270,7 +271,7 @@ public class ThreadManager2 {
     }
 
     public static StationFavTask startFavStationTask(
-            Context context, @Nullable StationListViewModel model, String stnId, boolean isFirst) {
+            Context context, @Nullable StationViewModel model, String stnId, boolean isFirst) {
 
         StationFavTask favStationTask = (StationFavTask) InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(favStationTask == null) favStationTask = new StationFavTask(context);
@@ -293,21 +294,20 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static StationGasTask startGasStationListTask(
-            StationListViewModel model, Location location, String[] params) {
+    public static StationGasTask startGasStnListTask(StationViewModel model, Location location, String[] params) {
 
         StationGasTask stationGasTask = (StationGasTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationGasTask == null) stationGasTask = new StationGasTask();
-        stationGasTask.initStationTask(model, location, params);
-        log.i("StationGasTask: %s", stationGasTask);
 
-        InnerClazz.sInstance.threadPoolExecutor.execute(stationGasTask.getStationListRunnable());
+        stationGasTask.initStationTask(model, location, params);
+        InnerClazz.sInstance.threadPoolExecutor.execute(stationGasTask.getStnListRunnable());
+
         return stationGasTask;
     }
 
     // Electric Charge Station
     public static StationEvTask startEVStatoinListTask(
-            Context context, StationListViewModel model, Location location) {
+            Context context, StationViewModel model, Location location) {
 
         StationEvTask stationEvTask = (StationEvTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
@@ -322,7 +322,7 @@ public class ThreadManager2 {
     }
 
     public static StationHydroTask startHydroStationListTask(
-            Context context, StationListViewModel model, Location location) {
+            Context context, StationViewModel model, Location location) {
 
         StationHydroTask hydroStationsTask = (StationHydroTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(hydroStationsTask == null) hydroStationsTask = new StationHydroTask(context, model, location);
