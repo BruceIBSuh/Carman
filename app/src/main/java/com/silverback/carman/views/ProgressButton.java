@@ -61,9 +61,7 @@ public class ProgressButton extends LinearLayout {
             //if(!isStatus) {
             if(buttonId == 1) return; //temp code for excluding the svc station
             //if(!isStatus) setProgress();
-
             ((MainActivity)context).locateStations(buttonId);
-
             //} else resetProgress();
         });
 
@@ -90,14 +88,13 @@ public class ProgressButton extends LinearLayout {
         pbColorRef = ContextCompat.getColor(context, android.R.color.holo_red_light);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
-
         binding.button.setClickable(true);
         isStatus = true;
     }
 
     public void resetProgress(){
-        pbColorRef = ContextCompat.getColor(context, android.R.color.white);
         binding.progressBar.setIndeterminate(false);
+        pbColorRef = ContextCompat.getColor(context, android.R.color.white);
         binding.progressBar.setBackgroundColor(pbColorRef);
         binding.progressBar.setScaleY(1f);
         binding.button.setClickable(true);

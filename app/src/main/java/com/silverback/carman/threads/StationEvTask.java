@@ -47,12 +47,14 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     }
 
     @Override
-    public void setElecStationTaskThread(Thread thread) {
+    public void setEvStationTaskThread(Thread thread) {
+        log.i("ev thread: %s", thread);
+        this.currentThread = thread;
         setCurrentThread(thread);
     }
 
     @Override
-    public Location getElecStationLocation() {
+    public Location getEvStationLocation() {
         return location;
     }
 
@@ -93,6 +95,10 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
         }
 
         sThreadManager.handleState(this, outstate);
+    }
+
+    public Thread getCurrentThread() {
+        return currentThread;
     }
 
 }

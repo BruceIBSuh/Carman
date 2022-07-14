@@ -1,23 +1,15 @@
 package com.silverback.carman.threads;
 
-import static com.silverback.carman.threads.StationEvTask.EV_TASK_FAIL;
-import static com.silverback.carman.threads.StationEvTask.EV_TASK_SUCCESS;
-
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
-import android.net.Uri;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.os.Process;
 
 import androidx.annotation.NonNull;
 
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
-import com.silverback.carman.rest.EvRetrofitTikXml;
-import com.silverback.carman.utils.CustomPostingObject;
 import com.tickaroo.tikxml.TikXml;
 import com.tickaroo.tikxml.annotation.Element;
 import com.tickaroo.tikxml.annotation.Path;
@@ -25,15 +17,7 @@ import com.tickaroo.tikxml.annotation.PropertyElement;
 import com.tickaroo.tikxml.annotation.Xml;
 import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory;
 
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
-
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -49,8 +33,7 @@ public class StationEvRunnable implements Runnable {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvRunnable.class);
     private static final String endPoint = "http://apis.data.go.kr/B552584/EvCharger/";
-    private static final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25" +
-            "VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
+    private static final String encodingKey = "Wd%2FkK0BbiWJlv1Rj9oR0Q7WA0aQ0UO3%2FY11uMkriK57e25VBUaNk1hQxQWv0svLZln5raxjA%2BFuCXzqm8pWu%2FQ%3D%3D";
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
@@ -61,8 +44,8 @@ public class StationEvRunnable implements Runnable {
 
     // Interface
     public interface ElecStationCallback {
-        void setElecStationTaskThread(Thread thread);
-        Location getElecStationLocation();
+        void setEvStationTaskThread(Thread thread);
+        Location getEvStationLocation();
         void setEvStationList(List<Item> evList);
         void handleTaskState(int state);
         void notifyEvStationError(Exception e);
@@ -76,9 +59,9 @@ public class StationEvRunnable implements Runnable {
 
     @Override
     public void run() {
-        callback.setElecStationTaskThread(Thread.currentThread());
+        callback.setEvStationTaskThread(Thread.currentThread());
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
-        Location location = callback.getElecStationLocation();
+        Location location = callback.getEvStationLocation();
         /*
         GeoPoint in_pt = new GeoPoint(location.getLongitude(), location.getLatitude());
         GeoPoint tm_pt = GeoTrans.convert(GeoTrans.GEO, GeoTrans.TM, in_pt);

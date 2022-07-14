@@ -527,20 +527,19 @@ public class MainActivity extends BaseActivity implements
         checkRuntimePermission(binding.getRoot(), perm, rationale,  () -> {
             locationTask = ThreadManager2.fetchLocationTask(this, locationModel);
             progbtnList.get(currentBtnId).setProgress();
-
             locationObserver = new Observer<Location>() {
                 @Override
                 public void onChanged(Location location) {
+                    log.i("Location: %s", location);
                     switch(currentBtnId) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
                         case 2: locateEvStations(location); break;
                         case 3: locateHydroStations(location); break;
                     }
-                    locationModel.getLocation().removeObserver(this);
+                    //locationModel.getLocation().removeObserver(this);
                 }
             };
-
             locationModel.getLocation().observe(this, locationObserver);
 
             locationModel.getLocationException().observe(this, exception -> {
@@ -563,15 +562,14 @@ public class MainActivity extends BaseActivity implements
 
     private void locateGasStations(Location location) {
         log.i("Locate Gas: %s", location);
-        locationModel.getLocation().removeObserver(locationObserver);
+        //locationModel.getLocation().removeObserver(locationObserver);
         //if(mPrevLocation == null || (mPrevLocation.distanceTo(location) > Constants.UPDATE_DISTANCE)) {
         mPrevLocation = location;
         gasListAdapter = new StationGasAdapter(this);
-
         defaultParams[0] = gasCode;
-
-
-        if(gasTask == null) gasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+        if(gasTask == null) {
+            gasTask = ThreadManager2.startGasStationListTask(stationModel, location, defaultParams);
+        }
         /*
         } else {
             final String msg = getString(R.string.general_snackkbar_inbounds);
@@ -646,8 +644,8 @@ public class MainActivity extends BaseActivity implements
 
     private void locateEvStations(Location location) {
         mPrevLocation = location;
-        locationModel.getLocation().removeObserver(locationObserver);
-        if(binding.fab.getVisibility() == View.VISIBLE) binding.fab.setVisibility(View.GONE);
+        //locationModel.getLocation().removeObserver(locationObserver);
+        binding.fab.setVisibility(View.GONE);
 
         evListAdapter = new StationEvAdapter(this);
         //binding.recyclerStations.setAdapter(evListAdapter);
@@ -741,8 +739,9 @@ public class MainActivity extends BaseActivity implements
         stationModel.getEvStationList().observe(this, evObserver);
         */
         stationModel.getExceptionMessage().observe(this, err -> {
-            log.e("exception in EV");
+            //log.e("exception in EV: %s", evTask.getCurrentThread());
             Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
+
             progbtnList.get(2).resetProgress();
             evTask = null;
         });
@@ -750,7 +749,7 @@ public class MainActivity extends BaseActivity implements
     }
 
     private void locateHydroStations(Location location) {
-        locationModel.getLocation().removeObserver(locationObserver);
+        //locationModel.getLocation().removeObserver(locationObserver);
         mPrevLocation = location;
         if(binding.fab.getVisibility() == View.VISIBLE) binding.fab.setVisibility(View.GONE);
 
