@@ -69,7 +69,7 @@ public class FirestoreGetRunnable implements Runnable {
             docRef.addSnapshotListener((snapshot, e) -> {
                 if(e != null) {
                     mCallback.notifyException(e.getLocalizedMessage());
-                    mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_FAIL);
+                    //mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_FAIL);
                     return;
                 }
 
@@ -110,7 +110,7 @@ public class FirestoreGetRunnable implements Runnable {
                 .set(stnData)
                 .addOnSuccessListener(documentReference -> {
                     mCallback.setStationId(stnList.get(position).getStnId());
-                    mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_COMPLETE);
+                    //mCallback.handleTaskState(StationGasTask.FIRESTORE_GET_COMPLETE);
                 }).addOnFailureListener(error -> log.e("failed to add data"));
     }
 

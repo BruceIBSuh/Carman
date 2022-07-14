@@ -50,8 +50,6 @@ public class StationGasRunnable implements Runnable{
         String[] getDefaultParam();
         Location getStationLocation();
         void setStationTaskThread(Thread thread);
-        //void setNearStationList(List<Opinet.GasStnParcelable> list);
-        //void setCurrentStation(Opinet.GasStnParcelable station);
         void setNearStationList(List<Item> stationList);
         void setCurrentStation(Item station);
         void notifyException(String msg);

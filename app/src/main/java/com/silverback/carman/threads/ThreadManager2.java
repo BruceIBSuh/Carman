@@ -121,14 +121,8 @@ public class ThreadManager2 {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask) msg.obj;
-                if(task instanceof UploadBitmapTask) {
-                    log.i("upload compressed bitmap done");
-                    recycleTask(task);
-                } else if(task instanceof StationEvTask) {
-                    log.i("ev station task");
-                    recycleTask(task);
-                }
-
+                task.recycle();
+                //boolean b = mThreadTaskQueue.offer(task);
             }
         };
     }
@@ -160,8 +154,13 @@ public class ThreadManager2 {
             case DOWNLOAD_NEAR_STATIONS:
                 //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).getFireStoreRunnable());
                 log.i("station list: %s", ((StationGasTask)task).getStationList().size());
-                InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).getStnInfoRunnable());
+                List<StationGasRunnable.Item> stationList = ((StationGasTask)task).getStationList();
+                for(int i = 0; i < stationList.size(); i++) {
+                    InnerClazz.sInstance.threadPoolExecutor.execute(
+                            ((StationGasTask)task).getStnInfoRunnable(i));
+                }
                 break;
+            /*
             // In case FireStore has no record as to a station,
             case FIRESTORE_STATION_GET_COMPLETED:
                 // Save basic information of stations in FireStore
@@ -173,11 +172,14 @@ public class ThreadManager2 {
                 log.i("upload station info to Firestore");
                 msg.sendToTarget();
                 break;
-
+            */
             case TASK_COMPLETE:
                 if(task instanceof StationEvTask) {
                     Message evMessage = mMainHandler.obtainMessage(state, task);
                     evMessage.sendToTarget();
+                } else if(task instanceof StationGasTask) {
+                    Message gasMessage = mMainHandler.obtainMessage(state, task);
+                    gasMessage.sendToTarget();
                 }
             case TASK_FAIL:
                 if(task instanceof StationEvTask) msg.sendToTarget();

@@ -56,7 +56,6 @@ import com.silverback.carman.threads.StationGasRunnable;
 import com.silverback.carman.threads.StationGasTask;
 import com.silverback.carman.threads.StationHydroRunnable;
 import com.silverback.carman.threads.StationHydroTask;
-import com.silverback.carman.threads.StationInfoRunnable;
 import com.silverback.carman.threads.ThreadManager2;
 import com.silverback.carman.utils.ApplyImageResourceUtil;
 import com.silverback.carman.utils.Constants;
@@ -579,7 +578,7 @@ public class MainActivity extends BaseActivity implements
          */
 
         stationModel.getNearStationList().observe(this, stnList -> {
-            log.i("gas station: %s", stnList);
+            //log.i("gas station: %s", stnList);
             if (stnList != null && stnList.size() > 0) {
                 gasStationList = stnList;
                 gasListAdapter.setStationList(stnList);
@@ -605,9 +604,9 @@ public class MainActivity extends BaseActivity implements
 
         });
 
-        stationModel.getStationInfo().observe(this, sparseArray -> {
-            StationInfoRunnable.Info info = sparseArray.get(0);
-            log.i("sparse array: %s", sparseArray.size());
+        stationModel.getStationInfoArray().observe(this, sparseInfoArray -> {
+            log.i("infoList: %s", sparseInfoArray.size());
+            gasListAdapter.notifyItemRangeChanged(0, sparseInfoArray.size(), sparseInfoArray);
 
             /*
             for(int i = 0; i < sparseArray.size(); i++) {

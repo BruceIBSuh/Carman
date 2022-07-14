@@ -1,9 +1,11 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationGasTask.DOWNLOAD_STATION_INFO;
+import static com.silverback.carman.threads.StationGasTask.TASK_FAILED;
 import static com.silverback.carman.threads.StationInfoRunnable.RetrofitApi.BASE_URL;
+import static com.silverback.carman.threads.ThreadTask.TASK_FAIL;
 
 import android.os.Process;
-import android.util.SparseArray;
 
 import androidx.annotation.NonNull;
 
@@ -32,25 +34,22 @@ public class StationInfoRunnable implements Runnable {
    private static final LoggingHelper log = LoggingHelperFactory.create(StationInfoRunnable.class);
 
    private final StationInfoMethods callback;
-   private List<StationGasRunnable.Item> mStationList;
-   private List<Info> stationInfoList;
-   private SparseArray<Info> sparseArray;
-   private int count, index;
+   private final StationGasRunnable.Item gasStation;
+   private final int index;
 
 
 
    public interface StationInfoMethods {
-      List<StationGasRunnable.Item> getNearStationList();
       void setStationTaskThread(Thread thread);
-      void setStationInfoArray(SparseArray<Info> sparseArray);
-      void setStationInfoList(List<StationGasRunnable.Item> info);
+      void setStationInfo(int index, Info info);
+      void handleTaskState(int state);
+
    }
 
-   public StationInfoRunnable(StationInfoMethods callback) {
+   public StationInfoRunnable(int index, StationGasRunnable.Item station, StationInfoMethods callback) {
       this.callback = callback;
-      stationInfoList = new ArrayList<>();
-      sparseArray = new SparseArray<>(1);
-
+      this.index = index;
+      this.gasStation = station;
    }
 
    @Override
@@ -61,13 +60,13 @@ public class StationInfoRunnable implements Runnable {
 
       try {
          if (Thread.interrupted()) throw new InterruptedException();
-         mStationList = callback.getNearStationList();
-         for (int i = 0; i < mStationList.size(); i++) {
-            index = i;
+         //mStationList = callback.getNearStationList();
+         log.i("index: %s", index);
+         //for (int i = 0; i < mStationList.size(); i++) {
+            //index = i;
             Call<StationInfoModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    .getStationInfoModel("F186170711", mStationList.get(i).getStnId(), "json");
-
+                    .getStationInfoModel("F186170711", gasStation.getStnId(), "json");
             call.enqueue(new Callback<StationInfoModel>() {
                @Override
                public void onResponse(@NonNull Call<StationInfoModel> call,
@@ -75,24 +74,26 @@ public class StationInfoRunnable implements Runnable {
                   StationInfoModel model = response.body();
                   assert model != null;
                   Info info = model.result.info.get(0);
-                  sparseArray.append(index, info);
-                  callback.setStationInfoArray(sparseArray);
-                  /*
-                  mStationList.get(index).setAddrsNew(info.addrsNew);
-                  mStationList.get(index).setAddrsOld(info.addrsOld);
-                  mStationList.get(index).setIsCarWash(Objects.equals(info.carWashYN, "Y"));
-                  mStationList.get(index).setIsCVS(Objects.equals(info.cvsYN, "Y"));
-                  mStationList.get(index).setIsService(Objects.equals(info.maintYN, "Y"));
+                  callback.setStationInfo(index, info);
 
-                   */
+                  log.i("station info: %s ,%s, %s, %s, %s:", index, info.stnName, info.carWashYN, info.cvsYN, info.maintYN);
+
+                  gasStation.setAddrsNew(info.addrsNew);
+                  gasStation.setAddrsOld(info.addrsOld);
+                  gasStation.setIsCarWash(Objects.equals(info.carWashYN, "Y"));
+                  gasStation.setIsCVS(Objects.equals(info.cvsYN, "Y"));
+                  gasStation.setIsService(Objects.equals(info.maintYN, "Y"));
+
+                  callback.handleTaskState(DOWNLOAD_STATION_INFO);
                }
 
                @Override
                public void onFailure(@NonNull Call<StationInfoModel> call, @NonNull Throwable t) {
                   log.i("call failed: %s", t);
+                  callback.handleTaskState(TASK_FAILED);
                }
             });
-         }
+         //}
 
       } catch (InterruptedException e) { e.getLocalizedMessage(); }
    }
@@ -148,23 +149,23 @@ public class StationInfoRunnable implements Runnable {
 
    public static class Info {
       @SerializedName("OS_NM")
-      private String stnName;
+      public String stnName;
       @SerializedName("VAN_ADR")
       @Expose
-      private String addrsOld;
+      public String addrsOld;
 
       @SerializedName("NEW_ADR")
       @Expose
-      private String addrsNew;
+      public String addrsNew;
 
       @SerializedName("CAR_WASH_YN")
-      private String carWashYN;
+      public String carWashYN;
 
       @SerializedName("CVS_YN")
-      private String cvsYN;
+      public String cvsYN;
 
       @SerializedName("MAINT_YN")
-      private String maintYN;
+      public String maintYN;
    }
 
 

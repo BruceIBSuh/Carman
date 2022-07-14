@@ -1,7 +1,6 @@
 package com.silverback.carman.viewmodels;
 
 import android.util.SparseArray;
-import android.util.SparseBooleanArray;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -24,7 +23,7 @@ public class StationViewModel extends ViewModel {
     // Objects
     //private MutableLiveData<List<Opinet.GasStnParcelable>> stnList;
     private MutableLiveData<List<StationGasRunnable.Item>> stnList;
-    private MutableLiveData<SparseArray<StationInfoRunnable.Info>> stationInfo;
+    private MutableLiveData<SparseArray<StationInfoRunnable.Info>> stationInfoList;
     private MutableLiveData<StationFavRunnable.Info> favStationInfo;
 
     //private MutableLiveData<Opinet.GasStnParcelable> currentStation;
@@ -58,9 +57,9 @@ public class StationViewModel extends ViewModel {
     }
 
 
-    public MutableLiveData<SparseArray<StationInfoRunnable.Info>> getStationInfo() {
-        if(stationInfo == null) stationInfo = new MutableLiveData<>();
-        return stationInfo;
+    public MutableLiveData<SparseArray<StationInfoRunnable.Info>> getStationInfoArray() {
+        if(stationInfoList == null) stationInfoList = new MutableLiveData<>();
+        return stationInfoList;
     }
 
     public MutableLiveData<StationFavRunnable.Info> getFavStationInfo() {
