@@ -28,6 +28,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
     private final List<StationEvRunnable.Item> evStationList;
     private int page = 1;
+    private int lastPage;
 
     public StationEvTask(Context context, StationViewModel viewModel, Location location){
         this.context = context;
@@ -38,7 +39,8 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     }
 
 
-    public Runnable getElecStationListRunnable(int queryPage) {
+    public Runnable getElecStationListRunnable(int queryPage, int lastPage) {
+        this.lastPage = lastPage;
         return new StationEvRunnable(context, queryPage, this);
     }
 
@@ -59,23 +61,24 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
     @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
-        // Sort EvList in the distance-descending order
-        if(page == 5){
+        if(evList != null) log.i("ev list: %s", evList.size());
+
+        if(page == lastPage){
+            // Sort the ev stations in the distance-descending order
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
                     Integer.compare((int) t1.getDistance(), (int) t2.getDistance()));
-            log.i("evStationList: %s", evStationList.size());
+
             viewModel.getEvStationList().postValue(evStationList);
             return;
         }
-
         page++;
     }
 
     @Override
     public void notifyEvStationError(Exception e) {
-        viewModel.getExceptionMessage().postValue(String.valueOf(e.getLocalizedMessage()));
+        viewModel.getEvExceptionMessage().postValue(String.valueOf(e.getLocalizedMessage()));
         page++;
     }
 

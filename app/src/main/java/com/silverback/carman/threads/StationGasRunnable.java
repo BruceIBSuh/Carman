@@ -1,5 +1,8 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationGasTask.DOWNLOAD_CURRENT_STATION_FAIL;
+import static com.silverback.carman.threads.StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL;
+
 import android.location.Location;
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -17,11 +20,12 @@ import com.silverback.carman.coords.GeoTrans;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.utils.Constants;
-import com.silverback.carman.viewmodels.Opinet;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,14 +39,8 @@ public class StationGasRunnable implements Runnable{
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationGasRunnable.class);
 
-
-    private static final String OPINET = "https://www.opinet.co.kr/api/aroundAll.do?code=F186170711&out=xml";
-
-
-
     // Objects
-    private FirebaseFirestore fireStore;
-    private List<Opinet.GasStnParcelable> mStationList;
+    //private FirebaseFirestore fireStore;
     private final StationListMethod mTask;
 
     // Interface
@@ -58,8 +56,7 @@ public class StationGasRunnable implements Runnable{
 
     // Constructor
     public StationGasRunnable(StationListMethod task) {
-        if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
-        mStationList = null;
+        //if(fireStore == null) fireStore = FirebaseFirestore.getInstance();
         mTask = task;
     }
 
@@ -75,7 +72,6 @@ public class StationGasRunnable implements Runnable{
         // Get the default params and location passed over here from MainActivity
         String fuelCode = defaultParams[0];
         String radius = defaultParams[1];
-        //String sort = defaultParams[2];
         int rad = Integer.parseInt(defaultParams[1]);
         int order = Integer.parseInt(defaultParams[2]);
 
@@ -89,18 +85,21 @@ public class StationGasRunnable implements Runnable{
 
         Call<StationAroundModel> call = RetrofitClient.getIntance()
                 .getRetrofitApi()
-                //.getGasStationAroundModel("F186170711", "B027", "json");
                 .getGasStationAroundModel("F186170711", x, y, rad, order, fuelCode, "json");
 
         call.enqueue(new Callback<StationAroundModel>() {
             @Override
             public void onResponse(@NonNull Call<StationAroundModel> call,
                                    @NonNull Response<StationAroundModel> response) {
+                // Retrofit2 Error Handling.
+                // Retrofit2 has a different concept of handling "successful" requests than Retrofit.
+                // In Retrofit2, all requests that can be executed(sent to the API) and for which
+                // you're receiving a response are seen as "successful", the meaning of which is
+                // that you need to manually check whether the request is actually successful(status:
+                // 200 - 299) or not(status 400-599)
                 StationAroundModel model = response.body();
                 assert model != null;
                 List<Item> itemList = model.result.oilList;
-                log.i("ItemList: %s", itemList.size());
-                for(Item item: itemList) log.i("Item: %s", item.getStnName());
 
                 if(itemList.size() > 0) {
                     if(radius.matches(Constants.MIN_RADIUS)) {
@@ -112,18 +111,25 @@ public class StationGasRunnable implements Runnable{
                     }
                 } else {
                     log.i("no station around");
+                    mTask.notifyException("");
+                    /*
                     if (radius.matches(Constants.MIN_RADIUS)) {
-                        mTask.handleTaskState(StationGasTask.DOWNLOAD_CURRENT_STATION_FAIL);
-                    } else mTask.handleTaskState(StationGasTask.DOWNLOAD_NEAR_STATIONS_FAIL);
+                        mTask.handleTaskState(DOWNLOAD_CURRENT_STATION_FAIL);
+                    } else mTask.handleTaskState(DOWNLOAD_NEAR_STATIONS_FAIL);
+
+                     */
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<StationAroundModel> call, @NonNull Throwable t) {
                 log.e("retrofit failed: %s, %s", call, t);
+                mTask.notifyException(t.getMessage());
+                mTask.handleTaskState(DOWNLOAD_NEAR_STATIONS_FAIL);
             }
         });
     }
+
 
 
     public interface RetrofitApi {
@@ -141,12 +147,18 @@ public class StationGasRunnable implements Runnable{
 
     }
 
+    private static final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build();
+
     private static class RetrofitClient {
         private final RetrofitApi retrofitApi;
         private RetrofitClient() {
             Gson gson = new GsonBuilder().setLenient().create(); //make it less strict
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(RetrofitApi.BASE_URL)
+                    .client(okHttpClient)
                     .addConverterFactory(GsonConverterFactory.create(gson))
                     .build();
 

@@ -152,10 +152,10 @@ public class ThreadManager2 {
             case DOWNLOAD_CURRENT_STATION:
                 break;
             case DOWNLOAD_NEAR_STATIONS:
-                //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).getFireStoreRunnable());
-                log.i("station list: %s", ((StationGasTask)task).getStationList().size());
+                //log.i("station list: %s", ((StationGasTask)task).getStationList().size());
                 List<StationGasRunnable.Item> stationList = ((StationGasTask)task).getStationList();
                 for(int i = 0; i < stationList.size(); i++) {
+                    //log.i("StationGasTask: %s", ((StationGasTask)task).hashCode());
                     InnerClazz.sInstance.threadPoolExecutor.execute(
                             ((StationGasTask)task).getStnInfoRunnable(i));
                 }
@@ -177,10 +177,8 @@ public class ThreadManager2 {
                 if(task instanceof StationEvTask) {
                     Message evMessage = mMainHandler.obtainMessage(state, task);
                     evMessage.sendToTarget();
-                } else if(task instanceof StationGasTask) {
-                    Message gasMessage = mMainHandler.obtainMessage(state, task);
-                    gasMessage.sendToTarget();
                 }
+                break;
             case TASK_FAIL:
                 if(task instanceof StationEvTask) msg.sendToTarget();
                 break;
@@ -294,7 +292,7 @@ public class ThreadManager2 {
 
     // Download stations around the current location from Opinet given the current location fetched
     // by LocationTask and defaut params transferred from OpinetStationListFragment
-    public static StationGasTask startGasStnListTask(StationViewModel model, Location location, String[] params) {
+    public static StationGasTask startGasStationTask(StationViewModel model, Location location, String[] params) {
 
         StationGasTask stationGasTask = (StationGasTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationGasTask == null) stationGasTask = new StationGasTask();
@@ -305,31 +303,35 @@ public class ThreadManager2 {
         return stationGasTask;
     }
 
-    // Electric Charge Station
-    public static StationEvTask startEVStatoinListTask(
+
+    public static StationEvTask startEVStationTask(
             Context context, StationViewModel model, Location location) {
 
         StationEvTask stationEvTask = (StationEvTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
-        for(int page = 1; page <= 5; page++) {
-            Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page);
+        // Calculate the last page to query the entire items, which should be refactored as the
+        // server scheme changes.
+        final double totalCount = 124993; // total items.
+        final double perPageItems = 9999; // max per-page items
+        final int lastPage = (int)Math.ceil(totalCount/perPageItems);
+
+        for(int page = 1; page <= lastPage; page++) {
+            Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page, lastPage);
             InnerClazz.sInstance.threadPoolExecutor.execute(elecRunnable);
         }
 
-        //InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getElecStationListRunnable());
         return stationEvTask;
     }
 
-    public static StationHydroTask startHydroStationListTask(
+    public static StationHydroTask startHydroStationTask(
             Context context, StationViewModel model, Location location) {
 
         StationHydroTask hydroStationsTask = (StationHydroTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(hydroStationsTask == null) hydroStationsTask = new StationHydroTask(context, model, location);
+
         InnerClazz.sInstance.threadPoolExecutor.execute(hydroStationsTask.getHydroListRunnable());
         return hydroStationsTask;
-
-
     }
 
     public static UploadBitmapTask uploadBitmapTask(

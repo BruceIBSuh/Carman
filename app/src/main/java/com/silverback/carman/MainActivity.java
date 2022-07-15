@@ -24,7 +24,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
@@ -38,6 +37,7 @@ import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.silverback.carman.adapters.MainContentAdapter;
 import com.silverback.carman.adapters.MainPricePagerAdapter;
 import com.silverback.carman.adapters.StationEvAdapter;
@@ -134,7 +134,7 @@ public class MainActivity extends BaseActivity implements
 
     private int statusbar;
     private String sidoName;
-    private int prevButtonId = -1;
+    private int prevBtnId = -1;
     private int prevEvPos = -1;
     private int prevEvCount = -1;
 
@@ -357,7 +357,7 @@ public class MainActivity extends BaseActivity implements
         isStnViewOn = binding.recyclerStations.getVisibility() == View.VISIBLE;
         if(isStnViewOn) {
             defaultParams[0] = gasCode;
-            gasTask = ThreadManager2.startGasStnListTask(stationModel, mPrevLocation, defaultParams);
+            gasTask = ThreadManager2.startGasStationTask(stationModel, mPrevLocation, defaultParams);
         }
     }
     @Override
@@ -430,8 +430,8 @@ public class MainActivity extends BaseActivity implements
     @Override
     public void getPermissionResult(Boolean isLocationPermitted) {
         log.i("permission result");
-        progbtnList.get(prevButtonId).resetProgress();;
-        if(isLocationPermitted) locateStations(prevButtonId);
+        progbtnList.get(prevBtnId).resetProgress();;
+        if(isLocationPermitted) locateStations(prevBtnId);
     }
 
     // Reset the default fuel code
@@ -505,19 +505,25 @@ public class MainActivity extends BaseActivity implements
     };
 
     public void locateStations(int currentBtnId){
-        if(prevButtonId != -1) {
-            progbtnList.get(prevButtonId).resetProgress();
-            if(prevButtonId == currentBtnId) {
-                statusbar = 0;
-                prevButtonId = -1;
+        log.i("multi button status: %s, %s", prevBtnId, currentBtnId);
+        if(prevBtnId != -1) {
+            progbtnList.get(prevBtnId).resetProgress();
+
+            if(prevBtnId == currentBtnId) {
                 binding.viewFlipper.setDisplayedChild(0);
                 binding.fab.setVisibility(View.GONE);
                 binding.appbar.setExpanded(true, true);
-                prevButtonId = -1;
+                statusbar = 0;
+                prevBtnId = -1;
                 return;
-            } else prevButtonId = currentBtnId;
-        // Click a multi-button initially.
-        } else prevButtonId = currentBtnId;
+
+            } else prevBtnId = currentBtnId;
+
+       // Click a multi-button initially.
+        } else {
+            if(binding.viewFlipper.getDisplayedChild() != 0) binding.viewFlipper.setDisplayedChild(0);
+            prevBtnId = currentBtnId;
+        }
 
         final String perm = Manifest.permission.ACCESS_FINE_LOCATION;
         final String rationale = "permission required to use Fine Location";
@@ -548,12 +554,14 @@ public class MainActivity extends BaseActivity implements
                 //binding.stationRecyclerView.showSpannableTextView(spannableString);
             });
 
+            /*
             stationModel.getExceptionMessage().observe(this, exception -> {
                 log.i("Exception occurred while getting station list");
                 locationTask = null;
                 progbtnList.get(currentBtnId).stopProgress();
-                //progbtnList.get(activeButton).stopProgress();
+                progbtnList.get(currentBtnId).resetProgress();
             });
+            */
         });
 
     }
@@ -566,16 +574,7 @@ public class MainActivity extends BaseActivity implements
         gasListAdapter = new StationGasAdapter(this);
 
         defaultParams[0] = gasCode;
-
-
-        if(gasTask == null) gasTask = ThreadManager2.startGasStnListTask(stationModel, location, defaultParams);
-        /*
-        } else {
-            final String msg = getString(R.string.general_snackkbar_inbounds);
-            Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-        }
-
-         */
+        if(gasTask == null) gasTask = ThreadManager2.startGasStationTask(stationModel, location, defaultParams);
 
         stationModel.getNearStationList().observe(this, stnList -> {
             //log.i("gas station: %s", stnList);
@@ -607,14 +606,17 @@ public class MainActivity extends BaseActivity implements
         stationModel.getStationInfoArray().observe(this, sparseInfoArray -> {
             log.i("infoList: %s", sparseInfoArray.size());
             gasListAdapter.notifyItemRangeChanged(0, sparseInfoArray.size(), sparseInfoArray);
+        });
 
-            /*
-            for(int i = 0; i < sparseArray.size(); i++) {
-                StationInfoRunnable.Info info = sparseArray.valueAt(i);
-                log.i("sparse info array: %s", info.stnName);
-            }
-
-             */
+        stationModel.getGasExceptionMessage().observe(this, msg -> {
+            log.e("exception in Gas");
+            String message = "Failed to fetch stations";
+            binding.tvEmptyview.setText(message);
+            binding.viewFlipper.setDisplayedChild(2);
+            //Snackbar.make(binding.getRoot(), message, Snackbar.LENGTH_SHORT).show();
+            progbtnList.get(0).resetProgress();
+            //prevBtnId = -1;
+            gasTask = null;
         });
 
         /*
@@ -662,7 +664,7 @@ public class MainActivity extends BaseActivity implements
         evListAdapter = new StationEvAdapter(this);
         //binding.recyclerStations.setAdapter(evListAdapter);
 
-        if(evTask == null) evTask = ThreadManager2.startEVStatoinListTask(this, stationModel, location);
+        if(evTask == null) evTask = ThreadManager2.startEVStationTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
             evFullList.addAll(evList);
             List<StationEvRunnable.Item> tempList = new ArrayList<>(evList);
@@ -750,10 +752,14 @@ public class MainActivity extends BaseActivity implements
         };
         stationModel.getEvStationList().observe(this, evObserver);
         */
-        stationModel.getExceptionMessage().observe(this, err -> {
+        stationModel.getEvExceptionMessage().observe(this, err -> {
             log.e("exception in EV");
-            Toast.makeText(this, err, Toast.LENGTH_SHORT).show();
+            binding.tvEmptyview.setText(err);
+            binding.viewFlipper.setDisplayedChild(2);
+
+            //prevBtnId = -1;
             progbtnList.get(2).resetProgress();
+
             evTask = null;
         });
 
@@ -764,7 +770,7 @@ public class MainActivity extends BaseActivity implements
         mPrevLocation = location;
         if(binding.fab.getVisibility() == View.VISIBLE) binding.fab.setVisibility(View.GONE);
 
-        if(hydroTask == null) hydroTask = ThreadManager2.startHydroStationListTask(this, stationModel, location);
+        if(hydroTask == null) hydroTask = ThreadManager2.startHydroStationTask(this, stationModel, location);
         stationModel.getHydroStationList().observe(this, hydroList -> {
             if(hydroList != null && hydroList.size() > 0) {
                 hydroAdapter = new StationHydroAdapter(hydroList);
@@ -781,6 +787,17 @@ public class MainActivity extends BaseActivity implements
             //binding.fab.setVisibility(View.VISIBLE);
             //showCollapsedStatusBar(1);
             statusbar = 0;
+        });
+
+        stationModel.getHydroExceptionMessage().observe(this, err -> {
+            log.e("exception in Hydro");
+            binding.tvEmptyview.setText(err);
+            binding.viewFlipper.setDisplayedChild(2);
+
+            //prevBtnId = -1;
+            progbtnList.get(3).resetProgress();
+
+            hydroTask = null;
         });
 
         /*
@@ -808,6 +825,7 @@ public class MainActivity extends BaseActivity implements
         stationModel.getHydroStationList().observe(this, hydroObserver);
 
          */
+
     }
 
     private void locateSvcStations(Location location) {
