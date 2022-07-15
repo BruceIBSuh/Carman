@@ -83,7 +83,6 @@ public class StationInfoRunnable implements Runnable {
                   gasStation.setIsCarWash(Objects.equals(info.carWashYN, "Y"));
                   gasStation.setIsCVS(Objects.equals(info.cvsYN, "Y"));
                   gasStation.setIsService(Objects.equals(info.maintYN, "Y"));
-
                   callback.handleTaskState(DOWNLOAD_STATION_INFO);
                }
 

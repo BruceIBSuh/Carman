@@ -51,6 +51,11 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
     }
 
     @Override
+    public void notifyException(String msg) {
+        model.getHydroExceptionMessage().postValue(msg);
+    }
+
+    @Override
     public void handleTaskState(int state) {
         int outstate = -1;
         switch (state) {

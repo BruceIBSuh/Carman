@@ -36,7 +36,9 @@ public class StationViewModel extends ViewModel {
     private MutableLiveData<List<StationEvRunnable.Item>> evStationList;
     private MutableLiveData<List<StationHydroRunnable.HydroStationObj>> hydroStationList;
 
-    private MutableLiveData<String> exceptionMessage;
+    private MutableLiveData<String> gasExceptionMsg;
+    private MutableLiveData<String> evExceptionMsg;
+    private MutableLiveData<String> hydroExceptionMsg;
 
     // Get a station list stationos of which are located within a given radius conditions.
     //public MutableLiveData<List<Opinet.GasStnParcelable>> getNearStationList() {
@@ -77,9 +79,18 @@ public class StationViewModel extends ViewModel {
         return hydroStationList;
     }
 
-    public MutableLiveData<String> getExceptionMessage() {
-        if(exceptionMessage == null) exceptionMessage = new MutableLiveData<>();
-        return exceptionMessage;
+    public MutableLiveData<String> getEvExceptionMessage() {
+        if(evExceptionMsg == null) evExceptionMsg = new MutableLiveData<>();
+        return evExceptionMsg;
     }
 
+    public MutableLiveData<String> getGasExceptionMessage() {
+        if(gasExceptionMsg == null) gasExceptionMsg = new MutableLiveData<>();
+        return gasExceptionMsg;
+    }
+
+    public MutableLiveData<String> getHydroExceptionMessage() {
+        if(hydroExceptionMsg == null) hydroExceptionMsg = new MutableLiveData<>();
+        return hydroExceptionMsg;
+    }
 }

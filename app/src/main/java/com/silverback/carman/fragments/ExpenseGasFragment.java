@@ -245,7 +245,7 @@ public class ExpenseGasFragment extends Fragment {//implements View.OnClickListe
                 defaultParams[1] = Constants.MIN_RADIUS;
                 mPrevLocation = location;
                 // Fetch the station within the radius.
-                stnListTask = ThreadManager2.startGasStnListTask(stnListModel, location, defaultParams);
+                stnListTask = ThreadManager2.startGasStationTask(stnListModel, location, defaultParams);
                 setCurrentStation();
             } else {
                 binding.pbSearchStation.setVisibility(View.GONE);

@@ -49,6 +49,7 @@ public class StationHydroRunnable implements Runnable {
         void setHydroStationThread(Thread thread);
         //void setHydroList(List<ExcelToJsonUtil.HydroStationObj> hydroList);
         void setFirebaseHydroList(List<HydroStationObj> hydroList);
+        void notifyException(String msg);
         void handleTaskState(int state);
 
     }
@@ -99,6 +100,7 @@ public class StationHydroRunnable implements Runnable {
             }
         }).addOnFailureListener(e -> {
             log.e("Hydro failed");
+            callback.notifyException(e.getMessage());
             e.printStackTrace();
         });
 

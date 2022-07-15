@@ -20,12 +20,15 @@ import com.tickaroo.tikxml.retrofit.TikXmlConverterFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Query;
 
@@ -37,8 +40,6 @@ public class StationEvRunnable implements Runnable {
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
-
-    //private EvStationModel model
     private final int queryPage;
 
 
@@ -73,14 +74,12 @@ public class StationEvRunnable implements Runnable {
         // querying scope.
         try {
             if(Thread.interrupted()) throw new InterruptedException();
-            int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
-            String sidoCode = String.valueOf(sido);
-
+            //int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+            //String sidoCode = String.valueOf(sido);
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
-            //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
-
+                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
             call.enqueue(new Callback<EvStationModel>() {
                 @Override
                 public void onResponse(@NonNull Call<EvStationModel> call,
@@ -90,11 +89,15 @@ public class StationEvRunnable implements Runnable {
                     assert model != null;
                     //final Header header = model.header;
                     //int totalCount = header.totalCount;
+                    //List<Item> itemList = model.body.items.itemList;
 
                     // Exclude an item if it is out of the distance or include an item within the distance
                     List<Item> itemList = model.itemList;
                     float[] results = new float[3];
+
+
                     if(itemList != null && itemList.size() > 0) {
+                        log.i("raw items: %s, %s", queryPage, itemList.size());
                         for (int i = itemList.size() - 1; i >= 0; i--) {
                             Location.distanceBetween(location.getLatitude(), location.getLongitude(),
                                     itemList.get(i).lat, itemList.get(i).lng, results);
@@ -102,6 +105,8 @@ public class StationEvRunnable implements Runnable {
                             if (distance > 1000) itemList.remove(i);
                             else itemList.get(i).setDistance(distance);
                         }
+                    } else {
+                       log.i("no item: %s", queryPage);
                     }
 
                     callback.setEvStationList(itemList);
@@ -115,10 +120,8 @@ public class StationEvRunnable implements Runnable {
                     //callback.handleTaskState(EV_TASK_FAIL);
                 }
             });
-            //callback.handleTaskState(EV_TASK_SUCCESS);
+
         } catch (InterruptedException e) { e.printStackTrace(); }
-
-
     }
 
     private interface RetrofitApi {
@@ -128,16 +131,22 @@ public class StationEvRunnable implements Runnable {
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period,
-                @Query(value="zcode", encoded=true) String sidoCode
+                @Query(value="period", encoded=true) int period
+                //@Query(value="zcode", encoded=true) String sidoCode
         );
     }
+
+    private static final OkHttpClient okHttpClient = new OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .build();
 
     private static class RetrofitClient {
         private final RetrofitApi retrofitApi;
         private RetrofitClient() {
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl(endPoint)
+                    .client(okHttpClient)
                     //.addConverterFactory(GsonConverterFactory.create())
                     //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .addConverterFactory(TikXmlConverterFactory.create(
@@ -160,12 +169,15 @@ public class StationEvRunnable implements Runnable {
         }
     }
 
-
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
         List<Item> itemList;
+
+        List<Item> getItemList() {
+            return itemList;
+        }
     }
 
     /*
@@ -189,8 +201,8 @@ public class StationEvRunnable implements Runnable {
         @Element(name="items")
         Items items;
     }
-    */
 
+     */
     @Xml
     public static class Items {
         @Element(name="item")
@@ -271,62 +283,6 @@ public class StationEvRunnable implements Runnable {
         private int cntOpen;
         public int getCntOpen() {return cntOpen;}
         public void setCntOpen(int cntOpen) {this.cntOpen = cntOpen;}
-
-
-        // Empty constructor
-        /*
-        public Item() {}
-        // Parcelize the object
-        protected Item(Parcel in) {
-            stdNm = in.readString();
-            chgerId = in.readString();
-            chgerType = in.readString();
-            addr = in.readString();
-            location = in.readString();
-            lat = in.readDouble();
-            lng = in.readDouble();
-            stat = in.readInt();
-            zcode = in.readString();
-            limitDetail = in.readString();
-            distance = in.readInt();
-            cntCharger = in.readInt();
-        }
-
-
-        public static final Creator<Item> CREATOR = new Creator<Item>() {
-            @Override
-            public Item createFromParcel(Parcel in) {
-                return new Item(in);
-            }
-
-            @Override
-            public Item[] newArray(int size) {
-                return new Item[size];
-            }
-        };
-
-        @Override
-        public int describeContents() {
-            return 0;
-        }
-
-        @Override
-        public void writeToParcel(Parcel parcel, int i) {
-            parcel.writeString(stdNm);
-            parcel.writeString(chgerId);
-            parcel.writeString(chgerType);
-            parcel.writeString(addr);
-            parcel.writeString(location);
-            parcel.writeDouble(lat);
-            parcel.writeDouble(lng);
-            parcel.writeInt(stat);
-            parcel.writeString(zcode);
-            parcel.writeString(limitDetail);
-            parcel.writeInt(distance);
-            parcel.writeInt(cntCharger);
-        }
-
-         */
     }
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the

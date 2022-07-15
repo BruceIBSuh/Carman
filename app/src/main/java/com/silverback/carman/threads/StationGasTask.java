@@ -12,8 +12,6 @@ import java.util.List;
 public class StationGasTask extends ThreadTask implements
         StationGasRunnable.StationListMethod,
         StationInfoRunnable.StationInfoMethods {
-        //FirestoreGetRunnable.FireStoreGetMethods,
-        //FirestoreSetRunnable.FireStoreSetMethods {
 
     // Logging
     private static final LoggingHelper log = LoggingHelperFactory.create(StationGasTask.class);
@@ -22,28 +20,14 @@ public class StationGasTask extends ThreadTask implements
     static final int DOWNLOAD_NEAR_STATIONS = 1;
     static final int DOWNLOAD_CURRENT_STATION = 2;
     static final int DOWNLOAD_STATION_INFO = 3;
-    //static final int FIRESTORE_GET_COMPLETE = 3;
-    //static final int FIRESTORE_SET_COMPLETE = 4;
     static final int DOWNLOAD_NEAR_STATIONS_FAIL = -1;
     static final int DOWNLOAD_CURRENT_STATION_FAIL = -2;
     static final int TASK_FAILED = -3;
-    //static final int FIRESTORE_GET_FAIL = -3;
-    //static final int FIRESTORE_SET_FAIL = -4;
-
     // Objects
     private StationViewModel viewModel;
-    //private WeakReference<StationViewModel> weakModelReference;
     private final Runnable mStnListRunnable;
-    //private final Runnable mStnInfoRunnable;
-    //private final Runnable mFireStoreSetRunnable;
-    //private final Runnable mFireStoreGetRunnable;
-    //private List<Opinet.GasStnParcelable> mStationList; //used by StationGasRunnable
-    private List<StationGasRunnable.Item> mStationList; //used by StationGasRunnable
-    //private final SparseBooleanArray sparseBooleanArray;
+    private List<StationGasRunnable.Item> mStationList;
     private final SparseArray<StationInfoRunnable.Info> mStationInfoArray;
-
-    //private List<Opinet.GasStnParcelable> mStationInfoList; //used by StationInfoRunnable
-    //private Opinet.GasStnParcelable mCurrentStation;
     private Location mLocation;
     private String[] defaultParams;
     private int count;
@@ -53,18 +37,12 @@ public class StationGasTask extends ThreadTask implements
         super();
         mStnListRunnable = new StationGasRunnable(this);
         mStationInfoArray = new SparseArray<>();
-        //mStnInfoRunnable = new StationInfoRunnable(this);
-        //mFireStoreGetRunnable = new FirestoreGetRunnable(this);
-        //mFireStoreSetRunnable = new FirestoreSetRunnable(this);
-        //sparseBooleanArray = new SparseBooleanArray();
-
     }
 
     void initStationTask(StationViewModel viewModel, Location location, String[] params) {
         defaultParams = params;
         mLocation = location;
         this.viewModel = viewModel;
-        log.i("Gas Location:%s", mLocation);
     }
 
     // Get Runnables to be called in ThreadPool.executor()
@@ -73,8 +51,7 @@ public class StationGasTask extends ThreadTask implements
         StationGasRunnable.Item item = mStationList.get(index);
         return new StationInfoRunnable(index, item, this);
     }
-    //Runnable getFireStoreRunnable() { return mFireStoreGetRunnable; }
-    //Runnable setFireStoreRunnalbe() { return mFireStoreSetRunnable; }
+
 
     // MUST BE careful to recycle variables. Otherwise, the app may break down.
     void recycle() {
@@ -115,18 +92,15 @@ public class StationGasTask extends ThreadTask implements
     @Override
     public void setStationInfo(int index, StationInfoRunnable.Info info) {
         mStationInfoArray.put(index, info);
-        //if(count == mStationList.size()) {
         if(count == mStationInfoArray.size()) {
             viewModel.getStationInfoArray().postValue(mStationInfoArray);
         }
-        //count++;
     }
 
     @Override
     public void notifyException(String msg) {
         //log.i("Exception occurred: %s", msg);
-        viewModel.getExceptionMessage().postValue(msg);
-        //weakModelReference.get().getExceptionMessage().postValue(msg);
+        viewModel.getGasExceptionMessage().postValue(msg);
     }
 
     /*
@@ -165,15 +139,6 @@ public class StationGasTask extends ThreadTask implements
                 outState= sThreadManager.TASK_COMPLETE;
                 break;
 
-            /*
-            case FIRESTORE_GET_COMPLETE:
-                outState = sThreadManager.FIRESTORE_STATION_GET_COMPLETED;
-                break;
-
-            case FIRESTORE_SET_COMPLETE:
-                outState = sThreadManager.FIRESTORE_STATION_SET_COMPLETED;
-                break;
-            */
             case DOWNLOAD_NEAR_STATIONS_FAIL:
                 //viewModel.getNearStationList().postValue(mStationList);
                 //outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
@@ -183,14 +148,7 @@ public class StationGasTask extends ThreadTask implements
                 //viewModel.getCurrentStation().postValue(null);
                 outState = ThreadManager2.DOWNLOAD_STATION_FAILED;
                 break;
-            /*
-            case FIRESTORE_GET_FAIL:
-                break;
 
-            case FIRESTORE_SET_FAIL:
-                break;
-
-            */
             default: break;
         }
 

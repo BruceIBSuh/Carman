@@ -476,7 +476,7 @@ public class ExpenseActivity extends BaseActivity implements AppBarLayout.OnOffs
                 String[] defaults = getNearStationParams();
                 defaults[1] = Constants.MIN_RADIUS;
                 StationViewModel stnListModel = new ViewModelProvider(this).get(StationViewModel.class);
-                stationGasTask = sThreadManager.startGasStnListTask(stnListModel, location, defaults);
+                stationGasTask = sThreadManager.startGasStationTask(stnListModel, location, defaults);
             }
         });
     }
