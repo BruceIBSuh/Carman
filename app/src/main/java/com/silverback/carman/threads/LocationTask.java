@@ -16,7 +16,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     // Objects
     private LocationViewModel viewModel;
-    //private WeakReference<LocationViewModel> weakModelReference;
     private Location mLocation;
     private final Runnable mLocationRunnable;
 
@@ -35,16 +34,7 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
         return mLocationRunnable;
     }
 
-    public void recycle() {
-        //if(mLocation != null) mLocation = null;
-        /*
-        if(weakModelReference != null) {
-            weakModelReference.clear();
-            weakModelReference = null;
-        }
-
-         */
-    }
+    public void recycle() {}
 
     @Override
     public void setLocationThread(Thread thread) {
@@ -53,15 +43,12 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
 
     @Override
     public void setCurrentLocation(Location location) {
-        log.i("current location:%s", location);
         mLocation = location;
-        //weakModelReference.get().getLocation().postValue(location);
         viewModel.getLocation().postValue(location);
     }
 
     @Override
     public void notifyLocationException(String msg) {
-        //weakModelReference.get().getLocationException().postValue(msg);
         viewModel.getLocationException().postValue(msg);
     }
 
@@ -76,7 +63,6 @@ public class LocationTask extends ThreadTask implements LocationRunnable.Locatio
                 outstate = sThreadManager.TASK_FAIL;
                 break;
         }
-
         sThreadManager.handleState(this, outstate);
     }
 

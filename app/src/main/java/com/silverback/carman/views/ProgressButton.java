@@ -21,6 +21,8 @@ public class ProgressButton extends LinearLayout {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ProgressButton.class);
 
+    private enum MultiButton { GAS, SERVICE, EV, HYDRO }
+
     private ViewProgressButtonBinding binding;
     private Context context;
     private int pbColorRef;
@@ -57,9 +59,8 @@ public class ProgressButton extends LinearLayout {
         //binding.progressBar.setBackgroundColor(pbColorRef);
         binding.button.setBackground(btnBgRef);
         binding.button.setOnClickListener(view -> {
-
             //if(!isStatus) {
-            if(buttonId == 1) return; //temp code for excluding the svc station
+            if(buttonId == MultiButton.SERVICE.ordinal()) return; //temp code for excluding the svc station
             //if(!isStatus) setProgress();
             ((MainActivity)context).locateStations(buttonId);
             //} else resetProgress();

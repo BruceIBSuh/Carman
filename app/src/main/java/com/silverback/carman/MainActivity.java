@@ -506,6 +506,7 @@ public class MainActivity extends BaseActivity implements
 
     public void locateStations(int currentBtnId){
         log.i("multi button status: %s, %s", prevBtnId, currentBtnId);
+
         if(prevBtnId != -1) {
             progbtnList.get(prevBtnId).resetProgress();
 
@@ -534,6 +535,7 @@ public class MainActivity extends BaseActivity implements
             locationObserver = new Observer<Location>() {
                 @Override
                 public void onChanged(Location location) {
+                    log.i("observe location: %s", currentBtnId);
                     switch(currentBtnId) {
                         case 0: locateGasStations(location); break;
                         case 1: locateSvcStations(location); break;
@@ -545,7 +547,6 @@ public class MainActivity extends BaseActivity implements
             };
 
             locationModel.getLocation().observe(this, locationObserver);
-
             locationModel.getLocationException().observe(this, exception -> {
                 log.i("Exception occurred while fetching location");
                 String msg = getString(R.string.general_no_location);
@@ -657,18 +658,18 @@ public class MainActivity extends BaseActivity implements
 
 
     private void locateEvStations(Location location) {
+        log.i("Locate EV Station: %s", location);
         mPrevLocation = location;
-        locationModel.getLocation().removeObserver(locationObserver);
+        //locationModel.getLocation().removeObserver(locationObserver);
         if(binding.fab.getVisibility() == View.VISIBLE) binding.fab.setVisibility(View.GONE);
-
         evListAdapter = new StationEvAdapter(this);
         //binding.recyclerStations.setAdapter(evListAdapter);
 
-        if(evTask == null) evTask = ThreadManager2.startEVStationTask(this, stationModel, location);
+        /*if(evTask == null)*/ evTask = ThreadManager2.startEVStationTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
+            log.i("ev station List: %s", evList.size());
             evFullList.addAll(evList);
             List<StationEvRunnable.Item> tempList = new ArrayList<>(evList);
-
             if(evList.size() > 0) {
                 for(int i = 0; i < tempList.size(); i++) {
                     String name = tempList.get(i).getStdNm().replaceAll(regexEvName, "");
@@ -761,6 +762,7 @@ public class MainActivity extends BaseActivity implements
             progbtnList.get(2).resetProgress();
 
             evTask = null;
+            locationModel.getLocation().removeObserver(locationObserver);
         });
 
     }

@@ -306,15 +306,16 @@ public class ThreadManager2 {
 
     public static StationEvTask startEVStationTask(
             Context context, StationViewModel model, Location location) {
-
+        log.i("EV Station Task");
         StationEvTask stationEvTask = (StationEvTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
         // Calculate the last page to query the entire items, which should be refactored as the
         // server scheme changes.
-        final double totalCount = 124993; // total items.
-        final double perPageItems = 9999; // max per-page items
-        final int lastPage = (int)Math.ceil(totalCount/perPageItems);
+        //final double totalCount = 124993; // total items.
+        //final double perPageItems = 9999; // max per-page items
+        //final int lastPage = (int)Math.ceil(totalCount/perPageItems);
+        int lastPage = 3;
 
         for(int page = 1; page <= lastPage; page++) {
             Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page, lastPage);

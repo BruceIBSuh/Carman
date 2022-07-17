@@ -74,12 +74,13 @@ public class StationEvRunnable implements Runnable {
         // querying scope.
         try {
             if(Thread.interrupted()) throw new InterruptedException();
-            //int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
-            //String sidoCode = String.valueOf(sido);
+
+            int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+            String sidoCode = String.valueOf(sido);
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
-                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5);
+                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
+                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
             call.enqueue(new Callback<EvStationModel>() {
                 @Override
                 public void onResponse(@NonNull Call<EvStationModel> call,
@@ -87,14 +88,14 @@ public class StationEvRunnable implements Runnable {
 
                     final EvStationModel model = response.body();
                     assert model != null;
-                    //final Header header = model.header;
-                    //int totalCount = header.totalCount;
-                    //List<Item> itemList = model.body.items.itemList;
+                    final Header header = model.header;
+                    int totalCount = header.totalCount;
+                    log.i("header total count: %s", totalCount);
+                    List<Item> itemList = model.body.items.itemList;
 
                     // Exclude an item if it is out of the distance or include an item within the distance
-                    List<Item> itemList = model.itemList;
+                    //List<Item> itemList = model.itemList;
                     float[] results = new float[3];
-
 
                     if(itemList != null && itemList.size() > 0) {
                         log.i("raw items: %s, %s", queryPage, itemList.size());
@@ -131,8 +132,8 @@ public class StationEvRunnable implements Runnable {
                 @Query(value="serviceKey", encoded=true) String serviceKey,
                 @Query(value="pageNo", encoded=true) int page,
                 @Query(value="numOfRows", encoded=true) int rows,
-                @Query(value="period", encoded=true) int period
-                //@Query(value="zcode", encoded=true) String sidoCode
+                @Query(value="period", encoded=true) int period,
+                @Query(value="zcode", encoded=true) String sidoCode
         );
     }
 
@@ -169,18 +170,17 @@ public class StationEvRunnable implements Runnable {
         }
     }
 
+    /*
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
         @Element
         List<Item> itemList;
-
-        List<Item> getItemList() {
-            return itemList;
-        }
     }
 
-    /*
+     */
+
+
     @Xml(name="response")
     public static class EvStationModel {
         @Element Header header;
@@ -202,7 +202,6 @@ public class StationEvRunnable implements Runnable {
         Items items;
     }
 
-     */
     @Xml
     public static class Items {
         @Element(name="item")
@@ -305,7 +304,6 @@ public class StationEvRunnable implements Runnable {
                     break;
                 }
             }
-
         } catch(IOException e) { e.printStackTrace(); }
 
         return sidoCode;

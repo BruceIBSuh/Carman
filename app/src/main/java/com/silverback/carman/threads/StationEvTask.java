@@ -67,6 +67,7 @@ public class StationEvTask extends ThreadTask implements StationEvRunnable.ElecS
 
         if(page == lastPage){
             // Sort the ev stations in the distance-descending order
+            log.i("page: %s", page);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
                 Collections.sort(evStationList, Comparator.comparingInt(t -> (int) t.getDistance()));
             else Collections.sort(evStationList, (t1, t2) ->
