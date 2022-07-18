@@ -170,7 +170,7 @@ public class ThreadManager2 {
                 int code = evEnum.getCode();
                 log.i("ev threading: %s, %s", code, lastPage);
 
-                for(int page = 0; page < lastPage; page++) {
+                for(int page = 1; page <= lastPage; page++) {
                     InnerClazz.sInstance.threadPoolExecutor.execute(
                             ((StationEvTask)task).getEvStnListRunnable(page, lastPage, code)
                     );

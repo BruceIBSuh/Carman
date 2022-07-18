@@ -46,24 +46,24 @@ public class StationAddrsRunnable implements Runnable {
         android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
 
         Location location = callback.getEvStationLocation();
-        getAddressfromLocation(location.getLatitude(), location.getLongitude());
+        EvSidoCode code = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+        if(code != null) {
+            callback.setEnumEvSidoCode(code);
+            callback.handleTaskState(EV_ADDRS_TASK_SUCCESS);
+        } else callback.handleTaskState(EV_ADDRS_TASK_FAIL);
     }
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
     // address done.
-    private void getAddressfromLocation(double lat, double lng) {
+    private EvSidoCode getAddressfromLocation(double lat, double lng) {
         try {
-            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 1); //last param: max results
-            String sido = addressList.get(0).getAdminArea().replaceAll("[\\s\\-]", "");
-
-            EvSidoCode evSidoCode = EvSidoCode.valueOf(sido);
-            callback.setEnumEvSidoCode(evSidoCode);
-            callback.handleTaskState(EV_ADDRS_TASK_SUCCESS);
-        } catch(IOException e) {
-            e.printStackTrace();
-            callback.handleTaskState(EV_ADDRS_TASK_FAIL);
-        }
-
+            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 1);
+            if(addressList.size() > 0) {
+                String sido = addressList.get(0).getAdminArea().replaceAll("[\\s\\-]", "");
+                return EvSidoCode.valueOf(sido);
+            }
+        } catch(IOException e) { e.printStackTrace(); }
+        return null;
     }
 
     public enum EvSidoCode {
@@ -73,7 +73,7 @@ public class StationAddrsRunnable implements Runnable {
         Chungcheongbukdo(43, 3937), Chungcheongnamdo(44, 5519),
         Gyeongsangbukdo(47, 7155), Gyeongsangnamdo(48, 6862),
         Jeollabukdo(45, 4261), Jeollanamdo(46, 4139),
-        Jeju(50, 5249);
+        Jejudo(50, 5249);
 
         private final int code;
         private final int number;
