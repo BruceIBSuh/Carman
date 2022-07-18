@@ -41,6 +41,7 @@ public class StationEvRunnable implements Runnable {
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
     private final int queryPage;
+    private final int sidoCode;
 
 
     // Interface
@@ -52,10 +53,11 @@ public class StationEvRunnable implements Runnable {
         void notifyEvStationError(Exception e);
     }
 
-    public StationEvRunnable(Context context, int queryPage, ElecStationCallback callback) {
+    public StationEvRunnable(Context context, int queryPage, int code, ElecStationCallback callback) {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
         this.queryPage = queryPage;
+        this.sidoCode = code;
     }
 
     @Override
@@ -75,8 +77,8 @@ public class StationEvRunnable implements Runnable {
         try {
             if(Thread.interrupted()) throw new InterruptedException();
 
-            int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
-            String sidoCode = String.valueOf(sido);
+            //int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
+            final String sidoCode = String.valueOf(this.sidoCode);
             Call<EvStationModel> call = RetrofitClient.getIntance()
                     .getRetrofitApi()
                     .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
@@ -286,24 +288,33 @@ public class StationEvRunnable implements Runnable {
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
     // address done.
+    /*
     private int getAddressfromLocation(double lat, double lng) {
         int sidoCode = -1;
         // Remove less than the third decimal place.
-        /*
-        double lat = Math.round(latitude * 1000) / 1000.0;
-        double lng = Math.round(longitude * 1000) / 1000.0;
-        log.i("Geocoding: %s, %s, %s", lat, lng, sidoCode);
-        */
+        //double lat = Math.round(latitude * 1000) / 1000.0;
+        //double lng = Math.round(longitude * 1000) / 1000.0;
+        //log.i("Geocoding: %s, %s, %s", lat, lng, sidoCode);
+
         try {
             List<Address> addressList = geocoder.getFromLocation(lat, lng, 1);
+            //log.i("admin area: %s", addressList.get(0).getAdminArea());
+            //String sido = addressList.get(0).getAdminArea();
+            //sidoCode = convSidoCode(sido);
+            //log.i("sido code: %s", sidoCode);
+
             for(Address addrs : addressList) {
                 if(addrs != null) {
+                    log.i("addrs: %s", addrs.getAdminArea());
                     String address = addrs.getAddressLine(0).substring(5);
                     String sido = address.substring(0, address.indexOf(" "));
                     sidoCode = convSidoCode(sido);
                     break;
                 }
             }
+
+
+
         } catch(IOException e) { e.printStackTrace(); }
 
         return sidoCode;
@@ -320,6 +331,8 @@ public class StationEvRunnable implements Runnable {
             default: return -1;
         }
     }
+
+     */
 
     private static String convChargerType(String code) {
         switch(code) {

@@ -34,7 +34,7 @@ public class StationHydroTask extends ThreadTask implements StationHydroRunnable
 
     @Override
     public void setHydroStationThread(Thread thread) {
-        setCurrentThread(thread);
+        super.setCurrentThread(thread);
     }
 
     @Override

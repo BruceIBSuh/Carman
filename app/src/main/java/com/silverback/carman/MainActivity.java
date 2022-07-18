@@ -8,6 +8,8 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -73,6 +75,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 public class MainActivity extends BaseActivity implements
@@ -83,11 +86,7 @@ public class MainActivity extends BaseActivity implements
         AdapterView.OnItemSelectedListener {
 
     private final LoggingHelper log = LoggingHelperFactory.create(MainActivity.class);
-
-
     public static final String regexEvName = "\\d*\\([\\w\\s]*\\)";
-
-
 
     // Objects
     //private ActivityMainBinding binding;
@@ -177,7 +176,6 @@ public class MainActivity extends BaseActivity implements
         arrGasCode = getResources().getStringArray(R.array.spinner_fuel_code);
         arrSidoCode = getResources().getStringArray(R.array.sido_name);
         mPrevLocation = null;
-
 
         // MainContent RecyclerView to display main content feeds in the activity
         mainContentAdapter = new MainContentAdapter(MainActivity.this, this);
@@ -660,10 +658,14 @@ public class MainActivity extends BaseActivity implements
     private void locateEvStations(Location location) {
         log.i("Locate EV Station: %s", location);
         mPrevLocation = location;
+        evSimpleList.clear();
+        evFullList.clear();
+
         //locationModel.getLocation().removeObserver(locationObserver);
         if(binding.fab.getVisibility() == View.VISIBLE) binding.fab.setVisibility(View.GONE);
         evListAdapter = new StationEvAdapter(this);
         //binding.recyclerStations.setAdapter(evListAdapter);
+
 
         /*if(evTask == null)*/ evTask = ThreadManager2.startEVStationTask(this, stationModel, location);
         stationModel.getEvStationList().observe(this, evList -> {
@@ -704,6 +706,7 @@ public class MainActivity extends BaseActivity implements
             binding.appbar.setExpanded(true, true);
             statusbar = 1;
             tempList.clear();
+            stationModel.getEvStationList().removeObservers(this);
         });
 
         /*
@@ -1060,7 +1063,5 @@ public class MainActivity extends BaseActivity implements
             defaultParams[1] = searchRadius;
         }
     }
-
-
 }
 

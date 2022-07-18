@@ -28,6 +28,7 @@ public class ThreadManager2 {
 
     private static final LoggingHelper log = LoggingHelperFactory.create(ThreadManager2.class);
 
+
     // Constants
     public final int TASK_COMPLETE = 1;
     public final int TASK_FAIL = -1;
@@ -36,6 +37,9 @@ public class ThreadManager2 {
     public final int DOWNLOAD_CURRENT_STATION = 101;
     public final int FIRESTORE_STATION_GET_COMPLETED = 103;
     public final int FIRESTORE_STATION_SET_COMPLETED = 104;
+
+    public final int EV_ADDRS_SUCCESS = 103;
+    public final int EV_ADDRS_FAIL = -103;
 
     static final int FETCH_LOCATION_COMPLETED = 102;
     //static final int DOWNLOAD_NEAR_STATIONS = 101;
@@ -152,27 +156,30 @@ public class ThreadManager2 {
             case DOWNLOAD_CURRENT_STATION:
                 break;
             case DOWNLOAD_NEAR_STATIONS:
-                //log.i("station list: %s", ((StationGasTask)task).getStationList().size());
                 List<StationGasRunnable.Item> stationList = ((StationGasTask)task).getStationList();
                 for(int i = 0; i < stationList.size(); i++) {
-                    //log.i("StationGasTask: %s", ((StationGasTask)task).hashCode());
                     InnerClazz.sInstance.threadPoolExecutor.execute(
                             ((StationGasTask)task).getStnInfoRunnable(i));
                 }
                 break;
-            /*
-            // In case FireStore has no record as to a station,
-            case FIRESTORE_STATION_GET_COMPLETED:
-                // Save basic information of stations in FireStore
-                log.i("upload station data: %s", task);
-                //InnerClazz.sInstance.threadPoolExecutor.execute(((StationGasTask)task).setFireStoreRunnalbe());
+
+            case EV_ADDRS_SUCCESS:
+                StationAddrsRunnable.EvSidoCode evEnum = ((StationEvTask)task).getEvEnumSidoCode();
+
+                int lastPage = (int)Math.ceil((double)evEnum.getEvNumber() / 10000);
+                int code = evEnum.getCode();
+                log.i("ev threading: %s, %s", code, lastPage);
+
+                for(int page = 0; page < lastPage; page++) {
+                    InnerClazz.sInstance.threadPoolExecutor.execute(
+                            ((StationEvTask)task).getEvStnListRunnable(page, lastPage, code)
+                    );
+                }
                 break;
 
-            case FIRESTORE_STATION_SET_COMPLETED:
-                log.i("upload station info to Firestore");
-                msg.sendToTarget();
+            case EV_ADDRS_FAIL:
                 break;
-            */
+
             case TASK_COMPLETE:
                 if(task instanceof StationEvTask) {
                     Message evMessage = mMainHandler.obtainMessage(state, task);
@@ -306,21 +313,27 @@ public class ThreadManager2 {
 
     public static StationEvTask startEVStationTask(
             Context context, StationViewModel model, Location location) {
-        log.i("EV Station Task");
+
         StationEvTask stationEvTask = (StationEvTask)InnerClazz.sInstance.mThreadTaskQueue.poll();
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
+
+        InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getStationAddrsRunnable());
 
         // Calculate the last page to query the entire items, which should be refactored as the
         // server scheme changes.
         //final double totalCount = 124993; // total items.
         //final double perPageItems = 9999; // max per-page items
         //final int lastPage = (int)Math.ceil(totalCount/perPageItems);
-        int lastPage = 3;
+
+        /*
+        int lastPage = 4;
 
         for(int page = 1; page <= lastPage; page++) {
             Runnable elecRunnable = stationEvTask.getElecStationListRunnable(page, lastPage);
             InnerClazz.sInstance.threadPoolExecutor.execute(elecRunnable);
         }
+        */
+
 
         return stationEvTask;
     }

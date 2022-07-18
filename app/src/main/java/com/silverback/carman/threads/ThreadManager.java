@@ -488,13 +488,6 @@ public class ThreadManager {
             ((DistSpinnerTask)task).recycle();
             mDistSpinnerTaskQueue.offer((DistSpinnerTask)task);
         }
-
-        // Interrupt the current thread if it is of no use.
-        if(task.getCurrentThread() != null) {
-            log.i("Interrupt the current thread: %s", task.getCurrentThread());
-            task.getCurrentThread().interrupt();
-        }
-
     }
 
 
