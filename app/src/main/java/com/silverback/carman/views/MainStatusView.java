@@ -6,8 +6,6 @@ import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 
-import androidx.constraintlayout.widget.ConstraintLayout;
-
 import com.silverback.carman.R;
 import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
@@ -50,7 +48,7 @@ public class MainStatusView extends LinearLayout {
                 LayoutInflater.from(context).inflate(R.layout.main_collapsed_pricebar, this, true);
                 break;
             case "ev":
-                LayoutInflater.from(context).inflate(R.layout.main_collapsed_indication, this, true);
+                LayoutInflater.from(context).inflate(R.layout.main_collapsed_state, this, true);
                 break;
         }
     }

@@ -57,9 +57,7 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="50dp"
         android:measureAllChildren="false"
-
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler_contents"
             android:layout_width="match_parent"
@@ -76,7 +74,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="no stations exist"/>
-
     </ViewFlipper>
 
     <ViewSwitcher
@@ -90,7 +87,7 @@
             layout="@layout/main_collapsed_pricebar" />
         <include
             android:id="@+id/evStatus"
-            layout="@layout/main_collapsed_indication" />
+            layout="@layout/main_collapsed_state" />
     </ViewSwitcher>
 
     <androidx.constraintlayout.widget.ConstraintLayout

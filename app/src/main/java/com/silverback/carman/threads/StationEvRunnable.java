@@ -276,11 +276,9 @@ public class StationEvRunnable implements Runnable {
         public void setCntCharger(int cnt) { this.cntCharger = cnt;}
         public int getCntCharger() { return cntCharger; }
 
-        private boolean isAnyChargerOpen;
-        public void setIsAnyChargerOpen(boolean isAnyChargerOpen) {this.isAnyChargerOpen = isAnyChargerOpen;}
-        public boolean getIsAnyChargerOpen() {
-            return isAnyChargerOpen;
-        }
+        private int cntCharging;
+        public int getCntCharging() { return cntCharging; }
+        public void setCntCharging(int cntCharging) { this.cntCharging = cntCharging;}
 
         private int cntOpen;
         public int getCntOpen() {return cntOpen;}

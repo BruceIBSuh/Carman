@@ -69,7 +69,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             return binding.tvEvName;
         }
         TextView getDistanceView() { return binding.tvDistance;}
-        TextView getBizNameView() { return binding.tvCntChgr; }
+        TextView getCntChgrView() { return binding.tvCntChgr; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
         TextView getChargerTypeView() { return binding.tvChgrType;}
         ImageView getImageView() { return binding.imgviewExpand; }
@@ -119,18 +119,19 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 CollapsedViewHolder holder = (CollapsedViewHolder)viewHolder;
                 String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                         context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
-                //String charId = "_" + Integer.parseInt(info.getChgerId());
-                boolean isChgrOpen = info.getCntOpen() > 0;
-                holder.getChgrStateView().setImageDrawable(getCollapsedStateImage(isChgrOpen));
-                if(isChgrOpen) holder.getOpenChgrCountView().setText(String.valueOf(info.getCntOpen()));
-                else holder.getOpenChgrCountView().setVisibility(View.GONE);
-
+                // Set the indicator to show a charger state.
+                holder.getChgrStateView().setImageDrawable(getCollapsedStateImage(info));
+                // Set the number of chargers available to charge
+                if(info.getCntOpen() > 0) {
+                    final String cntChargerOpen = String.valueOf(info.getCntOpen());
+                    holder.getOpenChgrCountView().setText(cntChargerOpen);
+                } else holder.getOpenChgrCountView().setText("");
+                // Set the EV station name
                 String stnName = info.getStdNm().replaceAll(MainActivity.regexEvName, "");
                 holder.getEvStationName().setText(stnName);
-                //holder.getChargerIdView().setText(charId);
-                //holder.getChargerStatus().setText(String.valueOf(info.getStat()));
-                //holder.getBizNameView().setText(info.getBusiNm());
-                holder.getBizNameView().setText(String.valueOf(info.getCntCharger()));
+                // Set the number of chargers in an EV station and add the multi charger image over
+                // lapped with the event handler set.
+                holder.getCntChgrView().setText(String.valueOf(info.getCntCharger()));
                 if(info.getCntCharger() > 1) {
                     holder.getImageView().setVisibility(View.VISIBLE);
                     holder.getImageView().setOnClickListener(view -> callback.onEvExpandIconClicked(
@@ -145,11 +146,9 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
             case VIEW_EXPANDED:
                 ExpandedViewHolder expandedHolder = (ExpandedViewHolder) viewHolder;
-                //int res = (info.getStat() == 2)?android.R.drawable.presence_online: android.R.drawable.presence_away;
                 String name = info.getStdNm() + "_" + info.getChgerId();
 
                 expandedHolder.getChgrIdView().setText(name);
-                //expandedHolder.getChgrStatusView().setImageDrawable(ContextCompat.getDrawable(context, res));
                 expandedHolder.getChgrStateView().setImageDrawable(getStateDrawable(info.getStat()));
 
                 if(info.getStat() == 3) {
@@ -185,9 +184,12 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return mDiffer.getCurrentList().get(position).getViewType();
     }
 
-    private Drawable getCollapsedStateImage(boolean isChgrOpen) {
-       int res = (isChgrOpen)?android.R.drawable.presence_online : android.R.drawable.presence_away;
-       return ContextCompat.getDrawable(context, res);
+    private Drawable getCollapsedStateImage(StationEvRunnable.Item info) {
+        int res = -1;
+        if(info.getCntOpen() > 0) res = android.R.drawable.presence_online;
+        else if(info.getCntCharging() > 0) res = android.R.drawable.presence_away;
+        else res = android.R.drawable.presence_busy;
+        return ContextCompat.getDrawable(context, res);
     }
 
     private Drawable getStateDrawable(int state) {

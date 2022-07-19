@@ -672,28 +672,31 @@ public class MainActivity extends BaseActivity implements
 
             List<StationEvRunnable.Item> tempList = new ArrayList<>(evList);
             if(evList.size() > 0) {
-                for(int i = 0; i < tempList.size(); i++) {
-                    String name = tempList.get(i).getStdNm().replaceAll(regexEvName, "");
+                for(int m = 0; m < tempList.size(); m++) {
+                    String name = tempList.get(m).getStdNm().replaceAll(regexEvName, "");
                     int cntSame = 1;
                     int cntOpen = 0;
-                    //int cntClose = 0;
-                    if(tempList.get(i).getStat() == 2) cntOpen++;
-                    //else if(tempList.get(i).getStat() == 3) cntCharging++;
+                    int cntCharging = 0;
 
-                    for(int j = tempList.size() - 1; j > i; j-- ) {
-                        String name2 = tempList.get(j).getStdNm().replaceAll(regexEvName, "");
+                    if(tempList.get(m).getStat() == 2) cntOpen++;
+                    else if(tempList.get(m).getStat() == 3) cntCharging++;
+
+                    for(int n = tempList.size() - 1; n > m; n-- ) {
+                        String name2 = tempList.get(n).getStdNm().replaceAll(regexEvName, "");
                         if(name.matches(name2)) {
-                        //if(name.contains(name2) || name2.contains(name)) {
-                            if(tempList.get(i).getStat() == 2) cntOpen++;
-                            //else if(tempList.get(i).getStat() == 3) cntCharging++;
-                            tempList.remove(j);
                             cntSame++;
+
+                            if(tempList.get(n).getStat() == 2) cntOpen++;
+                            else if(tempList.get(n).getStat() == 3) cntCharging++;
+
+                            tempList.remove(n);
                         }
                     }
 
-                    tempList.get(i).setCntCharger(cntSame);
-                    tempList.get(i).setCntOpen(cntOpen);
-                    evSimpleList.add(new MultiTypeEvItem(tempList.get(i), VIEW_COLLAPSED));
+                    tempList.get(m).setCntCharger(cntSame);
+                    tempList.get(m).setCntOpen(cntOpen);
+                    tempList.get(m).setCntCharging(cntCharging);
+                    evSimpleList.add(new MultiTypeEvItem(tempList.get(m), VIEW_COLLAPSED));
                 }
 
                 binding.recyclerStations.setAdapter(evListAdapter);

@@ -16,16 +16,15 @@
             android:id="@+id/iv_chgr_status"
             android:layout_width="25dp"
             android:layout_height="25dp"
-            android:contentDescription="@null"
-
-            app:srcCompat="@android:drawable/presence_online" />
+            android:contentDescription="@null" />
         <TextView
             android:id="@+id/tv_cnt_open"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:gravity="center"
-            android:textColor="@android:color/white"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white" />
     </FrameLayout>
 
     <FrameLayout
@@ -42,7 +41,6 @@
             android:layout_gravity="center"
             android:contentDescription="@null"
             android:src="@drawable/main_ev_expand" />
-
         <TextView
             android:id="@+id/tv_cnt_chgr"
             android:layout_width="18dp"
@@ -50,6 +48,7 @@
             android:layout_gravity="center|end"
             android:background="#778899"
             android:gravity="center"
+            android:textStyle="bold"
             android:textColor="@android:color/white"
             android:textSize="11sp" />
     </FrameLayout>

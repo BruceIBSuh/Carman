@@ -5,15 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="?attr/actionBarSize"
-    android:background="@android:color/holo_blue_light"
+    android:background="@android:color/darker_gray"
     android:padding="8dp">
 
     <ImageView
-        android:id="@+id/img_green"
+        android:id="@+id/img_chgr_open"
         android:layout_width="15dp"
         android:layout_height="0dp"
+        android:layout_marginStart="8dp"
         android:contentDescription="@null"
-        android:src="@drawable/main_status_green"
+        android:src="@android:drawable/presence_online"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/tv_green"
         app:layout_constraintHorizontal_bias="0.5"
@@ -26,57 +27,60 @@
         android:layout_height="19dp"
         android:layout_marginStart="8dp"
         android:text="@string/main_status_free"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/img_red"
+        app:layout_constraintEnd_toStartOf="@+id/img_charging"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/img_green"
+        app:layout_constraintStart_toEndOf="@+id/img_chgr_open"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
-        android:id="@+id/img_red"
+        android:id="@+id/img_charging"
         android:layout_width="15dp"
         android:layout_height="15dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="24dp"
         android:contentDescription="@null"
-        android:src="@drawable/main_status_red"
+        android:src="@android:drawable/presence_away"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/tv_red"
+        app:layout_constraintEnd_toStartOf="@+id/tv_charging"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/tv_green"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_red"
+        android:id="@+id/tv_charging"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/main_status_occupied"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/img_gray"
+        app:layout_constraintEnd_toStartOf="@+id/img_no_use"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/img_red"
+        app:layout_constraintStart_toEndOf="@+id/img_charging"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
-        android:id="@+id/img_gray"
+        android:id="@+id/img_no_use"
         android:layout_width="15dp"
         android:layout_height="15dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="24dp"
         android:contentDescription="@null"
-        android:src="@drawable/main_status_gray"
+        android:src="@android:drawable/presence_busy"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/tv_gray"
+        app:layout_constraintEnd_toStartOf="@+id/tv_no_use"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/tv_red"
+        app:layout_constraintStart_toEndOf="@+id/tv_charging"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/tv_gray"
+        android:id="@+id/tv_no_use"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:text="@string/main_status_no_signal"
+        android:textColor="@android:color/white"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/img_gray"
+        app:layout_constraintStart_toEndOf="@+id/img_no_use"
         app:layout_constraintTop_toTopOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>
