@@ -504,10 +504,8 @@ public class MainActivity extends BaseActivity implements
 
     public void locateStations(int currentBtnId){
         log.i("multi button status: %s, %s", prevBtnId, currentBtnId);
-
         if(prevBtnId != -1) {
             progbtnList.get(prevBtnId).resetProgress();
-
             if(prevBtnId == currentBtnId) {
                 binding.viewFlipper.setDisplayedChild(0);
                 binding.fab.setVisibility(View.GONE);
@@ -671,18 +669,23 @@ public class MainActivity extends BaseActivity implements
         stationModel.getEvStationList().observe(this, evList -> {
             log.i("ev station List: %s", evList.size());
             evFullList.addAll(evList);
+
             List<StationEvRunnable.Item> tempList = new ArrayList<>(evList);
             if(evList.size() > 0) {
                 for(int i = 0; i < tempList.size(); i++) {
                     String name = tempList.get(i).getStdNm().replaceAll(regexEvName, "");
                     int cntSame = 1;
                     int cntOpen = 0;
+                    //int cntClose = 0;
                     if(tempList.get(i).getStat() == 2) cntOpen++;
+                    //else if(tempList.get(i).getStat() == 3) cntCharging++;
 
                     for(int j = tempList.size() - 1; j > i; j-- ) {
                         String name2 = tempList.get(j).getStdNm().replaceAll(regexEvName, "");
                         if(name.matches(name2)) {
-                            if(tempList.get(j).getStat() == 2) cntOpen++;
+                        //if(name.contains(name2) || name2.contains(name)) {
+                            if(tempList.get(i).getStat() == 2) cntOpen++;
+                            //else if(tempList.get(i).getStat() == 3) cntCharging++;
                             tempList.remove(j);
                             cntSame++;
                         }

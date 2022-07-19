@@ -8,26 +8,21 @@
 
     <ImageView
         android:id="@+id/img_logo"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginEnd="8dp"
         android:contentDescription="@null"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/guideline10"
-        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline10"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_begin="48dp" />
-
+        app:layout_constraintGuide_begin="40dp" />
 
     <TextView
         android:id="@+id/tv_stn_name"
@@ -54,7 +49,7 @@
         android:id="@+id/tv_value_price"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="3dp"
         android:minWidth="40dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_price"
         app:layout_constraintStart_toEndOf="@+id/tv_label_price"
@@ -74,7 +69,7 @@
         android:id="@+id/tv_value_distance"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="3dp"
         android:minWidth="40dp"
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_distance"
         app:layout_constraintStart_toEndOf="@+id/tv_label_distance"
@@ -84,10 +79,10 @@
         android:id="@+id/expense_tv_label_carwash"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="86dp"
+        android:layout_marginEnd="64dp"
         android:text="@string/main_station_facility"
         app:layout_constraintBottom_toBottomOf="@+id/tv_value_distance"
-        app:layout_constraintStart_toEndOf="@+id/tv_label_distance"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/tv_value_distance" />
 
     <ImageView

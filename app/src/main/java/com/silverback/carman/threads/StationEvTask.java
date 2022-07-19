@@ -40,6 +40,7 @@ public class StationEvTask extends ThreadTask implements
         this.context = context;
         this.location = location;
         this.viewModel = viewModel;
+
         mStationAddrsRunnable = new StationAddrsRunnable(context, this);
         evStationList = new ArrayList<>();
     }

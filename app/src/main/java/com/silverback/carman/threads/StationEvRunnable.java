@@ -1,5 +1,8 @@
 package com.silverback.carman.threads;
 
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_FAIL;
+import static com.silverback.carman.threads.StationEvTask.EV_TASK_SUCCESS;
+
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -90,37 +93,37 @@ public class StationEvRunnable implements Runnable {
 
                     final EvStationModel model = response.body();
                     assert model != null;
-                    final Header header = model.header;
-                    int totalCount = header.totalCount;
-                    log.i("header total count: %s", totalCount);
-                    List<Item> itemList = model.body.items.itemList;
+                    //final Header header = model.header;
+                    //int totalCount = header.totalCount;
+                    //log.i("header total count: %s", totalCount);
+                    //List<Item> itemList = model.body.items.itemList;
 
                     // Exclude an item if it is out of the distance or include an item within the distance
-                    //List<Item> itemList = model.itemList;
+                    List<Item> itemList = model.itemList;
                     float[] results = new float[3];
 
                     if(itemList != null && itemList.size() > 0) {
-                        log.i("raw items: %s, %s", queryPage, itemList.size());
                         for (int i = itemList.size() - 1; i >= 0; i--) {
-                            Location.distanceBetween(location.getLatitude(), location.getLongitude(),
-                                    itemList.get(i).lat, itemList.get(i).lng, results);
+                            Location.distanceBetween (
+                                    location.getLatitude(), location.getLongitude(),
+                                    itemList.get(i).lat, itemList.get(i).lng, results
+                            );
+
                             int distance = (int) results[0];
                             if (distance > 1000) itemList.remove(i);
                             else itemList.get(i).setDistance(distance);
                         }
-                    } else {
-                       log.i("no item: %s", queryPage);
                     }
 
                     callback.setEvStationList(itemList);
-                    //callback.handleTaskState(EV_TASK_SUCCESS);
+                    callback.handleTaskState(EV_TASK_SUCCESS);
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
                     log.e("response failed: %s", t);
                     callback.notifyEvStationError(new Exception(t));
-                    //callback.handleTaskState(EV_TASK_FAIL);
+                    callback.handleTaskState(EV_TASK_FAIL);
                 }
             });
 
@@ -172,7 +175,7 @@ public class StationEvRunnable implements Runnable {
         }
     }
 
-    /*
+
     @Xml(name="response")
     public static class EvStationModel {
         @Path("body/items")
@@ -180,9 +183,7 @@ public class StationEvRunnable implements Runnable {
         List<Item> itemList;
     }
 
-     */
-
-
+    /*
     @Xml(name="response")
     public static class EvStationModel {
         @Element Header header;
@@ -203,7 +204,7 @@ public class StationEvRunnable implements Runnable {
         @Element(name="items")
         Items items;
     }
-
+    */
     @Xml
     public static class Items {
         @Element(name="item")
@@ -229,7 +230,7 @@ public class StationEvRunnable implements Runnable {
         //@PropertyElement(name="statUpdDt") String statUpdDt;
         //@PropertyElement(name="lastTsdt") String lastTsdt;
         //@PropertyElement(name="lastTedt") String lastTedt;
-        //@PropertyElement(name="nowTsdt") String nowTsdt;
+        @PropertyElement(name="nowTsdt") String nowTsdt;
         //@PropertyElement(name="powerType") String powerType;
         //@PropertyElement(name="output") String output;
         //@PropertyElement(name="method") String method;
@@ -257,7 +258,7 @@ public class StationEvRunnable implements Runnable {
         //public String getStatUpdDt() { return statUpdDt; }
         //public String getLastTsdt() { return lastTsdt; }
         //public String getLastTedt() { return lastTedt; }
-        //public String getNowTsdt() { return nowTsdt; }
+        public String getNowTsdt() { return nowTsdt; }
         //public String getPowerType() { return powerType; }
         //public String getOutput() { return output; }
         //public String getMethod() { return method; }

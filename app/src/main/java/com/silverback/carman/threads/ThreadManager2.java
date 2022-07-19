@@ -377,22 +377,7 @@ public class ThreadManager2 {
 
     private void recycleTask(ThreadTask task) {
         boolean b = mThreadTaskQueue.offer(task);
-        if(task instanceof GasPriceTask) {
-            task.recycle();
-            mGasPriceTaskQueue.offer((GasPriceTask)task);
-        } else if(task instanceof LocationTask) {
-            task.recycle();
-            //mLocationTaskQueue.offer((LocationTask)task);
-        } else if(task instanceof StationGasTask) {
-            task.recycle();
-            //mStnListTaskQueue.offer((StationGasTask)task);
-        } else if(task instanceof UploadBitmapTask) {
-            task.recycle();
-            mUploadBitmapTaskQueue.offer((UploadBitmapTask)task);
-        } else if(task instanceof StationEvTask) {
-            task.recycle();
-            //mElecListTaskQueue.offer((StationEvTask)task);
-        }
+
     }
 
 

@@ -23,7 +23,6 @@ public class StationAddrsRunnable implements Runnable {
 
     private final Geocoder geoCoder;
     private final StationAddrsCallback callback;
-    private EvSidoCode evSidoCode;
 
 
     public interface StationAddrsCallback {
@@ -57,23 +56,26 @@ public class StationAddrsRunnable implements Runnable {
     // address done.
     private EvSidoCode getAddressfromLocation(double lat, double lng) {
         try {
-            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 1);
-            if(addressList.size() > 0) {
-                String sido = addressList.get(0).getAdminArea().replaceAll("[\\s\\-]", "");
-                return EvSidoCode.valueOf(sido);
+            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 3);// last param: max results
+            for(Address addrs : addressList) {
+                if(addrs.getAdminArea() != null) {
+                    String sido = addrs.getAdminArea().replaceAll("[\\s\\-]", "");
+                    return EvSidoCode.valueOf(sido);
+                }
             }
-        } catch(IOException e) { e.printStackTrace(); }
+
+        } catch(NullPointerException | IOException e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
     public enum EvSidoCode {
         Seoul(11, 23059), Busan(26, 6467), Daegu(27, 1984), Incheon(28, 5358), Gwangju(29, 3860),
-        Daejeon(30, 3321), Ulsan(31, 1984), Sejong(36, 5519),
-        Gyeonggi(41, 31202),
-        Chungcheongbukdo(43, 3937), Chungcheongnamdo(44, 5519),
-        Gyeongsangbukdo(47, 7155), Gyeongsangnamdo(48, 6862),
-        Jeollabukdo(45, 4261), Jeollanamdo(46, 4139),
-        Jejudo(50, 5249);
+        Daejeon(30, 3321), Ulsan(31, 1984), Sejong(36, 5519), Gyeonggido(41, 31202), Gangwondo(42, 4015),
+        Chungcheongbukdo(43, 3937), Chungcheongnamdo(44, 5519), Gyeongsangbukdo(47, 7155), Gyeongsangnamdo(48, 6862),
+        Jeollabukdo(45, 4261), Jeollanamdo(46, 4139), Jejudo(50, 5249);
 
         private final int code;
         private final int number;
