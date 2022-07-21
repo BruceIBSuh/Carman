@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="130dp"
     android:padding="8dp">
 
     <FrameLayout
@@ -11,29 +11,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" >
+        app:layout_constraintTop_toTopOf="parent">
+
         <ImageView
             android:id="@+id/iv_chgr_status"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:contentDescription="@null" />
+
         <TextView
             android:id="@+id/tv_cnt_open"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:gravity="center"
+            android:textColor="@android:color/white"
             android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white" />
+            android:textStyle="bold" />
     </FrameLayout>
 
     <FrameLayout
         android:id="@+id/frame_expand"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/frame_indicator"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/frame_indicator">
+
         <ImageView
             android:id="@+id/imgview_expand"
             android:layout_width="25dp"
@@ -41,6 +44,7 @@
             android:layout_gravity="center"
             android:contentDescription="@null"
             android:src="@drawable/main_ev_expand" />
+
         <TextView
             android:id="@+id/tv_cnt_chgr"
             android:layout_width="18dp"
@@ -48,9 +52,9 @@
             android:layout_gravity="center|end"
             android:background="#778899"
             android:gravity="center"
-            android:textStyle="bold"
             android:textColor="@android:color/white"
-            android:textSize="11sp" />
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </FrameLayout>
 
     <TextView
@@ -75,7 +79,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="@string/general_station_distance"
+        android:text="@string/main_stn_distance"
         app:layout_constraintStart_toStartOf="@+id/tv_evName"
         app:layout_constraintTop_toBottomOf="@+id/tv_evName" />
 
@@ -135,7 +139,23 @@
         app:layout_constraintStart_toEndOf="@+id/tv_label_limit"
         app:layout_constraintTop_toTopOf="@+id/tv_label_limit" />
 
+    <TextView
+        android:id="@+id/textView9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/main_chgr_label_update"
+        app:layout_constraintStart_toStartOf="@+id/tv_label_limit"
+        app:layout_constraintTop_toBottomOf="@+id/tv_label_limit" />
 
+    <TextView
+        android:id="@+id/tv_chgr_update"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="3dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView9"
+        app:layout_constraintStart_toEndOf="@+id/textView9"
+        app:layout_constraintTop_toTopOf="@+id/textView9" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

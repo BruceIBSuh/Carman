@@ -22,19 +22,47 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-
         app:layout_constraintBottom_toBottomOf="@+id/imgview_expanded"
         app:layout_constraintStart_toEndOf="@+id/imgview_expanded"
         app:layout_constraintTop_toTopOf="@+id/imgview_expanded" />
 
     <TextView
-        android:id="@+id/tv_charging_time"
-        android:visibility="gone"
+        android:id="@+id/tv_chgr_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        app:layout_constraintBottom_toBottomOf="@+id/tv_chgrId"
-        app:layout_constraintStart_toEndOf="@+id/tv_chgrId"
-        app:layout_constraintTop_toTopOf="@+id/tv_chgrId" />
+        android:layout_marginTop="8dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@+id/tv_chgrId"
+        app:layout_constraintTop_toBottomOf="@+id/tv_chgrId" />
+
+    <TextView
+        android:id="@+id/tv_chgr_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="TextView"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_chgr_label"
+        app:layout_constraintStart_toEndOf="@+id/tv_chgr_label"
+        app:layout_constraintTop_toTopOf="@+id/tv_chgr_label" />
+
+    <TextView
+        android:id="@+id/tv_label_chgrtype"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:text="@string/main_chgr_label_output"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_chgr_detail"
+        app:layout_constraintStart_toEndOf="@+id/tv_chgr_detail"
+        app:layout_constraintTop_toTopOf="@+id/tv_chgr_detail" />
+
+    <TextView
+        android:id="@+id/tv_chgr_output"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/tv_label_chgrtype"
+        app:layout_constraintStart_toEndOf="@+id/tv_label_chgrtype"
+        app:layout_constraintTop_toTopOf="@+id/tv_label_chgrtype" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

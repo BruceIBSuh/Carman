@@ -59,7 +59,7 @@
         <entry key="app/src/main/res/layout/itemview_board_reply.xml" value="0.22" />
         <entry key="app/src/main/res/layout/main_collapsed_indication.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_collapsed_pricebar.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/main_collapsed_state.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/main_collapsed_state.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_content_ads.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_content_carlife.xml" value="0.25" />
         <entry key="app/src/main/res/layout/main_content_expense.xml" value="0.25" />
@@ -70,8 +70,8 @@
         <entry key="app/src/main/res/layout/main_incl_priceinfo.xml" value="0.24427083333333333" />
         <entry key="app/src/main/res/layout/main_pager_district_price.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_pager_station_price.xml" value="0.24427083333333333" />
-        <entry key="app/src/main/res/layout/main_recycler_ev_collapsed.xml" value="0.5" />
-        <entry key="app/src/main/res/layout/main_recycler_ev_expanded.xml" value="0.67" />
+        <entry key="app/src/main/res/layout/main_recycler_ev_collapsed.xml" value="0.33" />
+        <entry key="app/src/main/res/layout/main_recycler_ev_expanded.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_recycler_gas.xml" value="0.33" />
         <entry key="app/src/main/res/layout/main_recycler_hydro.xml" value="0.5" />
         <entry key="app/src/main/res/layout/main_recyclerview_ev.xml" value="0.5" />
@@ -150,7 +150,7 @@
       </value>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

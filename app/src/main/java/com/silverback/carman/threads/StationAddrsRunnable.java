@@ -49,14 +49,14 @@ public class StationAddrsRunnable implements Runnable {
         if(code != null) {
             callback.setEnumEvSidoCode(code);
             callback.handleTaskState(EV_ADDRS_TASK_SUCCESS);
-        } else callback.handleTaskState(EV_ADDRS_TASK_FAIL);
+        } //else callback.handleTaskState(EV_ADDRS_TASK_FAIL);
     }
 
     // Refactor required as of Android13(Tiramisu), which has added the listener for getting the
     // address done.
     private EvSidoCode getAddressfromLocation(double lat, double lng) {
         try {
-            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 3);// last param: max results
+            List<Address> addressList = geoCoder.getFromLocation(lat, lng, 2);// last param: max results
             for(Address addrs : addressList) {
                 if(addrs.getAdminArea() != null) {
                     String sido = addrs.getAdminArea().replaceAll("[\\s\\-]", "");

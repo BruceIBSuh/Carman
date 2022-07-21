@@ -125,7 +125,7 @@ public class ThreadManager2 {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 ThreadTask task = (ThreadTask) msg.obj;
-                task.recycle();
+                //task.recycle();
                 //boolean b = mThreadTaskQueue.offer(task);
             }
         };

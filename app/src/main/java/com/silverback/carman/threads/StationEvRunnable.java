@@ -121,7 +121,6 @@ public class StationEvRunnable implements Runnable {
 
                 @Override
                 public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                    log.e("response failed: %s", t);
                     callback.notifyEvStationError(new Exception(t));
                     callback.handleTaskState(EV_TASK_FAIL);
                 }
@@ -227,12 +226,12 @@ public class StationEvRunnable implements Runnable {
         //@PropertyElement(name="busiNm") String busiNm;
         //@PropertyElement(name="busiCall") String busiCall;
         @PropertyElement(name="stat") int stat;
-        //@PropertyElement(name="statUpdDt") String statUpdDt;
-        //@PropertyElement(name="lastTsdt") String lastTsdt;
-        //@PropertyElement(name="lastTedt") String lastTedt;
+        @PropertyElement(name="statUpdDt") String statUpdDt;
+        @PropertyElement(name="lastTsdt") String lastTsdt;
+        @PropertyElement(name="lastTedt") String lastTedt;
         @PropertyElement(name="nowTsdt") String nowTsdt;
-        //@PropertyElement(name="powerType") String powerType;
-        //@PropertyElement(name="output") String output;
+        @PropertyElement(name="powerType") String powerType;
+        @PropertyElement(name="output") String output;
         //@PropertyElement(name="method") String method;
         @PropertyElement(name="zcode") String zcode;
         //@PropertyElement(name="parkingFree") boolean parkingFree;
@@ -255,12 +254,12 @@ public class StationEvRunnable implements Runnable {
         //public String getBusiNm() { return busiNm; }
         //public String getBusiCall() { return busiCall; }
         public int getStat() { return stat; }
-        //public String getStatUpdDt() { return statUpdDt; }
-        //public String getLastTsdt() { return lastTsdt; }
-        //public String getLastTedt() { return lastTedt; }
+        public String getStatUpdDt() { return statUpdDt; }
+        public String getLastTsdt() { return lastTsdt; }
+        public String getLastTedt() { return lastTedt; }
         public String getNowTsdt() { return nowTsdt; }
-        //public String getPowerType() { return powerType; }
-        //public String getOutput() { return output; }
+        public String getPowerType() { return powerType; }
+        public String getOutput() { return output; }
         //public String getMethod() { return method; }
         public String getZcode() { return zcode;}
         //public boolean isParkingFree() { return parkingFree; }

@@ -112,10 +112,10 @@ public class StationEvTask extends ThreadTask implements
                 outstate = sThreadManager.EV_ADDRS_SUCCESS;
                 break;
             case EV_TASK_SUCCESS:
-                outstate = sThreadManager.TASK_COMPLETE;
+                //outstate = sThreadManager.TASK_COMPLETE;
                 break;
             case EV_TASK_FAIL:
-                outstate = sThreadManager.TASK_FAIL;
+                //outstate = sThreadManager.TASK_FAIL;
                 break;
 
             default:break;

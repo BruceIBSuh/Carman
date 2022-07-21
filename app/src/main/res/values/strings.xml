@@ -45,10 +45,10 @@
     <string name="general_no_gas_history">최근 주유 이력이 없습니다</string>
     <string name="general_no_svc_history">최근 정비 이력이 없습니다</string>
     <!--MainActivity$GeneralFragment$StatonRecyclerView-->
-    <string name="general_no_station">주유소 없습니다</string>
-    <string name="general_station_price">가격</string>
-    <string name="general_station_distance">거리</string>
-    <string name="main_station_facility">부대시설</string>
+    <string name="mainl_no_station">주유소 없습니다</string>
+    <string name="main_stn_price">가격:</string>
+    <string name="main_stn_distance">거리:</string>
+    <string name="main_station_facility">부대시설:</string>
     <string name="general_snackkbar_inbounds">같은 구역입니다. 잠시 후 다시 확인하여 주세요</string>
     <string name="general_carwash_yes">가능</string>
     <string name="general_carwash_no">불가</string>
@@ -64,9 +64,19 @@
     <string name="main_hydro_close">운영중단</string>
     <string name="main_hydro_phone">연락처</string>
 
-    <string name="main_status_free">충전대기</string>
-    <string name="main_status_occupied">충전중</string>
-    <string name="main_status_no_signal">통신이상</string>
+    <string name="main_chgr_label_start">충전시작:</string>
+    <string name="main_chgr_label_last">충전종료:</string>
+    <string name="main_chgr_label_reason">사유:</string>
+    <string name="main_chgr_label_output">충전기타입:</string>
+    <string name="main_chgr_label_update">갱신시간:</string>
+
+    <string name="main_chgr_state_free">충전대기</string>
+    <string name="main_chgr_state_occupied">충전중</string>
+    <string name="main_chgr_state_nosignal">상태미확인</string>
+    <string name="main_chgr_state_disconntected">통신이상</string>
+    <string name="main_chgr_state_inspect">점검중</string>
+    <string name="main_chgr_state_shutdown">운영중지</string>
+    <string name="main_chgr_no_data">정보없음</string>
 
 
     <!-- MainActivity updated version-->
@@ -384,6 +394,7 @@
 
     <string name="unit_km">\u0020 km</string>
     <string name="unit_meter">m</string> <!--\u0020-->
+    <string name="unit_kw">\u0020kw</string>
     <string name="unit_liter">리터</string>
     <string name="unit_won">원</string>
     <string name="unit_month">개월</string>

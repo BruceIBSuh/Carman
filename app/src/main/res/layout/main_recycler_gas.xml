@@ -39,7 +39,7 @@
         android:layout_width="wrap_content"
         android:layout_height="18dp"
         android:layout_marginTop="8dp"
-        android:text="@string/general_station_price"
+        android:text="@string/main_stn_price"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="@+id/guideline10"
@@ -60,7 +60,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:text="@string/general_station_distance"
+        android:text="@string/main_stn_distance"
         app:layout_constraintBottom_toBottomOf="@+id/tv_value_price"
         app:layout_constraintStart_toEndOf="@+id/tv_value_price"
         app:layout_constraintTop_toTopOf="@+id/tv_value_price" />

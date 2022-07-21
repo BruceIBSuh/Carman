@@ -71,8 +71,10 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         TextView getDistanceView() { return binding.tvDistance;}
         TextView getCntChgrView() { return binding.tvCntChgr; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
-        TextView getChargerTypeView() { return binding.tvChgrType;}
+        TextView getChgrTypeView() { return binding.tvChgrType;}
+        TextView getChgrUpdate() { return binding.tvChgrUpdate; }
         ImageView getImageView() { return binding.imgviewExpand; }
+
 
 
     }
@@ -86,7 +88,9 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         
         ImageView getChgrStateView() { return binding.imgviewExpanded; }
         TextView getChgrIdView() { return binding.tvChgrId; }
-        TextView getChargeTime() { return binding.tvChargingTime; }
+        TextView getChgrLabel() { return binding.tvChgrLabel; }
+        TextView getChgrDetail() { return binding.tvChgrDetail; }
+        TextView getChgrOutput() { return binding.tvChgrOutput; }
     }
 
     @NonNull
@@ -120,17 +124,20 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 String limitDetail = (TextUtils.isEmpty(info.getLimitDetail()))?
                         context.getString(R.string.main_ev_no_limit) : info.getLimitDetail();
                 // Set the indicator to show a charger state.
-                holder.getChgrStateView().setImageDrawable(getCollapsedStateImage(info));
+                holder.getChgrStateView().setImageDrawable(getCollapsedDrawable(info));
+
                 // Set the number of chargers available to charge
                 if(info.getCntOpen() > 0) {
                     final String cntChargerOpen = String.valueOf(info.getCntOpen());
                     holder.getOpenChgrCountView().setText(cntChargerOpen);
                 } else holder.getOpenChgrCountView().setText("");
+
                 // Set the EV station name
                 String stnName = info.getStdNm().replaceAll(MainActivity.regexEvName, "");
                 holder.getEvStationName().setText(stnName);
-                // Set the number of chargers in an EV station and add the multi charger image over
-                // lapped with the event handler set.
+
+                // Set the number of chargers in an EV station and the multi-charger image overlapped.
+                // Click event handler is set to expand chargers in an Ev station.
                 holder.getCntChgrView().setText(String.valueOf(info.getCntCharger()));
                 if(info.getCntCharger() > 1) {
                     holder.getImageView().setVisibility(View.VISIBLE);
@@ -141,7 +148,13 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
                 holder.getLimitDetailView().setText(limitDetail);
                 holder.getDistanceView().setText(df.format(info.getDistance()));
-                holder.getChargerTypeView().setText(info.getChgerType());
+                holder.getChgrTypeView().setText(info.getChgerType());
+
+                String update = (!TextUtils.isEmpty(info.getStatUpdDt())) ?
+                        BaseActivity.formatMilliseconds("HH:mm:ss", Long.parseLong(info.getStatUpdDt())) :
+                        context.getString(R.string.main_chgr_no_data);
+                holder.getChgrUpdate().setText(update);
+
                 break;
 
             case VIEW_EXPANDED:
@@ -149,14 +162,60 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 String name = info.getStdNm() + "_" + info.getChgerId();
 
                 expandedHolder.getChgrIdView().setText(name);
-                expandedHolder.getChgrStateView().setImageDrawable(getStateDrawable(info.getStat()));
+                expandedHolder.getChgrStateView().setImageDrawable(getExpandedDrawable(info.getStat()));
 
-                if(info.getStat() == 3) {
-                    String chargeTime = BaseActivity.formatMilliseconds("HH:mm:ss", Long.parseLong(info.getNowTsdt()));
-                    expandedHolder.getChargeTime().setVisibility(View.VISIBLE);
-                    expandedHolder.getChargeTime().setText(chargeTime);
+                String output = (!TextUtils.isEmpty(info.getOutput())) ?
+                        info.getOutput().concat(context.getString(R.string.unit_kw)) :
+                        context.getString(R.string.main_chgr_no_data);
+                expandedHolder.getChgrOutput().setText(output);
+
+                String lastUpdate = (!TextUtils.isEmpty(info.getStatUpdDt())) ?
+                        info.getStatUpdDt() : context.getString(R.string.main_chgr_no_data);
+
+
+                String detail = "";
+                String label = "";
+                switch(info.getStat()) {
+                    case 2:
+                        label = context.getString(R.string.main_chgr_label_last);
+                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
+                                BaseActivity.formatMilliseconds("hh:mm:ss a", Long.parseLong(info.getLastTedt())):
+                                context.getString(R.string.main_chgr_no_data));
+
+                        break;
+                    case 3:
+                        label = context.getString(R.string.main_chgr_label_start);
+                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
+                                BaseActivity.formatMilliseconds("hh:mm:ss a", Long.parseLong(info.getNowTsdt())):
+                                context.getString(R.string.main_chgr_no_data));
+                        break;
+                    case 1:
+                        label = context.getString(R.string.main_chgr_label_reason);
+                        detail = context.getString(R.string.main_chgr_state_disconntected);
+                        break;
+                    case 4:
+                        label = context.getString(R.string.main_chgr_label_reason);
+                        detail = context.getString(R.string.main_chgr_state_inspect);
+                        break;
+                    case 5:
+                        label = context.getString(R.string.main_chgr_label_reason);
+                        detail = context.getString(R.string.main_chgr_state_shutdown);
+                        break;
+                    case 9:
+                        label = context.getString(R.string.main_chgr_label_reason);
+                        detail = context.getString(R.string.main_chgr_state_nosignal);
+                        break;
                 }
-                break;
+
+                expandedHolder.getChgrLabel().setText(label);
+                expandedHolder.getChgrDetail().setText(detail);
+                /*
+                if(info.getStat() == 3) {
+                    String chargeTime = BaseActivity.formatMilliseconds("h:mm:ss a", Long.parseLong(info.getNowTsdt()));
+                    expandedHolder.getChgrDetail().setVisibility(View.VISIBLE);
+                    expandedHolder.getChgrDetail().setText(chargeTime);
+                }
+                 */
         }
 
     }
@@ -184,20 +243,23 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         return mDiffer.getCurrentList().get(position).getViewType();
     }
 
-    private Drawable getCollapsedStateImage(StationEvRunnable.Item info) {
-        int res = -1;
-        if(info.getCntOpen() > 0) res = android.R.drawable.presence_online;
-        else if(info.getCntCharging() > 0) res = android.R.drawable.presence_away;
-        else res = android.R.drawable.presence_busy;
-        return ContextCompat.getDrawable(context, res);
+    private Drawable getCollapsedDrawable(StationEvRunnable.Item info) {
+        int resource;
+        if(info.getCntOpen() > 0) resource = android.R.drawable.presence_online;
+        else if(info.getCntCharging() > 0) resource = android.R.drawable.presence_away;
+        else resource = android.R.drawable.presence_busy;
+        return ContextCompat.getDrawable(context, resource);
     }
 
-    private Drawable getStateDrawable(int state) {
+    private Drawable getExpandedDrawable(int state) {
+        int resource;
         switch(state) {
-            case 2: return ContextCompat.getDrawable(context, android.R.drawable.presence_online);
-            case 3: return ContextCompat.getDrawable(context, android.R.drawable.presence_away);
-            default: return ContextCompat.getDrawable(context, android.R.drawable.presence_busy);
+            case 2: resource = android.R.drawable.presence_online; break;
+            case 3: resource = android.R.drawable.presence_away; break;
+            default: resource = android.R.drawable.presence_busy; break;
         }
+
+        return ContextCompat.getDrawable(context, resource);
     }
 
     private static final DiffUtil.ItemCallback<MainActivity.MultiTypeEvItem> DIFF_CALLBACK_EV =
@@ -228,6 +290,21 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                     return super.getChangePayload(oldItem, newItem);
                 }
             };
+
+
+    public enum ChargerState {
+        MAL_COMMUNICATION(1), CHARGER_READY(2), CHARGER_OCCUPIED(3), CHARGER_CLOSED(4),
+        CHARGER_CHECK(5), CHARGER_UNKNOWN(9);
+
+        int state;
+        ChargerState(int state) {
+            this.state = state;
+        }
+
+        public int getState() {
+            return state;
+        }
+    }
 
 
 
