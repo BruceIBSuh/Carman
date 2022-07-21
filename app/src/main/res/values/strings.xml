@@ -56,7 +56,7 @@
     <string name="main_index_reset">변경</string>
     <string name="general_no_location">현재 위치 정보를 찾을 수 없습니다.\n버튼을 눌려서 현재위치를 업데이트해 주세요.</string>
     <string name="main_general_no_service">준비중입니다</string>
-    <string name="main_ev_chgrtype">타입:</string>
+    <string name="main_ev_chgrtype">충전기타입:</string>
     <string name="main_ev_access_limt">이용제한:</string>
     <string name="main_ev_no_limit">없음</string>
     <string name="main_hydro_chgr_num">충전기</string>
@@ -66,8 +66,8 @@
 
     <string name="main_chgr_label_start">충전시작:</string>
     <string name="main_chgr_label_last">충전종료:</string>
-    <string name="main_chgr_label_reason">사유:</string>
-    <string name="main_chgr_label_output">충전기타입:</string>
+    <string name="main_chgr_label_reason">원인:</string>
+    <string name="main_chgr_label_output">출력:</string>
     <string name="main_chgr_label_update">갱신시간:</string>
 
     <string name="main_chgr_state_free">충전대기</string>

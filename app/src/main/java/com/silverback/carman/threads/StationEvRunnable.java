@@ -142,8 +142,8 @@ public class StationEvRunnable implements Runnable {
     }
 
     private static final OkHttpClient okHttpClient = new OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(60, TimeUnit.SECONDS)
+            .connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS)
             .build();
 
     private static class RetrofitClient {

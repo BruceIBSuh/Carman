@@ -72,7 +72,7 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         TextView getCntChgrView() { return binding.tvCntChgr; }
         TextView getLimitDetailView() { return binding.tvLimitDetail; }
         TextView getChgrTypeView() { return binding.tvChgrType;}
-        TextView getChgrUpdate() { return binding.tvChgrUpdate; }
+        //TextView getChgrUpdate() { return binding.tvChgrUpdate; }
         ImageView getImageView() { return binding.imgviewExpand; }
 
 
@@ -150,11 +150,12 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 holder.getDistanceView().setText(df.format(info.getDistance()));
                 holder.getChgrTypeView().setText(info.getChgerType());
 
+                /*
                 String update = (!TextUtils.isEmpty(info.getStatUpdDt())) ?
                         BaseActivity.formatMilliseconds("HH:mm:ss", Long.parseLong(info.getStatUpdDt())) :
                         context.getString(R.string.main_chgr_no_data);
                 holder.getChgrUpdate().setText(update);
-
+                */
                 break;
 
             case VIEW_EXPANDED:
@@ -165,57 +166,54 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
                 expandedHolder.getChgrStateView().setImageDrawable(getExpandedDrawable(info.getStat()));
 
                 String output = (!TextUtils.isEmpty(info.getOutput())) ?
-                        info.getOutput().concat(context.getString(R.string.unit_kw)) :
-                        context.getString(R.string.main_chgr_no_data);
+                        info.getOutput().concat(context.getString(R.string.unit_kw)) : context.getString(R.string.main_chgr_no_data);
                 expandedHolder.getChgrOutput().setText(output);
 
                 String lastUpdate = (!TextUtils.isEmpty(info.getStatUpdDt())) ?
                         info.getStatUpdDt() : context.getString(R.string.main_chgr_no_data);
-
+                log.i("last update: %s", BaseActivity.formatMilliseconds("HH:mm:ss a", Long.parseLong(lastUpdate)));
 
                 String detail = "";
                 String label = "";
-                switch(info.getStat()) {
-                    case 2:
-                        label = context.getString(R.string.main_chgr_label_last);
-                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
-                                BaseActivity.formatMilliseconds("hh:mm:ss a", Long.parseLong(info.getLastTedt())):
-                                context.getString(R.string.main_chgr_no_data));
+                ChargerState chgrState = ChargerState.getByState(info.getStat());
 
-                        break;
-                    case 3:
-                        label = context.getString(R.string.main_chgr_label_start);
-                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
-                                BaseActivity.formatMilliseconds("hh:mm:ss a", Long.parseLong(info.getNowTsdt())):
-                                context.getString(R.string.main_chgr_no_data));
-                        break;
-                    case 1:
+                if(chgrState == null) return;
+                switch(chgrState) {
+                    case MAL_COMMUNICATION:
                         label = context.getString(R.string.main_chgr_label_reason);
                         detail = context.getString(R.string.main_chgr_state_disconntected);
                         break;
-                    case 4:
+                    case CHARGER_READY:
+                        label = context.getString(R.string.main_chgr_label_last);
+                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
+                                BaseActivity.formatMilliseconds("HH:mm:ss", Long.parseLong(info.getLastTedt())):
+                                context.getString(R.string.main_chgr_no_data));
+                        break;
+                    case CHARGER_OCCUPIED:
+                        label = context.getString(R.string.main_chgr_label_start);
+                        detail = (!TextUtils.isEmpty(info.getLastTedt()) ?
+                                BaseActivity.formatMilliseconds("HH:mm:ss", Long.parseLong(info.getNowTsdt())):
+                                context.getString(R.string.main_chgr_no_data));
+                        break;
+
+                    case CHARGER_CHECK:
                         label = context.getString(R.string.main_chgr_label_reason);
                         detail = context.getString(R.string.main_chgr_state_inspect);
                         break;
-                    case 5:
+
+                    case CHARGER_CLOSED:
                         label = context.getString(R.string.main_chgr_label_reason);
                         detail = context.getString(R.string.main_chgr_state_shutdown);
                         break;
-                    case 9:
-                        label = context.getString(R.string.main_chgr_label_reason);
-                        detail = context.getString(R.string.main_chgr_state_nosignal);
+
+                    case CHARGER_UNKNOWN:
+                        label = context.getString(R.string.main_chgr_label_reason)
+                        ;detail = context.getString(R.string.main_chgr_state_nosignal);
                         break;
                 }
 
                 expandedHolder.getChgrLabel().setText(label);
                 expandedHolder.getChgrDetail().setText(detail);
-                /*
-                if(info.getStat() == 3) {
-                    String chargeTime = BaseActivity.formatMilliseconds("h:mm:ss a", Long.parseLong(info.getNowTsdt()));
-                    expandedHolder.getChgrDetail().setVisibility(View.VISIBLE);
-                    expandedHolder.getChgrDetail().setText(chargeTime);
-                }
-                 */
         }
 
     }
@@ -300,9 +298,15 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         ChargerState(int state) {
             this.state = state;
         }
-
         public int getState() {
             return state;
+        }
+
+        public static ChargerState getByState(int state) {
+            for(ChargerState chgrState : ChargerState.values()) {
+                if(chgrState.state == state) return chgrState;
+            }
+            return null;
         }
     }
 
