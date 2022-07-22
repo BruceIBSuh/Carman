@@ -25,10 +25,15 @@ import com.silverback.carman.logs.LoggingHelper;
 import com.silverback.carman.logs.LoggingHelperFactory;
 import com.silverback.carman.threads.StationEvRunnable;
 
+import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final LoggingHelper log = LoggingHelperFactory.create(StationEvAdapter.class);
@@ -88,9 +93,9 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
         
         ImageView getChgrStateView() { return binding.imgviewExpanded; }
         TextView getChgrIdView() { return binding.tvChgrId; }
-        TextView getChgrLabel() { return binding.tvChgrLabel; }
-        TextView getChgrDetail() { return binding.tvChgrDetail; }
-        TextView getChgrOutput() { return binding.tvChgrOutput; }
+        //TextView getChgrLabel() { return binding.tvChgrLabel; }
+        //TextView getChgrDetail() { return binding.tvChgrDetail; }
+        //TextView getChgrOutput() { return binding.tvChgrOutput; }
     }
 
     @NonNull
@@ -161,22 +166,44 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
             case VIEW_EXPANDED:
                 ExpandedViewHolder expandedHolder = (ExpandedViewHolder) viewHolder;
                 String name = info.getStdNm() + "_" + info.getChgerId();
-
-                expandedHolder.getChgrIdView().setText(name);
+                //expandedHolder.getChgrIdView().setText(name);
                 expandedHolder.getChgrStateView().setImageDrawable(getExpandedDrawable(info.getStat()));
 
+                ChargerState chgrState = ChargerState.getByState(info.getStat());
+                assert chgrState != null;
+                switch(chgrState) {
+                    case MAL_COMMUNICATION:
+                        name = String.format("%s%8s", name, context.getString(R.string.main_chgr_state_disconntected));
+                        break;
+                    case CHARGER_CHECK:
+                        name = String.format("%s%8s", name, context.getString(R.string.main_chgr_state_inspect));
+                        break;
+                    case CHARGER_CLOSED:
+                        name = String.format("%s%8s", name, context.getString(R.string.main_chgr_state_shutdown));
+                        break;
+                    case CHARGER_OCCUPIED:
+
+
+
+                        break;
+                    case CHARGER_UNKNOWN:
+                        name = String.format("%s%8s", name, context.getString(R.string.main_chgr_state_nosignal));
+                        break;
+                }
+
+                expandedHolder.getChgrIdView().setText(name);
+
+                /*
                 String output = (!TextUtils.isEmpty(info.getOutput())) ?
                         info.getOutput().concat(context.getString(R.string.unit_kw)) : context.getString(R.string.main_chgr_no_data);
                 expandedHolder.getChgrOutput().setText(output);
-
                 String lastUpdate = (!TextUtils.isEmpty(info.getStatUpdDt())) ?
                         info.getStatUpdDt() : context.getString(R.string.main_chgr_no_data);
                 log.i("last update: %s", BaseActivity.formatMilliseconds("HH:mm:ss a", Long.parseLong(lastUpdate)));
-
+                /*
                 String detail = "";
                 String label = "";
                 ChargerState chgrState = ChargerState.getByState(info.getStat());
-
                 if(chgrState == null) return;
                 switch(chgrState) {
                     case MAL_COMMUNICATION:
@@ -214,6 +241,8 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
                 expandedHolder.getChgrLabel().setText(label);
                 expandedHolder.getChgrDetail().setText(detail);
+
+                 */
         }
 
     }
@@ -291,8 +320,12 @@ public class StationEvAdapter extends RecyclerView.Adapter<RecyclerView.ViewHold
 
 
     public enum ChargerState {
-        MAL_COMMUNICATION(1), CHARGER_READY(2), CHARGER_OCCUPIED(3), CHARGER_CLOSED(4),
-        CHARGER_CHECK(5), CHARGER_UNKNOWN(9);
+        MAL_COMMUNICATION(1),
+        CHARGER_READY(2),
+        CHARGER_OCCUPIED(3),
+        CHARGER_CLOSED(4),
+        CHARGER_CHECK(5),
+        CHARGER_UNKNOWN(9);
 
         int state;
         ChargerState(int state) {

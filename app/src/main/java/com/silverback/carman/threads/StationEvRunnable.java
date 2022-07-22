@@ -43,8 +43,10 @@ public class StationEvRunnable implements Runnable {
 
     private final Geocoder geocoder;
     private final ElecStationCallback callback;
-    private final int queryPage;
+    //private final int queryPage;
     private final int sidoCode;
+
+    private int lastPage;
 
 
     // Interface
@@ -56,11 +58,13 @@ public class StationEvRunnable implements Runnable {
         void notifyEvStationError(Exception e);
     }
 
-    public StationEvRunnable(Context context, int queryPage, int code, ElecStationCallback callback) {
+    public StationEvRunnable(Context context, /*int queryPage, */int lastPage, int code, ElecStationCallback callback) {
         this.callback = callback;
         geocoder = new Geocoder(context, Locale.KOREAN);
-        this.queryPage = queryPage;
+        //this.queryPage = queryPage;
         this.sidoCode = code;
+
+        this.lastPage = lastPage;
     }
 
     @Override
@@ -82,49 +86,57 @@ public class StationEvRunnable implements Runnable {
 
             //int sido = getAddressfromLocation(location.getLatitude(), location.getLongitude());
             final String sidoCode = String.valueOf(this.sidoCode);
-            Call<EvStationModel> call = RetrofitClient.getIntance()
-                    .getRetrofitApi()
-                    .getEvStationInfo(encodingKey, queryPage, 9999, 5, sidoCode);
-                    //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
-            call.enqueue(new Callback<EvStationModel>() {
-                @Override
-                public void onResponse(@NonNull Call<EvStationModel> call,
-                                       @NonNull Response<EvStationModel> response) {
 
-                    final EvStationModel model = response.body();
-                    assert model != null;
-                    //final Header header = model.header;
-                    //int totalCount = header.totalCount;
-                    //log.i("header total count: %s", totalCount);
-                    //List<Item> itemList = model.body.items.itemList;
+            for(int page = 1; page <= lastPage; page++) {
+                Call<EvStationModel> call = RetrofitClient.getIntance()
+                        .getRetrofitApi()
+                        .getEvStationInfo(encodingKey, /*queryPage,*/page,  10, 5, sidoCode);
+                //.getEvStationInfo(encodingKey, queryPage, 9999, 5);
+                call.enqueue(new Callback<EvStationModel>() {
+                    @Override
+                    public void onResponse(@NonNull Call<EvStationModel> call,
+                                           @NonNull Response<EvStationModel> response) {
 
-                    // Exclude an item if it is out of the distance or include an item within the distance
-                    List<Item> itemList = model.itemList;
-                    float[] results = new float[3];
-
-                    if(itemList != null && itemList.size() > 0) {
-                        for (int i = itemList.size() - 1; i >= 0; i--) {
-                            Location.distanceBetween (
-                                    location.getLatitude(), location.getLongitude(),
-                                    itemList.get(i).lat, itemList.get(i).lng, results
-                            );
-
-                            int distance = (int) results[0];
-                            if (distance > 1000) itemList.remove(i);
-                            else itemList.get(i).setDistance(distance);
+                        final EvStationModel model = response.body();
+                        if(model == null) {
+                            callback.notifyEvStationError(new Exception("response failed"));
+                            return;
                         }
+                        //assert model != null;
+                        //final Header header = model.header;
+                        //int totalCount = header.totalCount;
+                        //log.i("header total count: %s", totalCount);
+                        //List<Item> itemList = model.body.items.itemList;
+
+                        // Exclude an item if it is out of the distance or include an item within the distance
+                        List<Item> itemList = model.itemList;
+                        float[] results = new float[3];
+
+                        if(itemList != null && itemList.size() > 0) {
+                            for (int i = itemList.size() - 1; i >= 0; i--) {
+                                Location.distanceBetween (
+                                        location.getLatitude(), location.getLongitude(),
+                                        itemList.get(i).lat, itemList.get(i).lng, results
+                                );
+
+                                int distance = (int) results[0];
+                                if (distance > 1000) itemList.remove(i);
+                                else itemList.get(i).setDistance(distance);
+                            }
+                        }
+
+                        callback.setEvStationList(itemList);
+                        callback.handleTaskState(EV_TASK_SUCCESS);
                     }
 
-                    callback.setEvStationList(itemList);
-                    callback.handleTaskState(EV_TASK_SUCCESS);
-                }
+                    @Override
+                    public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
+                        callback.notifyEvStationError(new Exception(t));
+                        callback.handleTaskState(EV_TASK_FAIL);
+                    }
+                });
+            }
 
-                @Override
-                public void onFailure(@NonNull Call<EvStationModel> call, @NonNull Throwable t) {
-                    callback.notifyEvStationError(new Exception(t));
-                    callback.handleTaskState(EV_TASK_FAIL);
-                }
-            });
 
         } catch (InterruptedException e) { e.printStackTrace(); }
     }

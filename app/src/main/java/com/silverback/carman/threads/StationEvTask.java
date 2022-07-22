@@ -42,16 +42,19 @@ public class StationEvTask extends ThreadTask implements
         this.viewModel = viewModel;
 
         mStationAddrsRunnable = new StationAddrsRunnable(context, this);
+
         evStationList = new ArrayList<>();
     }
 
     public Runnable getStationAddrsRunnable() {
         return mStationAddrsRunnable;
     }
-    public Runnable getEvStnListRunnable(int queryPage, int lastPage, int code) {
+
+    public Runnable getEvStnListRunnable(/*int queryPage,*/ int lastPage, int code) {
         this.lastPage = lastPage;
-        return new StationEvRunnable(context, queryPage, code, this);
+        return new StationEvRunnable(context, /*queryPage,*/lastPage,  code, this);
     }
+
 
     public void recycle(){
         log.i("recycle StationEvTask");
@@ -82,7 +85,6 @@ public class StationEvTask extends ThreadTask implements
     @Override
     public void setEvStationList(List<StationEvRunnable.Item> evList) {
         if(evList != null && evList.size() > 0) evStationList.addAll(evList);
-        if(evList != null) log.i("ev list: %s", evList.size());
 
         if(page == lastPage){
             // Sort the ev stations in the distance-descending order

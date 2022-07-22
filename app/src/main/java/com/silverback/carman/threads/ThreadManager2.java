@@ -55,7 +55,7 @@ public class ThreadManager2 {
     static final int DISTCODE_FAILED = -102;
 
     // Determine the threadpool parameters.
-    private static final int CORE_POOL_SIZE = 8;
+    private static final int CORE_POOL_SIZE = 4;
     private static final int MAXIMUM_POOL_SIZE = 8;
     private static final int KEEP_ALIVE_TIME = 1;
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.SECONDS;// Sets the Time Unit to seconds
@@ -170,11 +170,14 @@ public class ThreadManager2 {
                 int code = evEnum.getCode();
                 log.i("ev threading: %s, %s", code, lastPage);
 
-                for(int page = 1; page <= lastPage; page++) {
+
+                //for(int page = 1; page <= lastPage; page++) {
                     InnerClazz.sInstance.threadPoolExecutor.execute(
-                            ((StationEvTask)task).getEvStnListRunnable(page, lastPage, code)
+                            ((StationEvTask)task).getEvStnListRunnable(/*page, */lastPage, code)
                     );
-                }
+                //}
+
+
                 break;
 
             case EV_ADDRS_FAIL:
@@ -318,6 +321,7 @@ public class ThreadManager2 {
         if(stationEvTask == null) stationEvTask = new StationEvTask(context, model, location);
 
         InnerClazz.sInstance.threadPoolExecutor.execute(stationEvTask.getStationAddrsRunnable());
+
 
         // Calculate the last page to query the entire items, which should be refactored as the
         // server scheme changes.

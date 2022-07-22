@@ -25,7 +25,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/imgview_expanded"
         app:layout_constraintStart_toEndOf="@+id/imgview_expanded"
         app:layout_constraintTop_toTopOf="@+id/imgview_expanded" />
-
+    <!--
     <TextView
         android:id="@+id/tv_chgr_label"
         android:layout_width="wrap_content"
@@ -64,5 +64,5 @@
         app:layout_constraintBottom_toBottomOf="@+id/tv_label_chgrtype"
         app:layout_constraintStart_toEndOf="@+id/tv_label_chgrtype"
         app:layout_constraintTop_toTopOf="@+id/tv_label_chgrtype" />
-
+    -->
 </androidx.constraintlayout.widget.ConstraintLayout>
